@@ -471,66 +471,87 @@ RCT_EXPORT_METHOD(removeConsent:(NSArray*)arguments)
   }
 }
 
-RCT_EXPORT_METHOD(remoteConfigUpdate:(NSArray*)arguments)
+RCT_EXPORT_METHOD(giveAllConsent:(NSArray*)arguments)
+{
+  [Countly.sharedInstance giveConsentForAllFeatures];
+}
+
+RCT_EXPORT_METHOD(removeAllConsent:(NSArray*)arguments)
+{
+  [Countly.sharedInstance cancelConsentForAllFeatures];
+}
+
+RCT_EXPORT_METHOD(remoteConfigUpdate:(NSArray*)arguments:(RCTResponseSenderBlock)callback)
 {
   [Countly.sharedInstance updateRemoteConfigWithCompletionHandler:^(NSError * error)
   {
       if (!error)
       {
-          NSLog(@"Remote Config is updated and ready to use!");
+          NSArray *result = @[@"Remote Config is updated and ready to use!"];
+          callback(@[result]);
       }
       else
       {
-          NSLog(@"There is an error while updating Remote Config:\n%@", error);
+          NSString* returnString = [NSString stringWithFormat:@"There is an error while updating Remote Config:%@", error];
+          NSArray *result = @[returnString];
+          callback(@[result]);
       }
   }];
 }
 
-RCT_EXPORT_METHOD(updateRemoteConfigForKeysOnly:(NSArray*)arguments)
+RCT_EXPORT_METHOD(updateRemoteConfigForKeysOnly:(NSArray*)arguments:(RCTResponseSenderBlock)callback)
 {
   NSString* keyName = [arguments objectAtIndex:0];
   [Countly.sharedInstance updateRemoteConfigOnlyForKeys:@[keyName] completionHandler:^(NSError * error)
   {
       if (!error)
       {
-          NSLog(@"Remote Config is updated only for given keys and ready to use!");
+          NSArray *result = @[@"Remote Config is updated only for given keys and ready to use!"];
+          callback(@[result]);
       }
       else
       {
-          NSLog(@"There is an error while updating Remote Config:\n%@", error);
+          NSString* returnString = [NSString stringWithFormat:@"There is an error while updating Remote Config:%@", error];
+          NSArray *result = @[returnString];
+          callback(@[result]);
       }
   }];
 }
 
-RCT_EXPORT_METHOD(updateRemoteConfigExceptKeys:(NSArray*)arguments)
+RCT_EXPORT_METHOD(updateRemoteConfigExceptKeys:(NSArray*)arguments:(RCTResponseSenderBlock)callback)
 {
   NSString* keyName = [arguments objectAtIndex:0];
   [Countly.sharedInstance updateRemoteConfigExceptForKeys:@[keyName] completionHandler:^(NSError * error)
   {
       if (!error)
       {
-          NSLog(@"Remote Config is updated except for given keys and ready to use !");
+          NSArray *result = @[@"Remote Config is updated except for given keys and ready to use !"];
+          callback(@[result]);
       }
       else
       {
-          NSLog(@"There is an error while updating Remote Config:\n%@", error);
+          NSString* returnString = [NSString stringWithFormat:@"There is an error while updating Remote Config:%@", error];
+          NSArray *result = @[returnString];
+          callback(@[result]);
       }
   }];
 }
 
-RCT_EXPORT_METHOD(getRemoteConfigValueForKey:(NSArray*)arguments)
+RCT_EXPORT_METHOD(getRemoteConfigValueForKey:(NSArray*)arguments:(RCTResponseSenderBlock)callback)
 {
   NSString* keyName = [arguments objectAtIndex:0];
   id value = [Countly.sharedInstance remoteConfigValueForKey:keyName];
-
   if (value) // if value exists, you can use it as you see fit
   {
-      NSLog(@"Value %@", [value description]);
+      // NSLog(@"Value %@", [value description]);
   }
   else //if value does not exist, you can set your default fallback value
   {
     value = @"Default Value";   
   }
+  NSString* returnString = [NSString stringWithFormat:@"Value is : %@", value];
+  NSArray *result = @[returnString];
+  callback(@[result]);
 }
 
 @end

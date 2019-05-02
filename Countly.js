@@ -36,6 +36,7 @@ Countly.isInitialized = function(){
 Countly.hasBeenCalledOnStart = function(){
     return CountlyReactNative.hasBeenCalledOnStart([]);
 }
+
 // countly sending various types of events
 Countly.sendEvent = function(options){
     var args = [];
@@ -83,8 +84,6 @@ Countly.setLoggingEnabled = function(boolean){
     CountlyReactNative.setloggingenabled([]);
 }
 
-
-
 Countly.sendPushToken = function(options, successCallback, failureCallback){
     var args = [];
     args.push(options.token || "");
@@ -113,6 +112,7 @@ Countly.deviceready = function(){
 Countly.onSuccess = function(result){
     // alert(result);
 }
+
 Countly.onError = function(error){
      // alert("error");
      // alert(error);
@@ -235,6 +235,7 @@ Countly.setUserData = function(options){
 
     CountlyReactNative.setuserdata(args);
 }
+
 Countly.userData = {};
 Countly.userData.setProperty = function(keyName, keyValue){
     CountlyReactNative.userData_setProperty([keyName.toString() || "", keyValue.toString() || ""]);
@@ -280,22 +281,37 @@ Countly.removeConsent = function(keyName){
     CountlyReactNative.removeConsent([keyName.toString() || ""]);
 }
 
+Countly.giveAllConsent = function(keyName){
+    CountlyReactNative.giveAllConsent([]);
+}
+
+Countly.removeAllConsent = function(keyName){
+    CountlyReactNative.removeAllConsent([]);
+}
+
 Countly.remoteConfigUpdate = function(){
-    var stringItem = CountlyReactNative.remoteConfigUpdate([]);
-    alert(stringItem);
+    var stringItem = CountlyReactNative.remoteConfigUpdate([], (stringItem) => {
+        alert(stringItem);
+    });
 }
 
 Countly.updateRemoteConfigForKeysOnly = function(keyName){
-    CountlyReactNative.updateRemoteConfigForKeysOnly([keyName.toString() || ""]);
+    CountlyReactNative.updateRemoteConfigForKeysOnly([keyName.toString() || ""], (stringItem) => {
+        alert(stringItem);
+    });
 }
 
 Countly.updateRemoteConfigExceptKeys = function(keyName){
-    CountlyReactNative.updateRemoteConfigExceptKeys([keyName.toString() || ""]);
+    CountlyReactNative.updateRemoteConfigExceptKeys([keyName.toString() || ""], (stringItem) => {
+        alert(stringItem);
+    });
 }
 
 Countly.getRemoteConfigValueForKey = function(keyName){
-    var stringItem = CountlyReactNative.getRemoteConfigValueForKey([keyName.toString() || ""]);
-    alert(stringItem);
+    CountlyReactNative.getRemoteConfigValueForKey([keyName.toString() || ""], (stringItem) => {
+        alert(stringItem);
+    });
+    
 }
 
 

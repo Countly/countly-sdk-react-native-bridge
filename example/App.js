@@ -54,6 +54,8 @@ class AwesomeProject extends Component {
       Countly.sendEvent(events);
     };
 
+
+    // TIMED EVENTS
     startEvent(){
       Countly.startEvent("timedEvent");
     };
@@ -61,6 +63,46 @@ class AwesomeProject extends Component {
     endEvent(){
       Countly.endEvent("timedEvent");
     };
+
+    timedEventWithSum(){
+      // Event with sum
+      Countly.startEvent("timedEvent");
+      var events = {
+        "eventName": "timedEvent",
+        "eventSum": "0.99"
+      };
+      Countly.endEvent(events);
+    };
+
+    timedEventWithSegment(){
+      // Event with segment
+      Countly.startEvent("timedEvent");
+      var events = {
+        "eventName": "timedEvent"
+      };
+      events.segments = {
+        "Country": "Germany",
+        "Age": "28"
+      };
+      Countly.endEvent(events);
+    };
+
+    timedEventWithSumAndSegment(){
+      // Event with Segment, sum and count
+      Countly.startEvent("timedEvent");
+      var events = {
+        "eventName": "timedEvent",
+        "eventCount": 1,
+        "eventSum": "0.99"
+      };
+      events.segments = {
+        "Country": "Germany",
+        "Age": "28"
+      };
+      Countly.endEvent(events);
+    };
+    // TIMED EVENTS
+
 
     userData_setProperty(){
       Countly.userData.setProperty("keyName", "keyValue");
@@ -136,6 +178,14 @@ class AwesomeProject extends Component {
       Countly.removeConsent("events");
     };
 
+    giveAllConsent(){
+      Countly.giveAllConsent();
+    };
+
+    removeAllConsent(){
+      Countly.removeAllConsent();
+    };
+
     remoteConfigUpdate(){
       Countly.remoteConfigUpdate();
     };
@@ -166,7 +216,7 @@ class AwesomeProject extends Component {
           },
           // (required) Called when a remote or local notification is opened or received
           onNotification: function(notification) {
-              alert( 'NOTIFICATION:', notification );
+              // alert( 'NOTIFICATION:', notification );
               // process the notification
               // required on iOS only (see fetchCompletionHandler docs: https://facebook.github.io/react-native/docs/pushnotificationios.html)
               notification.finish(PushNotificationIOS.FetchResult.NoData);
@@ -236,6 +286,9 @@ class AwesomeProject extends Component {
             < Button onPress = { this.eventWithSumAndSegment } title = "Even with Sum and Segment" color = "#841584"> </Button>
             < Button onPress = { this.startEvent } title = "Timed event: Start" color = "#e0e0e0"> </Button>
             < Button onPress = { this.endEvent } title = "Timed event: Stop" color = "#e0e0e0"> </Button>
+            < Button onPress = { this.timedEventWithSum } title = "Timed events with Sum" color = "#e0e0e0"> </Button>
+            < Button onPress = { this.timedEventWithSegment } title = "Timed events with Segment" color = "#e0e0e0"> </Button>
+            < Button onPress = { this.timedEventWithSumAndSegment } title = "Timed events with Sum and Segment" color = "#e0e0e0"> </Button>
 
 
 
@@ -267,6 +320,7 @@ class AwesomeProject extends Component {
             < Button onPress={this.pushMessage} title='Push Message' color='#00b5ad' />
             < Button onPress={this.cancelMessage} title='Cancel Push Message' color='#00b5ad' />
             < Button onPress={this.changeDeviceId} title='Change Device ID' color='#00b5ad' />
+            < Button onPress = { this.setupPush } title = "Setup Push" color = "#00b5ad"> </Button>
             < Text style={[{ textAlign: 'center' }]}>Push Notification End</Text>
 
 
@@ -274,17 +328,22 @@ class AwesomeProject extends Component {
             < Button onPress = { this.setRequiresConsent } title = "Init Consent" color = "#00b5ad"> </Button>
             < Button onPress = { this.giveConsent } title = "Events start Consent" color = "#00b5ad"> </Button>
             < Button onPress = { this.removeConsent } title = "Events remove Consent" color = "#00b5ad"> </Button>
-            < Button onPress = { this.setupPush } title = "Setup Push" color = "#00b5ad"> </Button>
+            < Button onPress = { this.giveAllConsent } title = "Start all Consent" color = "#00b5ad"> </Button>
+            < Button onPress = { this.removeAllConsent } title = "Remove all Consent" color = "#00b5ad"> </Button>
+
+
+            
 
 
             < Button onPress = { this.remoteConfigUpdate } title = "Update Remote Config" color = "#00b5ad"> </Button>
             < Button onPress = { this.updateRemoteConfigForKeysOnly } title = "Update Remote Config with Keys Only" color = "#00b5ad"> </Button>
             < Button onPress = { this.updateRemoteConfigExceptKeys } title = "Update Remote Config Except Keys" color = "#00b5ad"> </Button>
-            < Button onPress = { this.getRemoteConfigValueForKey } title = "Check Remote Config value" color = "#00b5ad"> </Button>
+            < Button onPress = { this.getStarRating } title = "Check Remote Config value" color = "#00b5ad"> </Button>
+            
 
+            < Button onPress = { this.getRemoteConfigValueForKey } title = "Star Rating" color = "#00b5ad"> </Button>
+            
             <Text style={[{textAlign: 'center'}]}>Other Methods End</Text>
-
-
           </ScrollView>
         );
     }

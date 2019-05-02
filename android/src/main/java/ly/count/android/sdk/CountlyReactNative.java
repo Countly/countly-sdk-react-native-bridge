@@ -428,59 +428,91 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         }
     }
 
+    @ReactMethod
+    public void giveAllConsent(ReadableArray args){
+        Countly.sharedInstance().giveConsent(new String[]{Countly.CountlyFeatureNames.sessions});
+        Countly.sharedInstance().giveConsent(new String[]{Countly.CountlyFeatureNames.events});
+        Countly.sharedInstance().giveConsent(new String[]{Countly.CountlyFeatureNames.users});
+        Countly.sharedInstance().giveConsent(new String[]{Countly.CountlyFeatureNames.crashes});
+        Countly.sharedInstance().giveConsent(new String[]{Countly.CountlyFeatureNames.push});
+        Countly.sharedInstance().giveConsent(new String[]{Countly.CountlyFeatureNames.location});
+        Countly.sharedInstance().giveConsent(new String[]{Countly.CountlyFeatureNames.views});
+        Countly.sharedInstance().giveConsent(new String[]{Countly.CountlyFeatureNames.attribution});
+        Countly.sharedInstance().giveConsent(new String[]{Countly.CountlyFeatureNames.starRating});
+    }
 
     @ReactMethod
-    public void remoteConfigUpdate(ReadableArray args){
+    public void removeAllConsent(ReadableArray args){
+        Countly.sharedInstance().removeConsent(new String[]{Countly.CountlyFeatureNames.sessions});
+        Countly.sharedInstance().removeConsent(new String[]{Countly.CountlyFeatureNames.events});
+        Countly.sharedInstance().removeConsent(new String[]{Countly.CountlyFeatureNames.users});
+        Countly.sharedInstance().removeConsent(new String[]{Countly.CountlyFeatureNames.crashes});
+        Countly.sharedInstance().removeConsent(new String[]{Countly.CountlyFeatureNames.push});
+        Countly.sharedInstance().removeConsent(new String[]{Countly.CountlyFeatureNames.location});
+        Countly.sharedInstance().removeConsent(new String[]{Countly.CountlyFeatureNames.views});
+        Countly.sharedInstance().removeConsent(new String[]{Countly.CountlyFeatureNames.attribution});
+        Countly.sharedInstance().removeConsent(new String[]{Countly.CountlyFeatureNames.starRating});
+    }
+
+
+    @ReactMethod
+    public void remoteConfigUpdate(ReadableArray args, final Callback myCallback){
         Countly.sharedInstance().remoteConfigUpdate(new RemoteConfig.RemoteConfigCallback() {
+            String resultString = "";
             @Override
             public void callback(String error) {
                 if(error == null) {
-                    Log.e(Countly.TAG, "Update finished");
+                    resultString = "Update finished";
                 } else {
-                    Log.e(Countly.TAG, "Error: " + error);
+                    resultString = "Error: " + error;
                 }
+                myCallback.invoke(resultString);
             }
         });
     }
 
     @ReactMethod
-    public void updateRemoteConfigForKeysOnly(ReadableArray args){
+    public void updateRemoteConfigForKeysOnly(ReadableArray args, final Callback myCallback){
         String keyName = args.getString(0);
         Countly.sharedInstance().updateRemoteConfigForKeysOnly(new String[]{keyName}, new RemoteConfig.RemoteConfigCallback() {
+            String resultString = "";
             @Override
             public void callback(String error) {
                 if(error == null) {
-                    Log.e(Countly.TAG, "Update with inclusion finished");
+                    resultString = "Update with inclusion finished";
                 } else {
-                    Log.e(Countly.TAG, "Error: " + error);
+                    resultString = "Error: " + error;
                 }
+                myCallback.invoke(resultString);
             }
         });
     }
 
 
     @ReactMethod
-    public void updateRemoteConfigExceptKeys(ReadableArray args){
+    public void updateRemoteConfigExceptKeys(ReadableArray args, final Callback myCallback){
         String keyName = args.getString(0);
         Countly.sharedInstance().updateRemoteConfigExceptKeys(new String[]{keyName}, new RemoteConfig.RemoteConfigCallback() {
+            String resultString = "";
             @Override
             public void callback(String error) {
                 if (error == null) {
-                    Log.e(Countly.TAG, "Update with exclusion finished");
+                    resultString = "Update with exclusion finished";
                 } else {
-                    Log.e(Countly.TAG, "Error: " + error);
+                    resultString = "Error: " + error;
                 }
+                myCallback.invoke(resultString);
             }
         });
     }
 
     @ReactMethod
-    public String getRemoteConfigValueForKey(ReadableArray args){
+    public void getRemoteConfigValueForKey(ReadableArray args, final Callback myCallback){
         String keyName = args.getString(0);
         Object value_1 = Countly.sharedInstance().getRemoteConfigValueForKey(keyName);
         String resultString = ("value of : " + keyName +" is "+ value_1 + "").toString();
         Log.e(Countly.TAG, resultString);
-        return "kwjelkfjlkwejflkwejlkfjklw";
+        myCallback.invoke(resultString);
     }
 }
 
