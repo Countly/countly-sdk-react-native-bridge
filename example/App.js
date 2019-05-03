@@ -201,6 +201,10 @@ class AwesomeProject extends Component {
     getRemoteConfigValueForKey(){
       Countly.getRemoteConfigValueForKey("test1");
     };
+
+    initNative(){
+      Countly.initNative("true");
+    }
     
     
 
@@ -343,6 +347,9 @@ class AwesomeProject extends Component {
 
             < Button onPress = { this.getRemoteConfigValueForKey } title = "Star Rating" color = "#00b5ad"> </Button>
             
+
+            < Button onPress = { this.initNative } title = "Init Native" color = "#00b5ad"> </Button>
+
             <Text style={[{textAlign: 'center'}]}>Other Methods End</Text>
           </ScrollView>
         );

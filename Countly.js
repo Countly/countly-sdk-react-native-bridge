@@ -314,5 +314,11 @@ Countly.getRemoteConfigValueForKey = function(keyName){
     
 }
 
+Countly.initNative = function(keyName){
+    CountlyReactNative.initNative([keyName.toString() || ""], (stringItem) => {
+    });
+    
+}
+
 
 export default Countly;

@@ -34,6 +34,8 @@ import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 import ly.count.android.sdk.Countly;
+import ly.count.android.sdknative.CountlyNative;
+
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -513,6 +515,11 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         String resultString = ("value of : " + keyName +" is "+ value_1 + "").toString();
         Log.e(Countly.TAG, resultString);
         myCallback.invoke(resultString);
+    }
+
+    @ReactMethod
+    public void initNative(ReadableArray args, final Callback myCallback){
+            CountlyNative.initNative(getReactApplicationContext());
     }
 }
 
