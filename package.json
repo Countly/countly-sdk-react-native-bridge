@@ -1,18 +1,48 @@
 {
+  "_from": "git+https://github.com/Countly/countly-sdk-react-native-bridge.git#v3",
+  "_id": "countly-sdk-react-native@5.0.0",
+  "_inBundle": false,
+  "_integrity": "",
+  "_location": "/countly-sdk-react-native",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "git",
+    "raw": "https://github.com/Countly/countly-sdk-react-native-bridge.git#v3",
+    "rawSpec": "https://github.com/Countly/countly-sdk-react-native-bridge.git#v3",
+    "saveSpec": "git+https://github.com/Countly/countly-sdk-react-native-bridge.git#v3",
+    "fetchSpec": "https://github.com/Countly/countly-sdk-react-native-bridge.git",
+    "gitCommittish": "v3"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "git+https://github.com/Countly/countly-sdk-react-native-bridge.git#c4b3b6b189a15aad3b05e8c0de72d67edb43c382",
+  "_spec": "https://github.com/Countly/countly-sdk-react-native-bridge.git#v3",
+  "_where": "/Users/trinisoft/office/react/Countly/AwesomeProject",
+  "author": {
+    "name": "Trinisoft Technologies",
+    "email": "trinisofttechnologies@gmail.com",
+    "url": "http://trinisofttechnologies.com"
+  },
+  "bugs": {
+    "url": "https://github.com/Countly/countly-sdk-react-native/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {},
+  "deprecated": false,
+  "description": "Countly is an innovative, real-time, open source mobile analytics and push notifications platform.",
+  "homepage": "https://github.com/Countly/countly-sdk-react-native",
+  "keywords": [
+    "countly",
+    "analytics"
+  ],
+  "license": "MIT",
+  "main": "Countly.js",
   "name": "countly-sdk-react-native",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Countly/countly-sdk-react-native.git"
+    "url": "git+https://github.com/Countly/countly-sdk-react-native.git"
   },
-  "main": "Countly.js",
-  "version": "5.0.0",
-  "description": "Countly is an innovative, real-time, open source mobile analytics and push notifications platform.",
-  "author": "Trinisoft Technologies <trinisofttechnologies@gmail.com> (http://trinisofttechnologies.com)",
-  "license": "MIT",
-  "homepage": "https://github.com/Countly/countly-sdk-react-native",
-  "keywords": [
-    "countly", "analytics"
-  ],
-  "dependencies": {
-  }
+  "version": "5.0.0"
 }
