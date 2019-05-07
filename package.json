@@ -1,5 +1,5 @@
 {
-  "_from": "git+https://github.com/Countly/countly-sdk-react-native-bridge.git#v3",
+  "_from": "git+https://github.com/Countly/countly-sdk-react-native-bridge.git",
   "_id": "countly-sdk-react-native-bridge@5.0.0",
   "_inBundle": false,
   "_integrity": "",
@@ -7,9 +7,9 @@
   "_phantomChildren": {},
   "_requested": {
     "type": "git",
-    "raw": "https://github.com/Countly/countly-sdk-react-native-bridge.git#v3",
-    "rawSpec": "https://github.com/Countly/countly-sdk-react-native-bridge.git#v3",
-    "saveSpec": "git+https://github.com/Countly/countly-sdk-react-native-bridge.git#v3",
+    "raw": "https://github.com/Countly/countly-sdk-react-native-bridge.git",
+    "rawSpec": "https://github.com/Countly/countly-sdk-react-native-bridge.git",
+    "saveSpec": "git+https://github.com/Countly/countly-sdk-react-native-bridge.git",
     "fetchSpec": "https://github.com/Countly/countly-sdk-react-native-bridge.git",
     "gitCommittish": "v3"
   },
