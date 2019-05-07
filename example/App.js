@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { AppRegistry, Text, Button, ScrollView, Image } from 'react-native';
-import Countly from 'countly-sdk-react-native';
+import Countly from 'countly-sdk-react-native-bridge';
 import PushNotificationIOS from 'react-native';
 var PushNotification = require('react-native-push-notification');
 
