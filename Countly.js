@@ -314,5 +314,13 @@ Countly.getRemoteConfigValueForKey = function(keyName){
     
 }
 
+Countly.setStarRatingDialogTexts = function(keyName){
+    CountlyReactNative.setStarRatingDialogTexts([]);
+}
+
+Countly.showStarRating = function(keyName){
+    CountlyReactNative.showStarRating([]);
+}
+
 
 export default Countly;

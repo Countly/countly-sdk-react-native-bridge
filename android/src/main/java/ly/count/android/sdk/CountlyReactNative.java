@@ -77,10 +77,10 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         });
         if("".equals(deviceId)){
             Countly.sharedInstance()
-                .init(_reactContext, serverUrl, appKey,null,DeviceId.Type.OPEN_UDID);
+                .init(_reactContext, serverUrl, appKey,null,DeviceId.Type.OPEN_UDID, 5, null, "Rate us.", "How would you rate the app?", "Dismiss");
         }else if(args.size() == 3){
             Countly.sharedInstance()
-                .init(_reactContext, serverUrl, appKey,deviceId,null);
+                .init(_reactContext, serverUrl, appKey,deviceId,null, 5, null, "Rate us.", "How would you rate the app?", "Dismiss");
         }
         // else{
         //     Countly.sharedInstance()
@@ -525,6 +525,18 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         String resultString = ("value of : " + keyName +" is "+ value_1 + "").toString();
         Log.e(Countly.TAG, resultString);
         myCallback.invoke(resultString);
+    }
+
+    @ReactMethod
+    public void setStarRatingDialogTexts(ReadableArray args){
+        Countly.sharedInstance().setStarRatingDialogTexts("Custom title", "Custom message", "Custom dismiss button text");
+    }
+
+    @ReactMethod
+    public void showStarRating(ReadableArray args){
+        Activity activity = getCurrentActivity();
+        Countly.sharedInstance().showStarRating(activity, null);
+
     }
 }
 

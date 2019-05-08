@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { AppRegistry, Text, Button, ScrollView, Image } from 'react-native';
-import Countly, { StarRating } from 'countly-sdk-react-native';
+import Countly from 'countly-sdk-react-native-bridge';
 import PushNotificationIOS from 'react-native';
 // var PushNotification = require('react-native-push-notification');
 
@@ -259,6 +259,14 @@ class AwesomeProject extends Component {
       Countly.setViewTracking("false");
     };
 
+    setStarRatingDialogTexts(){
+      Countly.setStarRatingDialogTexts();
+    };
+
+    showStarRating(){
+      Countly.showStarRating();
+    };
+
     test(){
       this.onInit();
       this.onStart();
@@ -365,17 +373,15 @@ class AwesomeProject extends Component {
             < Button onPress = { this.getStarRating } title = "Check Remote Config value" color = "#00b5ad"> </Button>
             
 
-            < Button onPress = { this.getRemoteConfigValueForKey } title = "Star Rating" color = "#00b5ad"> </Button>
+            < Button onPress = { this.getRemoteConfigValueForKey } title = "Get config value" color = "#00b5ad"> </Button>
 
+            < Button onPress = { this.setStarRatingDialogTexts } title = "designated Star Rating" color = "#00b5ad"> </Button>
+            < Button onPress = { this.showStarRating } title = "show Star Rating" color = "#00b5ad"> </Button>
 
 
             
             <Text style={[{textAlign: 'center'}]}>Other Methods End</Text>
 
-            <StarRating
-              isVisible={this.state.isVisible}
-              hideStar={() => this.setState({ isVisible: false })}
-            />
           </ScrollView>
         );
     }
