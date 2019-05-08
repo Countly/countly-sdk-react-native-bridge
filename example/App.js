@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import { AppRegistry, Text, Button, ScrollView, Image } from 'react-native';
-import Countly from 'countly-sdk-react-native-bridge';
+import Countly, { StarRating } from 'countly-sdk-react-native';
 import PushNotificationIOS from 'react-native';
-var PushNotification = require('react-native-push-notification');
+// var PushNotification = require('react-native-push-notification');
 
 class AwesomeProject extends Component {
     constructor(props) {
@@ -201,9 +201,18 @@ class AwesomeProject extends Component {
     getRemoteConfigValueForKey(){
       Countly.getRemoteConfigValueForKey("test1");
     };
-    
-    
 
+    setLocation(){
+      var countryCode = "us";
+      var city = "Houston";
+      var latitude = "29.634933";
+      var longitude = "-95.220255";
+      var ipAddress = "103.238.105.167";
+      Countly.setLocation(countryCode, city, latitude + "," + longitude, ipAddress);
+    };
+    disableLocation(){
+      Countly.disableLocation();
+    };
 
     setupPush(){
       PushNotification.configure({
@@ -241,6 +250,14 @@ class AwesomeProject extends Component {
           requestPermissions: true,
       });
     }
+
+    setLoggingEnabled(){
+      Countly.setViewTracking("true");
+    };
+
+    setLoggingDisable(){
+      Countly.setViewTracking("false");
+    };
 
     test(){
       this.onInit();
@@ -311,8 +328,9 @@ class AwesomeProject extends Component {
             <Text style={[{textAlign: 'center'}]}>Other Methods Start</Text>
             < Button onPress = { function(){Countly.recordView("HomePage")} } title = "Record View: 'HomePage'" color = "#e0e0e0"> </Button>
             < Button onPress = { function(){Countly.recordView("Dashboard")} } title = "Record View: 'Dashboard'" color = "#e0e0e0"> </Button>
-
-
+            < Button onPress={this.setLoggingEnabled} title='Auto View Tracking ON' color='#00b5ad' />
+            < Button onPress={this.setLoggingDisable} title='Auto View Tracking OFF' color='#00b5ad' />
+            
 
             < Text style={[{ textAlign: 'center' }]}>Push Notification Start</Text>
             < Button onPress={this.onRegisterDevice} title='Register Device' color='#00b5ad' />
@@ -331,8 +349,14 @@ class AwesomeProject extends Component {
             < Button onPress = { this.giveAllConsent } title = "Start all Consent" color = "#00b5ad"> </Button>
             < Button onPress = { this.removeAllConsent } title = "Remove all Consent" color = "#00b5ad"> </Button>
 
+            < Button onPress = { this.setOptionalParametersForInitialization } title = "Set Optional Parameters For Initialization" color = "#00b5ad"> </Button>
+            < Button onPress = { this.setLocation } title = "Set Location" color = "#00b5ad"> </Button>
+            < Button onPress = { this.disableLocation } title = "Disable Location" color = "#00b5ad"> </Button>
+
 
             
+
+
 
 
             < Button onPress = { this.remoteConfigUpdate } title = "Update Remote Config" color = "#00b5ad"> </Button>
@@ -342,8 +366,16 @@ class AwesomeProject extends Component {
             
 
             < Button onPress = { this.getRemoteConfigValueForKey } title = "Star Rating" color = "#00b5ad"> </Button>
+
+
+
             
             <Text style={[{textAlign: 'center'}]}>Other Methods End</Text>
+
+            <StarRating
+              isVisible={this.state.isVisible}
+              hideStar={() => this.setState({ isVisible: false })}
+            />
           </ScrollView>
         );
     }

@@ -239,6 +239,18 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 		Countly.sharedInstance().recordView(viewName);
     }
 
+    @ReactMethod
+    public void setViewTracking(ReadableArray args){
+        String flag = args.getString(0);
+        if("true".equals(flag)){
+            Countly.sharedInstance().setViewTracking(true);
+        }else{
+            Countly.sharedInstance().setViewTracking(false);
+        }
+    }
+
+    
+
 	@ReactMethod
 	public void setloggingenabled(){
 		Countly.sharedInstance().setLoggingEnabled(true);

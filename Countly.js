@@ -80,8 +80,8 @@ Countly.recordView = function(recordView){
 };
 
 // countly enable logger
-Countly.setLoggingEnabled = function(boolean){
-    CountlyReactNative.setloggingenabled([]);
+Countly.setViewTracking = function(boolean){
+    CountlyReactNative.setViewTracking([boolean || "false"]);
 }
 
 Countly.sendPushToken = function(options, successCallback, failureCallback){
