@@ -16,7 +16,7 @@ Note that previous React Native SDK (without bridge support) is discontinued and
 This SDK needs one of the following Countly Editions to work:
 
 * Countly Community Edition, [downloadable from Github](https://github.com/Countly/countly-server).
-* [Countly Enterprise Edition](http://count.ly/product), available for purchase.
+* [Countly Enterprise Edition](http://count.ly/product) with SLA and support options.
 
 For more information about Countly Enterprise Edition, see [comparison of different Countly Editions](https://count.ly/compare/)
 
