@@ -31,6 +31,10 @@ RCT_EXPORT_METHOD(init:(NSArray*)arguments)
   config.appKey = appkey;
   config.host = serverurl;
   config.enableRemoteConfig = YES;
+  config.starRatingSessionCount = 5;
+  config.starRatingDisableAskingForEachAppVersion = YES;
+  config.starRatingMessage = @"Please rate our app?";
+
 
 
   if (serverurl != nil && [serverurl length] > 0) {
@@ -552,6 +556,35 @@ RCT_EXPORT_METHOD(getRemoteConfigValueForKey:(NSArray*)arguments:(RCTResponseSen
   NSString* returnString = [NSString stringWithFormat:@"Value is : %@", value];
   NSArray *result = @[returnString];
   callback(@[result]);
+}
+
+RCT_EXPORT_METHOD(setStarRatingDialogTexts:(NSArray*)arguments)
+{
+  if (config == nil){
+    config.starRatingMessage = @"Please rate our app custom?";
+  }else{
+    config.starRatingMessage = @"Please rate our app custom?";
+  }
+}
+
+RCT_EXPORT_METHOD(showStarRating:(NSArray*)arguments)
+{
+  NSInteger* rating = 5;
+  [Countly.sharedInstance askForStarRating:^(NSInteger rating)
+  {
+      NSLog(@"rating %li",(long)rating);
+  }];
+}
+
+RCT_EXPORT_METHOD(showFeedbackPopup:(NSArray*)arguments)
+{
+  [Countly.sharedInstance presentFeedbackWidgetWithID:@"FEEDBACK_WIDGET_ID" completionHandler:^(NSError* error)
+  {
+      if (error)
+          NSLog(@"Feedback widget presentation failed: \n%@\n%@", error.localizedDescription, error.userInfo);
+      else
+          NSLog(@"Feedback widget presented successfully");
+  }];
 }
 
 @end

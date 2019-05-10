@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { AppRegistry, Text, Button, ScrollView, Image } from 'react-native';
-import Countly from 'countly-sdk-react-native-bridge';
+import Countly from 'countly-sdk-react-native';
 import PushNotificationIOS from 'react-native';
 // var PushNotification = require('react-native-push-notification');
 
@@ -267,6 +267,30 @@ class AwesomeProject extends Component {
       Countly.showStarRating();
     };
 
+    showFeedbackPopup(){
+      Countly.showFeedbackPopup("web_feedback_widgetseae77eb795de8257", "Submit");
+    }
+
+    enableCrashReporting(){
+      Countly.enableCrashReporting();
+    };
+
+    addCrashLog(){
+      // Countly.addCrashLog();
+      Countly.addCrashLog("User Performed Step A");
+      setTimeout(function(){
+        Countly.addCrashLog("User Performed Step B");
+      },1000);
+      setTimeout(function(){
+        Countly.addCrashLog("User Performed Step C");
+        console.log("Opps found and error");
+        // Countly.logException("My Customized error message");
+      },1000);
+    };
+
+    
+
+
     test(){
       this.onInit();
       this.onStart();
@@ -371,16 +395,19 @@ class AwesomeProject extends Component {
             < Button onPress = { this.updateRemoteConfigForKeysOnly } title = "Update Remote Config with Keys Only" color = "#00b5ad"> </Button>
             < Button onPress = { this.updateRemoteConfigExceptKeys } title = "Update Remote Config Except Keys" color = "#00b5ad"> </Button>
             < Button onPress = { this.getStarRating } title = "Check Remote Config value" color = "#00b5ad"> </Button>
-            
-
             < Button onPress = { this.getRemoteConfigValueForKey } title = "Get config value" color = "#00b5ad"> </Button>
 
             < Button onPress = { this.setStarRatingDialogTexts } title = "designated Star Rating" color = "#00b5ad"> </Button>
-            < Button onPress = { this.showStarRating } title = "show Star Rating" color = "#00b5ad"> </Button>
-
+            < Button onPress = { this.showStarRating } title = "Show Star Rating Model" color = "#00b5ad"> </Button>
+            < Button onPress = { this.showFeedbackPopup } title = "Show FeedBack Model" color = "#00b5ad"> </Button>
 
             
             <Text style={[{textAlign: 'center'}]}>Other Methods End</Text>
+            <Text style={[{textAlign: 'center'}]}>Crash Event start</Text>
+            < Button onPress = { this.enableCrashReporting } title = "Enable Crash Reporting" color = "#00b5ad"> </Button>
+            < Button onPress = { this.addCrashLog } title = "Add Crash Log" color = "#00b5ad"> </Button>
+            <Text style={[{textAlign: 'center'}]}>Crash Event End</Text>
+
 
           </ScrollView>
         );

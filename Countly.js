@@ -167,7 +167,7 @@ Countly.enableCrashReporting = function(){
     CountlyReactNative.enableCrashReporting();
 }
 Countly.addCrashLog = function(crashLog){
-    CountlyReactNative.addCrashLog(crashLog);
+    CountlyReactNative.addCrashLog([crashLog]);
 }
 Countly.setCustomCrashSegments = function(logs){
     if(!logs){
@@ -321,6 +321,12 @@ Countly.setStarRatingDialogTexts = function(keyName){
 Countly.showStarRating = function(keyName){
     CountlyReactNative.showStarRating([]);
 }
+
+Countly.showFeedbackPopup = function(widgetId, closeButtonText,){
+    CountlyReactNative.showFeedbackPopup([widgetId.toString() || "xxxxx", closeButtonText.toString() || "Done"]);
+}
+
+
 
 
 export default Countly;

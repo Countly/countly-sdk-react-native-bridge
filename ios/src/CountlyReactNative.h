@@ -38,5 +38,8 @@
 - (void)updateRemoteConfigForKeysOnly:(NSArray*)arguments;
 - (void)updateRemoteConfigExceptKeys:(NSArray*)arguments;
 - (void)getRemoteConfigValueForKey:(NSArray*)arguments;
+- (void)setStarRatingDialogTexts:(NSArray*)arguments;
+- (void)showStarRating:(NSArray*)arguments;
+- (void)showFeedbackPopup:(NSArray*)arguments;
 
 @end

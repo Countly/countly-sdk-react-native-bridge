@@ -156,6 +156,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void addCrashLog(ReadableArray args){
+        // Log.e(Countly.TAG, "enableCrashReporting");
         String record = args.getString(0);
         Countly.sharedInstance().addCrashLog(record);
     }
@@ -538,6 +539,14 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         Activity activity = getCurrentActivity();
         Countly.sharedInstance().showStarRating(activity, null);
 
+    }
+
+    @ReactMethod
+    public void showFeedbackPopup(ReadableArray args){
+        String widgetId = args.getString(0);
+        String closeButtonText = args.getString(1);
+        Activity activity = getCurrentActivity();
+        Countly.sharedInstance().showFeedbackPopup( widgetId, closeButtonText, activity, null);
     }
 }
 
