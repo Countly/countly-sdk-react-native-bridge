@@ -2,19 +2,21 @@
 ## What's Countly?
 [Countly](http://count.ly) is an innovative, real-time, open source mobile analytics and push notifications platform. It collects data from mobile devices, and visualizes this information to analyze mobile application usage and end-user behavior. There are two parts of Countly: [the server that collects and analyzes data](http://github.com/countly/countly-server), and mobile SDK that sends this data. Both parts are open source with different licensing terms.
 
-* **Slack user?** [Join our Slack community](http://slack.count.ly)
-* **Questions?** [Ask in our Community forum](http://community.count.ly)
+* **Slack user?** [Join our Slack community](https://slack.count.ly)
+* **Questions?** [Ask in our Community forum](https://community.count.ly)
 
 ## About this SDK
 
-This repository includes the Countly React Native SDK. See [Countly React Native SDK](http://resources.count.ly/docs/react-native) documentation for installation.
+This repository includes the Countly React Native Bridge SDK. See [Countly React Native Bridge SDK](http://resources.count.ly/docs/react-native-bridge-1) documentation for installation.
+
+Note that previous React Native SDK (without bridge support) is discontinued and you are strongly adviced to  migrate to new SDK which includes same feature options as Android and iOS SDKs.
 
 ## Other Github resources ##
 
 This SDK needs one of the following Countly Editions to work:
 
 * Countly Community Edition, [downloadable from Github](https://github.com/Countly/countly-server).
-* [Countly Enterprise Edition](http://count.ly/product), available for purchase.
+* [Countly Enterprise Edition](http://count.ly/product) with SLA and support options.
 
 For more information about Countly Enterprise Edition, see [comparison of different Countly Editions](https://count.ly/compare/)
 
