@@ -578,7 +578,8 @@ RCT_EXPORT_METHOD(showStarRating:(NSArray*)arguments)
 
 RCT_EXPORT_METHOD(showFeedbackPopup:(NSArray*)arguments)
 {
-  [Countly.sharedInstance presentFeedbackWidgetWithID:@"FEEDBACK_WIDGET_ID" completionHandler:^(NSError* error)
+  NSString* FEEDBACK_WIDGET_ID = [arguments objectAtIndex:0];
+  [Countly.sharedInstance presentFeedbackWidgetWithID:FEEDBACK_WIDGET_ID completionHandler:^(NSError* error)
   {
       if (error)
           NSLog(@"Feedback widget presentation failed: \n%@\n%@", error.localizedDescription, error.userInfo);

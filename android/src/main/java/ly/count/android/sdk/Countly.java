@@ -59,7 +59,7 @@ public class Countly {
     /**
      * Used as request meta data on every request
      */
-    protected static final String COUNTLY_SDK_NAME = "java-native-android";
+    protected static final String COUNTLY_SDK_NAME = "countly-sdk-react-native-bridge";
     /**
      * Default string used in the begin session metrics if the
      * app version cannot be found.
