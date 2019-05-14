@@ -204,6 +204,10 @@ class AwesomeProject extends Component {
 
     initNative(){
       Countly.initNative("true");
+    };
+
+    testCrash(){
+        Countly.testCrash("true");
     }
     
     
@@ -349,6 +353,7 @@ class AwesomeProject extends Component {
             
 
             < Button onPress = { this.initNative } title = "Init Native" color = "#00b5ad"> </Button>
+            < Button onPress = { this.testCrash } title = "Test Native Crash" color = "crimson"> </Button>
 
             <Text style={[{textAlign: 'center'}]}>Other Methods End</Text>
           </ScrollView>

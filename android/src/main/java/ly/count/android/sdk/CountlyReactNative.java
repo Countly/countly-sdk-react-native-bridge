@@ -521,6 +521,11 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     public void initNative(ReadableArray args, final Callback myCallback){
             CountlyNative.initNative(getReactApplicationContext());
     }
+
+    @ReactMethod
+    public void testCrash(ReadableArray args, final Callback myCallback){
+            CountlyNative.crash();
+    }
 }
 
 
