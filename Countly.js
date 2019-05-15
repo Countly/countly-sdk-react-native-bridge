@@ -169,6 +169,11 @@ Countly.enableCrashReporting = function(){
 Countly.addCrashLog = function(crashLog){
     CountlyReactNative.addCrashLog([crashLog]);
 }
+
+Countly.logException = function(crashLog){
+    CountlyReactNative.logException([crashLog]);
+}
+
 Countly.setCustomCrashSegments = function(logs){
     if(!logs){
         logs = [];
@@ -322,9 +327,10 @@ Countly.showStarRating = function(keyName){
     CountlyReactNative.showStarRating([]);
 }
 
-Countly.showFeedbackPopup = function(widgetId, closeButtonText,){
-    CountlyReactNative.showFeedbackPopup([widgetId.toString() || "xxxxx", closeButtonText.toString() || "Done"]);
+Countly.setEventSendThreshold = function(size){
+    CountlyReactNative.setEventSendThreshold([size.toString() || ""]);
 }
+
 
 
 

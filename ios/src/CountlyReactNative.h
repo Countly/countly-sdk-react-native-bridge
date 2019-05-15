@@ -41,5 +41,7 @@
 - (void)setStarRatingDialogTexts:(NSArray*)arguments;
 - (void)showStarRating:(NSArray*)arguments;
 - (void)showFeedbackPopup:(NSArray*)arguments;
+- (void)setEventSendThreshold:(NSArray*)arguments;
+
 
 @end

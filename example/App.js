@@ -288,6 +288,13 @@ class AwesomeProject extends Component {
       },1000);
     };
 
+    logException(){
+      Countly.logException();
+    }
+
+    setEventSendThreshold(){
+      Countly.setEventSendThreshold("5");
+    }
     
 
 
@@ -408,6 +415,8 @@ class AwesomeProject extends Component {
             < Button onPress = { this.addCrashLog } title = "Add Crash Log" color = "#00b5ad"> </Button>
             <Text style={[{textAlign: 'center'}]}>Crash Event End</Text>
 
+            < Button onPress = { this.eventSendThreshold } title = "Set Event Threshold" color = "#00b5ad"> </Button>
+            
 
           </ScrollView>
         );

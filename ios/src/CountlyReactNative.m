@@ -588,4 +588,14 @@ RCT_EXPORT_METHOD(showFeedbackPopup:(NSArray*)arguments)
   }];
 }
 
+RCT_EXPORT_METHOD(setEventSendThreshold:(NSArray*)arguments)
+{
+  NSString* size = [arguments objectAtIndex:0];
+  if (config == nil){
+    config.eventSendThreshold = size;
+  }else{
+    config.eventSendThreshold = size;
+  }
+}
+
 @end

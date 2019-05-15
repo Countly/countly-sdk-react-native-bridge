@@ -160,6 +160,11 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         String record = args.getString(0);
         Countly.sharedInstance().addCrashLog(record);
     }
+    @ReactMethod
+    public void logException(ReadableArray args){
+        // String exception = args.getString(0);
+        // Countly.sharedInstance().logException(Exception exception)
+    }
 
     @ReactMethod
     public void setCustomCrashSegments(ReadableArray args){
@@ -548,6 +553,14 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         Activity activity = getCurrentActivity();
         Countly.sharedInstance().showFeedbackPopup( widgetId, closeButtonText, activity, null);
     }
+
+    @ReactMethod
+    public void setEventSendThreshold(ReadableArray args){
+        int size = Integer.parseInt(args.getString(0));
+        Countly.sharedInstance().setEventQueueSizeToSend(size);
+    }
+
+    
 }
 
 
