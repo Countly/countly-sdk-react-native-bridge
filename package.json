@@ -1,20 +1,26 @@
 {
   "name": "countly-sdk-react-native-bridge",
-  "description": "Analytics.",
-  "version": "0.0.1",
-  "homepage": "https://github.com/Countly/countly-sdk-native-bridge#readme",
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/Countly/countly-sdk-native-bridge.git"
+  "version": "19.02.00",
+  "author": {
+    "name": "Trinisoft Technologies",
+    "email": "trinisofttechnologies@gmail.com",
+    "url": "http://trinisofttechnologies.com"
   },
   "bugs": {
-    "url": "https://github.com/Countly/countly-sdk-native-bridge/issues"
+    "url": "https://github.com/Countly/countly-sdk-react-native-bridge/issues"
   },
+  "dependencies": {},
+  "deprecated": false,
+  "description": "Countly is an innovative, real-time, open source mobile analytics and push notifications platform.",
+  "homepage": "https://github.com/Countly/countly-sdk-react-native-bridge",
   "keywords": [
-    "ecosystem:react-native",
-    "cordova-ios",
-    "cordova-android"
+    "countly",
+    "analytics"
   ],
-  "author": "Trinisoft Technologies Pvt. Ltd.",
-  "license": "MIT"
+  "license": "MIT",
+  "main": "Countly.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Countly/countly-sdk-react-native-bridge.git"
+  }
 }
