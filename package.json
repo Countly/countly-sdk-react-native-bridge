@@ -1,7 +1,7 @@
 {
   "name": "countly-sdk-react-native-bridge",
   "description": "Analytics.",
-  "version": "18.08.2",
+  "version": "18.08",
   "homepage": "https://github.com/Countly/countly-sdk-native-bridge#readme",
   "repository": {
     "type": "git",
