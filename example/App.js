@@ -2,11 +2,13 @@ import React, { Component } from 'react';
 import { AppRegistry, Text, Button, ScrollView, Image } from 'react-native';
 import Countly from 'countly-sdk-react-native';
 import PushNotificationIOS from 'react-native';
+import stacktrace from 'react-native-stacktrace';
 // var PushNotification = require('react-native-push-notification');
 
 class AwesomeProject extends Component {
     constructor(props) {
-        super(props);        
+        super(props); 
+
     };
     onInit(){
       Countly.init("https://try.count.ly","0e8a00e8c01395a0af8be0e55da05a404bb23c3e");
@@ -269,28 +271,37 @@ class AwesomeProject extends Component {
 
     showFeedbackPopup(){
       Countly.showFeedbackPopup("5cda549bd9e26f31bca772c6", "Submit");
-    }
+    };
 
     enableCrashReporting(){
       Countly.enableCrashReporting();
     };
 
+
+
     addCrashLog(){
+      console.log("addCrashLog");
+      // e = new Error("My Second Error");
+      // console.log(e.stack);
       // Countly.addCrashLog();
       Countly.addCrashLog("User Performed Step A");
       setTimeout(function(){
-        Countly.addCrashLog("User Performed Step B");
+        // Countly.addCrashLog("User Performed Step B");
       },1000);
       setTimeout(function(){
-        Countly.addCrashLog("User Performed Step C");
-        console.log("Opps found and error");
-        // Countly.logException("My Customized error message");
+        // Countly.addCrashLog("User Performed Step C");
+        try {
+            throw new Error("My Second Error");
+        } catch (err) {
+            var stackframes = [
+              {functionName: 'fn', fileName: 'file.js', lineNumber: 32, columnNumber: 1},
+              {functionName: 'fn2', fileName: 'file.js', lineNumber: 543, columnNumber: 32},
+              {functionName: 'fn3', fileName: 'file.js', lineNumber: 8, columnNumber: 1}
+            ]
+            Countly.logException(stackframes, true, {"_facebook_version": "0.0.1"});
+        }
       },1000);
     };
-
-    logException(){
-      Countly.logException();
-    }
 
     setEventSendThreshold(){
       Countly.setEventSendThreshold("5");
