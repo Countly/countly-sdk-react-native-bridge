@@ -280,19 +280,27 @@ class AwesomeProject extends Component {
 
 
     addCrashLog(){
+      Countly.addCrashLog("My crash log in string.");
+    };
+
+    addLogException(){
       console.log("addCrashLog");
-      // e = new Error("My Second Error");
-      // console.log(e.stack);
-      // Countly.addCrashLog();
       Countly.addCrashLog("User Performed Step A");
       setTimeout(function(){
-        // Countly.addCrashLog("User Performed Step B");
-      },1000);
+        Countly.addCrashLog("User Performed Step B");
+      },500);
+
       setTimeout(function(){
-        // Countly.addCrashLog("User Performed Step C");
+
+        Countly.addCrashLog("User Performed Step C");
         try {
-            throw new Error("My Second Error");
-        } catch (err) {
+            var a = {};
+            var x = a.b.c; // this will create error.
+        } catch (error) {
+          var stack = error.stack.toString();
+          console.log(stack);
+          stack = stack.split('\n');
+          console.log(stack);
             var stackframes = [
               {functionName: 'fn', fileName: 'file.js', lineNumber: 32, columnNumber: 1},
               {functionName: 'fn2', fileName: 'file.js', lineNumber: 543, columnNumber: 32},
@@ -301,7 +309,12 @@ class AwesomeProject extends Component {
             Countly.logException(stackframes, true, {"_facebook_version": "0.0.1"});
         }
       },1000);
-    };
+      setTimeout(function(){
+        var a = {};
+        var y = a.b.c; // uncaught exception
+      },1000);
+    }
+
 
     setEventSendThreshold(){
       Countly.setEventSendThreshold("5");
@@ -424,6 +437,7 @@ class AwesomeProject extends Component {
             <Text style={[{textAlign: 'center'}]}>Crash Event start</Text>
             < Button onPress = { this.enableCrashReporting } title = "Enable Crash Reporting" color = "#00b5ad"> </Button>
             < Button onPress = { this.addCrashLog } title = "Add Crash Log" color = "#00b5ad"> </Button>
+            < Button onPress = { this.addLogException } title = "Crash Me" color = "#00b5ad"> </Button>
             <Text style={[{textAlign: 'center'}]}>Crash Event End</Text>
 
             < Button onPress = { this.eventSendThreshold } title = "Set Event Threshold" color = "#00b5ad"> </Button>
