@@ -12,3 +12,18 @@ cp ./ios/src/CountlyReactNative.m $SDK/node_modules/countly-sdk-react-native/ios
 
 
 echo 'done'
+
+# Extra Nicolson's help
+npm install -g react-native-cli     # Install React Native
+react-native init AwesomeProject    # Create a new project
+
+cd AwesomeProject                   # Go to that directory
+react-native run-android # OR       # Run the android project
+react-native run-ios                # Run the iOS project
+
+# New terminal
+adb reverse tcp:8081 tcp:8081       # Link Android port
+
+npm start npm install ../../../plugins/countly-sdk-react-native-bridge/
+npm install --save https://github.com/Countly/countly-sdk-react-native-bridge.git
+react-native link countly-sdk-react-native-bridge
