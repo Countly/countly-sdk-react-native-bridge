@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { AppRegistry, Text, Button, ScrollView, Image, View } from 'react-native';
 import Countly from 'countly-sdk-react-native-bridge';
 import PushNotificationIOS from 'react-native';
+import stacktrace from 'react-native-stacktrace';
 // var PushNotification = require('react-native-push-notification');
 
 class AwesomeProject extends Component {
@@ -9,7 +10,7 @@ class AwesomeProject extends Component {
         super(props);        
     };
     onInit(){
-      Countly.init("http://try.count.ly","4c12975cb6561f06708c744bdf34b0a77cf6f56f");
+      Countly.init("https://try.count.ly","0e8a00e8c01395a0af8be0e55da05a404bb23c3e");
       Countly.enableLogging();
     }
     onStart(){
@@ -270,33 +271,55 @@ class AwesomeProject extends Component {
 
     showFeedbackPopup(){
       Countly.showFeedbackPopup("5cda549bd9e26f31bca772c6", "Submit");
-    }
+    };
 
     enableCrashReporting(){
       Countly.enableCrashReporting();
     };
 
+
+
     addCrashLog(){
-      // Countly.addCrashLog();
+      Countly.addCrashLog("My crash log in string.");
+    };
+
+    addLogException(){
+      console.log("addCrashLog");
       Countly.addCrashLog("User Performed Step A");
       setTimeout(function(){
         Countly.addCrashLog("User Performed Step B");
+      },500);
+
+      setTimeout(function(){
+
+        Countly.addCrashLog("User Performed Step C");
+        try {
+            var a = {};
+            var x = a.b.c; // this will create error.
+        } catch (error) {
+          var stack = error.stack.toString();
+          console.log(stack);
+          stack = stack.split('\n');
+          console.log(stack);
+            var stackframes = [
+              {functionName: 'fn', fileName: 'file.js', lineNumber: 32, columnNumber: 1},
+              {functionName: 'fn2', fileName: 'file.js', lineNumber: 543, columnNumber: 32},
+              {functionName: 'fn3', fileName: 'file.js', lineNumber: 8, columnNumber: 1}
+            ]
+            Countly.logException(stackframes, true, {"_facebook_version": "0.0.1"});
+        }
       },1000);
       setTimeout(function(){
-        Countly.addCrashLog("User Performed Step C");
-        console.log("Opps found and error");
-        // Countly.logException("My Customized error message");
+        var a = {};
+        var y = a.b.c; // uncaught exception
       },1000);
-    };
-
-    logException(){
-      Countly.logException();
     }
+
 
     setEventSendThreshold(){
       Countly.setEventSendThreshold("5");
     }
-    
+
 
 
     test(){
@@ -395,12 +418,6 @@ class AwesomeProject extends Component {
             < Button onPress = { this.setLocation } title = "Set Location" color = "#00b5ad"> </Button>
             < Button onPress = { this.disableLocation } title = "Disable Location" color = "#00b5ad"> </Button>
 
-
-            
-
-
-
-
             < Button onPress = { this.remoteConfigUpdate } title = "Update Remote Config" color = "#00b5ad"> </Button>
             < Button onPress = { this.updateRemoteConfigForKeysOnly } title = "Update Remote Config with Keys Only" color = "#00b5ad"> </Button>
             < Button onPress = { this.updateRemoteConfigExceptKeys } title = "Update Remote Config Except Keys" color = "#00b5ad"> </Button>
@@ -416,6 +433,7 @@ class AwesomeProject extends Component {
             <Text style={[{textAlign: 'center'}]}>Crash Event start</Text>
             < Button onPress = { this.enableCrashReporting } title = "Enable Crash Reporting" color = "#00b5ad"> </Button>
             < Button onPress = { this.addCrashLog } title = "Add Crash Log" color = "#00b5ad"> </Button>
+            < Button onPress = { this.addLogException } title = "Crash Me" color = "#00b5ad"> </Button>
             <Text style={[{textAlign: 'center'}]}>Crash Event End</Text>
 
             < Button onPress = { this.eventSendThreshold } title = "Set Event Threshold" color = "#00b5ad"> </Button>

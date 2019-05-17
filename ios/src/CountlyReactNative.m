@@ -561,10 +561,9 @@ RCT_EXPORT_METHOD(getRemoteConfigValueForKey:(NSArray*)arguments:(RCTResponseSen
 RCT_EXPORT_METHOD(setStarRatingDialogTexts:(NSArray*)arguments)
 {
   if (config == nil){
-    config.starRatingMessage = @"Please rate our app custom?";
-  }else{
-    config.starRatingMessage = @"Please rate our app custom?";
+    config = CountlyConfig.new;
   }
+  config.starRatingMessage = @"Please rate our app custom?";
 }
 
 RCT_EXPORT_METHOD(showStarRating:(NSArray*)arguments)
@@ -592,10 +591,9 @@ RCT_EXPORT_METHOD(setEventSendThreshold:(NSArray*)arguments)
 {
   NSString* size = [arguments objectAtIndex:0];
   if (config == nil){
-    config.eventSendThreshold = size;
-  }else{
-    config.eventSendThreshold = size;
+    config = CountlyConfig.new;
   }
+  config.eventSendThreshold = size;
 }
 
 @end
