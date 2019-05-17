@@ -106,11 +106,15 @@ Countly.stop = function(){
 }
 
 Countly.enableLogging = function(){
-    CountlyReactNative.setLoggingEnabled([true]);
+    if (Platform.OS.match("android")) {
+        CountlyReactNative.setLoggingEnabled([true]);
+    }
 }
 
 Countly.disableLogging = function(){
-    CountlyReactNative.setLoggingEnabled([false]);
+    if (Platform.OS.match("android")) {
+        CountlyReactNative.setLoggingEnabled([false]);
+    }
 }
 
 // countly deviceready for testing purpose
