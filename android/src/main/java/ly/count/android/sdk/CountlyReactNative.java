@@ -89,6 +89,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         // }
 	}
 
+	@ReactMethod
+	public void setLoggingEnabled(ReadableArray args){
+        Boolean enabled = args.getBoolean(0);
+        Countly.sharedInstance().setLoggingEnabled(enabled);
+	}
+
     @ReactMethod
     public Boolean isInitialized(ReadableArray args){
         return Countly.sharedInstance().isInitialized();

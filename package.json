@@ -1,25 +1,6 @@
 {
-  "_from": "git+https://github.com/Countly/countly-sdk-react-native-bridge.git",
-  "_id": "countly-sdk-react-native-bridge@5.0.0",
-  "_inBundle": false,
-  "_integrity": "",
-  "_location": "/countly-sdk-react-native-bridge",
-  "_phantomChildren": {},
-  "_requested": {
-    "type": "git",
-    "raw": "https://github.com/Countly/countly-sdk-react-native-bridge.git",
-    "rawSpec": "https://github.com/Countly/countly-sdk-react-native-bridge.git",
-    "saveSpec": "git+https://github.com/Countly/countly-sdk-react-native-bridge.git",
-    "fetchSpec": "https://github.com/Countly/countly-sdk-react-native-bridge.git",
-    "gitCommittish": "v3"
-  },
-  "_requiredBy": [
-    "#USER",
-    "/"
-  ],
-  "_resolved": "git+https://github.com/Countly/countly-sdk-react-native-bridge.git#c4b3b6b189a15aad3b05e8c0de72d67edb43c382",
-  "_spec": "https://github.com/Countly/countly-sdk-react-native-bridge.git#v3",
-  "_where": "/Users/trinisoft/office/react/Countly/AwesomeProject",
+  "name": "countly-sdk-react-native-bridge",
+  "version": "19.02.00",
   "author": {
     "name": "Trinisoft Technologies",
     "email": "trinisofttechnologies@gmail.com",
@@ -28,7 +9,6 @@
   "bugs": {
     "url": "https://github.com/Countly/countly-sdk-react-native-bridge/issues"
   },
-  "bundleDependencies": false,
   "dependencies": {},
   "deprecated": false,
   "description": "Countly is an innovative, real-time, open source mobile analytics and push notifications platform.",
@@ -39,10 +19,8 @@
   ],
   "license": "MIT",
   "main": "Countly.js",
-  "name": "countly-sdk-react-native-bridge",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Countly/countly-sdk-react-native-bridge.git"
-  },
-  "version": "19.02.00"
+  }
 }

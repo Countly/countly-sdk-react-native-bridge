@@ -1,17 +1,17 @@
 import React, { Component } from 'react';
-import { AppRegistry, Text, Button, ScrollView, Image } from 'react-native';
-import Countly from 'countly-sdk-react-native';
+import { AppRegistry, Text, Button, ScrollView, Image, View } from 'react-native';
+import Countly from 'countly-sdk-react-native-bridge';
 import PushNotificationIOS from 'react-native';
 import stacktrace from 'react-native-stacktrace';
 // var PushNotification = require('react-native-push-notification');
 
 class AwesomeProject extends Component {
     constructor(props) {
-        super(props); 
-
+        super(props);        
     };
     onInit(){
       Countly.init("https://try.count.ly","0e8a00e8c01395a0af8be0e55da05a404bb23c3e");
+      Countly.enableLogging();
     }
     onStart(){
       Countly.start();
@@ -253,12 +253,12 @@ class AwesomeProject extends Component {
       });
     }
 
-    setLoggingEnabled(){
-      Countly.setViewTracking("true");
+    enableLogging(){
+      Countly.enableLogging();
     };
 
-    setLoggingDisable(){
-      Countly.setViewTracking("false");
+    disableLogging(){
+      Countly.disableLogging();
     };
 
     setStarRatingDialogTexts(){
@@ -280,19 +280,27 @@ class AwesomeProject extends Component {
 
 
     addCrashLog(){
+      Countly.addCrashLog("My crash log in string.");
+    };
+
+    addLogException(){
       console.log("addCrashLog");
-      // e = new Error("My Second Error");
-      // console.log(e.stack);
-      // Countly.addCrashLog();
       Countly.addCrashLog("User Performed Step A");
       setTimeout(function(){
-        // Countly.addCrashLog("User Performed Step B");
-      },1000);
+        Countly.addCrashLog("User Performed Step B");
+      },500);
+
       setTimeout(function(){
-        // Countly.addCrashLog("User Performed Step C");
+
+        Countly.addCrashLog("User Performed Step C");
         try {
-            throw new Error("My Second Error");
-        } catch (err) {
+            var a = {};
+            var x = a.b.c; // this will create error.
+        } catch (error) {
+          var stack = error.stack.toString();
+          console.log(stack);
+          stack = stack.split('\n');
+          console.log(stack);
             var stackframes = [
               {functionName: 'fn', fileName: 'file.js', lineNumber: 32, columnNumber: 1},
               {functionName: 'fn2', fileName: 'file.js', lineNumber: 543, columnNumber: 32},
@@ -301,12 +309,17 @@ class AwesomeProject extends Component {
             Countly.logException(stackframes, true, {"_facebook_version": "0.0.1"});
         }
       },1000);
-    };
+      setTimeout(function(){
+        var a = {};
+        var y = a.b.c; // uncaught exception
+      },1000);
+    }
+
 
     setEventSendThreshold(){
       Countly.setEventSendThreshold("5");
     }
-    
+
 
 
     test(){
@@ -337,9 +350,11 @@ class AwesomeProject extends Component {
     render() {
 
         return (
-          <ScrollView>
-            <Text style={[{fontSize:25, textAlign: 'center'}]}>Countly Cordova Demo App</Text>
-            <Image source={{uri: 'https://try.count.ly/images/dashboard/countly_logo.svg'}} style={{width: 300, height: 88}} />
+          <ScrollView >
+            <View style={{ justifyContent: 'center', alignItems: 'center', margin: 20 }}>
+              <Image source={{uri: 'https://community.count.ly/uploads/default/original/1X/ed53a7c24391bfde820b44b1de9a044352f718b0.png'}} style={{width: 150, height: 45}} onError={(e) => console.log(e.nativeEvent.error) }/>
+              <Text style={[{fontSize:24, textAlign: 'center'}]}>React Native Demo App</Text>
+            </View>
             < Button onPress = { this.test } title = "Test" color = "#1b1c1d"> </Button>
             < Button onPress = { this.onInit } title = "Init"> </Button>
             < Button onPress = { this.onStart } title = "Start" color = "#5bbd72"> </Button>
@@ -378,8 +393,8 @@ class AwesomeProject extends Component {
             <Text style={[{textAlign: 'center'}]}>Other Methods Start</Text>
             < Button onPress = { function(){Countly.recordView("HomePage")} } title = "Record View: 'HomePage'" color = "#e0e0e0"> </Button>
             < Button onPress = { function(){Countly.recordView("Dashboard")} } title = "Record View: 'Dashboard'" color = "#e0e0e0"> </Button>
-            < Button onPress={this.setLoggingEnabled} title='Auto View Tracking ON' color='#00b5ad' />
-            < Button onPress={this.setLoggingDisable} title='Auto View Tracking OFF' color='#00b5ad' />
+            < Button onPress={this.enableLogging} title='Enable Logging' color='#00b5ad' />
+            < Button onPress={this.disableLogging} title='Disable Logging' color='#00b5ad' />
             
 
             < Text style={[{ textAlign: 'center' }]}>Push Notification Start</Text>
@@ -403,12 +418,6 @@ class AwesomeProject extends Component {
             < Button onPress = { this.setLocation } title = "Set Location" color = "#00b5ad"> </Button>
             < Button onPress = { this.disableLocation } title = "Disable Location" color = "#00b5ad"> </Button>
 
-
-            
-
-
-
-
             < Button onPress = { this.remoteConfigUpdate } title = "Update Remote Config" color = "#00b5ad"> </Button>
             < Button onPress = { this.updateRemoteConfigForKeysOnly } title = "Update Remote Config with Keys Only" color = "#00b5ad"> </Button>
             < Button onPress = { this.updateRemoteConfigExceptKeys } title = "Update Remote Config Except Keys" color = "#00b5ad"> </Button>
@@ -424,6 +433,7 @@ class AwesomeProject extends Component {
             <Text style={[{textAlign: 'center'}]}>Crash Event start</Text>
             < Button onPress = { this.enableCrashReporting } title = "Enable Crash Reporting" color = "#00b5ad"> </Button>
             < Button onPress = { this.addCrashLog } title = "Add Crash Log" color = "#00b5ad"> </Button>
+            < Button onPress = { this.addLogException } title = "Crash Me" color = "#00b5ad"> </Button>
             <Text style={[{textAlign: 'center'}]}>Crash Event End</Text>
 
             < Button onPress = { this.eventSendThreshold } title = "Set Event Threshold" color = "#00b5ad"> </Button>

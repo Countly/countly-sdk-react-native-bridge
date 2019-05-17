@@ -8,6 +8,9 @@ import {
     Platform,
     NativeModules
 } from 'react-native';
+
+// import StackTrace from './Countly.StackTrace.js';
+
 const CountlyReactNative = NativeModules.CountlyReactNative;
 
 const Countly = {};
@@ -102,6 +105,18 @@ Countly.stop = function(){
     CountlyReactNative.stop();
 }
 
+Countly.enableLogging = function(){
+    if (Platform.OS.match("android")) {
+        CountlyReactNative.setLoggingEnabled([true]);
+    }
+}
+
+Countly.disableLogging = function(){
+    if (Platform.OS.match("android")) {
+        CountlyReactNative.setLoggingEnabled([false]);
+    }
+}
+
 // countly deviceready for testing purpose
 Countly.deviceready = function(){
     Countly.ready = true;
@@ -183,7 +198,7 @@ Countly.logException = function(exception, nonfatal, segments){
     args.push(nonfatal || false);
     for(var key in segments){
         args.push(key);
-        args.push(segments.toString());
+        args.push(segments[key].toString());
     }
     CountlyReactNative.logException(args);
 }
@@ -330,7 +345,7 @@ Countly.getRemoteConfigValueForKey = function(keyName){
     CountlyReactNative.getRemoteConfigValueForKey([keyName.toString() || ""], (stringItem) => {
         alert(stringItem);
     });
-    
+
 }
 
 Countly.setStarRatingDialogTexts = function(keyName){
@@ -344,7 +359,6 @@ Countly.showStarRating = function(keyName){
 Countly.setEventSendThreshold = function(size){
     CountlyReactNative.setEventSendThreshold([size.toString() || ""]);
 }
-
 
 
 
