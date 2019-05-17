@@ -1473,8 +1473,11 @@ public class Countly {
      * @return Countly instance for easy method chaining
      */
     public synchronized Countly setLoggingEnabled(final boolean enableLogging) {
-        if (Countly.sharedInstance().isLoggingEnabled()) {
-            Log.d(Countly.TAG, "Enabling logging");
+        if (enableLogging) {
+            Log.d(Countly.TAG, "Enabling debug logging");
+        }
+        else {
+            Log.d(Countly.TAG, "Disabling debug logging");
         }
         enableLogging_ = enableLogging;
         return this;

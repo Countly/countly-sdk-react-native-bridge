@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
-import { AppRegistry, Text, Button, ScrollView, Image } from 'react-native';
-import Countly from 'countly-sdk-react-native';
+import { AppRegistry, Text, Button, ScrollView, Image, View } from 'react-native';
+import Countly from 'countly-sdk-react-native-bridge';
 import PushNotificationIOS from 'react-native';
 // var PushNotification = require('react-native-push-notification');
 
@@ -9,7 +9,8 @@ class AwesomeProject extends Component {
         super(props);        
     };
     onInit(){
-      Countly.init("https://try.count.ly","0e8a00e8c01395a0af8be0e55da05a404bb23c3e");
+      Countly.init("http://try.count.ly","4c12975cb6561f06708c744bdf34b0a77cf6f56f");
+      Countly.enableLogging();
     }
     onStart(){
       Countly.start();
@@ -251,12 +252,12 @@ class AwesomeProject extends Component {
       });
     }
 
-    setLoggingEnabled(){
-      Countly.setViewTracking("true");
+    enableLogging(){
+      Countly.enableLogging();
     };
 
-    setLoggingDisable(){
-      Countly.setViewTracking("false");
+    disableLogging(){
+      Countly.disableLogging();
     };
 
     setStarRatingDialogTexts(){
@@ -326,9 +327,11 @@ class AwesomeProject extends Component {
     render() {
 
         return (
-          <ScrollView>
-            <Text style={[{fontSize:25, textAlign: 'center'}]}>Countly Cordova Demo App</Text>
-            <Image source={{uri: 'https://try.count.ly/images/dashboard/countly_logo.svg'}} style={{width: 300, height: 88}} />
+          <ScrollView >
+            <View style={{ justifyContent: 'center', alignItems: 'center', margin: 20 }}>
+              <Image source={{uri: 'https://community.count.ly/uploads/default/original/1X/ed53a7c24391bfde820b44b1de9a044352f718b0.png'}} style={{width: 150, height: 45}} onError={(e) => console.log(e.nativeEvent.error) }/>
+              <Text style={[{fontSize:24, textAlign: 'center'}]}>React Native Demo App</Text>
+            </View>
             < Button onPress = { this.test } title = "Test" color = "#1b1c1d"> </Button>
             < Button onPress = { this.onInit } title = "Init"> </Button>
             < Button onPress = { this.onStart } title = "Start" color = "#5bbd72"> </Button>
@@ -367,8 +370,8 @@ class AwesomeProject extends Component {
             <Text style={[{textAlign: 'center'}]}>Other Methods Start</Text>
             < Button onPress = { function(){Countly.recordView("HomePage")} } title = "Record View: 'HomePage'" color = "#e0e0e0"> </Button>
             < Button onPress = { function(){Countly.recordView("Dashboard")} } title = "Record View: 'Dashboard'" color = "#e0e0e0"> </Button>
-            < Button onPress={this.setLoggingEnabled} title='Auto View Tracking ON' color='#00b5ad' />
-            < Button onPress={this.setLoggingDisable} title='Auto View Tracking OFF' color='#00b5ad' />
+            < Button onPress={this.enableLogging} title='Enable Logging' color='#00b5ad' />
+            < Button onPress={this.disableLogging} title='Disable Logging' color='#00b5ad' />
             
 
             < Text style={[{ textAlign: 'center' }]}>Push Notification Start</Text>

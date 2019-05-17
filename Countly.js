@@ -102,6 +102,14 @@ Countly.stop = function(){
     CountlyReactNative.stop();
 }
 
+Countly.enableLogging = function(){
+    CountlyReactNative.setLoggingEnabled([true]);
+}
+
+Countly.disableLogging = function(){
+    CountlyReactNative.setLoggingEnabled([false]);
+}
+
 // countly deviceready for testing purpose
 Countly.deviceready = function(){
     Countly.ready = true;
@@ -170,8 +178,22 @@ Countly.addCrashLog = function(crashLog){
     CountlyReactNative.addCrashLog([crashLog]);
 }
 
-Countly.logException = function(crashLog){
-    CountlyReactNative.logException([crashLog]);
+Countly.logException = function(exception, nonfatal, segments){
+    var exceptionString = "";
+    for(var i=0,il=exception.length;i<il;i++){
+        exceptionString += "columnNumber: " +exception[i].columnNumber +"\n";
+        exceptionString += "fileName: " +exception[i].fileName +"\n";
+        exceptionString += "functionName: " +exception[i].functionName +"\n";
+        exceptionString += "lineNumber: " +exception[i].lineNumber +"\n";
+    }
+    var args = [];
+    args.push(exceptionString || "");
+    args.push(nonfatal || false);
+    for(var key in segments){
+        args.push(key);
+        args.push(segments.toString());
+    }
+    CountlyReactNative.logException(args);
 }
 
 Countly.setCustomCrashSegments = function(logs){
