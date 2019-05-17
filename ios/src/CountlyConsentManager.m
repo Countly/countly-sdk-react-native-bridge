@@ -1,504 +1,710 @@
-// CountlyPersistency.m
+// Countly.m
 //
 // This code is provided under the MIT License.
 //
 // Please visit www.count.ly for more information.
 
+#pragma mark - Core
+
 #import "CountlyCommon.h"
 
-NSString* const CLYConsentSessions             = @"sessions";
-NSString* const CLYConsentEvents               = @"events";
-NSString* const CLYConsentUserDetails          = @"users";
-NSString* const CLYConsentCrashReporting       = @"crashes";
-NSString* const CLYConsentPushNotifications    = @"push";
-NSString* const CLYConsentLocation             = @"location";
-NSString* const CLYConsentViewTracking         = @"views";
-NSString* const CLYConsentAttribution          = @"attribution";
-NSString* const CLYConsentStarRating           = @"star-rating";
-NSString* const CLYConsentAppleWatch           = @"accessory-devices";
-
-
-@interface CountlyConsentManager ()
-@property (nonatomic, strong) NSMutableDictionary* consentChanges;
+@interface Countly ()
+{
+    NSTimer* timer;
+    BOOL isSuspended;
+}
 @end
 
-@implementation CountlyConsentManager
-
-@synthesize consentForSessions = _consentForSessions;
-@synthesize consentForEvents = _consentForEvents;
-@synthesize consentForUserDetails = _consentForUserDetails;
-@synthesize consentForCrashReporting = _consentForCrashReporting;
-@synthesize consentForPushNotifications = _consentForPushNotifications;
-@synthesize consentForLocation = _consentForLocation;
-@synthesize consentForViewTracking = _consentForViewTracking;
-@synthesize consentForAttribution = _consentForAttribution;
-@synthesize consentForStarRating = _consentForStarRating;
-@synthesize consentForAppleWatch = _consentForAppleWatch;
-
-#pragma mark -
+@implementation Countly
 
 + (instancetype)sharedInstance
 {
-    if (!CountlyCommon.sharedInstance.hasStarted)
-        return nil;
-
-    static CountlyConsentManager* s_sharedInstance = nil;
+    static Countly *s_sharedCountly = nil;
     static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{s_sharedInstance = self.new;});
-    return s_sharedInstance;
+    dispatch_once(&onceToken, ^{s_sharedCountly = self.new;});
+    return s_sharedCountly;
 }
-
 
 - (instancetype)init
 {
     if (self = [super init])
     {
-        self.consentChanges = NSMutableDictionary.new;
+#if (TARGET_OS_IOS  || TARGET_OS_TV)
+        [NSNotificationCenter.defaultCenter addObserver:self
+                                               selector:@selector(didEnterBackgroundCallBack:)
+                                                   name:UIApplicationDidEnterBackgroundNotification
+                                                 object:nil];
+        [NSNotificationCenter.defaultCenter addObserver:self
+                                               selector:@selector(willEnterForegroundCallBack:)
+                                                   name:UIApplicationWillEnterForegroundNotification
+                                                 object:nil];
+        [NSNotificationCenter.defaultCenter addObserver:self
+                                               selector:@selector(willTerminateCallBack:)
+                                                   name:UIApplicationWillTerminateNotification
+                                                 object:nil];
+#elif TARGET_OS_OSX
+        [NSNotificationCenter.defaultCenter addObserver:self
+                                               selector:@selector(willTerminateCallBack:)
+                                                   name:NSApplicationWillTerminateNotification
+                                                 object:nil];
+#endif
     }
 
     return self;
 }
 
+#pragma mark ---
 
-#pragma mark -
-
-
-- (void)giveConsentForAllFeatures
+- (void)startWithConfig:(CountlyConfig *)config
 {
-    [self giveConsentForFeatures:[self allFeatures]];
-}
-
-
-- (void)giveConsentForFeatures:(NSArray *)features
-{
-    if (!self.requiresConsent)
+    if (CountlyCommon.sharedInstance.hasStarted)
         return;
 
-    if (!features.count)
-        return;
+    CountlyCommon.sharedInstance.hasStarted = YES;
+    CountlyCommon.sharedInstance.enableDebug = config.enableDebug;
+    CountlyConsentManager.sharedInstance.requiresConsent = config.requiresConsent;
 
-    if ([features containsObject:CLYConsentSessions] && !self.consentForSessions)
-        self.consentForSessions = YES;
+    if (!config.appKey.length || [config.appKey isEqualToString:@"YOUR_APP_KEY"])
+        [NSException raise:@"CountlyAppKeyNotSetException" format:@"appKey property on CountlyConfig object is not set"];
 
-    if ([features containsObject:CLYConsentEvents] && !self.consentForEvents)
-        self.consentForEvents = YES;
+    if (!config.host.length || [config.host isEqualToString:@"https://YOUR_COUNTLY_SERVER"])
+        [NSException raise:@"CountlyHostNotSetException" format:@"host property on CountlyConfig object is not set"];
 
-    if ([features containsObject:CLYConsentUserDetails] && !self.consentForUserDetails)
-        self.consentForUserDetails = YES;
+    COUNTLY_LOG(@"Initializing with %@ SDK v%@", kCountlySDKName, kCountlySDKVersion);
 
-    if ([features containsObject:CLYConsentCrashReporting] && !self.consentForCrashReporting)
-        self.consentForCrashReporting = YES;
+    if (!CountlyDeviceInfo.sharedInstance.deviceID || config.forceDeviceIDInitialization)
+        [CountlyDeviceInfo.sharedInstance initializeDeviceID:config.deviceID];
 
-    if ([features containsObject:CLYConsentPushNotifications] && !self.consentForPushNotifications)
-        self.consentForPushNotifications = YES;
+    CountlyConnectionManager.sharedInstance.appKey = config.appKey;
+    BOOL hostHasExtraSlash = [[config.host substringFromIndex:config.host.length - 1] isEqualToString:@"/"];
+    CountlyConnectionManager.sharedInstance.host = hostHasExtraSlash ? [config.host substringToIndex:config.host.length - 1] : config.host;
+    CountlyConnectionManager.sharedInstance.alwaysUsePOST = config.alwaysUsePOST;
+    CountlyConnectionManager.sharedInstance.pinnedCertificates = config.pinnedCertificates;
+    CountlyConnectionManager.sharedInstance.customHeaderFieldName = config.customHeaderFieldName;
+    CountlyConnectionManager.sharedInstance.customHeaderFieldValue = config.customHeaderFieldValue;
+    CountlyConnectionManager.sharedInstance.secretSalt = config.secretSalt;
+    CountlyConnectionManager.sharedInstance.applyZeroIDFAFix = config.applyZeroIDFAFix;
 
-    if ([features containsObject:CLYConsentLocation] && !self.consentForLocation)
-        self.consentForLocation = YES;
+    CountlyPersistency.sharedInstance.eventSendThreshold = config.eventSendThreshold;
+    CountlyPersistency.sharedInstance.storedRequestsLimit = MAX(1, config.storedRequestsLimit);
 
-    if ([features containsObject:CLYConsentViewTracking] && !self.consentForViewTracking)
-        self.consentForViewTracking = YES;
+    CountlyCommon.sharedInstance.manualSessionHandling = config.manualSessionHandling;
+    CountlyCommon.sharedInstance.enableAppleWatch = config.enableAppleWatch;
+    CountlyCommon.sharedInstance.enableAttribution = config.enableAttribution;
 
-    if ([features containsObject:CLYConsentAttribution] && !self.consentForAttribution)
-        self.consentForAttribution = YES;
+    if (!CountlyCommon.sharedInstance.manualSessionHandling)
+        [CountlyConnectionManager.sharedInstance beginSession];
 
-    if ([features containsObject:CLYConsentStarRating] && !self.consentForStarRating)
-        self.consentForStarRating = YES;
+#if TARGET_OS_IOS
+    CountlyStarRating.sharedInstance.message = config.starRatingMessage;
+    CountlyStarRating.sharedInstance.sessionCount = config.starRatingSessionCount;
+    CountlyStarRating.sharedInstance.disableAskingForEachAppVersion = config.starRatingDisableAskingForEachAppVersion;
+    CountlyStarRating.sharedInstance.ratingCompletionForAutoAsk = config.starRatingCompletion;
+    [CountlyStarRating.sharedInstance checkForAutoAsk];
 
-    if ([features containsObject:CLYConsentAppleWatch] && !self.consentForAppleWatch)
-        self.consentForAppleWatch = YES;
+    CountlyLocationManager.sharedInstance.location = CLLocationCoordinate2DIsValid(config.location) ? [NSString stringWithFormat:@"%f,%f", config.location.latitude, config.location.longitude] : nil;
+    CountlyLocationManager.sharedInstance.city = config.city;
+    CountlyLocationManager.sharedInstance.ISOCountryCode = config.ISOCountryCode;
+    CountlyLocationManager.sharedInstance.IP = config.IP;
+    [CountlyLocationManager.sharedInstance sendLocationInfo];
 
-    [self sendConsentChanges];
-}
-
-
-- (void)cancelConsentForAllFeatures
-{
-    [self cancelConsentForFeatures:[self allFeatures]];
-}
-
-
-- (void)cancelConsentForFeatures:(NSArray *)features
-{
-    if (!self.requiresConsent)
-        return;
-
-    if ([features containsObject:CLYConsentSessions] && self.consentForSessions)
-        self.consentForSessions = NO;
-
-    if ([features containsObject:CLYConsentEvents] && self.consentForEvents)
-        self.consentForEvents = NO;
-
-    if ([features containsObject:CLYConsentUserDetails] && self.consentForUserDetails)
-        self.consentForUserDetails = NO;
-
-    if ([features containsObject:CLYConsentCrashReporting] && self.consentForCrashReporting)
-        self.consentForCrashReporting = NO;
-
-    if ([features containsObject:CLYConsentPushNotifications] && self.consentForPushNotifications)
-        self.consentForPushNotifications = NO;
-
-    if ([features containsObject:CLYConsentLocation] && self.consentForLocation)
-        self.consentForLocation = NO;
-
-    if ([features containsObject:CLYConsentViewTracking] && self.consentForViewTracking)
-        self.consentForViewTracking = NO;
-
-    if ([features containsObject:CLYConsentAttribution] && self.consentForAttribution)
-        self.consentForAttribution = NO;
-
-    if ([features containsObject:CLYConsentStarRating] && self.consentForStarRating)
-        self.consentForStarRating = NO;
-
-    if ([features containsObject:CLYConsentAppleWatch] && self.consentForAppleWatch)
-        self.consentForAppleWatch = NO;
-
-    [self sendConsentChanges];
-}
-
-
-- (void)sendConsentChanges
-{
-    if (self.consentChanges.allKeys.count)
+    CountlyCrashReporter.sharedInstance.crashSegmentation = config.crashSegmentation;
+    CountlyCrashReporter.sharedInstance.crashLogLimit = MAX(1, config.crashLogLimit);
+    if ([config.features containsObject:CLYCrashReporting])
     {
-        [CountlyConnectionManager.sharedInstance sendConsentChanges:[self.consentChanges cly_JSONify]];
-        [self.consentChanges removeAllObjects];
+        CountlyCrashReporter.sharedInstance.isEnabledOnInitialConfig = YES;
+        [CountlyCrashReporter.sharedInstance startCrashReporting];
     }
-}
+#endif
 
-
-- (NSArray *)allFeatures
-{
-    return
-    @[
-        CLYConsentSessions,
-        CLYConsentEvents,
-        CLYConsentUserDetails,
-        CLYConsentCrashReporting,
-        CLYConsentPushNotifications,
-        CLYConsentLocation,
-        CLYConsentViewTracking,
-        CLYConsentAttribution,
-        CLYConsentStarRating,
-        CLYConsentAppleWatch,
-    ];
-}
-
-
-- (BOOL)hasAnyConsent
-{
-    return
-    self.consentForSessions ||
-    self.consentForEvents ||
-    self.consentForUserDetails ||
-    self.consentForCrashReporting ||
-    self.consentForPushNotifications ||
-    self.consentForLocation ||
-    self.consentForViewTracking ||
-    self.consentForAttribution ||
-    self.consentForStarRating ||
-    self.consentForAppleWatch;
-}
-
-
-#pragma mark -
-
-
-- (void)setConsentForSessions:(BOOL)consentForSessions
-{
-    _consentForSessions = consentForSessions;
-
-    if (consentForSessions)
+#if (TARGET_OS_IOS || TARGET_OS_OSX)
+    if ([config.features containsObject:CLYPushNotifications])
     {
-        COUNTLY_LOG(@"Consent for Session is given.");
+        CountlyPushNotifications.sharedInstance.isEnabledOnInitialConfig = YES;
+        CountlyPushNotifications.sharedInstance.isTestDevice = config.isTestDevice;
+        CountlyPushNotifications.sharedInstance.sendPushTokenAlways = config.sendPushTokenAlways;
+        CountlyPushNotifications.sharedInstance.doNotShowAlertForNotifications = config.doNotShowAlertForNotifications;
+        CountlyPushNotifications.sharedInstance.launchNotification = config.launchNotification;
+        [CountlyPushNotifications.sharedInstance startPushNotifications];
+    }
+#endif
 
-        if (!CountlyCommon.sharedInstance.manualSessionHandling)
-            [CountlyConnectionManager.sharedInstance beginSession];
+#if (TARGET_OS_IOS || TARGET_OS_TV)
+    if ([config.features containsObject:CLYAutoViewTracking])
+    {
+        CountlyViewTracking.sharedInstance.isEnabledOnInitialConfig = YES;
+        [CountlyViewTracking.sharedInstance startAutoViewTracking];
+    }
+#endif
+
+//NOTE: Disable APM feature until server completely supports it
+//    if ([config.features containsObject:CLYAPM])
+//        [CountlyAPM.sharedInstance startAPM];
+
+    timer = [NSTimer scheduledTimerWithTimeInterval:config.updateSessionPeriod target:self selector:@selector(onTimer:) userInfo:nil repeats:YES];
+    [NSRunLoop.mainRunLoop addTimer:timer forMode:NSRunLoopCommonModes];
+
+    [CountlyCommon.sharedInstance startAppleWatchMatching];
+
+    [CountlyCommon.sharedInstance startAttribution];
+
+    CountlyRemoteConfig.sharedInstance.isEnabledOnInitialConfig = config.enableRemoteConfig;
+    CountlyRemoteConfig.sharedInstance.remoteConfigCompletionHandler = config.remoteConfigCompletionHandler;
+    [CountlyRemoteConfig.sharedInstance startRemoteConfig];
+
+    [CountlyConnectionManager.sharedInstance proceedOnQueue];
+}
+
+- (void)setNewDeviceID:(NSString *)deviceID onServer:(BOOL)onServer
+{
+    if (!CountlyCommon.sharedInstance.hasStarted)
+        return;
+
+    if (!CountlyConsentManager.sharedInstance.hasAnyConsent)
+        return;
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
+#if TARGET_OS_IOS
+    if ([deviceID isEqualToString:CLYIDFA])
+        deviceID = [CountlyDeviceInfo.sharedInstance zeroSafeIDFA];
+    else if ([deviceID isEqualToString:CLYIDFV])
+        deviceID = UIDevice.currentDevice.identifierForVendor.UUIDString;
+    else if ([deviceID isEqualToString:CLYOpenUDID])
+        deviceID = [Countly_OpenUDID value];
+#elif TARGET_OS_OSX
+    if ([deviceID isEqualToString:CLYOpenUDID])
+        deviceID = [Countly_OpenUDID value];
+#endif
+
+#pragma GCC diagnostic pop
+
+    if ([deviceID isEqualToString:CountlyDeviceInfo.sharedInstance.deviceID])
+        return;
+
+    if (onServer)
+    {
+        NSString* oldDeviceID = CountlyDeviceInfo.sharedInstance.deviceID;
+
+        [CountlyDeviceInfo.sharedInstance initializeDeviceID:deviceID];
+
+        [CountlyConnectionManager.sharedInstance sendOldDeviceID:oldDeviceID];
     }
     else
     {
-        COUNTLY_LOG(@"Consent for Session is cancelled.");
-    }
+        [self suspend];
 
-    self.consentChanges[CLYConsentSessions] = @(consentForSessions);
-}
+        [CountlyDeviceInfo.sharedInstance initializeDeviceID:deviceID];
 
+        [self resume];
 
-- (void)setConsentForEvents:(BOOL)consentForEvents
-{
-    _consentForEvents = consentForEvents;
-
-    if (consentForEvents)
-    {
-        COUNTLY_LOG(@"Consent for Events is given.");
-    }
-    else
-    {
-        COUNTLY_LOG(@"Consent for Events is cancelled.");
-
-        [CountlyConnectionManager.sharedInstance sendEvents];
         [CountlyPersistency.sharedInstance clearAllTimedEvents];
     }
 
-    self.consentChanges[CLYConsentEvents] = @(consentForEvents);
+    [CountlyRemoteConfig.sharedInstance clearCachedRemoteConfig];
+    [CountlyRemoteConfig.sharedInstance startRemoteConfig];
 }
 
-
-- (void)setConsentForUserDetails:(BOOL)consentForUserDetails
+- (void)setCustomHeaderFieldValue:(NSString *)customHeaderFieldValue
 {
-    _consentForUserDetails = consentForUserDetails;
-
-    if (consentForUserDetails)
-    {
-        COUNTLY_LOG(@"Consent for UserDetails is given.");
-    }
-    else
-    {
-        COUNTLY_LOG(@"Consent for UserDetails is cancelled.");
-
-        [CountlyUserDetails.sharedInstance clearUserDetails];
-    }
-
-    self.consentChanges[CLYConsentUserDetails] = @(consentForUserDetails);
+    CountlyConnectionManager.sharedInstance.customHeaderFieldValue = customHeaderFieldValue.copy;
+    [CountlyConnectionManager.sharedInstance proceedOnQueue];
 }
 
+#pragma mark ---
 
-- (void)setConsentForCrashReporting:(BOOL)consentForCrashReporting
+- (void)beginSession
 {
-    _consentForCrashReporting = consentForCrashReporting;
+    if (CountlyCommon.sharedInstance.manualSessionHandling)
+        [CountlyConnectionManager.sharedInstance beginSession];
+}
 
-#if TARGET_OS_IOS
-    if (consentForCrashReporting)
+- (void)updateSession
+{
+    if (CountlyCommon.sharedInstance.manualSessionHandling)
+        [CountlyConnectionManager.sharedInstance updateSession];
+}
+
+- (void)endSession
+{
+    if (CountlyCommon.sharedInstance.manualSessionHandling)
+        [CountlyConnectionManager.sharedInstance endSession];
+}
+
+#pragma mark ---
+
+- (void)onTimer:(NSTimer *)timer
+{
+    if (isSuspended)
+        return;
+
+    if (!CountlyCommon.sharedInstance.manualSessionHandling)
+        [CountlyConnectionManager.sharedInstance updateSession];
+
+    [CountlyConnectionManager.sharedInstance sendEvents];
+}
+
+- (void)suspend
+{
+    if (!CountlyCommon.sharedInstance.hasStarted)
+        return;
+
+    if (isSuspended)
+        return;
+
+    COUNTLY_LOG(@"Suspending...");
+
+    isSuspended = YES;
+
+    [CountlyConnectionManager.sharedInstance sendEvents];
+
+    if (!CountlyCommon.sharedInstance.manualSessionHandling)
+        [CountlyConnectionManager.sharedInstance endSession];
+
+    [CountlyViewTracking.sharedInstance pauseView];
+
+    [CountlyPersistency.sharedInstance saveToFile];
+}
+
+- (void)resume
+{
+    if (!CountlyCommon.sharedInstance.hasStarted)
+        return;
+
+#if TARGET_OS_WATCH
+    //NOTE: Skip first time to prevent double begin session because of applicationDidBecomeActive call on launch of watchOS apps
+    static BOOL isFirstCall = YES;
+
+    if (isFirstCall)
     {
-        COUNTLY_LOG(@"Consent for CrashReporting is given.");
-
-        [CountlyCrashReporter.sharedInstance startCrashReporting];
-    }
-    else
-    {
-        COUNTLY_LOG(@"Consent for CrashReporting is cancelled.");
-
-        [CountlyCrashReporter.sharedInstance stopCrashReporting];
+        isFirstCall = NO;
+        return;
     }
 #endif
 
-    self.consentChanges[CLYConsentCrashReporting] = @(consentForCrashReporting);
+    if (!CountlyCommon.sharedInstance.manualSessionHandling)
+        [CountlyConnectionManager.sharedInstance beginSession];
+
+    [CountlyViewTracking.sharedInstance resumeView];
+
+    isSuspended = NO;
+}
+
+#pragma mark ---
+
+- (void)didEnterBackgroundCallBack:(NSNotification *)notification
+{
+    COUNTLY_LOG(@"App did enter background.");
+    [self suspend];
+}
+
+- (void)willEnterForegroundCallBack:(NSNotification *)notification
+{
+    COUNTLY_LOG(@"App will enter foreground.");
+    [self resume];
+}
+
+- (void)willTerminateCallBack:(NSNotification *)notification
+{
+    COUNTLY_LOG(@"App will terminate.");
+
+    [CountlyViewTracking.sharedInstance endView];
+
+    [self suspend];
+}
+
+- (void)dealloc
+{
+    [NSNotificationCenter.defaultCenter removeObserver:self];
+
+    if (timer)
+    {
+        [timer invalidate];
+        timer = nil;
+    }
 }
 
 
-- (void)setConsentForPushNotifications:(BOOL)consentForPushNotifications
+
+#pragma mark - Consents
+- (void)giveConsentForFeature:(NSString *)featureName
 {
-    _consentForPushNotifications = consentForPushNotifications;
+    if (!featureName.length)
+        return;
 
-#if TARGET_OS_IOS
-    if (consentForPushNotifications)
-    {
-        COUNTLY_LOG(@"Consent for PushNotifications is given.");
+    [CountlyConsentManager.sharedInstance giveConsentForFeatures:@[featureName]];
+}
 
-        [CountlyPushNotifications.sharedInstance startPushNotifications];
-    }
-    else
-    {
-        COUNTLY_LOG(@"Consent for PushNotifications is cancelled.");
+- (void)giveConsentForFeatures:(NSArray *)features
+{
+    [CountlyConsentManager.sharedInstance giveConsentForFeatures:features];
+}
 
-        [CountlyPushNotifications.sharedInstance stopPushNotifications];
-    }
-#endif
+- (void)giveConsentForAllFeatures
+{
+    [CountlyConsentManager.sharedInstance giveConsentForAllFeatures];
+}
 
-    self.consentChanges[CLYConsentPushNotifications] = @(consentForPushNotifications);
+- (void)cancelConsentForFeature:(NSString *)featureName
+{
+    if (!featureName.length)
+        return;
+
+    [CountlyConsentManager.sharedInstance cancelConsentForFeatures:@[featureName]];
+}
+
+- (void)cancelConsentForFeatures:(NSArray *)features
+{
+    [CountlyConsentManager.sharedInstance cancelConsentForFeatures:features];
+}
+
+- (void)cancelConsentForAllFeatures
+{
+    [CountlyConsentManager.sharedInstance cancelConsentForAllFeatures];
+}
+
+- (NSString *)deviceID
+{
+    return CountlyDeviceInfo.sharedInstance.deviceID.cly_URLEscaped;
 }
 
 
-- (void)setConsentForLocation:(BOOL)consentForLocation
+
+#pragma mark - Events
+- (void)recordEvent:(NSString *)key
 {
-    _consentForLocation = consentForLocation;
-
-    if (consentForLocation)
-    {
-        COUNTLY_LOG(@"Consent for Location is given.");
-
-        [CountlyLocationManager.sharedInstance sendLocationInfo];
-    }
-    else
-    {
-        COUNTLY_LOG(@"Consent for Location is cancelled.");
-    }
-
-    self.consentChanges[CLYConsentLocation] = @(consentForLocation);
+    [self recordEvent:key segmentation:nil count:1 sum:0 duration:0];
 }
 
-
-- (void)setConsentForViewTracking:(BOOL)consentForViewTracking
+- (void)recordEvent:(NSString *)key count:(NSUInteger)count
 {
-    _consentForViewTracking = consentForViewTracking;
-
-#if (TARGET_OS_IOS || TARGET_OS_TV)
-    if (consentForViewTracking)
-    {
-        COUNTLY_LOG(@"Consent for ViewTracking is given.");
-
-        [CountlyViewTracking.sharedInstance startAutoViewTracking];
-    }
-    else
-    {
-        COUNTLY_LOG(@"Consent for ViewTracking is cancelled.");
-
-        [CountlyViewTracking.sharedInstance stopAutoViewTracking];
-    }
-#endif
-
-    self.consentChanges[CLYConsentViewTracking] = @(consentForViewTracking);
+    [self recordEvent:key segmentation:nil count:count sum:0 duration:0];
 }
 
-
-- (void)setConsentForAttribution:(BOOL)consentForAttribution
+- (void)recordEvent:(NSString *)key sum:(double)sum
 {
-    _consentForAttribution = consentForAttribution;
-
-    if (consentForAttribution)
-    {
-        COUNTLY_LOG(@"Consent for Attribution is given.");
-
-        [CountlyCommon.sharedInstance startAttribution];
-    }
-    else
-    {
-        COUNTLY_LOG(@"Consent for Attribution is cancelled.");
-    }
-
-    self.consentChanges[CLYConsentAttribution] = @(consentForAttribution);
+    [self recordEvent:key segmentation:nil count:1 sum:sum duration:0];
 }
 
-
-- (void)setConsentForStarRating:(BOOL)consentForStarRating
+- (void)recordEvent:(NSString *)key duration:(NSTimeInterval)duration
 {
-    _consentForStarRating = consentForStarRating;
-
-#if TARGET_OS_IOS
-    if (consentForStarRating)
-    {
-        COUNTLY_LOG(@"Consent for StarRating is given.");
-
-        [CountlyStarRating.sharedInstance checkForAutoAsk];
-    }
-    else
-    {
-        COUNTLY_LOG(@"Consent for StarRating is cancelled.");
-    }
-#endif
-
-    self.consentChanges[CLYConsentStarRating] = @(consentForStarRating);
+    [self recordEvent:key segmentation:nil count:1 sum:0 duration:duration];
 }
 
-
-- (void)setConsentForAppleWatch:(BOOL)consentForAppleWatch
+- (void)recordEvent:(NSString *)key count:(NSUInteger)count sum:(double)sum
 {
-    _consentForAppleWatch = consentForAppleWatch;
+    [self recordEvent:key segmentation:nil count:count sum:sum duration:0];
+}
 
-#if (TARGET_OS_IOS || TARGET_OS_WATCH)
-    if (consentForAppleWatch)
-    {
-        COUNTLY_LOG(@"Consent for AppleWatch is given.");
+- (void)recordEvent:(NSString *)key segmentation:(NSDictionary *)segmentation
+{
+    [self recordEvent:key segmentation:segmentation count:1 sum:0 duration:0];
+}
 
-        [CountlyCommon.sharedInstance startAppleWatchMatching];
-    }
-    else
-    {
-        COUNTLY_LOG(@"Consent for AppleWatch is cancelled.");
-    }
-#endif
+- (void)recordEvent:(NSString *)key segmentation:(NSDictionary *)segmentation count:(NSUInteger)count
+{
+    [self recordEvent:key segmentation:segmentation count:count sum:0 duration:0];
+}
 
-    self.consentChanges[CLYConsentAppleWatch] = @(consentForAppleWatch);
+- (void)recordEvent:(NSString *)key segmentation:(NSDictionary *)segmentation count:(NSUInteger)count sum:(double)sum
+{
+    [self recordEvent:key segmentation:segmentation count:count sum:sum duration:0];
+}
+
+- (void)recordEvent:(NSString *)key segmentation:(NSDictionary *)segmentation count:(NSUInteger)count sum:(double)sum duration:(NSTimeInterval)duration
+{
+    if (!CountlyConsentManager.sharedInstance.consentForEvents)
+        return;
+
+    [self recordEvent:key segmentation:segmentation count:count sum:sum duration:duration timestamp:CountlyCommon.sharedInstance.uniqueTimestamp];
 }
 
 #pragma mark -
 
-- (BOOL)consentForSessions
+- (void)recordReservedEvent:(NSString *)key segmentation:(NSDictionary *)segmentation
 {
-    if (!self.requiresConsent)
-      return YES;
+    [self recordEvent:key segmentation:segmentation count:1 sum:0 duration:0 timestamp:CountlyCommon.sharedInstance.uniqueTimestamp];
+}
 
-    return _consentForSessions;
+- (void)recordReservedEvent:(NSString *)key segmentation:(NSDictionary *)segmentation count:(NSUInteger)count sum:(double)sum duration:(NSTimeInterval)duration timestamp:(NSTimeInterval)timestamp
+{
+    [self recordEvent:key segmentation:segmentation count:count sum:sum duration:duration timestamp:timestamp];
+}
+
+#pragma mark -
+
+- (void)recordEvent:(NSString *)key segmentation:(NSDictionary *)segmentation count:(NSUInteger)count sum:(double)sum duration:(NSTimeInterval)duration timestamp:(NSTimeInterval)timestamp
+{
+    if (key.length == 0)
+        return;
+
+    CountlyEvent *event = CountlyEvent.new;
+    event.key = key;
+    event.segmentation = segmentation;
+    event.count = MAX(count, 1);
+    event.sum = sum;
+    event.timestamp = timestamp;
+    event.hourOfDay = CountlyCommon.sharedInstance.hourOfDay;
+    event.dayOfWeek = CountlyCommon.sharedInstance.dayOfWeek;
+    event.duration = duration;
+
+    [CountlyPersistency.sharedInstance recordEvent:event];
+}
+
+#pragma mark ---
+
+- (void)startEvent:(NSString *)key
+{
+    if (!CountlyConsentManager.sharedInstance.consentForEvents)
+        return;
+
+    CountlyEvent *event = CountlyEvent.new;
+    event.key = key;
+    event.timestamp = CountlyCommon.sharedInstance.uniqueTimestamp;
+    event.hourOfDay = CountlyCommon.sharedInstance.hourOfDay;
+    event.dayOfWeek = CountlyCommon.sharedInstance.dayOfWeek;
+
+    [CountlyPersistency.sharedInstance recordTimedEvent:event];
+}
+
+- (void)endEvent:(NSString *)key
+{
+    [self endEvent:key segmentation:nil count:1 sum:0];
+}
+
+- (void)endEvent:(NSString *)key segmentation:(NSDictionary *)segmentation count:(NSUInteger)count sum:(double)sum
+{
+    if (!CountlyConsentManager.sharedInstance.consentForEvents)
+        return;
+
+    CountlyEvent *event = [CountlyPersistency.sharedInstance timedEventForKey:key];
+
+    if (!event)
+    {
+        COUNTLY_LOG(@"Event with key '%@' not started yet or cancelled/ended before!", key);
+        return;
+    }
+
+    event.segmentation = segmentation;
+    event.count = MAX(count, 1);
+    event.sum = sum;
+    event.duration = NSDate.date.timeIntervalSince1970 - event.timestamp;
+
+    [CountlyPersistency.sharedInstance recordEvent:event];
+}
+
+- (void)cancelEvent:(NSString *)key
+{
+    if (!CountlyConsentManager.sharedInstance.consentForEvents)
+        return;
+
+    CountlyEvent *event = [CountlyPersistency.sharedInstance timedEventForKey:key];
+
+    if (!event)
+    {
+        COUNTLY_LOG(@"Event with key '%@' not started yet or cancelled/ended before!", key);
+        return;
+    }
+
+    COUNTLY_LOG(@"Event with key '%@' cancelled!", key);
 }
 
 
-- (BOOL)consentForEvents
-{
-    if (!self.requiresConsent)
-      return YES;
+#pragma mark - Push Notifications
+#if (TARGET_OS_IOS || TARGET_OS_OSX)
 
-    return _consentForEvents;
+- (void)askForNotificationPermission
+{
+    [CountlyPushNotifications.sharedInstance askForNotificationPermissionWithOptions:0 completionHandler:nil];
+}
+
+- (void)askForNotificationPermissionWithOptions:(UNAuthorizationOptions)options completionHandler:(void (^)(BOOL granted, NSError * error))completionHandler;
+{
+    [CountlyPushNotifications.sharedInstance askForNotificationPermissionWithOptions:options completionHandler:completionHandler];
+}
+
+- (void)recordActionForNotification:(NSDictionary *)userInfo clickedButtonIndex:(NSInteger)buttonIndex;
+{
+    [CountlyPushNotifications.sharedInstance recordActionForNotification:userInfo clickedButtonIndex:buttonIndex];
+}
+
+- (void)recordPushNotificationToken
+{
+    [CountlyPushNotifications.sharedInstance sendToken:@""];
+}
+
+- (void)clearPushNotificationToken
+{
+    [CountlyPushNotifications.sharedInstance clearToken];
+}
+#endif
+
+
+
+#pragma mark - Location
+
+- (void)recordLocation:(CLLocationCoordinate2D)location
+{
+    [CountlyLocationManager.sharedInstance recordLocationInfo:location city:nil ISOCountryCode:nil andIP:nil];
+}
+
+- (void)recordCity:(NSString *)city andISOCountryCode:(NSString *)ISOCountryCode
+{
+    [CountlyLocationManager.sharedInstance recordLocationInfo:kCLLocationCoordinate2DInvalid city:city ISOCountryCode:ISOCountryCode andIP:nil];
+}
+
+- (void)recordIP:(NSString *)IP
+{
+    [CountlyLocationManager.sharedInstance recordLocationInfo:kCLLocationCoordinate2DInvalid city:nil ISOCountryCode:nil andIP:IP];
+}
+
+- (void)disableLocationInfo
+{
+    [CountlyLocationManager.sharedInstance disableLocationInfo];
 }
 
 
-- (BOOL)consentForUserDetails
-{
-    if (!self.requiresConsent)
-      return YES;
 
-    return _consentForUserDetails;
+#pragma mark - Crash Reporting
+
+#if TARGET_OS_IOS
+- (void)recordHandledException:(NSException *)exception
+{
+    [CountlyCrashReporter.sharedInstance recordException:exception withStackTrace:nil isFatal:NO];
+}
+
+- (void)recordHandledException:(NSException *)exception withStackTrace:(NSArray *)stackTrace
+{
+    [CountlyCrashReporter.sharedInstance recordException:exception withStackTrace:stackTrace isFatal:NO];
+}
+
+- (void)recordUnhandledException:(NSException *)exception withStackTrace:(NSArray * _Nullable)stackTrace
+{
+    [CountlyCrashReporter.sharedInstance recordException:exception withStackTrace:stackTrace isFatal:YES];
+}
+
+- (void)recordCrashLog:(NSString *)log
+{
+    [CountlyCrashReporter.sharedInstance log:log];
+}
+
+- (void)crashLog:(NSString *)format, ...
+{
+
+}
+
+#endif
+
+
+
+#pragma mark - APM
+
+- (void)addExceptionForAPM:(NSString *)exceptionURL
+{
+    [CountlyAPM.sharedInstance addExceptionForAPM:exceptionURL];
+}
+
+- (void)removeExceptionForAPM:(NSString *)exceptionURL
+{
+    [CountlyAPM.sharedInstance removeExceptionForAPM:exceptionURL];
 }
 
 
-- (BOOL)consentForCrashReporting
-{
-    if (!self.requiresConsent)
-      return YES;
 
-    return _consentForCrashReporting;
+#pragma mark - View Tracking
+
+- (void)recordView:(NSString *)viewName;
+{
+    [CountlyViewTracking.sharedInstance startView:viewName];
+}
+
+- (void)reportView:(NSString *)viewName
+{
+
+}
+
+#if TARGET_OS_IOS
+- (void)addExceptionForAutoViewTracking:(NSString *)exception
+{
+    [CountlyViewTracking.sharedInstance addExceptionForAutoViewTracking:exception.copy];
+}
+
+- (void)removeExceptionForAutoViewTracking:(NSString *)exception
+{
+    [CountlyViewTracking.sharedInstance removeExceptionForAutoViewTracking:exception.copy];
+}
+
+- (void)setIsAutoViewTrackingActive:(BOOL)isAutoViewTrackingActive
+{
+    CountlyViewTracking.sharedInstance.isAutoViewTrackingActive = isAutoViewTrackingActive;
+}
+
+- (BOOL)isAutoViewTrackingActive
+{
+    return CountlyViewTracking.sharedInstance.isAutoViewTrackingActive;
+}
+#endif
+
+
+
+#pragma mark - User Details
+
++ (CountlyUserDetails *)user
+{
+    return CountlyUserDetails.sharedInstance;
+}
+
+- (void)userLoggedIn:(NSString *)userID
+{
+    [self setNewDeviceID:userID onServer:YES];
+}
+
+- (void)userLoggedOut
+{
+    [self setNewDeviceID:nil onServer:NO];
 }
 
 
-- (BOOL)consentForPushNotifications
-{
-    if (!self.requiresConsent)
-      return YES;
 
-    return _consentForPushNotifications;
+#pragma mark - Star Rating
+#if TARGET_OS_IOS
+
+- (void)askForStarRating:(void(^)(NSInteger rating))completion
+{
+    [CountlyStarRating.sharedInstance showDialog:completion];
 }
 
-
-- (BOOL)consentForLocation
+- (void)presentFeedbackWidgetWithID:(NSString *)widgetID completionHandler:(void (^)(NSError * error))completionHandler
 {
-    if (!self.requiresConsent)
-        return YES;
-
-    return _consentForLocation;
+    [CountlyStarRating.sharedInstance checkFeedbackWidgetWithID:widgetID completionHandler:completionHandler];
 }
 
+#endif
 
-- (BOOL)consentForViewTracking
+
+
+#pragma mark - Remote Config
+
+- (id)remoteConfigValueForKey:(NSString *)key
 {
-    if (!self.requiresConsent)
-      return YES;
-
-    return _consentForViewTracking;
+    return [CountlyRemoteConfig.sharedInstance remoteConfigValueForKey:key];
 }
 
-
-- (BOOL)consentForAttribution
+- (void)updateRemoteConfigWithCompletionHandler:(void (^)(NSError * error))completionHandler
 {
-    if (!self.requiresConsent)
-      return YES;
-
-    return _consentForAttribution;
+    [CountlyRemoteConfig.sharedInstance updateRemoteConfigForForKeys:nil omitKeys:nil completionHandler:completionHandler];
 }
 
-
-- (BOOL)consentForStarRating
+- (void)updateRemoteConfigOnlyForKeys:(NSArray *)keys completionHandler:(void (^)(NSError * error))completionHandler
 {
-    if (!self.requiresConsent)
-      return YES;
-
-    return _consentForStarRating;
+    [CountlyRemoteConfig.sharedInstance updateRemoteConfigForForKeys:keys omitKeys:nil completionHandler:completionHandler];
 }
 
-
-- (BOOL)consentForAppleWatch
+- (void)updateRemoteConfigExceptForKeys:(NSArray *)omitKeys completionHandler:(void (^)(NSError * error))completionHandler
 {
-    if (!self.requiresConsent)
-      return YES;
-
-    return _consentForAppleWatch;
+    [CountlyRemoteConfig.sharedInstance updateRemoteConfigForForKeys:nil omitKeys:omitKeys completionHandler:completionHandler];
 }
+
 
 @end

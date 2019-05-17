@@ -137,10 +137,10 @@ RCT_EXPORT_METHOD(onregistrationid:(NSArray*)arguments)
   if(mode == 1){
     // [[CountlyConnectionQueue sharedInstance] setStartedWithTest:YES];
   }
-  [CountlyConnectionManager.sharedInstance sendPushToken:token];
-   // CountlyPushNotifications.sharedInstance.token = token;
-   // [CountlyPushNotifications.sharedInstance sendToken];
-  // [Countly.sharedInstance didRegisterForRemoteNotificationsWithDeviceToken:tokenByte];
+  // [CountlyConnectionManager.sharedInstance sendPushToken:token];
+   CountlyPushNotifications.sharedInstance.token = token;
+   [CountlyPushNotifications.sharedInstance sendToken];
+  [Countly.sharedInstance didRegisterForRemoteNotificationsWithDeviceToken:tokenByte];
 
   // [[CountlyConnectionQueue sharedInstance] tokenSession:token];
 
