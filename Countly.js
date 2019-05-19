@@ -219,39 +219,13 @@ Countly.enableParameterTamperingProtection = function(salt){
     CountlyReactNative.enableParameterTamperingProtection([salt.toString() || ""]);
 }
 Countly.startEvent = function(eventName){
-    CountlyReactNative.startEvent([eventName.toString() || ""]);
+    CountlyReactNative.startEvent(eventName.toString() || "");
 }
 Countly.endEvent = function(options){
-    if(typeof options === "string")
+    if(typeof options === "string") {
         options = {eventName: options};
-    var args = [];
-    var eventType = "event"; //event, eventWithSum, eventWithSegment, eventWithSumSegment
-    var segments = {};
-
-    if(options.segments && options.eventSum)
-        eventType = "eventWithSumSegment";
-
-    args.push(eventType);
-
-    if(!options.eventName)
-        options.eventName = "";
-    args.push(options.eventName.toString());
-
-    if(!options.eventCount)
-        options.eventCount = "1";
-    args.push(options.eventCount.toString());
-
-    if(!options.eventSum)
-        options.eventSum = "0";
-    args.push(options.eventSum.toString());
-
-    if(options.segments)
-        segments = options.segments;
-    for (var event in segments) {
-        args.push(event);
-        args.push(segments[event]);
-    }
-    CountlyReactNative.endEvent(args);
+    }     
+    CountlyReactNative.endEvent(options);
 };
 
 // countly sending user data

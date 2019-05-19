@@ -207,41 +207,36 @@ RCT_EXPORT_METHOD(enableParameterTamperingProtection:(NSArray*)arguments)
   config.secretSalt = salt;
 }
 
-RCT_EXPORT_METHOD(startEvent:(NSArray*)arguments)
+RCT_EXPORT_METHOD(startEvent:(NSString*)eventName)
 {
-  NSString* eventName = [arguments objectAtIndex:0];
-  [Countly.sharedInstance startEvent:eventName];
-
-
-
+  [Countly.sharedInstance eventName];
 }
 
-RCT_EXPORT_METHOD(endEvent:(NSArray*)arguments)
+RCT_EXPORT_METHOD(endEvent:(NSDictionary*)options)
 {
-  NSString* eventType = [arguments objectAtIndex:0];
+  NSString* eventName = "";
 
-  if ([eventType  isEqual: @"event"]) {
-    NSString* eventName = [arguments objectAtIndex:1];
-    [Countly.sharedInstance endEvent:eventName];
+  if ([options valueForKey:@"eventName"] == nil) {
+    // log error as in android method
+    return;
   }
-  else if ([eventType  isEqual: @"eventWithSegment"]){
-    NSString* eventName = [arguments objectAtIndex:1];
-
-    NSString* countString = [arguments objectAtIndex:2];
-    int countInt = [countString intValue];
-
-    NSString* sumString = [arguments objectAtIndex:3];
-    int sumInt = [sumString intValue];
-
-    NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
-    for(int i=3,il=(int)arguments.count;i<il;i+=2){
-      dict[[arguments objectAtIndex:i]] = [arguments objectAtIndex:i+1];
-    }
-
-    [Countly.sharedInstance endEvent:eventName segmentation:dict count:countInt sum:sumInt];
+  else {
+    eventName = (String) [options valueForKey:@"eventName"];
   }
-  else{
+  int eventCount = 1;
+  if ([options valueForKey:@"eventCount"] != nil) {
+    eventCount = (int) [options valueForKey:@"eventCount"]
   }
+  double eventSum = 0;
+  if ([options valueForKey:@"eventSum"] != nil) {
+    eventSum = (double) [options valueForKey:@"eventSum"]
+  }
+  NSMutableDictionary *segments = [NSMutableDictionary dictionary]
+  if ([options valueForKey:@"segments"] != nil) {
+    NSDictionary *segmentation = (NSDictionary*) [options valueForKey:@"segments"];
+    [segments addEntriesFromDictionary:segmentation];
+  }
+  [Countly.sharedInstance endEvent:eventName segmentation:segments count:eventCount sum:eventSum];
 }
 
 RCT_EXPORT_METHOD(setLocation:(NSArray*)arguments)

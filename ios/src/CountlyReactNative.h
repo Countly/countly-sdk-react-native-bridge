@@ -19,8 +19,8 @@
 
 - (void)changeDeviceId:(NSArray*)arguments;
 - (void)enableParameterTamperingProtection:(NSArray*)arguments;
-- (void)startEvent:(NSArray*)arguments;
-- (void)endEvent:(NSArray*)arguments;
+- (void)startEvent:(NSString*)arguments;
+- (void)endEvent:(NSDictionary*)arguments;
 
 - (void)userData_setProperty:(NSArray*)arguments;
 - (void)userData_increment:(NSArray*)arguments;

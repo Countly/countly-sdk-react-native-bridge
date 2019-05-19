@@ -15,6 +15,7 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.JavaScriptModule;
 
@@ -58,7 +59,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
 	@ReactMethod
 	public void init(ReadableArray args){
-        Log.e(Countly.TAG, "Testing In It item");
+        Log.d(Countly.TAG, "Initializing...");
         String serverUrl = args.getString(0);
         String appKey = args.getString(1);
         String deviceId = args.getString(2);
@@ -220,30 +221,39 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void startEvent(ReadableArray args){
-        String startEvent = args.getString(0);
-        Countly.sharedInstance().startEvent(startEvent);
+    public void startEvent(String eventName){
+        Countly.sharedInstance().startEvent(eventName);
     }
 
     @ReactMethod
-    public void endEvent(ReadableArray args){
-        String eventType = args.getString(0);
-        if("event".equals(eventType)){
-            String eventName = args.getString(1);
-            Countly.sharedInstance().endEvent(eventName);
+    public void endEvent(ReadableMap options){
+      if (!options.hasKey("eventName")) {
+        Log.e(Countly.TAG, "For timed events you need to specify eventName");
+        return;
+      }
+      String eventName = options.getString("eventName");
+      HashMap<String, String> segmentation = new HashMap<String, String>();
+      if (options.hasKey("segments")) {
+        ReadableMap segments = options.getMap("segments");
+        ReadableMapKeySetIterator iterator = segments.keySetIterator();
+        while (iterator.hasNextKey()) {
+          String key = iterator.nextKey();
+          String value = segments.getString(key);
+          segmentation.put(key, value);
         }
-        else if ("eventWithSumSegment".equals(eventType)) {
-            String eventName = args.getString(1);
-            int eventCount= Integer.parseInt(args.getString(2));
-            float eventSum= new Float(args.getString(3)).floatValue();
-            HashMap<String, String> segmentation = new HashMap<String, String>();
-            for(int i=4,il=args.size();i<il;i+=2){
-                segmentation.put(args.getString(i), args.getString(i+1));
-            }
-            Countly.sharedInstance().endEvent(eventName, segmentation, eventCount,eventSum);
-        }
-        else{
-        }
+      }
+      /* else {
+        segmentation = null;
+      } */
+      double eventSum = 0;
+      if (options.hasKey("eventSum")) {
+        eventSum = options.getDouble("eventSum");
+      }
+      int eventCount = 1;
+      if (options.hasKey("eventCount")) {
+        eventCount = options.getInt("eventCount");
+      }
+      Countly.sharedInstance().endEvent(eventName, segmentation, eventCount, eventSum);
     }
 
 	@ReactMethod
