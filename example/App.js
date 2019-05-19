@@ -9,7 +9,7 @@ class AwesomeProject extends Component {
         super(props);        
     };
     onInit(){
-      Countly.init("http://104.199.85.181","4c12975cb6561f06708c744bdf34b0a77cf6f56f");
+      Countly.init("https://try.count.ly","0e8a00e8c01395a0af8be0e55da05a404bb23c3e");
       Countly.enableLogging();
     }
     onStart(){
