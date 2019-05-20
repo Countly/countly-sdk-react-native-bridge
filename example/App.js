@@ -296,6 +296,21 @@ class AwesomeProject extends Component {
         Countly.addCrashLog("User Performed Step C");
         console.log("Opps found and error");
         // Countly.logException("My Customized error message");
+        try { 
+            var a = {}; 
+            var x = a.b.c; // this will create error. 
+        } catch (error) { 
+          var stack = error.stack.toString(); 
+          console.log(stack); 
+          stack = stack.split('\n');  
+          console.log(stack); 
+            var stackframes = [ 
+              {functionName: 'fn', fileName: 'file.js', lineNumber: 32, columnNumber: 1}, 
+              {functionName: 'fn2', fileName: 'file.js', lineNumber: 543, columnNumber: 32},  
+              {functionName: 'fn3', fileName: 'file.js', lineNumber: 8, columnNumber: 1}  
+            ] 
+            Countly.logException(stackframes, true, {"_facebook_version": "0.0.1"});  
+        }
       },1000);
     };
 
