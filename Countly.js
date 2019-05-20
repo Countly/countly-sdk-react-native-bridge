@@ -9,7 +9,7 @@ import {
     NativeModules
 } from 'react-native';
 
-// import StackTrace from './Countly.StackTrace.js';
+import StackTrace from './Countly.StackTrace.js';
 
 const CountlyReactNative = NativeModules.CountlyReactNative;
 
@@ -186,12 +186,10 @@ Countly.addCrashLog = function(crashLog){
 }
 
 Countly.logException = function(exception, nonfatal, segments){
+    var exceptionArray = exception.split('\n');
     var exceptionString = "";
-    for(var i=0,il=exception.length;i<il;i++){
-        exceptionString += "columnNumber: " +exception[i].columnNumber +"\n";
-        exceptionString += "fileName: " +exception[i].fileName +"\n";
-        exceptionString += "functionName: " +exception[i].functionName +"\n";
-        exceptionString += "lineNumber: " +exception[i].lineNumber +"\n";
+    for(var i=0,il=exceptionArray.length;i<il;i++){
+        exceptionString += "" +exceptionArray[i] +"\n";
     }
     var args = [];
     args.push(exceptionString || "");

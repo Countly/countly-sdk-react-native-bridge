@@ -2,7 +2,8 @@ import React, { Component } from 'react';
 import { AppRegistry, Text, Button, ScrollView, Image, View } from 'react-native';
 import Countly from 'countly-sdk-react-native-bridge';
 import PushNotificationIOS from 'react-native';
-import stacktrace from 'react-native-stacktrace';
+// import StackTrace from '/Countly.StackTrace.js';
+// import stacktrace from 'react-native-stacktrace';
 // var PushNotification = require('react-native-push-notification');
 
 class AwesomeProject extends Component {
@@ -298,15 +299,7 @@ class AwesomeProject extends Component {
             var x = a.b.c; // this will create error.
         } catch (error) {
           var stack = error.stack.toString();
-          console.log(stack);
-          stack = stack.split('\n');
-          console.log(stack);
-            var stackframes = [
-              {functionName: 'fn', fileName: 'file.js', lineNumber: 32, columnNumber: 1},
-              {functionName: 'fn2', fileName: 'file.js', lineNumber: 543, columnNumber: 32},
-              {functionName: 'fn3', fileName: 'file.js', lineNumber: 8, columnNumber: 1}
-            ]
-            Countly.logException(stackframes, true, {"_facebook_version": "0.0.1"});
+          Countly.logException(stack, true, {"_facebook_version": "0.0.1"});
         }
       },1000);
       setTimeout(function(){

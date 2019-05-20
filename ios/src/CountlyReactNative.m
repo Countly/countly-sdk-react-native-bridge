@@ -211,9 +211,6 @@ RCT_EXPORT_METHOD(startEvent:(NSArray*)arguments)
 {
   NSString* eventName = [arguments objectAtIndex:0];
   [Countly.sharedInstance startEvent:eventName];
-
-
-
 }
 
 RCT_EXPORT_METHOD(endEvent:(NSArray*)arguments)
@@ -296,6 +293,27 @@ RCT_EXPORT_METHOD(addCrashLog:(NSArray*)arguments)
 {
   NSString* logs = [arguments objectAtIndex:0];
   [Countly.sharedInstance recordCrashLog:logs];
+}
+
+RCT_EXPORT_METHOD(logException:(NSArray*)arguments)
+{
+  NSString* execption = [arguments objectAtIndex:0];
+  NSString* nonfatal = [arguments objectAtIndex:1];
+  NSArray *nsException = [execption componentsSeparatedByString:@"\n"];
+
+  NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
+  
+  for(int i=2,il=(int)arguments.count;i<il;i+=2){
+      dict[[arguments objectAtIndex:i]] = [arguments objectAtIndex:i+1];
+  }
+  [dict setObject:nonfatal forKey:@"nonfatal"];
+
+  NSException* myException = [NSException exceptionWithName:@"Exception" reason:execption userInfo:dict];
+  
+  [Countly.sharedInstance recordHandledException:myException withStackTrace: nsException];
+
+  // CDVPluginResult* pluginResult = nil;
+  // pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"logException!"];
 }
 
 RCT_EXPORT_METHOD(userData_setProperty:(NSArray*)arguments)
