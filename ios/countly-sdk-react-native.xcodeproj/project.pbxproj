@@ -188,9 +188,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		DA5891D71BA9A9FC002B4DB2 /* countly-sdk-react-native */ = {
+		DA5891D71BA9A9FC002B4DB2 /* countly-sdk-react-native-bridge */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = DA5891E11BA9A9FC002B4DB2 /* Build configuration list for PBXNativeTarget "countly-sdk-react-native" */;
+			buildConfigurationList = DA5891E11BA9A9FC002B4DB2 /* Build configuration list for PBXNativeTarget "countly-sdk-react-native-bridge" */;
 			buildPhases = (
 				DA5891D41BA9A9FC002B4DB2 /* Sources */,
 				DA5891D51BA9A9FC002B4DB2 /* Frameworks */,
@@ -200,8 +200,8 @@
 			);
 			dependencies = (
 			);
-			name = "countly-sdk-react-native";
-			productName = "countly-sdk-react-native";
+			name = "countly-sdk-react-native-bridge";
+			productName = "countly-sdk-react-native-bridge";
 			productReference = DA5891D81BA9A9FC002B4DB2 /* libcountly-sdk-react-native.a */;
 			productType = "com.apple.product-type.library.static";
 		};
@@ -219,7 +219,7 @@
 					};
 				};
 			};
-			buildConfigurationList = DA5891D31BA9A9FC002B4DB2 /* Build configuration list for PBXProject "countly-sdk-react-native" */;
+			buildConfigurationList = DA5891D31BA9A9FC002B4DB2 /* Build configuration list for PBXProject "countly-sdk-react-native-bridge" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -231,7 +231,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				DA5891D71BA9A9FC002B4DB2 /* countly-sdk-react-native */,
+				DA5891D71BA9A9FC002B4DB2 /* countly-sdk-react-native-bridge */,
 			);
 		};
 /* End PBXProject section */
@@ -384,7 +384,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		DA5891D31BA9A9FC002B4DB2 /* Build configuration list for PBXProject "countly-sdk-react-native" */ = {
+		DA5891D31BA9A9FC002B4DB2 /* Build configuration list for PBXProject "countly-sdk-react-native-bridge" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				DA5891DF1BA9A9FC002B4DB2 /* Debug */,
@@ -393,7 +393,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		DA5891E11BA9A9FC002B4DB2 /* Build configuration list for PBXNativeTarget "countly-sdk-react-native" */ = {
+		DA5891E11BA9A9FC002B4DB2 /* Build configuration list for PBXNativeTarget "countly-sdk-react-native-bridge" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				DA5891E21BA9A9FC002B4DB2 /* Debug */,
