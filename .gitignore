@@ -2,7 +2,9 @@ android/.git
 android/.idea
 android/build
 android/countly-sdk-react-native.iml
+android/.gradle
 ios/.git
 node_modules
 .DS_Store
 yarn.lock
+.idea

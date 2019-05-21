@@ -1,4 +1,4 @@
-package ly.count.android.sdk;
+package ly.count.android.sdk.react;
 
 import java.util.Arrays;
 import java.util.Collections;

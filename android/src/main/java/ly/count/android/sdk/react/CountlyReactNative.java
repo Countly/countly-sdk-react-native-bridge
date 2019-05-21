@@ -1,4 +1,4 @@
-package ly.count.android.sdk;
+package ly.count.android.sdk.react;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
@@ -36,6 +36,8 @@ import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 import ly.count.android.sdk.Countly;
+import ly.count.android.sdk.RemoteConfig;
+import ly.count.android.sdk.DeviceId;
 
 import java.util.ArrayList;
 import java.util.Collections;
