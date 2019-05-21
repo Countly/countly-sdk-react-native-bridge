@@ -336,11 +336,11 @@ Countly.setEventSendThreshold = function(size){
 
 Countly.initNative = function(){
     CountlyReactNative.initNative();
-});
+}
 
 Countly.testCrash = function(){
     CountlyReactNative.initNative();
-});
+}
 
 
 
