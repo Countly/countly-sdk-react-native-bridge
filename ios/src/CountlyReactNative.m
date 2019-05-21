@@ -281,7 +281,7 @@ RCT_EXPORT_METHOD(disableLocation:(NSArray*)arguments)
   [Countly.sharedInstance disableLocationInfo];
 }
 
-RCT_EXPORT_METHOD(enableCrashReporting:(NSArray*)arguments)
+RCT_EXPORT_METHOD(enableCrashReporting)
 {
   if (config == nil){
     config = CountlyConfig.new;
@@ -416,14 +416,16 @@ RCT_EXPORT_METHOD(demo:(NSArray*)arguments)
   // NSData *tokenByte = [token dataUsingEncoding:NSUTF8StringEncoding];
 }
 
-
 RCT_EXPORT_METHOD(setRequiresConsent:(NSArray*)arguments)
 {
   if (config == nil){
     config = CountlyConfig.new;
+    config.requiresConsent = YES;
+  }else{
+    config.requiresConsent = YES;
   }
-  config.requiresConsent = YES;
 }
+
 RCT_EXPORT_METHOD(giveConsent:(NSArray*)arguments)
 {
   NSString* keyName = [arguments objectAtIndex:0];

@@ -14,7 +14,7 @@
 
 - (void)setHttpPostForced:(NSArray*)arguments;
 - (void)setLocation:(NSArray*)arguments;
-- (void)enableCrashReporting:(NSArray*)arguments;
+- (void)enableCrashReporting;
 - (void)addCrashLog:(NSArray*)arguments;
 
 - (void)changeDeviceId:(NSArray*)arguments;

@@ -9,7 +9,7 @@ import {
     NativeModules
 } from 'react-native';
 
-import StackTrace from './Countly.StackTrace.js';
+// import StackTrace from './Countly.StackTrace.js';
 
 const CountlyReactNative = NativeModules.CountlyReactNative;
 
