@@ -531,7 +531,7 @@
 
 - (void)recordPushNotificationToken
 {
-    [CountlyPushNotifications.sharedInstance sendToken:@""];
+    [CountlyPushNotifications.sharedInstance sendToken];
 }
 
 - (void)clearPushNotificationToken
