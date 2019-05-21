@@ -11,6 +11,7 @@ class AwesomeProject extends Component {
     onInit(){
       Countly.init("https://try.count.ly","0e8a00e8c01395a0af8be0e55da05a404bb23c3e");
       Countly.enableLogging();
+      Countly.initNative();
     }
     onStart(){
       Countly.start();
@@ -321,7 +322,13 @@ class AwesomeProject extends Component {
     setEventSendThreshold(){
       Countly.setEventSendThreshold("3");
     }
-    
+    initNative(){
+        Countly.initNative();
+    };
+
+    testCrash(){
+        Countly.testCrash();
+    }
 
 
     test(){
@@ -444,7 +451,8 @@ class AwesomeProject extends Component {
             <Text style={[{textAlign: 'center'}]}>Crash Event End</Text>
 
             < Button onPress = { this.eventSendThreshold } title = "Set Event Threshold" color = "#00b5ad"> </Button>
-            
+            < Button onPress = { this.initNative } title = "Init Native" color = "#00b5ad"> </Button>
+            < Button onPress = { this.testCrash } title = "Test Native Crash" color = "crimson"> </Button>
 
           </ScrollView>
         );

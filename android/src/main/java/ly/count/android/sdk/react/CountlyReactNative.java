@@ -38,6 +38,7 @@ import android.util.Log;
 import ly.count.android.sdk.Countly;
 import ly.count.android.sdk.RemoteConfig;
 import ly.count.android.sdk.DeviceId;
+import ly.count.android.sdknative.CountlyNative;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -594,6 +595,16 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     public void setEventSendThreshold(ReadableArray args){
         int size = Integer.parseInt(args.getString(0));
         Countly.sharedInstance().setEventQueueSizeToSend(size);
+    }
+
+    @ReactMethod
+    public void initNative(ReadableArray args, final Callback myCallback){
+            CountlyNative.initNative(getReactApplicationContext());
+    }
+
+    @ReactMethod
+    public void testCrash(ReadableArray args, final Callback myCallback){
+            CountlyNative.crash();
     }
 
     
