@@ -322,6 +322,7 @@ class AwesomeProject extends Component {
     setEventSendThreshold(){
       Countly.setEventSendThreshold("3");
     }
+    /*
     initNative(){
         Countly.initNative();
     };
@@ -329,7 +330,7 @@ class AwesomeProject extends Component {
     testCrash(){
         Countly.testCrash();
     }
-
+    */
 
     test(){
       this.onInit();
@@ -451,8 +452,10 @@ class AwesomeProject extends Component {
             <Text style={[{textAlign: 'center'}]}>Crash Event End</Text>
 
             < Button onPress = { this.eventSendThreshold } title = "Set Event Threshold" color = "#00b5ad"> </Button>
+            {/*
             < Button onPress = { this.initNative } title = "Init Native" color = "#00b5ad"> </Button>
             < Button onPress = { this.testCrash } title = "Test Native Crash" color = "crimson"> </Button>
+            */}
 
           </ScrollView>
         );

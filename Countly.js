@@ -334,14 +334,15 @@ Countly.setEventSendThreshold = function(size){
     CountlyReactNative.setEventSendThreshold([size.toString() || ""]);
 }
 
+/*
 Countly.initNative = function(){
     CountlyReactNative.initNative();
 }
 
 Countly.testCrash = function(){
-    CountlyReactNative.initNative();
+    CountlyReactNative.testCrash();
 }
-
+*/
 
 
 export default Countly;

@@ -35,7 +35,6 @@ repositories {
     maven {
         // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
         url "$rootDir/../node_modules/react-native/android"
-
     }
     maven {
         url  "http://dl.bintray.com/countly/maven"
@@ -46,5 +45,5 @@ repositories {
 dependencies {
     implementation "com.facebook.react:react-native:${safeExtGet('reactNativeVersion', '+')}"
     implementation 'ly.count.android:sdk:19.02.3'
-    implementation 'ly.count.android:sdk-native:19.02.3'
+    // implementation 'ly.count.android:sdk-native:0.6'
 }
