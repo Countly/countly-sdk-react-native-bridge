@@ -140,7 +140,7 @@ RCT_EXPORT_METHOD(onregistrationid:(NSArray*)arguments)
   // [CountlyConnectionManager.sharedInstance sendPushToken:token];
    CountlyPushNotifications.sharedInstance.token = token;
    [CountlyPushNotifications.sharedInstance sendToken];
-  [Countly.sharedInstance didRegisterForRemoteNotificationsWithDeviceToken:tokenByte];
+  // [Countly.sharedInstance didRegisterForRemoteNotificationsWithDeviceToken:tokenByte];
 
   // [[CountlyConnectionQueue sharedInstance] tokenSession:token];
 
