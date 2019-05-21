@@ -91,7 +91,7 @@
 		8B23E3342255198200807805 /* Countly_OpenUDID.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Countly_OpenUDID.m; sourceTree = "<group>"; };
 		8B23E3352255198200807805 /* CountlyStarRating.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CountlyStarRating.m; sourceTree = "<group>"; };
 		8B23E3362255198200807805 /* CountlyPushNotifications.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CountlyPushNotifications.h; sourceTree = "<group>"; };
-		DA5891D81BA9A9FC002B4DB2 /* libcountly-sdk-react-native.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libcountly-sdk-react-native.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		DA5891D81BA9A9FC002B4DB2 /* libcountly-sdk-react-native-bridge.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libcountly-sdk-react-native-bridge.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -128,7 +128,7 @@
 		DA5891D91BA9A9FC002B4DB2 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				DA5891D81BA9A9FC002B4DB2 /* libcountly-sdk-react-native.a */,
+				DA5891D81BA9A9FC002B4DB2 /* libcountly-sdk-react-native-bridge.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -202,7 +202,7 @@
 			);
 			name = "countly-sdk-react-native-bridge";
 			productName = "countly-sdk-react-native-bridge";
-			productReference = DA5891D81BA9A9FC002B4DB2 /* libcountly-sdk-react-native.a */;
+			productReference = DA5891D81BA9A9FC002B4DB2 /* libcountly-sdk-react-native-bridge.a */;
 			productType = "com.apple.product-type.library.static";
 		};
 /* End PBXNativeTarget section */
