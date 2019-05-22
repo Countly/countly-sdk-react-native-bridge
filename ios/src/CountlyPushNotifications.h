@@ -8,7 +8,6 @@
 
 @interface CountlyPushNotifications : NSObject
 
-@property (nonatomic) NSString* token;
 @property (nonatomic) BOOL isEnabledOnInitialConfig;
 @property (nonatomic) BOOL isTestDevice;
 @property (nonatomic) BOOL sendPushTokenAlways;
