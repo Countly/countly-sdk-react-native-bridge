@@ -58,24 +58,21 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
 	@ReactMethod
 	public void init(ReadableArray args){
-        Log.e(Countly.TAG, "Testing In It item");
         String serverUrl = args.getString(0);
         String appKey = args.getString(1);
         String deviceId = args.getString(2);
-        Countly.sharedInstance().setRemoteConfigAutomaticDownload(true, new RemoteConfig.RemoteConfigCallback() {
-            @Override
-            public void callback(String error) {
-                if(error == null) {
-                    // Log.i("AdvertisingIdAdapter", "Advertising ID cannot be determined yet");
-                    Log.e(Countly.TAG, "Automatic remote config download has completed");
-                    // Toast.makeText(activity, "Automatic remote config download has completed", Toast.LENGTH_LONG).show();
-                } else {
-                    Log.e(Countly.TAG, "akslkjslkd aklsjlkasjlkjaskljlaksjflkajslkfjalksjflksajlkfjlaksjl ID cannot be determined yet");
-                    // alert("Automatic remote config download encountered a problem,");
-                    // Toast.makeText(activity, "Automatic remote config download encountered a problem, " + error, Toast.LENGTH_LONG).show();
-                }
-            }
-        });
+        // @hasten, cannot do this unless user specifically request it.
+        // If user request auto download, then do it. otherwise not necessary.
+        // Countly.sharedInstance().setRemoteConfigAutomaticDownload(true, new RemoteConfig.RemoteConfigCallback() {
+        //     @Override
+        //     public void callback(String error) {
+        //         if(error == null) {
+        //             Log.e(Countly.TAG, "Automatic remote config download has completed");
+        //         } else {
+        //             alert("Automatic remote config download encountered a problem,");
+        //         }
+        //     }
+        // });
         if("".equals(deviceId)){
             Countly.sharedInstance()
                 .init(_reactContext, serverUrl, appKey,null,DeviceId.Type.OPEN_UDID, 5, null, "Rate us.", "How would you rate the app?", "Dismiss");
@@ -83,11 +80,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
             Countly.sharedInstance()
                 .init(_reactContext, serverUrl, appKey,deviceId,null, 5, null, "Rate us.", "How would you rate the app?", "Dismiss");
         }
-        // else{
-        //     Countly.sharedInstance()
-        //         .init(_reactContext, serverUrl, appKey,null,DeviceId.Type.ADVERTISING_ID);
-        // }
-	}
+ 	}
 
 	@ReactMethod
 	public void setLoggingEnabled(ReadableArray args){
@@ -273,7 +266,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         }
     }
 
-    
+
 
 	@ReactMethod
 	public void setloggingenabled(){
@@ -429,11 +422,11 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         }else if ("starRating".equals(keyNameFeature)) {
             Countly.sharedInstance().giveConsent(new String[]{Countly.CountlyFeatureNames.starRating});
         }else if ("accessory-devices".equals(keyNameFeature)) {
-            
+
         }else{
 
         }
-        
+
     }
 
     @ReactMethod
@@ -458,7 +451,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         }else if ("starRating".equals(keyNameFeature)) {
             Countly.sharedInstance().removeConsent(new String[]{Countly.CountlyFeatureNames.starRating});
         }else if ("accessory-devices".equals(keyNameFeature)) {
-            
+
         }else{
 
         }
@@ -577,7 +570,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         Countly.sharedInstance().setEventQueueSizeToSend(size);
     }
 
-    
+
 }
 
 

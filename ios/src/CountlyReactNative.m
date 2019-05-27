@@ -39,10 +39,7 @@ RCT_EXPORT_METHOD(init:(NSArray*)arguments)
 
   if (serverurl != nil && [serverurl length] > 0) {
     [[Countly sharedInstance] startWithConfig:config];
-  } else {
   }
-
-
 }
 
 RCT_EXPORT_METHOD(event:(NSArray*)arguments)
@@ -88,10 +85,11 @@ RCT_EXPORT_METHOD(event:(NSArray*)arguments)
       }
       [[Countly sharedInstance] recordEvent:eventName segmentation:dict count:countInt  sum:sumFloat];
     }
-    else{
-    }
-  } else {
+    // else{
+    // }
   }
+  // else {
+  // }
 }
 RCT_EXPORT_METHOD(recordView:(NSArray*)arguments)
 {
@@ -302,14 +300,14 @@ RCT_EXPORT_METHOD(logException:(NSArray*)arguments)
   NSArray *nsException = [execption componentsSeparatedByString:@"\n"];
 
   NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
-  
+
   for(int i=2,il=(int)arguments.count;i<il;i+=2){
       dict[[arguments objectAtIndex:i]] = [arguments objectAtIndex:i+1];
   }
   [dict setObject:nonfatal forKey:@"nonfatal"];
 
   NSException* myException = [NSException exceptionWithName:@"Exception" reason:execption userInfo:dict];
-  
+
   [Countly.sharedInstance recordHandledException:myException withStackTrace: nsException];
 
   // CDVPluginResult* pluginResult = nil;
@@ -571,7 +569,7 @@ RCT_EXPORT_METHOD(getRemoteConfigValueForKey:(NSArray*)arguments:(RCTResponseSen
   }
   else //if value does not exist, you can set your default fallback value
   {
-    value = @"Default Value";   
+    value = @"Default Value";
   }
   NSString* returnString = [NSString stringWithFormat:@"Value is : %@", value];
   NSArray *result = @[returnString];

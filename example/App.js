@@ -8,7 +8,8 @@ import PushNotificationIOS from 'react-native';
 
 class AwesomeProject extends Component {
     constructor(props) {
-        super(props);        
+        super(props);
+        this.config = {};
     };
     onInit(){
       Countly.init("https://try.count.ly","0e8a00e8c01395a0af8be0e55da05a404bb23c3e");
@@ -188,7 +189,9 @@ class AwesomeProject extends Component {
     removeAllConsent(){
       Countly.removeAllConsent();
     };
-
+    getConfig(){
+      return this.config;
+    }
     remoteConfigUpdate(){
       Countly.remoteConfigUpdate();
     };
@@ -202,7 +205,8 @@ class AwesomeProject extends Component {
     };
 
     getRemoteConfigValueForKey(){
-      Countly.getRemoteConfigValueForKey("test1");
+      var myTestValue = Countly.getRemoteConfigValueForKey("test1");
+      console.log(myTestValue);
     };
 
     setLocation(){
@@ -388,7 +392,7 @@ class AwesomeProject extends Component {
             < Button onPress = { function(){Countly.recordView("Dashboard")} } title = "Record View: 'Dashboard'" color = "#e0e0e0"> </Button>
             < Button onPress={this.enableLogging} title='Enable Logging' color='#00b5ad' />
             < Button onPress={this.disableLogging} title='Disable Logging' color='#00b5ad' />
-            
+
 
             < Text style={[{ textAlign: 'center' }]}>Push Notification Start</Text>
             < Button onPress={this.onRegisterDevice} title='Register Device' color='#00b5ad' />
@@ -421,7 +425,7 @@ class AwesomeProject extends Component {
             < Button onPress = { this.showStarRating } title = "Show Star Rating Model" color = "#00b5ad"> </Button>
             < Button onPress = { this.showFeedbackPopup } title = "Show FeedBack Model" color = "#00b5ad"> </Button>
 
-            
+
             <Text style={[{textAlign: 'center'}]}>Other Methods End</Text>
             <Text style={[{textAlign: 'center'}]}>Crash Event start</Text>
             < Button onPress = { this.enableCrashReporting } title = "Enable Crash Reporting" color = "#00b5ad"> </Button>
@@ -430,7 +434,7 @@ class AwesomeProject extends Component {
             <Text style={[{textAlign: 'center'}]}>Crash Event End</Text>
 
             < Button onPress = { this.eventSendThreshold } title = "Set Event Threshold" color = "#00b5ad"> </Button>
-            
+
 
           </ScrollView>
         );

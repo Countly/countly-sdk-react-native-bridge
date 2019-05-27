@@ -66,6 +66,9 @@ Countly.sendEvent = function(options){
     else{
         args.push("1");
     }
+    // @hasten, make sure eventSum is float value, otherwise it crashes in iOS
+    // eventSum and location lat, and lng
+    // check method setLocation for both android and iOS float test required.
     if(options.eventSum){
         args.push(options.eventSum.toString());
     }
@@ -120,7 +123,6 @@ Countly.disableLogging = function(){
 // countly deviceready for testing purpose
 Countly.deviceready = function(){
     Countly.ready = true;
-    //testing
 }
 
 // countly dummy success and error event
@@ -185,14 +187,16 @@ Countly.addCrashLog = function(crashLog){
     CountlyReactNative.addCrashLog([crashLog]);
 }
 
+// @hasten, you are converting string to array, which we talked not to do it.
+// Instead send the entire log as in.
 Countly.logException = function(exception, nonfatal, segments){
-    var exceptionArray = exception.split('\n');
-    var exceptionString = "";
-    for(var i=0,il=exceptionArray.length;i<il;i++){
-        exceptionString += "" +exceptionArray[i] +"\n";
-    }
+    // var exceptionArray = exception.split('\n');
+    // var exceptionString = "";
+    // for(var i=0,il=exceptionArray.length;i<il;i++){
+    //     exceptionString += "" +exceptionArray[i] +"\n";
+    // }
     var args = [];
-    args.push(exceptionString || "");
+    args.push(exception || "");
     args.push(nonfatal || false);
     for(var key in segments){
         args.push(key);
@@ -239,6 +243,7 @@ Countly.endEvent = function(options){
         options.eventCount = "1";
     args.push(options.eventCount.toString());
 
+    // @hasten event sum check float value, 0 is not float.
     if(!options.eventSum)
         options.eventSum = "0";
     args.push(options.eventSum.toString());
@@ -340,10 +345,11 @@ Countly.updateRemoteConfigExceptKeys = function(keyName){
 }
 
 Countly.getRemoteConfigValueForKey = function(keyName){
+    var item = "";
     CountlyReactNative.getRemoteConfigValueForKey([keyName.toString() || ""], (stringItem) => {
-        alert(stringItem);
+        item = stringItem;
     });
-
+    return item;
 }
 
 Countly.setStarRatingDialogTexts = function(keyName){
@@ -357,8 +363,5 @@ Countly.showStarRating = function(keyName){
 Countly.setEventSendThreshold = function(size){
     CountlyReactNative.setEventSendThreshold([size.toString() || ""]);
 }
-
-
-
 
 export default Countly;
