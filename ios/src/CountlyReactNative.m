@@ -104,12 +104,17 @@ RCT_EXPORT_METHOD(recordView:(NSArray*)arguments)
 
 RCT_EXPORT_METHOD(setViewTracking:(NSArray*)arguments)
 {
-  
+
 }
 
 RCT_EXPORT_METHOD(setloggingenabled:(NSArray*)arguments)
 {
-  config.enableDebug = YES;
+  Boolean* boolean = [arguments objectAtIndex:0];
+  if(boolean){
+    config.enableDebug = YES;
+  }else{
+    config.enableDebug = NO;
+  }
 }
 
 RCT_EXPORT_METHOD(setuserdata:(NSArray*)arguments)
@@ -120,7 +125,7 @@ RCT_EXPORT_METHOD(setuserdata:(NSArray*)arguments)
   NSString* org = [arguments objectAtIndex:3];
   NSString* phone = [arguments objectAtIndex:4];
   NSString* picture = [arguments objectAtIndex:5];
-  NSString* picturePath = [arguments objectAtIndex:6];
+  NSString* pictureLocalPath = [arguments objectAtIndex:6];
   NSString* gender = [arguments objectAtIndex:7];
   NSString* byear = [arguments objectAtIndex:8];
 
@@ -130,6 +135,7 @@ RCT_EXPORT_METHOD(setuserdata:(NSArray*)arguments)
   Countly.user.organization = org;
   Countly.user.phone = phone;
   Countly.user.pictureURL = picture;
+  Countly.user.pictureLocalPath = pictureLocalPath;
   Countly.user.gender = gender;
   Countly.user.birthYear = @([byear integerValue]);
   [Countly.user save];
@@ -225,7 +231,7 @@ RCT_EXPORT_METHOD(endEvent:(NSArray*)arguments)
     int sumInt = [sumString intValue];
 
     NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
-    for(int i=3,il=(int)arguments.count;i<il;i+=2){
+    for(int i=4,il=(int)arguments.count;i<il;i+=2){
       dict[[arguments objectAtIndex:i]] = [arguments objectAtIndex:i+1];
     }
 
@@ -395,10 +401,8 @@ RCT_EXPORT_METHOD(setRequiresConsent:(NSArray*)arguments)
 {
   if (config == nil){
     config = CountlyConfig.new;
-    config.requiresConsent = YES;
-  }else{
-    config.requiresConsent = YES;
   }
+  config.requiresConsent = YES;
 }
 
 RCT_EXPORT_METHOD(giveConsent:(NSArray*)arguments)
@@ -540,12 +544,9 @@ RCT_EXPORT_METHOD(getRemoteConfigValueForKey:(NSArray*)arguments:(RCTResponseSen
 {
   NSString* keyName = [arguments objectAtIndex:0];
   id value = [Countly.sharedInstance remoteConfigValueForKey:keyName];
-  if (value) // if value exists, you can use it as you see fit
-  {
-      // NSLog(@"Value %@", [value description]);
+  if (value){
   }
-  else //if value does not exist, you can set your default fallback value
-  {
+  else{
     value = @"";
   }
   NSString* returnString = [NSString stringWithFormat:@"%@", value];
@@ -556,8 +557,7 @@ RCT_EXPORT_METHOD(getRemoteConfigValueForKey:(NSArray*)arguments:(RCTResponseSen
 RCT_EXPORT_METHOD(showStarRating:(NSArray*)arguments)
 {
   NSInteger* rating = 5;
-  [Countly.sharedInstance askForStarRating:^(NSInteger rating)
-  {
+  [Countly.sharedInstance askForStarRating:^(NSInteger rating){
   }];
 }
 

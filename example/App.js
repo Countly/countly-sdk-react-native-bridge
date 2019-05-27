@@ -202,9 +202,7 @@ class AwesomeProject extends Component {
     removeAllConsent(){
       Countly.removeAllConsent();
     };
-    getConfig(){
-      return this.config;
-    }
+
     remoteConfigUpdate(){
       Countly.remoteConfigUpdate(function(data){
         console.log(data);
