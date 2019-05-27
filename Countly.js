@@ -24,13 +24,18 @@ if (Platform.OS.match("android")) {
 }
 
 // countly initialization
-Countly.init = function(serverUrl,appKey, deviceId){
+Countly.init = function(serverUrl,appKey, deviceId, starRatingLimit, titleText, messageText, buttonText){
     Countly.serverUrl = serverUrl;
     Countly.appKey = appKey;
     var args = [];
     args.push(serverUrl || "");
     args.push(appKey || "");
     args.push(deviceId || "");
+    args.push(starRatingLimit || "5");
+    args.push(titleText || "Rate us.");
+    args.push(messageText || "How would you rate the app?");
+    args.push(buttonText || "Dismiss");
+
     CountlyReactNative.init(args);
 }
 Countly.isInitialized = function(){
@@ -66,11 +71,16 @@ Countly.sendEvent = function(options){
     else{
         args.push("1");
     }
-    // @hasten, make sure eventSum is float value, otherwise it crashes in iOS
-    // eventSum and location lat, and lng
-    // check method setLocation for both android and iOS float test required.
+
     if(options.eventSum){
-        args.push(options.eventSum.toString());
+        var eventSumTemp = options.eventSum.toString();
+        if(eventSumTemp.indexOf(".") == -1){
+            eventSumTemp = parseFloat(eventSumTemp).toFixed(2);
+            args.push(eventSumTemp);
+        }else{
+            args.push(eventSumTemp);
+        }
+        
     }
 
     if(options.segments)
@@ -120,11 +130,6 @@ Countly.disableLogging = function(){
     }
 }
 
-// countly deviceready for testing purpose
-Countly.deviceready = function(){
-    Countly.ready = true;
-}
-
 // countly dummy success and error event
 Countly.onSuccess = function(result){
     // alert(result);
@@ -138,20 +143,23 @@ Countly.demo = function(){
 
 }
 
-Countly.setOptionalParametersForInitialization = function(options){
-    var args = [];
-    args.push(options.city || "");
-    args.push(options.country || "");
-    args.push(String(options.latitude) || "0.0");
-    args.push(String(options.longitude) || "0.0");
-    args.push(String(options.ipAddress) || "0.0.0.0");
-    CountlyReactNative.setLocation(args);
-}
 Countly.setLocation = function(countryCode, city, location, ipAddress){
     var args = [];
     args.push(countryCode || "");
     args.push(city || "");
-    args.push(location || "0,0");
+    var locationArray = location.split(",")
+    var newStringLocation = "";
+    if(locationArray[0].indexOf(".") == -1){
+        newStringLocation = newStringLocation+""+parseFloat(locationArray[0]).toFixed(2);
+    }else{
+        newStringLocation = newStringLocation+""+locationArray[0]
+    }
+    if(locationArray[1].indexOf(".") == -1){
+        newStringLocation = newStringLocation+","+ parseFloat(locationArray[1]).toFixed(2);
+    }else{
+        newStringLocation = newStringLocation+","+locationArray[1]
+    }
+    args.push(newStringLocation || "0,0");
     args.push(ipAddress || "0.0.0.0");
     CountlyReactNative.setLocation(args);
 }
@@ -187,16 +195,14 @@ Countly.addCrashLog = function(crashLog){
     CountlyReactNative.addCrashLog([crashLog]);
 }
 
-// @hasten, you are converting string to array, which we talked not to do it.
-// Instead send the entire log as in.
 Countly.logException = function(exception, nonfatal, segments){
-    // var exceptionArray = exception.split('\n');
-    // var exceptionString = "";
-    // for(var i=0,il=exceptionArray.length;i<il;i++){
-    //     exceptionString += "" +exceptionArray[i] +"\n";
-    // }
+    var exceptionArray = exception.split('\n');
+    var exceptionString = "";
+    for(var i=0,il=exceptionArray.length;i<il;i++){
+        exceptionString += "" +exceptionArray[i] +"\n";
+    }
     var args = [];
-    args.push(exception || "");
+    args.push(exceptionString || "");
     args.push(nonfatal || false);
     for(var key in segments){
         args.push(key);
@@ -243,10 +249,16 @@ Countly.endEvent = function(options){
         options.eventCount = "1";
     args.push(options.eventCount.toString());
 
-    // @hasten event sum check float value, 0 is not float.
-    if(!options.eventSum)
-        options.eventSum = "0";
-    args.push(options.eventSum.toString());
+    if(options.eventSum){
+        var eventSumTemp = options.eventSum.toString();
+        if(eventSumTemp.indexOf(".") == -1){
+            eventSumTemp = parseFloat(eventSumTemp).toFixed(2);
+            args.push(eventSumTemp);
+        }else{
+            args.push(eventSumTemp);
+        }
+        
+    }
 
     if(options.segments)
         segments = options.segments;
@@ -269,7 +281,6 @@ Countly.setUserData = function(options){
     args.push(options.picturePath || "");
     args.push(options.gender || "");
     args.push(options.byear || 0);
-
     CountlyReactNative.setuserdata(args);
 }
 
@@ -344,16 +355,10 @@ Countly.updateRemoteConfigExceptKeys = function(keyName){
     });
 }
 
-Countly.getRemoteConfigValueForKey = function(keyName){
-    var item = "";
+Countly.getRemoteConfigValueForKey = function(keyName,callBack){
     CountlyReactNative.getRemoteConfigValueForKey([keyName.toString() || ""], (stringItem) => {
-        item = stringItem;
+        callBack(stringItem);
     });
-    return item;
-}
-
-Countly.setStarRatingDialogTexts = function(keyName){
-    CountlyReactNative.setStarRatingDialogTexts([]);
 }
 
 Countly.showStarRating = function(keyName){

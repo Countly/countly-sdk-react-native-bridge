@@ -61,25 +61,15 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         String serverUrl = args.getString(0);
         String appKey = args.getString(1);
         String deviceId = args.getString(2);
-        // @hasten, cannot do this unless user specifically request it.
-        // If user request auto download, then do it. otherwise not necessary.
-        // Countly.sharedInstance().setRemoteConfigAutomaticDownload(true, new RemoteConfig.RemoteConfigCallback() {
-        //     @Override
-        //     public void callback(String error) {
-        //         if(error == null) {
-        //             Log.e(Countly.TAG, "Automatic remote config download has completed");
-        //         } else {
-        //             alert("Automatic remote config download encountered a problem,");
-        //         }
-        //     }
-        // });
+        String titleText = args.getString(4);
+        String messageText = args.getString(5);
+        String buttonText = args.getString(6);
+        int starRatingLimit = Integer.parseInt(args.getString(3));
         if("".equals(deviceId)){
-            Countly.sharedInstance()
-                .init(_reactContext, serverUrl, appKey,null,DeviceId.Type.OPEN_UDID, 5, null, "Rate us.", "How would you rate the app?", "Dismiss");
-        }else if(args.size() == 3){
-            Countly.sharedInstance()
-                .init(_reactContext, serverUrl, appKey,deviceId,null, 5, null, "Rate us.", "How would you rate the app?", "Dismiss");
+            deviceId = null;
         }
+        Countly.sharedInstance()
+                .init(_reactContext, serverUrl, appKey, deviceId, DeviceId.Type.OPEN_UDID, starRatingLimit, null, titleText, messageText, buttonText);
  	}
 
 	@ReactMethod
@@ -155,7 +145,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void addCrashLog(ReadableArray args){
-        // Log.e(Countly.TAG, "enableCrashReporting");
         String record = args.getString(0);
         Countly.sharedInstance().addCrashLog(record);
     }
@@ -219,7 +208,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
             Countly.sharedInstance().recordEvent(eventName, segmentation, eventCount,eventSum);
         }
         else{
-            // nothing to do here
         }
     }
 
@@ -539,14 +527,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     public void getRemoteConfigValueForKey(ReadableArray args, final Callback myCallback){
         String keyName = args.getString(0);
         Object value_1 = Countly.sharedInstance().getRemoteConfigValueForKey(keyName);
-        String resultString = ("value of : " + keyName +" is "+ value_1 + "").toString();
-        Log.e(Countly.TAG, resultString);
+        String resultString = (value_1).toString();
         myCallback.invoke(resultString);
-    }
-
-    @ReactMethod
-    public void setStarRatingDialogTexts(ReadableArray args){
-        Countly.sharedInstance().setStarRatingDialogTexts("Custom title", "Custom message", "Custom dismiss button text");
     }
 
     @ReactMethod

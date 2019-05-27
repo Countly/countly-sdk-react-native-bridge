@@ -12,7 +12,7 @@ class AwesomeProject extends Component {
         this.config = {};
     };
     onInit(){
-      Countly.init("https://try.count.ly","0e8a00e8c01395a0af8be0e55da05a404bb23c3e");
+      Countly.init("https://try.count.ly","0e8a00e8c01395a0af8be0e55da05a404bb23c3e","","5", "Rate us.", "How would you rate the app?", "Dismiss");
       Countly.enableLogging();
     }
     onStart(){
@@ -136,6 +136,19 @@ class AwesomeProject extends Component {
       Countly.userData.setOnce("keyName", 200);
     };
 
+    userData_saveMax(){
+      Countly.userData.pushUniqueValue("type", "morning");
+    };
+
+    userData_saveMin(){
+      Countly.userData.pushValue("type", "morning");
+    };
+
+    userData_setOnce(){
+      Countly.userData.pullValue("type", "morning");
+    };
+
+
     onRegisterDevice(){
       // Countly.initMessaging('403185924621', Countly.TEST);
     }
@@ -205,8 +218,10 @@ class AwesomeProject extends Component {
     };
 
     getRemoteConfigValueForKey(){
-      var myTestValue = Countly.getRemoteConfigValueForKey("test1");
-      console.log(myTestValue);
+      Countly.getRemoteConfigValueForKey("test1",function(data){
+        console.log(data);
+      });
+      
     };
 
     setLocation(){
@@ -411,7 +426,6 @@ class AwesomeProject extends Component {
             < Button onPress = { this.giveAllConsent } title = "Start all Consent" color = "#00b5ad"> </Button>
             < Button onPress = { this.removeAllConsent } title = "Remove all Consent" color = "#00b5ad"> </Button>
 
-            < Button onPress = { this.setOptionalParametersForInitialization } title = "Set Optional Parameters For Initialization" color = "#00b5ad"> </Button>
             < Button onPress = { this.setLocation } title = "Set Location" color = "#00b5ad"> </Button>
             < Button onPress = { this.disableLocation } title = "Disable Location" color = "#00b5ad"> </Button>
 

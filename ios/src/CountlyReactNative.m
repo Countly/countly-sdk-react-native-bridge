@@ -21,6 +21,12 @@ RCT_EXPORT_METHOD(init:(NSArray*)arguments)
   NSString* serverurl = [arguments objectAtIndex:0];
   NSString* appkey = [arguments objectAtIndex:1];
   NSString* deviceID = [arguments objectAtIndex:2];
+  NSString* titleText = [arguments objectAtIndex:3];
+  NSString* messageText = [arguments objectAtIndex:4];
+  NSString* buttonText = [arguments objectAtIndex:5];
+  NSString* starRatingLimitString = [arguments objectAtIndex:6];
+  int starRatingLimit = [starRatingLimitString intValue];
+
 
   if (config == nil){
     config = CountlyConfig.new;
@@ -31,15 +37,18 @@ RCT_EXPORT_METHOD(init:(NSArray*)arguments)
   config.appKey = appkey;
   config.host = serverurl;
   config.enableRemoteConfig = YES;
-  config.starRatingSessionCount = 5;
+  config.starRatingSessionCount = starRatingLimit;
   config.starRatingDisableAskingForEachAppVersion = YES;
-  config.starRatingMessage = @"Please rate our app?";
+  config.starRatingMessage = messageText;
 
 
 
   if (serverurl != nil && [serverurl length] > 0) {
     [[Countly sharedInstance] startWithConfig:config];
+  } else {
   }
+
+
 }
 
 RCT_EXPORT_METHOD(event:(NSArray*)arguments)
@@ -96,10 +105,15 @@ RCT_EXPORT_METHOD(recordView:(NSArray*)arguments)
   NSString* recordView = [arguments objectAtIndex:0];
   [Countly.sharedInstance reportView:recordView];
 }
+
+RCT_EXPORT_METHOD(setViewTracking:(NSArray*)arguments)
+{
+  
+}
+
 RCT_EXPORT_METHOD(setloggingenabled:(NSArray*)arguments)
 {
-
-
+  config.enableDebug = YES;
 }
 
 RCT_EXPORT_METHOD(setuserdata:(NSArray*)arguments)
@@ -133,33 +147,20 @@ RCT_EXPORT_METHOD(onregistrationid:(NSArray*)arguments)
   int mode = [messagingMode intValue];
   NSData *tokenByte = [token dataUsingEncoding:NSUTF8StringEncoding];
   if(mode == 1){
-    // [[CountlyConnectionQueue sharedInstance] setStartedWithTest:YES];
+    [[CountlyConnectionQueue sharedInstance] setStartedWithTest:YES];
   }
   [CountlyConnectionManager.sharedInstance sendPushToken:token];
-   // CountlyPushNotifications.sharedInstance.token = token;
-   // [CountlyPushNotifications.sharedInstance sendToken];
-  // [Countly.sharedInstance didRegisterForRemoteNotificationsWithDeviceToken:tokenByte];
-
-  // [[CountlyConnectionQueue sharedInstance] tokenSession:token];
-
-
-
 }
 
 RCT_EXPORT_METHOD(start)
 {
-  // [Countly.sharedInstance resume];
-
-
+  [Countly.sharedInstance resume];
 
 }
 
 RCT_EXPORT_METHOD(stop)
 {
-  // [Countly.sharedInstance suspend];
-
-
-
+  [Countly.sharedInstance suspend];
 }
 
 RCT_EXPORT_METHOD(changeDeviceId:(NSArray*)arguments)
@@ -569,19 +570,11 @@ RCT_EXPORT_METHOD(getRemoteConfigValueForKey:(NSArray*)arguments:(RCTResponseSen
   }
   else //if value does not exist, you can set your default fallback value
   {
-    value = @"Default Value";
+    value = @"";
   }
-  NSString* returnString = [NSString stringWithFormat:@"Value is : %@", value];
+  NSString* returnString = [NSString stringWithFormat:@"%@", value];
   NSArray *result = @[returnString];
   callback(@[result]);
-}
-
-RCT_EXPORT_METHOD(setStarRatingDialogTexts:(NSArray*)arguments)
-{
-  if (config == nil){
-    config = CountlyConfig.new;
-  }
-  config.starRatingMessage = @"Please rate our app custom?";
 }
 
 RCT_EXPORT_METHOD(showStarRating:(NSArray*)arguments)
@@ -589,7 +582,7 @@ RCT_EXPORT_METHOD(showStarRating:(NSArray*)arguments)
   NSInteger* rating = 5;
   [Countly.sharedInstance askForStarRating:^(NSInteger rating)
   {
-      NSLog(@"rating %li",(long)rating);
+      // NSLog(@"rating %li",(long)rating);
   }];
 }
 
@@ -598,10 +591,10 @@ RCT_EXPORT_METHOD(showFeedbackPopup:(NSArray*)arguments)
   NSString* FEEDBACK_WIDGET_ID = [arguments objectAtIndex:0];
   [Countly.sharedInstance presentFeedbackWidgetWithID:FEEDBACK_WIDGET_ID completionHandler:^(NSError* error)
   {
-      if (error)
-          NSLog(@"Feedback widget presentation failed: \n%@\n%@", error.localizedDescription, error.userInfo);
-      else
-          NSLog(@"Feedback widget presented successfully");
+      // if (error)
+      //     NSLog(@"Feedback widget presentation failed: \n%@\n%@", error.localizedDescription, error.userInfo);
+      // else
+      //     NSLog(@"Feedback widget presented successfully");
   }];
 }
 
