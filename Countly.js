@@ -130,7 +130,6 @@ Countly.disableLogging = function(){
     }
 }
 
-// countly dummy success and error event
 Countly.onSuccess = function(result){
     // alert(result);
 }
@@ -257,7 +256,6 @@ Countly.endEvent = function(options){
         }else{
             args.push(eventSumTemp);
         }
-        
     }
 
     if(options.segments)
@@ -337,21 +335,21 @@ Countly.removeAllConsent = function(keyName){
     CountlyReactNative.removeAllConsent([]);
 }
 
-Countly.remoteConfigUpdate = function(){
+Countly.remoteConfigUpdate = function(callBack){
     var stringItem = CountlyReactNative.remoteConfigUpdate([], (stringItem) => {
-        alert(stringItem);
+        callBack(stringItem);
     });
 }
 
-Countly.updateRemoteConfigForKeysOnly = function(keyName){
+Countly.updateRemoteConfigForKeysOnly = function(keyName,callBack){
     CountlyReactNative.updateRemoteConfigForKeysOnly([keyName.toString() || ""], (stringItem) => {
-        alert(stringItem);
+        callBack(stringItem);
     });
 }
 
-Countly.updateRemoteConfigExceptKeys = function(keyName){
+Countly.updateRemoteConfigExceptKeys = function(keyName,callBack){
     CountlyReactNative.updateRemoteConfigExceptKeys([keyName.toString() || ""], (stringItem) => {
-        alert(stringItem);
+        callBack(stringItem);
     });
 }
 

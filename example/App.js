@@ -206,22 +206,27 @@ class AwesomeProject extends Component {
       return this.config;
     }
     remoteConfigUpdate(){
-      Countly.remoteConfigUpdate();
+      Countly.remoteConfigUpdate(function(data){
+        console.log(data);
+      });
     };
 
     updateRemoteConfigForKeysOnly(){
-      Countly.updateRemoteConfigForKeysOnly("test1");
+      Countly.updateRemoteConfigForKeysOnly("test1",function(data){
+        console.log(data);
+      });
     };
 
     updateRemoteConfigExceptKeys(){
-      Countly.updateRemoteConfigExceptKeys("test1");
+      Countly.updateRemoteConfigExceptKeys("test1",function(data){
+        console.log(data);
+      });
     };
 
     getRemoteConfigValueForKey(){
       Countly.getRemoteConfigValueForKey("test1",function(data){
         console.log(data);
       });
-      
     };
 
     setLocation(){
