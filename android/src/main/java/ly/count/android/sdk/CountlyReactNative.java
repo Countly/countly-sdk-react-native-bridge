@@ -130,6 +130,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         if("0.0.0.0".equals(ipAddress)){
             ipAddress = null;
         }
+        if("0.0,0.0".equals(location)){
+            location = null;
+        }
         Countly.sharedInstance().setLocation(countryCode, city, location, ipAddress);
     }
 
@@ -256,10 +259,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
 
 
-	@ReactMethod
-	public void setloggingenabled(){
-		Countly.sharedInstance().setLoggingEnabled(true);
-	}
 
 	@ReactMethod
 	public void setuserdata(ReadableArray args){
@@ -285,12 +284,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
         Countly.CountlyMessagingMode mode = null;
         if(messagingMode == 0){
-            mode = Countly.CountlyMessagingMode.TEST;
-        }
-        else{
             mode = Countly.CountlyMessagingMode.PRODUCTION;
         }
-        Countly.sharedInstance().onRegistrationId(registrationId,mode);
+        else{
+            mode = Countly.CountlyMessagingMode.TEST;
+        }
+        Countly.sharedInstance().onRegistrationId(registrationId, mode);
 	}
 
 	@ReactMethod
@@ -551,7 +550,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         int size = Integer.parseInt(args.getString(0));
         Countly.sharedInstance().setEventQueueSizeToSend(size);
     }
-
 
 }
 

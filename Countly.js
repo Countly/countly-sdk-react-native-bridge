@@ -140,6 +140,9 @@ Countly.setLocation = function(countryCode, city, location, ipAddress){
     var args = [];
     args.push(countryCode || "");
     args.push(city || "");
+    if(!location){
+        location = "0.0,0.0";
+    }
     var locationArray = location.split(",")
     var newStringLocation = "";
     if(locationArray[0].indexOf(".") == -1){
@@ -152,7 +155,7 @@ Countly.setLocation = function(countryCode, city, location, ipAddress){
     }else{
         newStringLocation = newStringLocation+","+locationArray[1]
     }
-    args.push(newStringLocation || "0,0");
+    args.push(newStringLocation);
     args.push(ipAddress || "0.0.0.0");
     CountlyReactNative.setLocation(args);
 }
