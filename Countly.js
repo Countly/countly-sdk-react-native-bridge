@@ -1,7 +1,7 @@
 /**
- * Countly SKD React Native
- * https://github.com/facebook/react-native
- * @flow
+ * Countly SDK React Native Bridge
+ * https://github.com/Countly/countly-sdk-react-native-bridge
+ * @Countly
  */
 
 import {
@@ -16,7 +16,6 @@ const CountlyReactNative = NativeModules.CountlyReactNative;
 const Countly = {};
 Countly.serverUrl = "";
 Countly.appKey = "";
-Countly.ready = false;
 
 Countly.messagingMode = {"DEVELOPMENT":1,"PRODUCTION":0, "ADHOC": 2};
 if (Platform.OS.match("android")) {
@@ -73,14 +72,13 @@ Countly.sendEvent = function(options){
     }
 
     if(options.eventSum){
-        var eventSumTemp = options.eventSum.toString();
-        if(eventSumTemp.indexOf(".") == -1){
-            eventSumTemp = parseFloat(eventSumTemp).toFixed(2);
-            args.push(eventSumTemp);
+        options.eventSum = options.eventSum.toString();
+        if(options.eventSum.indexOf(".") == -1){
+            options.eventSum = parseFloat(options.eventSum).toFixed(2);
+            args.push(options.eventSum);
         }else{
-            args.push(eventSumTemp);
+            args.push(options.eventSum);
         }
-        
     }
 
     if(options.segments)
@@ -100,7 +98,7 @@ Countly.setViewTracking = function(boolean){
     CountlyReactNative.setViewTracking([boolean || "false"]);
 }
 
-Countly.sendPushToken = function(options, successCallback, failureCallback){
+Countly.sendPushToken = function(options){
     var args = [];
     args.push(options.token || "");
     args.push(options.messagingMode || "");
@@ -119,15 +117,11 @@ Countly.stop = function(){
 }
 
 Countly.enableLogging = function(){
-    if (Platform.OS.match("android")) {
-        CountlyReactNative.setLoggingEnabled([true]);
-    }
+    CountlyReactNative.setLoggingEnabled([true]);
 }
 
 Countly.disableLogging = function(){
-    if (Platform.OS.match("android")) {
-        CountlyReactNative.setLoggingEnabled([false]);
-    }
+    CountlyReactNative.setLoggingEnabled([false]);
 }
 
 Countly.onSuccess = function(result){
@@ -179,12 +173,12 @@ Countly.userLoggedIn = function(deviceId){
     args.push(deviceId || "");
     CountlyReactNative.userLoggedIn(args);
 }
-Countly.userLoggedOut = function(deviceId){
+Countly.userLoggedOut = function(){
     CountlyReactNative.userLoggedOut([]);
 }
-Countly.setHttpPostForced = function(bool){
+Countly.setHttpPostForced = function(boolean){
     var args = [];
-    args.push(bool?"1":"0");
+    args.push(boolean?"1":"0");
     CountlyReactNative.setHttpPostForced(args);
 }
 Countly.enableCrashReporting = function(){
@@ -327,39 +321,39 @@ Countly.removeConsent = function(keyName){
     CountlyReactNative.removeConsent([keyName.toString() || ""]);
 }
 
-Countly.giveAllConsent = function(keyName){
+Countly.giveAllConsent = function(){
     CountlyReactNative.giveAllConsent([]);
 }
 
-Countly.removeAllConsent = function(keyName){
+Countly.removeAllConsent = function(){
     CountlyReactNative.removeAllConsent([]);
 }
 
-Countly.remoteConfigUpdate = function(callBack){
-    var stringItem = CountlyReactNative.remoteConfigUpdate([], (stringItem) => {
-        callBack(stringItem);
+Countly.remoteConfigUpdate = function(callback){
+    CountlyReactNative.remoteConfigUpdate([], (stringItem) => {
+        callback(stringItem);
     });
 }
 
-Countly.updateRemoteConfigForKeysOnly = function(keyName,callBack){
+Countly.updateRemoteConfigForKeysOnly = function(keyName, callback){
     CountlyReactNative.updateRemoteConfigForKeysOnly([keyName.toString() || ""], (stringItem) => {
-        callBack(stringItem);
+        callback(stringItem);
     });
 }
 
-Countly.updateRemoteConfigExceptKeys = function(keyName,callBack){
+Countly.updateRemoteConfigExceptKeys = function(keyName, callback){
     CountlyReactNative.updateRemoteConfigExceptKeys([keyName.toString() || ""], (stringItem) => {
-        callBack(stringItem);
+        callback(stringItem);
     });
 }
 
-Countly.getRemoteConfigValueForKey = function(keyName,callBack){
+Countly.getRemoteConfigValueForKey = function(keyName, callback){
     CountlyReactNative.getRemoteConfigValueForKey([keyName.toString() || ""], (stringItem) => {
-        callBack(stringItem);
+        callback(stringItem);
     });
 }
 
-Countly.showStarRating = function(keyName){
+Countly.showStarRating = function(){
     CountlyReactNative.showStarRating([]);
 }
 
