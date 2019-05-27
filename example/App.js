@@ -440,7 +440,6 @@ class AwesomeProject extends Component {
             < Button onPress = { this.getStarRating } title = "Check Remote Config value" color = "#00b5ad"> </Button>
             < Button onPress = { this.getRemoteConfigValueForKey } title = "Get config value" color = "#00b5ad"> </Button>
 
-            < Button onPress = { this.setStarRatingDialogTexts } title = "designated Star Rating" color = "#00b5ad"> </Button>
             < Button onPress = { this.showStarRating } title = "Show Star Rating Model" color = "#00b5ad"> </Button>
             < Button onPress = { this.showFeedbackPopup } title = "Show FeedBack Model" color = "#00b5ad"> </Button>
 
