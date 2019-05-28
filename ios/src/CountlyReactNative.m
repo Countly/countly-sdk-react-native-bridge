@@ -21,11 +21,11 @@ RCT_EXPORT_METHOD(init:(NSArray*)arguments)
   NSString* serverurl = [arguments objectAtIndex:0];
   NSString* appkey = [arguments objectAtIndex:1];
   NSString* deviceID = [arguments objectAtIndex:2];
-  NSString* titleText = [arguments objectAtIndex:4];
-  NSString* messageText = [arguments objectAtIndex:5];
-  NSString* buttonText = [arguments objectAtIndex:6];
-  NSString* starRatingLimitString = [arguments objectAtIndex:3];
-  int starRatingLimit = [starRatingLimitString intValue];
+  NSString* ratingTitle = [arguments objectAtIndex:4];
+  NSString* ratingMessage = [arguments objectAtIndex:5];
+  NSString* ratingButton = [arguments objectAtIndex:6];
+  NSString* ratingLimitString = [arguments objectAtIndex:3];
+  int ratingLimit = [starRatingLimitString intValue];
 
 
   if (config == nil){
@@ -37,9 +37,9 @@ RCT_EXPORT_METHOD(init:(NSArray*)arguments)
   config.appKey = appkey;
   config.host = serverurl;
   config.enableRemoteConfig = YES;
-  config.starRatingSessionCount = starRatingLimit;
+  config.starRatingSessionCount = ratingLimit;
   config.starRatingDisableAskingForEachAppVersion = YES;
-  config.starRatingMessage = messageText;
+  config.starRatingMessage = ratingMessage;
 
 
 
@@ -260,9 +260,13 @@ RCT_EXPORT_METHOD(setLocation:(NSArray*)arguments)
 
     [Countly.sharedInstance recordLocation:(CLLocationCoordinate2D){latitudeDouble,longitudeDouble}];
   }
+  [Countly.sharedInstance recordCity:city andISOCountryCode:countryCode];   //@nicolson Validation for city and countryCode is done on Countly js
+  if ([IP  isEqual: @"0.0.0.0"]){
 
-  [Countly.sharedInstance recordCity:city andISOCountryCode:countryCode];
-  [Countly.sharedInstance recordIP:IP];
+  }else{
+    [Countly.sharedInstance recordIP:IP];
+  }
+  
 
 }
 
@@ -557,6 +561,11 @@ RCT_EXPORT_METHOD(getRemoteConfigValueForKey:(NSArray*)arguments:(RCTResponseSen
 RCT_EXPORT_METHOD(showStarRating:(NSArray*)arguments)
 {
   NSInteger* rating = 5;
+  if (config != nil){
+    if(config.starRatingSessionCount){
+      rating = config.starRatingSessionCount;
+    }
+  }
   [Countly.sharedInstance askForStarRating:^(NSInteger rating){
   }];
 }

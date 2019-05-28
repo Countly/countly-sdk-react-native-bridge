@@ -61,15 +61,15 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         String serverUrl = args.getString(0);
         String appKey = args.getString(1);
         String deviceId = args.getString(2);
-        String titleText = args.getString(4);
-        String messageText = args.getString(5);
-        String buttonText = args.getString(6);
-        int starRatingLimit = Integer.parseInt(args.getString(3));
+        String ratingTitle = args.getString(4);
+        String ratingMessage = args.getString(5);
+        String ratingButton = args.getString(6);
+        int ratingLimit = Integer.parseInt(args.getString(3));
         if("".equals(deviceId)){
             deviceId = null;
         }
         Countly.sharedInstance()
-                .init(_reactContext, serverUrl, appKey, deviceId, DeviceId.Type.OPEN_UDID, starRatingLimit, null, titleText, messageText, buttonText);
+                .init(_reactContext, serverUrl, appKey, deviceId, DeviceId.Type.OPEN_UDID, ratingLimit, null, ratingTitle, ratingMessage, ratingButton);
  	}
 
 	@ReactMethod
@@ -539,9 +539,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void showFeedbackPopup(ReadableArray args){
         String widgetId = args.getString(0);
-        String closeButtonText = args.getString(1);
+        String closeFeedBackButton = args.getString(1);
         Activity activity = getCurrentActivity();
-        Countly.sharedInstance().showFeedbackPopup( widgetId, closeButtonText, activity, null);
+        Countly.sharedInstance().showFeedbackPopup( widgetId, closeFeedBackButton, activity, null);
     }
 
     @ReactMethod
