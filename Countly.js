@@ -101,8 +101,7 @@ Countly.setViewTracking = function(boolean){
 Countly.sendPushToken = function(options){
     var args = [];
     args.push(options.token || "");
-    args.push(options.messagingMode || "");
-    args.push(options.projectId || "");
+    args.push((options.messagingMode || "").toString());
     CountlyReactNative.onregistrationid(args);
 }
 

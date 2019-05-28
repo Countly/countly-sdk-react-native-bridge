@@ -4,7 +4,7 @@ import Countly from 'countly-sdk-react-native-bridge';
 import PushNotificationIOS from 'react-native';
 // import StackTrace from '/Countly.StackTrace.js';
 // import stacktrace from 'react-native-stacktrace';
-// var PushNotification = require('react-native-push-notification');
+var PushNotification = require('react-native-push-notification');
 
 class AwesomeProject extends Component {
     constructor(props) {
@@ -241,16 +241,16 @@ class AwesomeProject extends Component {
 
     setupPush(){
       PushNotification.configure({
-          // (optional) Called when Token is generated (iOS and Android)
           onRegister: function(token) {
-            // alert(JSON.stringify(token))
-            var token = token;
-            token.messagingMode = "0";
-            Countly.sendPushToken(token)
+            console.log( 'TOKEN:', token );
+            var options = {
+              token: token.token,
+              messagingMode: Countly.messagingMode.DEVELOPMENT
+            }
+            Countly.sendPushToken(options)
           },
-          // (required) Called when a remote or local notification is opened or received
           onNotification: function(notification) {
-              // alert( 'NOTIFICATION:', notification );
+              alert( 'NOTIFICATION:', notification );
               // process the notification
               // required on iOS only (see fetchCompletionHandler docs: https://facebook.github.io/react-native/docs/pushnotificationios.html)
               notification.finish(PushNotificationIOS.FetchResult.NoData);

@@ -278,9 +278,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
 	@ReactMethod
 	 public void onregistrationid(ReadableArray args){
-        String registrationId = args.getString(0);
+        String pushToken = args.getString(0);
         int messagingMode = Integer.parseInt(args.getString(1));
-        String projectId = args.getString(2);
 
         Countly.CountlyMessagingMode mode = null;
         if(messagingMode == 0){
@@ -289,7 +288,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         else{
             mode = Countly.CountlyMessagingMode.TEST;
         }
-        Countly.sharedInstance().onRegistrationId(registrationId, mode);
+        Countly.sharedInstance().onRegistrationId(pushToken, mode);
 	}
 
 	@ReactMethod
