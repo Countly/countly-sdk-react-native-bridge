@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { AppRegistry, Text, Button, ScrollView, Image, View } from 'react-native';
 import Countly from 'countly-sdk-react-native-bridge';
-import PushNotificationIOS from 'react-native';
+import { PushNotificationIOS }  from 'react-native';
 // import StackTrace from '/Countly.StackTrace.js';
 // import stacktrace from 'react-native-stacktrace';
 var PushNotification = require('react-native-push-notification');
@@ -13,7 +13,6 @@ class AwesomeProject extends Component {
     };
     onInit(){
       Countly.init("https://try.count.ly","0e8a00e8c01395a0af8be0e55da05a404bb23c3e","","5", "Rate us.", "How would you rate the app?", "Dismiss");
-      Countly.enableLogging();
     }
     onStart(){
       Countly.start();
@@ -240,6 +239,11 @@ class AwesomeProject extends Component {
     };
 
     setupPush(){
+      console.log('setupPush');
+      PushNotificationIOS.addEventListener('registrationError', function(error){
+        console.log('error:', error);
+      });
+
       PushNotification.configure({
           onRegister: function(token) {
             console.log( 'TOKEN:', token );
@@ -250,7 +254,7 @@ class AwesomeProject extends Component {
             Countly.sendPushToken(options)
           },
           onNotification: function(notification) {
-              alert( 'NOTIFICATION:', notification );
+              console.log( 'NOTIFICATION:', notification );
               // process the notification
               // required on iOS only (see fetchCompletionHandler docs: https://facebook.github.io/react-native/docs/pushnotificationios.html)
               notification.finish(PushNotificationIOS.FetchResult.NoData);
@@ -320,8 +324,10 @@ class AwesomeProject extends Component {
             var a = {};
             var x = a.b.c; // this will create error.
         } catch (error) {
-          var stack = error.stack.toString();
-          Countly.logException(stack, true, {"_facebook_version": "0.0.1"});
+          setTimeout(function(){
+            var stack = error.stack.toString();
+            Countly.logException(stack, true, {"_facebook_version": "0.0.1"});
+          },1000);
         }
       },1000);
       setTimeout(function(){

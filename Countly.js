@@ -9,8 +9,6 @@ import {
     NativeModules
 } from 'react-native';
 
-// import StackTrace from './Countly.StackTrace.js';
-
 const CountlyReactNative = NativeModules.CountlyReactNative;
 
 const Countly = {};
@@ -183,7 +181,9 @@ Countly.setHttpPostForced = function(boolean){
     args.push(boolean?"1":"0");
     CountlyReactNative.setHttpPostForced(args);
 }
+Countly.isCrashReportingEnabled = false;
 Countly.enableCrashReporting = function(){
+    Countly.isCrashReportingEnabled = true;
     CountlyReactNative.enableCrashReporting();
 }
 Countly.addCrashLog = function(crashLog){
@@ -361,6 +361,18 @@ Countly.showStarRating = function(){
 
 Countly.setEventSendThreshold = function(size){
     CountlyReactNative.setEventSendThreshold([size.toString() || ""]);
+}
+
+if (ErrorUtils) {
+    var previousHandler = ErrorUtils.getGlobalHandler();
+    ErrorUtils.setGlobalHandler(function (error, isFatal) {
+        if(Countly.isCrashReportingEnabled){
+            var stack = error.stack.toString();
+            Countly.logException(stack, isFatal, {});
+        }else{
+            previousHandler(error, isFatal);
+        }
+    });
 }
 
 export default Countly;
