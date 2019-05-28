@@ -488,8 +488,14 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void updateRemoteConfigForKeysOnly(ReadableArray args, final Callback myCallback){
-        String keyName = args.getString(0);
-        Countly.sharedInstance().updateRemoteConfigForKeysOnly(new String[]{keyName}, new RemoteConfig.RemoteConfigCallback() {
+        int i = args.size();  
+        int n = ++i;  
+        String[] newArray = new String[n];  
+        for(int cnt=0;cnt<args.size();cnt++)
+        {  
+            newArray[cnt] = args.getString(cnt);
+        }
+        Countly.sharedInstance().updateRemoteConfigForKeysOnly(newArray, new RemoteConfig.RemoteConfigCallback() {
             String resultString = "";
             @Override
             public void callback(String error) {
@@ -506,8 +512,14 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void updateRemoteConfigExceptKeys(ReadableArray args, final Callback myCallback){
-        String keyName = args.getString(0);
-        Countly.sharedInstance().updateRemoteConfigExceptKeys(new String[]{keyName}, new RemoteConfig.RemoteConfigCallback() {
+        int i = args.size();  
+        int n = ++i;  
+        String[] newArray = new String[n];  
+        for(int cnt=0;cnt<args.size();cnt++)
+        {  
+            newArray[cnt] = args.getString(cnt);
+        }
+        Countly.sharedInstance().updateRemoteConfigExceptKeys(newArray, new RemoteConfig.RemoteConfigCallback() {
             String resultString = "";
             @Override
             public void callback(String error) {
@@ -524,8 +536,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void getRemoteConfigValueForKey(ReadableArray args, final Callback myCallback){
         String keyName = args.getString(0);
-        Object value_1 = Countly.sharedInstance().getRemoteConfigValueForKey(keyName);
-        String resultString = (value_1).toString();
+        Object keyValue = Countly.sharedInstance().getRemoteConfigValueForKey(keyName);
+        String resultString = (keyValue).toString();
         myCallback.invoke(resultString);
     }
 

@@ -4,7 +4,7 @@ import Countly from 'countly-sdk-react-native-bridge';
 import { PushNotificationIOS }  from 'react-native';
 // import StackTrace from '/Countly.StackTrace.js';
 // import stacktrace from 'react-native-stacktrace';
-var PushNotification = require('react-native-push-notification');
+// var PushNotification = require('react-native-push-notification');
 
 class AwesomeProject extends Component {
     constructor(props) {
@@ -209,13 +209,13 @@ class AwesomeProject extends Component {
     };
 
     updateRemoteConfigForKeysOnly(){
-      Countly.updateRemoteConfigForKeysOnly("test1",function(data){
+      Countly.updateRemoteConfigForKeysOnly(["test1"],function(data){
         console.log(data);
       });
     };
 
     updateRemoteConfigExceptKeys(){
-      Countly.updateRemoteConfigExceptKeys("test1",function(data){
+      Countly.updateRemoteConfigExceptKeys(["test1"],function(data){
         console.log(data);
       });
     };
@@ -444,7 +444,6 @@ class AwesomeProject extends Component {
             < Button onPress = { this.remoteConfigUpdate } title = "Update Remote Config" color = "#00b5ad"> </Button>
             < Button onPress = { this.updateRemoteConfigForKeysOnly } title = "Update Remote Config with Keys Only" color = "#00b5ad"> </Button>
             < Button onPress = { this.updateRemoteConfigExceptKeys } title = "Update Remote Config Except Keys" color = "#00b5ad"> </Button>
-            < Button onPress = { this.getStarRating } title = "Check Remote Config value" color = "#00b5ad"> </Button>
             < Button onPress = { this.getRemoteConfigValueForKey } title = "Get config value" color = "#00b5ad"> </Button>
 
             < Button onPress = { this.showStarRating } title = "Show Star Rating Model" color = "#00b5ad"> </Button>

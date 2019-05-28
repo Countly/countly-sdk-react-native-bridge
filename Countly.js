@@ -337,16 +337,28 @@ Countly.remoteConfigUpdate = function(callback){
     });
 }
 
-Countly.updateRemoteConfigForKeysOnly = function(keyName, callback){
-    CountlyReactNative.updateRemoteConfigForKeysOnly([keyName.toString() || ""], (stringItem) => {
-        callback(stringItem);
-    });
+Countly.updateRemoteConfigForKeysOnly = function(keyNames, callback){
+    var args = [];
+    if(keyNames.length){
+        for(var i=0,il=keyNames.length;i<il;i++){
+            args.push(keyNames[i])
+        }
+        CountlyReactNative.updateRemoteConfigForKeysOnly(args, (stringItem) => {
+            callback(stringItem);
+        });
+    }
 }
 
-Countly.updateRemoteConfigExceptKeys = function(keyName, callback){
-    CountlyReactNative.updateRemoteConfigExceptKeys([keyName.toString() || ""], (stringItem) => {
-        callback(stringItem);
-    });
+Countly.updateRemoteConfigExceptKeys = function(keyNames, callback){
+    var args = [];
+    if(keyNames.length){
+        for(var i=0,il=keyNames.length;i<il;i++){
+            args.push(keyNames[i])
+        }
+        CountlyReactNative.updateRemoteConfigExceptKeys(args, (stringItem) => {
+            callback(stringItem);
+        });
+    }
 }
 
 Countly.getRemoteConfigValueForKey = function(keyName, callback){

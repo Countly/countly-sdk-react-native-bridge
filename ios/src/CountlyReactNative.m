@@ -25,7 +25,7 @@ RCT_EXPORT_METHOD(init:(NSArray*)arguments)
   NSString* ratingMessage = [arguments objectAtIndex:5];
   NSString* ratingButton = [arguments objectAtIndex:6];
   NSString* ratingLimitString = [arguments objectAtIndex:3];
-  int ratingLimit = [starRatingLimitString intValue];
+  int ratingLimit = [ratingLimitString intValue];
 
 
   if (config == nil){
@@ -508,8 +508,12 @@ RCT_EXPORT_METHOD(remoteConfigUpdate:(NSArray*)arguments:(RCTResponseSenderBlock
 
 RCT_EXPORT_METHOD(updateRemoteConfigForKeysOnly:(NSArray*)arguments:(RCTResponseSenderBlock)callback)
 {
-  NSString* keyName = [arguments objectAtIndex:0];
-  [Countly.sharedInstance updateRemoteConfigOnlyForKeys:@[keyName] completionHandler:^(NSError * error)
+  NSMutableArray *randomSelection = [[NSMutableArray alloc] init];
+  for (int i = 0; i < (int)arguments.count; i++){
+      [randomSelection addObject:[arguments objectAtIndex:i]];
+  }
+  NSArray *keyNames = [randomSelection copy];
+  [Countly.sharedInstance updateRemoteConfigOnlyForKeys:keyNames completionHandler:^(NSError * error)
   {
       if (!error)
       {
@@ -527,8 +531,12 @@ RCT_EXPORT_METHOD(updateRemoteConfigForKeysOnly:(NSArray*)arguments:(RCTResponse
 
 RCT_EXPORT_METHOD(updateRemoteConfigExceptKeys:(NSArray*)arguments:(RCTResponseSenderBlock)callback)
 {
-  NSString* keyName = [arguments objectAtIndex:0];
-  [Countly.sharedInstance updateRemoteConfigExceptForKeys:@[keyName] completionHandler:^(NSError * error)
+  NSMutableArray *randomSelection = [[NSMutableArray alloc] init];
+  for (int i = 0; i < (int)arguments.count; i++){
+      [randomSelection addObject:[arguments objectAtIndex:i]];
+  }
+  NSArray *keyNames = [randomSelection copy];
+  [Countly.sharedInstance updateRemoteConfigExceptForKeys:keyNames completionHandler:^(NSError * error)
   {
       if (!error)
       {
@@ -543,7 +551,6 @@ RCT_EXPORT_METHOD(updateRemoteConfigExceptKeys:(NSArray*)arguments:(RCTResponseS
       }
   }];
 }
-
 RCT_EXPORT_METHOD(getRemoteConfigValueForKey:(NSArray*)arguments:(RCTResponseSenderBlock)callback)
 {
   NSString* keyName = [arguments objectAtIndex:0];
