@@ -109,7 +109,7 @@ RCT_EXPORT_METHOD(setViewTracking:(NSArray*)arguments)
 
 RCT_EXPORT_METHOD(setloggingenabled:(NSArray*)arguments)
 {
-  Boolean* boolean = [arguments objectAtIndex:0];
+  Boolean* boolean = [[arguments objectAtIndex:0] boolValue];
   if(boolean){
     config.enableDebug = YES;
   }else{
