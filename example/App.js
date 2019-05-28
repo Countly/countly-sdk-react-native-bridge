@@ -136,15 +136,15 @@ class AwesomeProject extends Component {
       Countly.userData.setOnce("keyName", 200);
     };
 
-    userData_saveMax(){
+    userData_pushUniqueValue(){
       Countly.userData.pushUniqueValue("type", "morning");
     };
 
-    userData_saveMin(){
+    userData_pushValue(){
       Countly.userData.pushValue("type", "morning");
     };
 
-    userData_setOnce(){
+    userData_pullValue(){
       Countly.userData.pullValue("type", "morning");
     };
 
@@ -402,6 +402,9 @@ class AwesomeProject extends Component {
             < Button onPress = { this.userData_saveMax } title = "UserData.saveMax" color = "#00b5ad"> </Button>
             < Button onPress = { this.userData_saveMin } title = "UserData.saveMin" color = "#00b5ad"> </Button>
             < Button onPress = { this.userData_setOnce } title = "UserData.setOnce" color = "#00b5ad"> </Button>
+            < Button onPress = { this.userData_pushUniqueValue } title = "UserData.pushUniqueValue" color = "#00b5ad"> </Button>
+            < Button onPress = { this.userData_pushValue } title = "UserData.pushValue" color = "#00b5ad"> </Button>
+            < Button onPress = { this.userData_pullValue } title = "UserData.pullValue" color = "#00b5ad"> </Button>
 
             <Text style={[{textAlign: 'center'}]}>User Methods End</Text>
 
