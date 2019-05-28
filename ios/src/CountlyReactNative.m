@@ -107,7 +107,7 @@ RCT_EXPORT_METHOD(setViewTracking:(NSArray*)arguments)
 
 }
 
-RCT_EXPORT_METHOD(setloggingenabled:(NSArray*)arguments)
+RCT_EXPORT_METHOD(setLoggingEnabled:(NSArray*)arguments)
 {
   BOOL boolean = [[arguments objectAtIndex:0] boolValue];
   if(boolean){
@@ -266,7 +266,7 @@ RCT_EXPORT_METHOD(setLocation:(NSArray*)arguments)
   }else{
     [Countly.sharedInstance recordIP:IP];
   }
-  
+
 
 }
 
