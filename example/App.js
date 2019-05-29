@@ -108,31 +108,31 @@ class AwesomeProject extends Component {
 
 
     userData_setProperty(){
-      Countly.userData.setProperty("keyName", "keyValue");
+      Countly.userData.setProperty("setProperty", "keyValue");
     };
 
     userData_increment(){
-      Countly.userData.increment("keyName");
+      Countly.userData.increment("increment");
     };
 
     userData_incrementBy(){
-      Countly.userData.incrementBy("keyName", 10);
+      Countly.userData.incrementBy("incrementBy", 10);
     };
 
     userData_multiply(){
-      Countly.userData.multiply("keyName", 20);
+      Countly.userData.multiply("multiply", 20);
     };
 
     userData_saveMax(){
-      Countly.userData.saveMax("keyName", 100);
+      Countly.userData.saveMax("saveMax", 100);
     };
 
     userData_saveMin(){
-      Countly.userData.saveMin("keyName", 50);
+      Countly.userData.saveMin("saveMin", 50);
     };
 
     userData_setOnce(){
-      Countly.userData.setOnce("keyName", 200);
+      Countly.userData.setOnce("setOnce", 200);
     };
 
     userData_pushUniqueValue(){
