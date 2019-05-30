@@ -371,6 +371,10 @@ Countly.showStarRating = function(){
     CountlyReactNative.showStarRating([]);
 }
 
+Countly.showFeedbackPopup = function(widgetId, closeButtonText,){
+    CountlyReactNative.showFeedbackPopup([widgetId.toString() || "xxxxx", closeButtonText.toString() || "Done"]);
+}
+
 Countly.setEventSendThreshold = function(size){
     CountlyReactNative.setEventSendThreshold([size.toString() || ""]);
 }
