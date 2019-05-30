@@ -4,7 +4,7 @@ import Countly from 'countly-sdk-react-native-bridge';
 import { PushNotificationIOS }  from 'react-native';
 // import StackTrace from '/Countly.StackTrace.js';
 // import stacktrace from 'react-native-stacktrace';
-// var PushNotification = require('react-native-push-notification');
+var PushNotification = require('react-native-push-notification');
 
 class AwesomeProject extends Component {
     constructor(props) {

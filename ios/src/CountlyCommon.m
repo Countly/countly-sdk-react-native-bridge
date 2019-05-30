@@ -19,7 +19,7 @@
 @end
 
 NSString* const kCountlySDKVersion = @"19.02";
-NSString* const kCountlySDKName = @"countly-sdk-react-native-bridge";
+NSString* const kCountlySDKName = @"countly-sdk-react-native-bridge-ios";
 
 NSString* const kCountlyParentDeviceIDTransferKey = @"kCountlyParentDeviceIDTransferKey";
 NSString* const kCountlyAttributionIDFAKey = @"idfa";

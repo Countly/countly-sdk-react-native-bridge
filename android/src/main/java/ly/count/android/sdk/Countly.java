@@ -26,8 +26,12 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.util.Base64;
 import android.util.Log;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.MalformedURLException;
@@ -50,16 +54,17 @@ import static ly.count.android.sdk.CountlyStarRating.STAR_RATING_EVENT_KEY;
  * This class is the public API for the Countly Android SDK.
  * Get more details <a href="https://github.com/Countly/countly-sdk-android">here</a>.
  */
+@SuppressWarnings("JavadocReference")
 public class Countly {
 
     /**
      * Current version of the Count.ly Android SDK as a displayable string.
      */
-    public static final String COUNTLY_SDK_VERSION_STRING = "19.02";
+    public static final String COUNTLY_SDK_VERSION_STRING = "19.02.3";
     /**
      * Used as request meta data on every request
      */
-    protected static final String COUNTLY_SDK_NAME = "countly-sdk-react-native-bridge";
+    protected static final String COUNTLY_SDK_NAME = "countly-sdk-react-native-bridge-android";
     /**
      * Default string used in the begin session metrics if the
      * app version cannot be found.
@@ -163,6 +168,10 @@ public class Countly {
     //custom request header fields
     Map<String, String> requestHeaderCustomValues;
 
+    //native crash
+    static final String countlyFolderName = "Countly";
+    static final String countlyNativeCrashFolderName = "CrashDumps";
+
     //GDPR
     protected boolean requiresConsent = false;
 
@@ -236,8 +245,8 @@ public class Countly {
      * @param serverURL URL of the Countly server to submit data to; use "https://try.count.ly" for Countly trial server
      * @param appKey app key for the application being tracked; find in the Countly Dashboard under Management &gt; Applications
      * @return Countly instance for easy method chaining
-     * @throws java.lang.IllegalArgumentException if context, serverURL, appKey, or deviceID are invalid
-     * @throws java.lang.IllegalStateException if the Countly SDK has already been initialized
+     * @throws IllegalArgumentException if context, serverURL, appKey, or deviceID are invalid
+     * @throws IllegalStateException if the Countly SDK has already been initialized
      */
     public Countly init(final Context context, final String serverURL, final String appKey) {
         return init(context, serverURL, appKey, null, OpenUDIDAdapter.isOpenUDIDAvailable() ? DeviceId.Type.OPEN_UDID : DeviceId.Type.ADVERTISING_ID);
@@ -441,6 +450,9 @@ public class Countly {
                 RemoteConfig.updateRemoteConfigValues(context_, null, null, connectionQueue_, false, remoteConfigInitCallback);
             }
         }
+
+        //check for previous native crash dumps
+        checkForNativeCrashDumps(context);
 
         return this;
     }
@@ -1222,6 +1234,64 @@ public class Countly {
     }
 
     /**
+     * Called during init to check if there are any crash dumps saved
+     * @param context
+     */
+    protected synchronized void checkForNativeCrashDumps(Context context){
+        Log.d(TAG, "Checking for native crash dumps");
+
+        String basePath = context.getCacheDir().getAbsolutePath();
+        String finalPath = basePath + File.separator + countlyFolderName + File.separator + countlyNativeCrashFolderName;
+
+        File folder = new File(finalPath);
+        if (folder.exists()) {
+            Log.d(TAG, "Native crash folder exists, checking for dumps");
+
+            File[] dumpFiles = folder.listFiles();
+            Log.d(TAG,"Crash dump folder contains [" + dumpFiles.length + "] files");
+            for (int i = 0; i < dumpFiles.length; i++)
+            {
+                //record crash
+                recordNativeException(dumpFiles[i]);
+
+                //delete dump file
+                dumpFiles[i].delete();
+            }
+        } else {
+            Log.d(TAG, "Native crash folder does not exist");
+        }
+    }
+
+    protected synchronized void recordNativeException(File dumpFile){
+        Log.d(TAG, "Recording native crash dump: [" + dumpFile.getName() + "]");
+
+        //check for consent
+        if(!getConsent(CountlyFeatureNames.crashes)){
+            return;
+        }
+
+        //read bytes
+        int size = (int)dumpFile.length();
+        byte[] bytes = new byte[size];
+
+        try {
+            BufferedInputStream buf = new BufferedInputStream(new FileInputStream(dumpFile));
+            buf.read(bytes, 0, bytes.length);
+            buf.close();
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to read dump file bytes");
+            e.printStackTrace();
+            return;
+        }
+
+        //convert to base64
+        String dumpString = Base64.encodeToString(bytes, Base64.NO_WRAP);
+
+        //record crash
+        connectionQueue_.sendCrashReport(dumpString, false, true);
+    }
+
+    /**
      * Log handled exception to report it to server as non fatal crash
      * @param exception Exception to log
      * @deprecated Use recordHandledException
@@ -1285,7 +1355,7 @@ public class Countly {
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
         exception.printStackTrace(pw);
-        connectionQueue_.sendCrashReport(sw.toString(), itIsHandled);
+        connectionQueue_.sendCrashReport(sw.toString(), itIsHandled, false);
         return this;
     }
 
@@ -1309,7 +1379,7 @@ public class Countly {
                     PrintWriter pw = new PrintWriter(sw);
                     e.printStackTrace(pw);
 
-                    Countly.sharedInstance().connectionQueue_.sendCrashReport(sw.toString(), false);
+                    Countly.sharedInstance().connectionQueue_.sendCrashReport(sw.toString(), false, false);
                 }
 
                 //if there was another handler before
@@ -1473,11 +1543,8 @@ public class Countly {
      * @return Countly instance for easy method chaining
      */
     public synchronized Countly setLoggingEnabled(final boolean enableLogging) {
-        if (enableLogging) {
-            Log.d(Countly.TAG, "Enabling debug logging");
-        }
-        else {
-            Log.d(Countly.TAG, "Disabling debug logging");
+        if (Countly.sharedInstance().isLoggingEnabled()) {
+            Log.d(Countly.TAG, "Enabling logging");
         }
         enableLogging_ = enableLogging;
         return this;
