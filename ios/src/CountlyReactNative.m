@@ -99,7 +99,7 @@ RCT_EXPORT_METHOD(event:(NSArray*)arguments)
 RCT_EXPORT_METHOD(recordView:(NSArray*)arguments)
 {
   NSString* recordView = [arguments objectAtIndex:0];
-  [Countly.sharedInstance reportView:recordView];
+  [Countly.sharedInstance recordView:recordView];
 }
 
 RCT_EXPORT_METHOD(setViewTracking:(NSArray*)arguments)
