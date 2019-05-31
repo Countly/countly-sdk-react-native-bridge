@@ -28,7 +28,7 @@
 - (void)endSession;
 
 - (void)sendEvents;
-- (void)sendPushToken:(NSString *)token messagingMode:(NSString *)messagingMode;
+- (void)sendPushTokenReactNative:(NSString *)token messagingMode:(NSString *)messagingMode;
 - (void)sendPushToken:(NSString *)token;
 - (void)sendLocationInfo;
 - (void)sendUserDetails:(NSString *)userDetails;

@@ -294,7 +294,7 @@ const NSInteger kCountlyGETRequestMaxLength = 2048;
     [self proceedOnQueue];
 }
 
-- (void)sendPushToken:(NSString *)token messagingMode:(NSString *)messagingMode
+- (void)sendPushTokenReactNative:(NSString *)token messagingMode:(NSString *)messagingMode
 {
     typedef enum : NSInteger
     {
