@@ -12,7 +12,7 @@ class AwesomeProject extends Component {
         this.config = {};
     };
     onInit(){
-      Countly.init("https://try.count.ly","0e8a00e8c01395a0af8be0e55da05a404bb23c3e","","5", "Rate us.", "How would you rate the app?", "Dismiss",false);
+      Countly.init("https://trinisoft.count.ly","f0b2ac6919f718a13821575db28c0e2971e05ec5","","5", "Rate us.", "How would you rate the app?", "Dismiss",false);
     }
     onStart(){
       Countly.start();
@@ -152,31 +152,10 @@ class AwesomeProject extends Component {
       // Countly.initMessaging('403185924621', Countly.TEST);
     }
 
-    onSendTestTokenAndroid(){
-      const testToken = 'coyj3YaNss4:APA91bG_9rwIQF4Ul7J2JB76J3afpcP_4TJA1hTfrSjD4lxklLLQIT82ygxLlqND9uUvFbVTosFWvM83QFGiStm_M3HQFK11yO682_5e6MEzL6qsDwWkt_IBv5PTylMhRM6cn2g0CGXs';
-      Countly.registerPush(Countly.TEST, testToken);
-    }
-
-    pushMessage(){
-      // implementation is pending
-      PushNotification.localNotification({
-        /* Android Only Properties */
-        id: '0',
-
-        /* iOS and Android properties */
-        title: 'My Notification Title', // (optional, for iOS this is only used in apple watch, the title will be the app name on other iOS devices)
-        message: 'My Notification Message1', // (required)
-        actions: '["Yes", "No"]', // (Android only) See the doc for notification actions to know more
-      });
-    };
 
     changeDeviceId(){
       Countly.changeDeviceId('02d56d66-6a39-482d-aff0-d14e4d5e5fda');
     };
-
-    cancelMessage(){
-      PushNotification.cancelAllLocalNotifications();
-    }
 
     enableParameterTamperingProtection(){
       Countly.enableParameterTamperingProtection("salt");
@@ -311,7 +290,6 @@ class AwesomeProject extends Component {
     };
 
     addLogException(){
-      console.log("addCrashLog");
       Countly.addCrashLog("User Performed Step A");
       setTimeout(function(){
         Countly.addCrashLog("User Performed Step B");
@@ -422,12 +400,8 @@ class AwesomeProject extends Component {
 
 
             < Text style={[{ textAlign: 'center' }]}>Push Notification Start</Text>
-            < Button onPress={this.onRegisterDevice} title='Register Device' color='#00b5ad' />
-            < Button onPress={this.onSendTestTokenAndroid} title='Test Token Android' color='#00b5ad' />
-            < Button onPress={this.pushMessage} title='Push Message' color='#00b5ad' />
-            < Button onPress={this.cancelMessage} title='Cancel Push Message' color='#00b5ad' />
+            < Button onPress={this.setupPush} title='Register Device' color='#00b5ad' />
             < Button onPress={this.changeDeviceId} title='Change Device ID' color='#00b5ad' />
-            < Button onPress = { this.setupPush } title = "Setup Push" color = "#00b5ad"> </Button>
             < Text style={[{ textAlign: 'center' }]}>Push Notification End</Text>
 
 
