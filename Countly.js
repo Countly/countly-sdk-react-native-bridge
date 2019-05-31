@@ -21,7 +21,7 @@ if (Platform.OS.match("android")) {
 }
 
 // countly initialization
-Countly.init = function(serverUrl,appKey, deviceId, starRatingLimit, titleText, messageText, buttonText){
+Countly.init = function(serverUrl,appKey, deviceId, starRatingLimit, titleText, messageText, buttonText,consentFlag){
     Countly.serverUrl = serverUrl;
     Countly.appKey = appKey;
     var args = [];
@@ -32,6 +32,7 @@ Countly.init = function(serverUrl,appKey, deviceId, starRatingLimit, titleText, 
     args.push(titleText || "Rate us.");
     args.push(messageText || "How would you rate the app?");
     args.push(buttonText || "Dismiss");
+    args.push(consentFlag || false);
 
     CountlyReactNative.init(args);
 }

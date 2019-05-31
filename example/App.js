@@ -4,7 +4,7 @@ import Countly from 'countly-sdk-react-native-bridge';
 import { PushNotificationIOS }  from 'react-native';
 // import StackTrace from '/Countly.StackTrace.js';
 // import stacktrace from 'react-native-stacktrace';
-// var PushNotification = require('react-native-push-notification');
+var PushNotification = require('react-native-push-notification');
 
 class AwesomeProject extends Component {
     constructor(props) {
@@ -12,7 +12,7 @@ class AwesomeProject extends Component {
         this.config = {};
     };
     onInit(){
-      Countly.init("https://try.count.ly","0e8a00e8c01395a0af8be0e55da05a404bb23c3e","","5", "Rate us.", "How would you rate the app?", "Dismiss");
+      Countly.init("https://try.count.ly","0e8a00e8c01395a0af8be0e55da05a404bb23c3e","","5", "Rate us.", "How would you rate the app?", "Dismiss",false);
     }
     onStart(){
       Countly.start();

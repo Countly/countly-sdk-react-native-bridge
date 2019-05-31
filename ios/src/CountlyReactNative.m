@@ -24,6 +24,7 @@ RCT_EXPORT_METHOD(init:(NSArray*)arguments)
   NSString* ratingTitle = [arguments objectAtIndex:4];
   NSString* ratingMessage = [arguments objectAtIndex:5];
   NSString* ratingButton = [arguments objectAtIndex:6];
+  BOOL consentFlag = [[arguments objectAtIndex:7] boolValue];
   NSString* ratingLimitString = [arguments objectAtIndex:3];
   int ratingLimit = [ratingLimitString intValue];
 
@@ -40,7 +41,7 @@ RCT_EXPORT_METHOD(init:(NSArray*)arguments)
   config.starRatingSessionCount = ratingLimit;
   config.starRatingDisableAskingForEachAppVersion = YES;
   config.starRatingMessage = ratingMessage;
-
+  config.requiresConsent = consentFlag;
 
 
   if (serverurl != nil && [serverurl length] > 0) {
