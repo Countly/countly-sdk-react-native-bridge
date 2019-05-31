@@ -268,7 +268,33 @@ const NSInteger kCountlyGETRequestMaxLength = 2048;
 
 #pragma mark ---
 
-- (void)sendPushToken:(NSString *)token
+// - (void)sendPushToken:(NSString *)token
+// {
+//     typedef enum : NSInteger
+//     {
+//         CLYPushTokenModeProduction,
+//         CLYPushTokenModeDevelopment,
+//         CLYPushTokenModeAdHoc,
+//     } CLYPushTokenMode;
+
+//     int testMode;
+// #ifdef DEBUG
+//     testMode = CLYPushTokenModeDevelopment;
+// #else
+//     testMode = CountlyPushNotifications.sharedInstance.isTestDevice ? CLYPushTokenModeAdHoc : CLYPushTokenModeProduction;
+// #endif
+
+//     NSString* queryString = [[self queryEssentials] stringByAppendingFormat:@"&%@=%@&%@=%@&%@=%d",
+//                              kCountlyQSKeyPushTokenSession, @"1",
+//                              kCountlyQSKeyPushTokeniOS, token,
+//                              kCountlyQSKeyPushTestMode, testMode];
+
+//     [CountlyPersistency.sharedInstance addToQueue:queryString];
+
+//     [self proceedOnQueue];
+// }
+
+- (void)sendPushToken:(NSString *)token messagingMode:(NSString *)messagingMode
 {
     typedef enum : NSInteger
     {
@@ -277,12 +303,8 @@ const NSInteger kCountlyGETRequestMaxLength = 2048;
         CLYPushTokenModeAdHoc,
     } CLYPushTokenMode;
 
-    int testMode;
-#ifdef DEBUG
-    testMode = CLYPushTokenModeDevelopment;
-#else
-    testMode = CountlyPushNotifications.sharedInstance.isTestDevice ? CLYPushTokenModeAdHoc : CLYPushTokenModeProduction;
-#endif
+    int testMode = [messagingMode intValue];
+
 
     NSString* queryString = [[self queryEssentials] stringByAppendingFormat:@"&%@=%@&%@=%@&%@=%d",
                              kCountlyQSKeyPushTokenSession, @"1",
@@ -293,7 +315,6 @@ const NSInteger kCountlyGETRequestMaxLength = 2048;
 
     [self proceedOnQueue];
 }
-
 - (void)sendLocationInfo
 {
     NSString* location = CountlyLocationManager.sharedInstance.location.cly_URLEscaped;

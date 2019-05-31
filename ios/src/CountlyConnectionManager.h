@@ -28,7 +28,7 @@
 - (void)endSession;
 
 - (void)sendEvents;
-- (void)sendPushToken:(NSString *)token;
+- (void)sendPushToken:(NSString *)token messagingMode:(NSString *)messagingMode;
 - (void)sendLocationInfo;
 - (void)sendUserDetails:(NSString *)userDetails;
 - (void)sendCrashReport:(NSString *)report immediately:(BOOL)immediately;
