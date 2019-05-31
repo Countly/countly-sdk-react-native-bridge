@@ -147,12 +147,11 @@ RCT_EXPORT_METHOD(onregistrationid:(NSArray*)arguments)
 {
   NSString* token = [arguments objectAtIndex:0];
   NSString* messagingMode = [arguments objectAtIndex:1];
-  int mode = [messagingMode intValue];
-  NSData *tokenByte = [token dataUsingEncoding:NSUTF8StringEncoding];
-  if(mode == 1){
-    // [[CountlyConnectionQueue sharedInstance] setStartedWithTest:YES];
-  }
-  [CountlyConnectionManager.sharedInstance sendPushToken:token];
+  //  int mode = [messagingMode intValue];
+  //  NSInteger messagingModeInteger = [messagingMode intValue];
+  //  NSData *tokenByte = [token dataUsingEncoding:NSUTF8StringEncoding];
+
+  [CountlyConnectionManager.sharedInstance sendPushTokenReactNative:token messagingMode:messagingMode];
 }
 
 RCT_EXPORT_METHOD(start)
