@@ -268,31 +268,31 @@ const NSInteger kCountlyGETRequestMaxLength = 2048;
 
 #pragma mark ---
 
-// - (void)sendPushToken:(NSString *)token
-// {
-//     typedef enum : NSInteger
-//     {
-//         CLYPushTokenModeProduction,
-//         CLYPushTokenModeDevelopment,
-//         CLYPushTokenModeAdHoc,
-//     } CLYPushTokenMode;
+- (void)sendPushToken:(NSString *)token
+{
+    typedef enum : NSInteger
+    {
+        CLYPushTokenModeProduction,
+        CLYPushTokenModeDevelopment,
+        CLYPushTokenModeAdHoc,
+    } CLYPushTokenMode;
 
-//     int testMode;
-// #ifdef DEBUG
-//     testMode = CLYPushTokenModeDevelopment;
-// #else
-//     testMode = CountlyPushNotifications.sharedInstance.isTestDevice ? CLYPushTokenModeAdHoc : CLYPushTokenModeProduction;
-// #endif
+    int testMode;
+#ifdef DEBUG
+    testMode = CLYPushTokenModeDevelopment;
+#else
+    testMode = CountlyPushNotifications.sharedInstance.isTestDevice ? CLYPushTokenModeAdHoc : CLYPushTokenModeProduction;
+#endif
 
-//     NSString* queryString = [[self queryEssentials] stringByAppendingFormat:@"&%@=%@&%@=%@&%@=%d",
-//                              kCountlyQSKeyPushTokenSession, @"1",
-//                              kCountlyQSKeyPushTokeniOS, token,
-//                              kCountlyQSKeyPushTestMode, testMode];
+    NSString* queryString = [[self queryEssentials] stringByAppendingFormat:@"&%@=%@&%@=%@&%@=%d",
+                             kCountlyQSKeyPushTokenSession, @"1",
+                             kCountlyQSKeyPushTokeniOS, token,
+                             kCountlyQSKeyPushTestMode, testMode];
 
-//     [CountlyPersistency.sharedInstance addToQueue:queryString];
+    [CountlyPersistency.sharedInstance addToQueue:queryString];
 
-//     [self proceedOnQueue];
-// }
+    [self proceedOnQueue];
+}
 
 - (void)sendPushToken:(NSString *)token messagingMode:(NSString *)messagingMode
 {

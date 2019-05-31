@@ -29,6 +29,7 @@
 
 - (void)sendEvents;
 - (void)sendPushToken:(NSString *)token messagingMode:(NSString *)messagingMode;
+- (void)sendPushToken:(NSString *)token;
 - (void)sendLocationInfo;
 - (void)sendUserDetails:(NSString *)userDetails;
 - (void)sendCrashReport:(NSString *)report immediately:(BOOL)immediately;
