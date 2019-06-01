@@ -118,22 +118,27 @@ class AwesomeProject extends Component {
     };
 
     userData_increment(){
+      Countly.userData.setProperty("increment", 5);
       Countly.userData.increment("increment");
     };
 
     userData_incrementBy(){
+      Countly.userData.setProperty("incrementBy", 5);
       Countly.userData.incrementBy("incrementBy", 10);
     };
 
     userData_multiply(){
+      Countly.userData.setProperty("multiply", 5);
       Countly.userData.multiply("multiply", 20);
     };
 
     userData_saveMax(){
+      Countly.userData.setProperty("saveMax", 5);
       Countly.userData.saveMax("saveMax", 100);
     };
 
     userData_saveMin(){
+      Countly.userData.setProperty("saveMin", 5);
       Countly.userData.saveMin("saveMin", 50);
     };
 
