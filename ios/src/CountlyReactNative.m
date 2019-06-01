@@ -221,7 +221,7 @@ RCT_EXPORT_METHOD(endEvent:(NSArray*)arguments)
     NSString* eventName = [arguments objectAtIndex:1];
     [Countly.sharedInstance endEvent:eventName];
   }
-  else if ([eventType  isEqual: @"eventWithSegment"]){
+  else if ([eventType  isEqual: @"eventWithSumSegment"]){
     NSString* eventName = [arguments objectAtIndex:1];
 
     NSString* countString = [arguments objectAtIndex:2];

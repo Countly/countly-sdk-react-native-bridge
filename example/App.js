@@ -79,15 +79,17 @@ class AwesomeProject extends Component {
 
     timedEventWithSegment(){
       // Event with segment
-      Countly.startEvent("timedEvent");
+      Countly.startEvent("timedEventWithSegment");
       var events = {
-        "eventName": "timedEvent"
+        "eventName": "timedEventWithSegment"
       };
       events.segments = {
         "Country": "Germany",
         "Age": "28"
       };
-      Countly.endEvent(events);
+      setTimeout(function(){
+        Countly.endEvent(events);
+      },1000);
     };
 
     timedEventWithSumAndSegment(){

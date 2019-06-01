@@ -198,7 +198,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
             int eventCount= Integer.parseInt(args.getString(2));
             HashMap<String, String> segmentation = new HashMap<String, String>();
             for(int i=3,il=args.size();i<il;i+=2){
-            segmentation.put(args.getString(i), args.getString(i+1));
+                segmentation.put(args.getString(i), args.getString(i+1));
             }
             Countly.sharedInstance().recordEvent(eventName, segmentation, eventCount);
             }
@@ -208,7 +208,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
             float eventSum= new Float(args.getString(3)).floatValue();
             HashMap<String, String> segmentation = new HashMap<String, String>();
             for(int i=4,il=args.size();i<il;i+=2){
-            segmentation.put(args.getString(i), args.getString(i+1));
+                segmentation.put(args.getString(i), args.getString(i+1));
             }
             Countly.sharedInstance().recordEvent(eventName, segmentation, eventCount,eventSum);
         }
@@ -490,11 +490,11 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void updateRemoteConfigForKeysOnly(ReadableArray args, final Callback myCallback){
-        int i = args.size();  
-        int n = ++i;  
-        String[] newArray = new String[n];  
+        int i = args.size();
+        int n = ++i;
+        String[] newArray = new String[n];
         for(int cnt=0;cnt<args.size();cnt++)
-        {  
+        {
             newArray[cnt] = args.getString(cnt);
         }
         Countly.sharedInstance().updateRemoteConfigForKeysOnly(newArray, new RemoteConfig.RemoteConfigCallback() {
@@ -514,11 +514,11 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void updateRemoteConfigExceptKeys(ReadableArray args, final Callback myCallback){
-        int i = args.size();  
-        int n = ++i;  
-        String[] newArray = new String[n];  
+        int i = args.size();
+        int n = ++i;
+        String[] newArray = new String[n];
         for(int cnt=0;cnt<args.size();cnt++)
-        {  
+        {
             newArray[cnt] = args.getString(cnt);
         }
         Countly.sharedInstance().updateRemoteConfigExceptKeys(newArray, new RemoteConfig.RemoteConfigCallback() {

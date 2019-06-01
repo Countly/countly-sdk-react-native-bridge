@@ -253,6 +253,8 @@ Countly.endEvent = function(options){
         }else{
             args.push(eventSumTemp);
         }
+    }else{
+        args.push('0.0');
     }
 
     if(options.segments)
