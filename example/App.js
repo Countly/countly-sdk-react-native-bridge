@@ -61,20 +61,22 @@ class AwesomeProject extends Component {
     // TIMED EVENTS
     startEvent(){
       Countly.startEvent("timedEvent");
+      setTimeout(function(){
+        Countly.endEvent("timedEvent");
+      },1000);
     };
 
-    endEvent(){
-      Countly.endEvent("timedEvent");
-    };
 
     timedEventWithSum(){
       // Event with sum
-      Countly.startEvent("timedEvent");
+      Countly.startEvent("timedEventWithSum");
       var events = {
-        "eventName": "timedEvent",
+        "eventName": "timedEventWithSum",
         "eventSum": "0.99"
       };
-      Countly.endEvent(events);
+      setTimeout(function(){
+        Countly.endEvent(events);
+      },1000);
     };
 
     timedEventWithSegment(){
@@ -94,9 +96,9 @@ class AwesomeProject extends Component {
 
     timedEventWithSumAndSegment(){
       // Event with Segment, sum and count
-      Countly.startEvent("timedEvent");
-      var events = {
-        "eventName": "timedEvent",
+      Countly.startEvent("timedEventWithSumAndSegment");
+        var events = {
+        "eventName": "timedEventWithSumAndSegment",
         "eventCount": 1,
         "eventSum": "0.99"
       };
@@ -104,7 +106,9 @@ class AwesomeProject extends Component {
         "Country": "Germany",
         "Age": "28"
       };
-      Countly.endEvent(events);
+      setTimeout(function(){
+        Countly.endEvent(events);
+      },1000);
     };
     // TIMED EVENTS
 
@@ -389,8 +393,7 @@ class AwesomeProject extends Component {
             < Button onPress = { this.eventWithSum } title = "Event with Sum" color = "#e0e0e0"> </Button>
             < Button onPress = { this.eventWithSegment } title = "Event with Segment" color = "#e0e0e0"> </Button>
             < Button onPress = { this.eventWithSumAndSegment } title = "Even with Sum and Segment" color = "#841584"> </Button>
-            < Button onPress = { this.startEvent } title = "Timed event: Start" color = "#e0e0e0"> </Button>
-            < Button onPress = { this.endEvent } title = "Timed event: Stop" color = "#e0e0e0"> </Button>
+            < Button onPress = { this.startEvent } title = "Timed event" color = "#e0e0e0"> </Button>
             < Button onPress = { this.timedEventWithSum } title = "Timed events with Sum" color = "#e0e0e0"> </Button>
             < Button onPress = { this.timedEventWithSegment } title = "Timed events with Segment" color = "#e0e0e0"> </Button>
             < Button onPress = { this.timedEventWithSumAndSegment } title = "Timed events with Sum and Segment" color = "#e0e0e0"> </Button>
