@@ -221,78 +221,38 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         }
     }
 
-/*
     @ReactMethod
-    public void startEvent(String eventName){
-        Countly.sharedInstance().startEvent(eventName);
+    public void startEvent(ReadableArray args){
+        String startEvent = args.getString(0);
+        Countly.sharedInstance().startEvent(startEvent);
     }
-*/
 
-		@ReactMethod
-		public void startEvent(ReadableArray args){
-				String startEvent = args.getString(0);
-				Countly.sharedInstance().startEvent(startEvent);
-		}
-
-/*
     @ReactMethod
-    public void endEvent(ReadableMap options){
-      if (!options.hasKey("eventName")) {
-        Log.e(Countly.TAG, "For timed events you need to specify eventName");
-        return;
-      }
-      String eventName = options.getString("eventName");
-      HashMap<String, String> segmentation = new HashMap<String, String>();
-      if (options.hasKey("segments")) {
-        ReadableMap segments = options.getMap("segments");
-        ReadableMapKeySetIterator iterator = segments.keySetIterator();
-        while (iterator.hasNextKey()) {
-          String key = iterator.nextKey();
-          String value = segments.getString(key);
-          segmentation.put(key, value);
+    public void endEvent(ReadableArray args){
+        String eventType = args.getString(0);
+        if("event".equals(eventType)){
+            String eventName = args.getString(1);
+            Countly.sharedInstance().endEvent(eventName);
         }
-      }
-      // else {
-      //  segmentation = null;
-      // }
-      double eventSum = 0;
-      if (options.hasKey("eventSum")) {
-        eventSum = options.getDouble("eventSum");
-      }
-      int eventCount = 1;
-      if (options.hasKey("eventCount")) {
-        eventCount = options.getInt("eventCount");
-      }
-      Countly.sharedInstance().endEvent(eventName, segmentation, eventCount, eventSum);
+        else if ("eventWithSumSegment".equals(eventType)) {
+            String eventName = args.getString(1);
+            int eventCount= Integer.parseInt(args.getString(2));
+            float eventSum= new Float(args.getString(3)).floatValue();
+            HashMap<String, String> segmentation = new HashMap<String, String>();
+            for(int i=4,il=args.size();i<il;i+=2){
+                segmentation.put(args.getString(i), args.getString(i+1));
+            }
+            Countly.sharedInstance().endEvent(eventName, segmentation, eventCount,eventSum);
+        }
+        else{
+        }
     }
-*/
 
-		@ReactMethod
-		public void endEvent(ReadableArray args){
-				String eventType = args.getString(0);
-				if("event".equals(eventType)){
-						String eventName = args.getString(1);
-						Countly.sharedInstance().endEvent(eventName);
-				}
-				else if ("eventWithSumSegment".equals(eventType)) {
-						String eventName = args.getString(1);
-						int eventCount= Integer.parseInt(args.getString(2));
-						float eventSum= new Float(args.getString(3)).floatValue();
-						HashMap<String, String> segmentation = new HashMap<String, String>();
-						for(int i=4,il=args.size();i<il;i+=2){
-								segmentation.put(args.getString(i), args.getString(i+1));
-						}
-						Countly.sharedInstance().endEvent(eventName, segmentation, eventCount,eventSum);
-				}
-				else{
-				}
-		}
-
-		@ReactMethod
-		public void recordView(ReadableArray args){
-	        String viewName = args.getString(0);
-			Countly.sharedInstance().recordView(viewName);
-	  }
+	@ReactMethod
+	public void recordView(ReadableArray args){
+        String viewName = args.getString(0);
+		Countly.sharedInstance().recordView(viewName);
+    }
 
     @ReactMethod
     public void setViewTracking(ReadableArray args){
