@@ -228,6 +228,7 @@ Countly.startEvent = function(eventName){
 Countly.endEvent = function(options){
     if(typeof options === "string") {
         options = {eventName: options};
+    }
     var args = [];
     var eventType = "event"; //event, eventWithSum, eventWithSegment, eventWithSumSegment
     var segments = {};
