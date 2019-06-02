@@ -173,8 +173,8 @@ NSString* const kCountlyTokenError = @"kCountlyTokenError";
     if (!CountlyConsentManager.sharedInstance.consentForPushNotifications)
         return;
 
-    // if (!self.token)
-    //     return;
+    if (!self.token)
+        return;
 
     if ([self.token isEqualToString:kCountlyTokenError])
     {

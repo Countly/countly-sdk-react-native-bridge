@@ -294,6 +294,27 @@ const NSInteger kCountlyGETRequestMaxLength = 2048;
     [self proceedOnQueue];
 }
 
+- (void)sendPushTokenReactNative:(NSString *)token messagingMode:(NSString *)messagingMode
+{
+    typedef enum : NSInteger
+    {
+        CLYPushTokenModeProduction,
+        CLYPushTokenModeDevelopment,
+        CLYPushTokenModeAdHoc,
+    } CLYPushTokenMode;
+
+    int testMode = [messagingMode intValue];
+
+
+    NSString* queryString = [[self queryEssentials] stringByAppendingFormat:@"&%@=%@&%@=%@&%@=%d",
+                             kCountlyQSKeyPushTokenSession, @"1",
+                             kCountlyQSKeyPushTokeniOS, token,
+                             kCountlyQSKeyPushTestMode, testMode];
+
+    [CountlyPersistency.sharedInstance addToQueue:queryString];
+
+    [self proceedOnQueue];
+}
 - (void)sendLocationInfo
 {
     NSString* location = CountlyLocationManager.sharedInstance.location.cly_URLEscaped;

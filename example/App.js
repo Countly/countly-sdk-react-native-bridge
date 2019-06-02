@@ -1,16 +1,18 @@
 import React, { Component } from 'react';
 import { AppRegistry, Text, Button, ScrollView, Image, View, Alert } from 'react-native';
 import Countly from 'countly-sdk-react-native-bridge';
-import PushNotificationIOS from 'react-native';
+import { PushNotificationIOS }  from 'react-native';
+// import StackTrace from '/Countly.StackTrace.js';
+// import stacktrace from 'react-native-stacktrace';
 // var PushNotification = require('react-native-push-notification');
 
 class AwesomeProject extends Component {
     constructor(props) {
-        super(props);        
+        super(props);
+        this.config = {};
     };
     onInit(){
-      Countly.init("https://try.count.ly","0e8a00e8c01395a0af8be0e55da05a404bb23c3e");
-      Countly.enableLogging();
+      Countly.init("https://try.count.ly","0e8a00e8c01395a0af8be0e55da05a404bb23c3e","","5", "Rate us.", "How would you rate the app?", "Dismiss",false);
     }
     onStart(){
       Countly.start();
@@ -65,11 +67,11 @@ class AwesomeProject extends Component {
     // TIMED EVENTS
     startEvent(){
       Countly.startEvent("timedEvent");
+      setTimeout(function(){
+        Countly.endEvent("timedEvent");
+      },1000);
     };
 
-    endEvent(){
-      Countly.endEvent("timedEvent");
-    };
 
     /*
       setTimeout may not work correctly if you are attached to Chrome Debugger.
@@ -80,9 +82,11 @@ class AwesomeProject extends Component {
       Countly.startEvent("timedEventWithSum");
       var event = {
         "eventName": "timedEventWithSum",
-        "eventSum": 0.99
+        "eventSum": "0.99"
       };
-      setTimeout(function() { Alert.alert("Event sent after 2 secs"); Countly.endEvent(event) }, 2000);
+      setTimeout(function(){
+        Countly.endEvent(event);
+      },1000);
     };
 
     timedEventWithSegment(){
@@ -95,7 +99,9 @@ class AwesomeProject extends Component {
         "Country": "Germany",
         "Age": "32"
       };
-      setTimeout(function() { Alert.alert("Event sent after 2 secs"); Countly.endEvent(event) }, 2000);
+      setTimeout(function(){
+        Countly.endEvent(event);
+      },1000);
     };
 
     timedEventWithSumAndSegment(){
@@ -103,45 +109,65 @@ class AwesomeProject extends Component {
       Countly.startEvent("timedEventWithSumAndSegment");
       var event = {
         "eventName": "timedEventWithSumAndSegment",
-        "eventCount": 2,
-        "eventSum": 3.99
+        "eventCount": 1,
+        "eventSum": "0.99"
       };
       event.segments = {
         "Country": "India",
         "Age": "21"
       };
-      setTimeout(function() { Alert.alert("Event sent after 2 secs"); Countly.endEvent(event) }, 2000);
+      setTimeout(function(){
+        Countly.endEvent(event);
+      },1000);
     };
     // TIMED EVENTS
 
 
     userData_setProperty(){
-      Countly.userData.setProperty("keyName", "keyValue");
+      Countly.userData.setProperty("setProperty", "keyValue");
     };
 
     userData_increment(){
-      Countly.userData.increment("keyName");
+      Countly.userData.setProperty("increment", 5);
+      Countly.userData.increment("increment");
     };
 
     userData_incrementBy(){
-      Countly.userData.incrementBy("keyName", 10);
+      Countly.userData.setProperty("incrementBy", 5);
+      Countly.userData.incrementBy("incrementBy", 10);
     };
 
     userData_multiply(){
-      Countly.userData.multiply("keyName", 20);
+      Countly.userData.setProperty("multiply", 5);
+      Countly.userData.multiply("multiply", 20);
     };
 
     userData_saveMax(){
-      Countly.userData.saveMax("keyName", 100);
+      Countly.userData.setProperty("saveMax", 5);
+      Countly.userData.saveMax("saveMax", 100);
     };
 
     userData_saveMin(){
-      Countly.userData.saveMin("keyName", 50);
+      Countly.userData.setProperty("saveMin", 5);
+      Countly.userData.saveMin("saveMin", 50);
     };
 
     userData_setOnce(){
-      Countly.userData.setOnce("keyName", 200);
+      Countly.userData.setOnce("setOnce", 200);
     };
+
+    userData_pushUniqueValue(){
+      Countly.userData.pushUniqueValue("type", "morning");
+    };
+
+    userData_pushValue(){
+      Countly.userData.pushValue("type", "morning");
+    };
+
+    userData_pullValue(){
+      Countly.userData.pullValue("type", "morning");
+    };
+
 
     onRegisterDevice(){
       // Countly.initMessaging('403185924621', Countly.TEST);
@@ -198,19 +224,27 @@ class AwesomeProject extends Component {
     };
 
     remoteConfigUpdate(){
-      Countly.remoteConfigUpdate();
+      Countly.remoteConfigUpdate(function(data){
+        console.log(data);
+      });
     };
 
     updateRemoteConfigForKeysOnly(){
-      Countly.updateRemoteConfigForKeysOnly("test1");
+      Countly.updateRemoteConfigForKeysOnly(["test1"],function(data){
+        console.log(data);
+      });
     };
 
     updateRemoteConfigExceptKeys(){
-      Countly.updateRemoteConfigExceptKeys("test1");
+      Countly.updateRemoteConfigExceptKeys(["test1"],function(data){
+        console.log(data);
+      });
     };
 
     getRemoteConfigValueForKey(){
-      Countly.getRemoteConfigValueForKey("test1");
+      Countly.getRemoteConfigValueForKey("test1",function(data){
+        console.log(data);
+      });
     };
 
     setLocation(){
@@ -226,17 +260,22 @@ class AwesomeProject extends Component {
     };
 
     setupPush(){
+      console.log('setupPush');
+      PushNotificationIOS.addEventListener('registrationError', function(error){
+        console.log('error:', error);
+      });
+
       PushNotification.configure({
-          // (optional) Called when Token is generated (iOS and Android)
           onRegister: function(token) {
-            // alert(JSON.stringify(token))
-            var token = token;
-            token.messagingMode = "0";
-            Countly.sendPushToken(token)
+            console.log( 'TOKEN:', token );
+            var options = {
+              token: token.token,
+              messagingMode: Countly.messagingMode.DEVELOPMENT
+            }
+            Countly.sendPushToken(options)
           },
-          // (required) Called when a remote or local notification is opened or received
           onNotification: function(notification) {
-              // alert( 'NOTIFICATION:', notification );
+              console.log( 'NOTIFICATION:', notification );
               // process the notification
               // required on iOS only (see fetchCompletionHandler docs: https://facebook.github.io/react-native/docs/pushnotificationios.html)
               notification.finish(PushNotificationIOS.FetchResult.NoData);
@@ -294,22 +333,14 @@ class AwesomeProject extends Component {
       },1000);
       setTimeout(function(){
         Countly.addCrashLog("User Performed Step C");
-        console.log("Opps found and error");
-        // Countly.logException("My Customized error message");
-        try { 
-            var a = {}; 
-            var x = a.b.c; // this will create error. 
-        } catch (error) { 
-          var stack = error.stack.toString(); 
-          console.log(stack); 
-          stack = stack.split('\n');  
-          console.log(stack); 
-            var stackframes = [ 
-              {functionName: 'fn', fileName: 'file.js', lineNumber: 32, columnNumber: 1}, 
-              {functionName: 'fn2', fileName: 'file.js', lineNumber: 543, columnNumber: 32},  
-              {functionName: 'fn3', fileName: 'file.js', lineNumber: 8, columnNumber: 1}  
-            ] 
-            Countly.logException(stackframes, true, {"_facebook_version": "0.0.1"});  
+        try {
+            var a = {};
+            var x = a.b.c; // this will create error.
+        } catch (error) {
+          setTimeout(function(){
+            var stack = error.stack.toString();
+            Countly.logException(stack, true, {"_facebook_version": "0.0.1"});
+          },1000);
         }
       },1000);
     };
@@ -375,8 +406,7 @@ class AwesomeProject extends Component {
             < Button onPress = { this.eventWithSum } title = "Event with Sum" color = "#e0e0e0"> </Button>
             < Button onPress = { this.eventWithSegment } title = "Event with Segment" color = "#e0e0e0"> </Button>
             < Button onPress = { this.eventWithSumAndSegment } title = "Even with Sum and Segment" color = "#841584"> </Button>
-            < Button onPress = { this.startEvent } title = "Timed event: Start" color = "#e0e0e0"> </Button>
-            < Button onPress = { this.endEvent } title = "Timed event: Stop" color = "#e0e0e0"> </Button>
+            < Button onPress = { this.startEvent } title = "Timed event" color = "#e0e0e0"> </Button>
             < Button onPress = { this.timedEventWithSum } title = "Timed events with Sum" color = "#e0e0e0"> </Button>
             < Button onPress = { this.timedEventWithSegment } title = "Timed events with Segment" color = "#e0e0e0"> </Button>
             < Button onPress = { this.timedEventWithSumAndSegment } title = "Timed events with Sum and Segment" color = "#e0e0e0"> </Button>
@@ -396,6 +426,9 @@ class AwesomeProject extends Component {
             < Button onPress = { this.userData_saveMax } title = "UserData.saveMax" color = "#00b5ad"> </Button>
             < Button onPress = { this.userData_saveMin } title = "UserData.saveMin" color = "#00b5ad"> </Button>
             < Button onPress = { this.userData_setOnce } title = "UserData.setOnce" color = "#00b5ad"> </Button>
+            < Button onPress = { this.userData_pushUniqueValue } title = "UserData.pushUniqueValue" color = "#00b5ad"> </Button>
+            < Button onPress = { this.userData_pushValue } title = "UserData.pushValue" color = "#00b5ad"> </Button>
+            < Button onPress = { this.userData_pullValue } title = "UserData.pullValue" color = "#00b5ad"> </Button>
 
             <Text style={[{textAlign: 'center'}]}>User Methods End</Text>
 
@@ -404,7 +437,7 @@ class AwesomeProject extends Component {
             < Button onPress = { function(){Countly.recordView("Dashboard")} } title = "Record View: 'Dashboard'" color = "#e0e0e0"> </Button>
             < Button onPress={this.enableLogging} title='Enable Logging' color='#00b5ad' />
             < Button onPress={this.disableLogging} title='Disable Logging' color='#00b5ad' />
-            
+
 
             < Text style={[{ textAlign: 'center' }]}>Push Notification Start</Text>
             < Button onPress={this.onRegisterDevice} title='Register Device' color='#00b5ad' />
@@ -423,12 +456,11 @@ class AwesomeProject extends Component {
             < Button onPress = { this.giveAllConsent } title = "Start all Consent" color = "#00b5ad"> </Button>
             < Button onPress = { this.removeAllConsent } title = "Remove all Consent" color = "#00b5ad"> </Button>
 
-            < Button onPress = { this.setOptionalParametersForInitialization } title = "Set Optional Parameters For Initialization" color = "#00b5ad"> </Button>
             < Button onPress = { this.setLocation } title = "Set Location" color = "#00b5ad"> </Button>
             < Button onPress = { this.disableLocation } title = "Disable Location" color = "#00b5ad"> </Button>
 
 
-            
+
 
 
 
@@ -436,14 +468,12 @@ class AwesomeProject extends Component {
             < Button onPress = { this.remoteConfigUpdate } title = "Update Remote Config" color = "#00b5ad"> </Button>
             < Button onPress = { this.updateRemoteConfigForKeysOnly } title = "Update Remote Config with Keys Only" color = "#00b5ad"> </Button>
             < Button onPress = { this.updateRemoteConfigExceptKeys } title = "Update Remote Config Except Keys" color = "#00b5ad"> </Button>
-            < Button onPress = { this.getStarRating } title = "Check Remote Config value" color = "#00b5ad"> </Button>
             < Button onPress = { this.getRemoteConfigValueForKey } title = "Get config value" color = "#00b5ad"> </Button>
 
-            < Button onPress = { this.setStarRatingDialogTexts } title = "designated Star Rating" color = "#00b5ad"> </Button>
             < Button onPress = { this.showStarRating } title = "Show Star Rating Model" color = "#00b5ad"> </Button>
             < Button onPress = { this.showFeedbackPopup } title = "Show FeedBack Model" color = "#00b5ad"> </Button>
 
-            
+
             <Text style={[{textAlign: 'center'}]}>Other Methods End</Text>
             <Text style={[{textAlign: 'center'}]}>Crash Event start</Text>
             < Button onPress = { this.enableCrashReporting } title = "Enable Crash Reporting" color = "#00b5ad"> </Button>

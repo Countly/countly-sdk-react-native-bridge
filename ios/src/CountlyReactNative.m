@@ -21,6 +21,13 @@ RCT_EXPORT_METHOD(init:(NSArray*)arguments)
   NSString* serverurl = [arguments objectAtIndex:0];
   NSString* appkey = [arguments objectAtIndex:1];
   NSString* deviceID = [arguments objectAtIndex:2];
+  NSString* ratingTitle = [arguments objectAtIndex:4];
+  NSString* ratingMessage = [arguments objectAtIndex:5];
+  NSString* ratingButton = [arguments objectAtIndex:6];
+  BOOL consentFlag = [[arguments objectAtIndex:7] boolValue];
+  NSString* ratingLimitString = [arguments objectAtIndex:3];
+  int ratingLimit = [ratingLimitString intValue];
+
 
   if (config == nil){
     config = CountlyConfig.new;
@@ -31,10 +38,10 @@ RCT_EXPORT_METHOD(init:(NSArray*)arguments)
   config.appKey = appkey;
   config.host = serverurl;
   config.enableRemoteConfig = YES;
-  config.starRatingSessionCount = 5;
+  config.starRatingSessionCount = ratingLimit;
   config.starRatingDisableAskingForEachAppVersion = YES;
-  config.starRatingMessage = @"Please rate our app?";
-
+  config.starRatingMessage = ratingMessage;
+  config.requiresConsent = consentFlag;
 
 
   if (serverurl != nil && [serverurl length] > 0) {
@@ -88,20 +95,27 @@ RCT_EXPORT_METHOD(event:(NSArray*)arguments)
       }
       [[Countly sharedInstance] recordEvent:eventName segmentation:dict count:countInt  sum:sumFloat];
     }
-    else{
-    }
-  } else {
   }
 }
 RCT_EXPORT_METHOD(recordView:(NSArray*)arguments)
 {
   NSString* recordView = [arguments objectAtIndex:0];
-  [Countly.sharedInstance reportView:recordView];
+  [Countly.sharedInstance recordView:recordView];
 }
-RCT_EXPORT_METHOD(setloggingenabled:(NSArray*)arguments)
+
+RCT_EXPORT_METHOD(setViewTracking:(NSArray*)arguments)
 {
 
+}
 
+RCT_EXPORT_METHOD(setLoggingEnabled:(NSArray*)arguments)
+{
+  BOOL boolean = [[arguments objectAtIndex:0] boolValue];
+  if(boolean){
+    config.enableDebug = YES;
+  }else{
+    config.enableDebug = NO;
+  }
 }
 
 RCT_EXPORT_METHOD(setuserdata:(NSArray*)arguments)
@@ -112,7 +126,7 @@ RCT_EXPORT_METHOD(setuserdata:(NSArray*)arguments)
   NSString* org = [arguments objectAtIndex:3];
   NSString* phone = [arguments objectAtIndex:4];
   NSString* picture = [arguments objectAtIndex:5];
-  //NSString* picturePath = [arguments objectAtIndex:6];
+  NSString* pictureLocalPath = [arguments objectAtIndex:6];
   NSString* gender = [arguments objectAtIndex:7];
   NSString* byear = [arguments objectAtIndex:8];
 
@@ -122,6 +136,7 @@ RCT_EXPORT_METHOD(setuserdata:(NSArray*)arguments)
   Countly.user.organization = org;
   Countly.user.phone = phone;
   Countly.user.pictureURL = picture;
+  Countly.user.pictureLocalPath = pictureLocalPath;
   Countly.user.gender = gender;
   Countly.user.birthYear = @([byear integerValue]);
   [Countly.user save];
@@ -132,36 +147,21 @@ RCT_EXPORT_METHOD(onregistrationid:(NSArray*)arguments)
 {
   NSString* token = [arguments objectAtIndex:0];
   NSString* messagingMode = [arguments objectAtIndex:1];
-  int mode = [messagingMode intValue];
-  NSData *tokenByte = [token dataUsingEncoding:NSUTF8StringEncoding];
-  if(mode == 1){
-    // [[CountlyConnectionQueue sharedInstance] setStartedWithTest:YES];
-  }
-  // [CountlyConnectionManager.sharedInstance sendPushToken:token];
-   CountlyPushNotifications.sharedInstance.token = token;
-   [CountlyPushNotifications.sharedInstance sendToken];
-  [Countly.sharedInstance didRegisterForRemoteNotificationsWithDeviceToken:tokenByte];
+  //  int mode = [messagingMode intValue];
+  //  NSInteger messagingModeInteger = [messagingMode intValue];
+  //  NSData *tokenByte = [token dataUsingEncoding:NSUTF8StringEncoding];
 
-  // [[CountlyConnectionQueue sharedInstance] tokenSession:token];
-
-
-
+  [CountlyConnectionManager.sharedInstance sendPushTokenReactNative:token messagingMode:messagingMode];
 }
 
 RCT_EXPORT_METHOD(start)
 {
   // [Countly.sharedInstance resume];
-
-
-
 }
 
 RCT_EXPORT_METHOD(stop)
 {
   // [Countly.sharedInstance suspend];
-
-
-
 }
 
 RCT_EXPORT_METHOD(changeDeviceId:(NSArray*)arguments)
@@ -207,11 +207,13 @@ RCT_EXPORT_METHOD(enableParameterTamperingProtection:(NSArray*)arguments)
   config.secretSalt = salt;
 }
 
-RCT_EXPORT_METHOD(startEvent:(NSString*)eventName)
+RCT_EXPORT_METHOD(startEvent:(NSArray*)arguments)
 {
-  [Countly.sharedInstance eventName];
+  NSString* eventName = [arguments objectAtIndex:0];
+  [Countly.sharedInstance startEvent:eventName];
 }
 
+/*
 RCT_EXPORT_METHOD(endEvent:(NSDictionary*)options)
 {
   NSString* eventName = "";
@@ -238,6 +240,35 @@ RCT_EXPORT_METHOD(endEvent:(NSDictionary*)options)
   }
   [Countly.sharedInstance endEvent:eventName segmentation:segments count:eventCount sum:eventSum];
 }
+*/
+
+RCT_EXPORT_METHOD(endEvent:(NSArray*)arguments)
+{
+  NSString* eventType = [arguments objectAtIndex:0];
+
+  if ([eventType  isEqual: @"event"]) {
+    NSString* eventName = [arguments objectAtIndex:1];
+    [Countly.sharedInstance endEvent:eventName];
+  }
+  else if ([eventType  isEqual: @"eventWithSumSegment"]){
+    NSString* eventName = [arguments objectAtIndex:1];
+
+    NSString* countString = [arguments objectAtIndex:2];
+    int countInt = [countString intValue];
+
+    NSString* sumString = [arguments objectAtIndex:3];
+    int sumInt = [sumString intValue];
+
+    NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
+    for(int i=4,il=(int)arguments.count;i<il;i+=2){
+      dict[[arguments objectAtIndex:i]] = [arguments objectAtIndex:i+1];
+    }
+
+    [Countly.sharedInstance endEvent:eventName segmentation:dict count:countInt sum:sumInt];
+  }
+  else{
+  }
+}
 
 RCT_EXPORT_METHOD(setLocation:(NSArray*)arguments)
 {
@@ -258,19 +289,13 @@ RCT_EXPORT_METHOD(setLocation:(NSArray*)arguments)
 
     [Countly.sharedInstance recordLocation:(CLLocationCoordinate2D){latitudeDouble,longitudeDouble}];
   }
+  [Countly.sharedInstance recordCity:city andISOCountryCode:countryCode];   //@nicolson Validation for city and countryCode is done on Countly js
+  if ([IP  isEqual: @"0.0.0.0"]){
 
+  }else{
+    [Countly.sharedInstance recordIP:IP];
+  }
 
-  // Not necessary, as there is method for it.
-  // if (config == nil){
-  //   config = CountlyConfig.new;
-  // }
-  // config.ISOCountryCode = countryCode;
-  // config.city = city;
-  // config.location = location; // (CLLocationCoordinate2D){35.6895,139.6917};
-  // config.IP = IP;
-
-  [Countly.sharedInstance recordCity:city andISOCountryCode:countryCode];
-  [Countly.sharedInstance recordIP:IP];
 
 }
 
@@ -279,7 +304,7 @@ RCT_EXPORT_METHOD(disableLocation:(NSArray*)arguments)
   [Countly.sharedInstance disableLocationInfo];
 }
 
-RCT_EXPORT_METHOD(enableCrashReporting:(NSArray*)arguments)
+RCT_EXPORT_METHOD(enableCrashReporting)
 {
   if (config == nil){
     config = CountlyConfig.new;
@@ -291,6 +316,24 @@ RCT_EXPORT_METHOD(addCrashLog:(NSArray*)arguments)
 {
   NSString* logs = [arguments objectAtIndex:0];
   [Countly.sharedInstance recordCrashLog:logs];
+}
+
+RCT_EXPORT_METHOD(logException:(NSArray*)arguments)
+{
+  NSString* execption = [arguments objectAtIndex:0];
+  NSString* nonfatal = [arguments objectAtIndex:1];
+  NSArray *nsException = [execption componentsSeparatedByString:@"\n"];
+
+  NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
+
+  for(int i=2,il=(int)arguments.count;i<il;i+=2){
+      dict[[arguments objectAtIndex:i]] = [arguments objectAtIndex:i+1];
+  }
+  [dict setObject:nonfatal forKey:@"nonfatal"];
+
+  NSException* myException = [NSException exceptionWithName:@"Exception" reason:execption userInfo:dict];
+
+  [Countly.sharedInstance recordHandledException:myException withStackTrace: nsException];
 }
 
 RCT_EXPORT_METHOD(userData_setProperty:(NSArray*)arguments)
@@ -362,9 +405,6 @@ RCT_EXPORT_METHOD(userData_pushUniqueValue:(NSArray*)arguments)
 {
   NSString* keyName = [arguments objectAtIndex:0];
   NSString* keyValue = [arguments objectAtIndex:1];
-
-  // [Countly.user pushUnique:keyName value:keyValue];
-  // [Countly.user save];
 }
 RCT_EXPORT_METHOD(userData_pushValue:(NSArray*)arguments)
 {
@@ -387,12 +427,8 @@ RCT_EXPORT_METHOD(userData_pullValue:(NSArray*)arguments)
 
 RCT_EXPORT_METHOD(demo:(NSArray*)arguments)
 {
-  // NSString* token = [arguments objectAtIndex:0];
-  // NSString* messagingMode = [arguments objectAtIndex:1];
-  // int mode = [messagingMode intValue];
-  // NSData *tokenByte = [token dataUsingEncoding:NSUTF8StringEncoding];
-}
 
+}
 
 RCT_EXPORT_METHOD(setRequiresConsent:(NSArray*)arguments)
 {
@@ -401,6 +437,7 @@ RCT_EXPORT_METHOD(setRequiresConsent:(NSArray*)arguments)
   }
   config.requiresConsent = YES;
 }
+
 RCT_EXPORT_METHOD(giveConsent:(NSArray*)arguments)
 {
   NSString* keyName = [arguments objectAtIndex:0];
@@ -500,8 +537,12 @@ RCT_EXPORT_METHOD(remoteConfigUpdate:(NSArray*)arguments:(RCTResponseSenderBlock
 
 RCT_EXPORT_METHOD(updateRemoteConfigForKeysOnly:(NSArray*)arguments:(RCTResponseSenderBlock)callback)
 {
-  NSString* keyName = [arguments objectAtIndex:0];
-  [Countly.sharedInstance updateRemoteConfigOnlyForKeys:@[keyName] completionHandler:^(NSError * error)
+  NSMutableArray *randomSelection = [[NSMutableArray alloc] init];
+  for (int i = 0; i < (int)arguments.count; i++){
+      [randomSelection addObject:[arguments objectAtIndex:i]];
+  }
+  NSArray *keyNames = [randomSelection copy];
+  [Countly.sharedInstance updateRemoteConfigOnlyForKeys:keyNames completionHandler:^(NSError * error)
   {
       if (!error)
       {
@@ -519,8 +560,12 @@ RCT_EXPORT_METHOD(updateRemoteConfigForKeysOnly:(NSArray*)arguments:(RCTResponse
 
 RCT_EXPORT_METHOD(updateRemoteConfigExceptKeys:(NSArray*)arguments:(RCTResponseSenderBlock)callback)
 {
-  NSString* keyName = [arguments objectAtIndex:0];
-  [Countly.sharedInstance updateRemoteConfigExceptForKeys:@[keyName] completionHandler:^(NSError * error)
+  NSMutableArray *randomSelection = [[NSMutableArray alloc] init];
+  for (int i = 0; i < (int)arguments.count; i++){
+      [randomSelection addObject:[arguments objectAtIndex:i]];
+  }
+  NSArray *keyNames = [randomSelection copy];
+  [Countly.sharedInstance updateRemoteConfigExceptForKeys:keyNames completionHandler:^(NSError * error)
   {
       if (!error)
       {
@@ -535,38 +580,29 @@ RCT_EXPORT_METHOD(updateRemoteConfigExceptKeys:(NSArray*)arguments:(RCTResponseS
       }
   }];
 }
-
 RCT_EXPORT_METHOD(getRemoteConfigValueForKey:(NSArray*)arguments:(RCTResponseSenderBlock)callback)
 {
   NSString* keyName = [arguments objectAtIndex:0];
   id value = [Countly.sharedInstance remoteConfigValueForKey:keyName];
-  if (value) // if value exists, you can use it as you see fit
-  {
-      // NSLog(@"Value %@", [value description]);
+  if (value){
   }
-  else //if value does not exist, you can set your default fallback value
-  {
-    value = @"Default Value";   
+  else{
+    value = @"";
   }
-  NSString* returnString = [NSString stringWithFormat:@"Value is : %@", value];
+  NSString* returnString = [NSString stringWithFormat:@"%@", value];
   NSArray *result = @[returnString];
   callback(@[result]);
-}
-
-RCT_EXPORT_METHOD(setStarRatingDialogTexts:(NSArray*)arguments)
-{
-  if (config == nil){
-    config = CountlyConfig.new;
-  }
-  config.starRatingMessage = @"Please rate our app custom?";
 }
 
 RCT_EXPORT_METHOD(showStarRating:(NSArray*)arguments)
 {
   NSInteger* rating = 5;
-  [Countly.sharedInstance askForStarRating:^(NSInteger rating)
-  {
-      NSLog(@"rating %li",(long)rating);
+  if (config != nil){
+    if(config.starRatingSessionCount){
+      rating = config.starRatingSessionCount;
+    }
+  }
+  [Countly.sharedInstance askForStarRating:^(NSInteger rating){
   }];
 }
 
@@ -575,10 +611,7 @@ RCT_EXPORT_METHOD(showFeedbackPopup:(NSArray*)arguments)
   NSString* FEEDBACK_WIDGET_ID = [arguments objectAtIndex:0];
   [Countly.sharedInstance presentFeedbackWidgetWithID:FEEDBACK_WIDGET_ID completionHandler:^(NSError* error)
   {
-      if (error)
-          NSLog(@"Feedback widget presentation failed: \n%@\n%@", error.localizedDescription, error.userInfo);
-      else
-          NSLog(@"Feedback widget presented successfully");
+
   }];
 }
 

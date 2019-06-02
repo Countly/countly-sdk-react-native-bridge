@@ -1,7 +1,7 @@
 /**
- * Countly SKD React Native
- * https://github.com/facebook/react-native
- * @flow
+ * Countly SDK React Native Bridge
+ * https://github.com/Countly/countly-sdk-react-native-bridge
+ * @Countly
  */
 
 import {
@@ -9,14 +9,11 @@ import {
     NativeModules
 } from 'react-native';
 
-// import StackTrace from './Countly.StackTrace.js';
-
 const CountlyReactNative = NativeModules.CountlyReactNative;
 
 const Countly = {};
 Countly.serverUrl = "";
 Countly.appKey = "";
-Countly.ready = false;
 
 Countly.messagingMode = {"DEVELOPMENT":1,"PRODUCTION":0, "ADHOC": 2};
 if (Platform.OS.match("android")) {
@@ -24,13 +21,19 @@ if (Platform.OS.match("android")) {
 }
 
 // countly initialization
-Countly.init = function(serverUrl,appKey, deviceId){
+Countly.init = function(serverUrl,appKey, deviceId, starRatingLimit, titleText, messageText, buttonText,consentFlag){
     Countly.serverUrl = serverUrl;
     Countly.appKey = appKey;
     var args = [];
     args.push(serverUrl || "");
     args.push(appKey || "");
     args.push(deviceId || "");
+    args.push(starRatingLimit || "5");
+    args.push(titleText || "Rate us.");
+    args.push(messageText || "How would you rate the app?");
+    args.push(buttonText || "Dismiss");
+    args.push(consentFlag || false);
+
     CountlyReactNative.init(args);
 }
 Countly.isInitialized = function(){
@@ -66,8 +69,15 @@ Countly.sendEvent = function(options){
     else{
         args.push("1");
     }
+
     if(options.eventSum){
-        args.push(options.eventSum.toString());
+        options.eventSum = options.eventSum.toString();
+        if(options.eventSum.indexOf(".") == -1){
+            options.eventSum = parseFloat(options.eventSum).toFixed(2);
+            args.push(options.eventSum);
+        }else{
+            args.push(options.eventSum);
+        }
     }
 
     if(options.segments)
@@ -87,11 +97,10 @@ Countly.setViewTracking = function(boolean){
     CountlyReactNative.setViewTracking([boolean || "false"]);
 }
 
-Countly.sendPushToken = function(options, successCallback, failureCallback){
+Countly.sendPushToken = function(options){
     var args = [];
     args.push(options.token || "");
-    args.push(options.messagingMode || "");
-    args.push(options.projectId || "");
+    args.push((options.messagingMode || "").toString());
     CountlyReactNative.onregistrationid(args);
 }
 
@@ -106,24 +115,13 @@ Countly.stop = function(){
 }
 
 Countly.enableLogging = function(){
-    if (Platform.OS.match("android")) {
-        CountlyReactNative.setLoggingEnabled([true]);
-    }
+    CountlyReactNative.setLoggingEnabled([true]);
 }
 
 Countly.disableLogging = function(){
-    if (Platform.OS.match("android")) {
-        CountlyReactNative.setLoggingEnabled([false]);
-    }
+    CountlyReactNative.setLoggingEnabled([false]);
 }
 
-// countly deviceready for testing purpose
-Countly.deviceready = function(){
-    Countly.ready = true;
-    //testing
-}
-
-// countly dummy success and error event
 Countly.onSuccess = function(result){
     // alert(result);
 }
@@ -136,20 +134,26 @@ Countly.demo = function(){
 
 }
 
-Countly.setOptionalParametersForInitialization = function(options){
-    var args = [];
-    args.push(options.city || "");
-    args.push(options.country || "");
-    args.push(String(options.latitude) || "0.0");
-    args.push(String(options.longitude) || "0.0");
-    args.push(String(options.ipAddress) || "0.0.0.0");
-    CountlyReactNative.setLocation(args);
-}
 Countly.setLocation = function(countryCode, city, location, ipAddress){
     var args = [];
     args.push(countryCode || "");
     args.push(city || "");
-    args.push(location || "0,0");
+    if(!location){
+        location = "0.0,0.0";
+    }
+    var locationArray = location.split(",")
+    var newStringLocation = "";
+    if(locationArray[0].indexOf(".") == -1){
+        newStringLocation = newStringLocation+""+parseFloat(locationArray[0]).toFixed(2);
+    }else{
+        newStringLocation = newStringLocation+""+locationArray[0]
+    }
+    if(locationArray[1].indexOf(".") == -1){
+        newStringLocation = newStringLocation+","+ parseFloat(locationArray[1]).toFixed(2);
+    }else{
+        newStringLocation = newStringLocation+","+locationArray[1]
+    }
+    args.push(newStringLocation);
     args.push(ipAddress || "0.0.0.0");
     CountlyReactNative.setLocation(args);
 }
@@ -170,15 +174,17 @@ Countly.userLoggedIn = function(deviceId){
     args.push(deviceId || "");
     CountlyReactNative.userLoggedIn(args);
 }
-Countly.userLoggedOut = function(deviceId){
+Countly.userLoggedOut = function(){
     CountlyReactNative.userLoggedOut([]);
 }
-Countly.setHttpPostForced = function(bool){
+Countly.setHttpPostForced = function(boolean){
     var args = [];
-    args.push(bool?"1":"0");
+    args.push(boolean?"1":"0");
     CountlyReactNative.setHttpPostForced(args);
 }
+Countly.isCrashReportingEnabled = false;
 Countly.enableCrashReporting = function(){
+    Countly.isCrashReportingEnabled = true;
     CountlyReactNative.enableCrashReporting();
 }
 Countly.addCrashLog = function(crashLog){
@@ -186,12 +192,10 @@ Countly.addCrashLog = function(crashLog){
 }
 
 Countly.logException = function(exception, nonfatal, segments){
+    var exceptionArray = exception.split('\n');
     var exceptionString = "";
-    for(var i=0,il=exception.length;i<il;i++){
-        exceptionString += "columnNumber: " +exception[i].columnNumber +"\n";
-        exceptionString += "fileName: " +exception[i].fileName +"\n";
-        exceptionString += "functionName: " +exception[i].functionName +"\n";
-        exceptionString += "lineNumber: " +exception[i].lineNumber +"\n";
+    for(var i=0,il=exceptionArray.length;i<il;i++){
+        exceptionString += "" +exceptionArray[i] +"\n";
     }
     var args = [];
     args.push(exceptionString || "");
@@ -224,8 +228,42 @@ Countly.startEvent = function(eventName){
 Countly.endEvent = function(options){
     if(typeof options === "string") {
         options = {eventName: options};
-    }     
-    CountlyReactNative.endEvent(options);
+    var args = [];
+    var eventType = "event"; //event, eventWithSum, eventWithSegment, eventWithSumSegment
+    var segments = {};
+
+    if(options.segments && options.eventSum)
+        eventType = "eventWithSumSegment";
+
+    args.push(eventType);
+
+    if(!options.eventName)
+        options.eventName = "";
+    args.push(options.eventName.toString());
+
+    if(!options.eventCount)
+        options.eventCount = "1";
+    args.push(options.eventCount.toString());
+
+    if(options.eventSum){
+        var eventSumTemp = options.eventSum.toString();
+        if(eventSumTemp.indexOf(".") == -1){
+            eventSumTemp = parseFloat(eventSumTemp).toFixed(2);
+            args.push(eventSumTemp);
+        }else{
+            args.push(eventSumTemp);
+        }
+    }else{
+        args.push('0.0');
+    }
+
+    if(options.segments)
+        segments = options.segments;
+    for (var event in segments) {
+        args.push(event);
+        args.push(segments[event]);
+    }
+    CountlyReactNative.endEvent(args);
 };
 
 // countly sending user data
@@ -240,7 +278,6 @@ Countly.setUserData = function(options){
     args.push(options.picturePath || "");
     args.push(options.gender || "");
     args.push(options.byear || 0);
-
     CountlyReactNative.setuserdata(args);
 }
 
@@ -289,45 +326,56 @@ Countly.removeConsent = function(keyName){
     CountlyReactNative.removeConsent([keyName.toString() || ""]);
 }
 
-Countly.giveAllConsent = function(keyName){
+Countly.giveAllConsent = function(){
     CountlyReactNative.giveAllConsent([]);
 }
 
-Countly.removeAllConsent = function(keyName){
+Countly.removeAllConsent = function(){
     CountlyReactNative.removeAllConsent([]);
 }
 
-Countly.remoteConfigUpdate = function(){
-    var stringItem = CountlyReactNative.remoteConfigUpdate([], (stringItem) => {
-        alert(stringItem);
+Countly.remoteConfigUpdate = function(callback){
+    CountlyReactNative.remoteConfigUpdate([], (stringItem) => {
+        callback(stringItem);
     });
 }
 
-Countly.updateRemoteConfigForKeysOnly = function(keyName){
-    CountlyReactNative.updateRemoteConfigForKeysOnly([keyName.toString() || ""], (stringItem) => {
-        alert(stringItem);
-    });
+Countly.updateRemoteConfigForKeysOnly = function(keyNames, callback){
+    var args = [];
+    if(keyNames.length){
+        for(var i=0,il=keyNames.length;i<il;i++){
+            args.push(keyNames[i])
+        }
+        CountlyReactNative.updateRemoteConfigForKeysOnly(args, (stringItem) => {
+            callback(stringItem);
+        });
+    }
 }
 
-Countly.updateRemoteConfigExceptKeys = function(keyName){
-    CountlyReactNative.updateRemoteConfigExceptKeys([keyName.toString() || ""], (stringItem) => {
-        alert(stringItem);
-    });
+Countly.updateRemoteConfigExceptKeys = function(keyNames, callback){
+    var args = [];
+    if(keyNames.length){
+        for(var i=0,il=keyNames.length;i<il;i++){
+            args.push(keyNames[i])
+        }
+        CountlyReactNative.updateRemoteConfigExceptKeys(args, (stringItem) => {
+            callback(stringItem);
+        });
+    }
 }
 
-Countly.getRemoteConfigValueForKey = function(keyName){
+Countly.getRemoteConfigValueForKey = function(keyName, callback){
     CountlyReactNative.getRemoteConfigValueForKey([keyName.toString() || ""], (stringItem) => {
-        alert(stringItem);
+        callback(stringItem);
     });
-
 }
 
-Countly.setStarRatingDialogTexts = function(keyName){
-    CountlyReactNative.setStarRatingDialogTexts([]);
-}
-
-Countly.showStarRating = function(keyName){
+Countly.showStarRating = function(){
     CountlyReactNative.showStarRating([]);
+}
+
+Countly.showFeedbackPopup = function(widgetId, closeButtonText,){
+    CountlyReactNative.showFeedbackPopup([widgetId.toString() || "", closeButtonText.toString() || "Done"]);
 }
 
 Countly.setEventSendThreshold = function(size){
@@ -344,5 +392,16 @@ Countly.testCrash = function(){
 }
 */
 
+if (ErrorUtils) {
+    var previousHandler = ErrorUtils.getGlobalHandler();
+    ErrorUtils.setGlobalHandler(function (error, isFatal) {
+        if(Countly.isCrashReportingEnabled){
+            var stack = error.stack.toString();
+            Countly.logException(stack, isFatal, {});
+        }else{
+            previousHandler(error, isFatal);
+        }
+    });
+}
 
 export default Countly;
