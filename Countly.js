@@ -223,7 +223,7 @@ Countly.enableParameterTamperingProtection = function(salt){
     CountlyReactNative.enableParameterTamperingProtection([salt.toString() || ""]);
 }
 Countly.startEvent = function(eventName){
-    CountlyReactNative.startEvent(eventName.toString() || "");
+    CCountlyReactNative.startEvent([eventName.toString() || ""]);
 }
 Countly.endEvent = function(options){
     if(typeof options === "string") {
