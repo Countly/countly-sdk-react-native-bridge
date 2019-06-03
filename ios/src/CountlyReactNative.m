@@ -221,6 +221,31 @@ RCT_EXPORT_METHOD(endEvent:(NSArray*)arguments)
     NSString* eventName = [arguments objectAtIndex:1];
     [Countly.sharedInstance endEvent:eventName];
   }
+  else if ([eventType  isEqual: @"eventWithSum"]){
+    NSString* eventName = [arguments objectAtIndex:1];
+
+    NSString* countString = [arguments objectAtIndex:2];
+    int countInt = [countString intValue];
+
+    NSString* sumString = [arguments objectAtIndex:3];
+    float sumInt = [sumString floatValue];
+
+    NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
+    [Countly.sharedInstance endEvent:eventName segmentation:dict count:countInt sum:sumInt];
+  }
+  else if ([eventType  isEqual: @"eventWithSegment"]){
+    NSString* eventName = [arguments objectAtIndex:1];
+
+    NSString* countString = [arguments objectAtIndex:2];
+    int countInt = [countString intValue];
+
+    NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
+    for(int i=4,il=(int)arguments.count;i<il;i+=2){
+      dict[[arguments objectAtIndex:i]] = [arguments objectAtIndex:i+1];
+    }
+
+    [Countly.sharedInstance endEvent:eventName segmentation:dict count:countInt sum:0];
+  }
   else if ([eventType  isEqual: @"eventWithSumSegment"]){
     NSString* eventName = [arguments objectAtIndex:1];
 
@@ -228,7 +253,7 @@ RCT_EXPORT_METHOD(endEvent:(NSArray*)arguments)
     int countInt = [countString intValue];
 
     NSString* sumString = [arguments objectAtIndex:3];
-    int sumInt = [sumString intValue];
+    float sumInt = [sumString floatValue];
 
     NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
     for(int i=4,il=(int)arguments.count;i<il;i+=2){
