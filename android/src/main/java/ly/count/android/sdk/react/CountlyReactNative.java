@@ -234,6 +234,21 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
             String eventName = args.getString(1);
             Countly.sharedInstance().endEvent(eventName);
         }
+        else if ("eventWithSum".equals(eventType)) {
+            String eventName = args.getString(1);
+            int eventCount= Integer.parseInt(args.getString(2));
+            float eventSum= new Float(args.getString(3)).floatValue();
+            Countly.sharedInstance().endEvent(eventName, null, eventCount,eventSum);
+        }
+        else if ("eventWithSegment".equals(eventType)) {
+            String eventName = args.getString(1);
+            int eventCount= Integer.parseInt(args.getString(2));
+            HashMap<String, String> segmentation = new HashMap<String, String>();
+            for(int i=4,il=args.size();i<il;i+=2){
+                segmentation.put(args.getString(i), args.getString(i+1));
+            }
+            Countly.sharedInstance().endEvent(eventName, segmentation, eventCount,0);
+        }
         else if ("eventWithSumSegment".equals(eventType)) {
             String eventName = args.getString(1);
             int eventCount= Integer.parseInt(args.getString(2));
