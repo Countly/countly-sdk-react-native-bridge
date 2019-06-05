@@ -283,7 +283,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
 
 	@ReactMethod
-	public void setuserdata(ReadableArray args){
+	public void setUserData(ReadableArray args){
         Map<String, String> bundle = new HashMap<String, String>();
         bundle.put("name", args.getString(0));
         bundle.put("username", args.getString(1));
@@ -299,7 +299,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 	}
 
 	@ReactMethod
-	 public void onregistrationid(ReadableArray args){
+	 public void onRegistrationId(ReadableArray args){
         String pushToken = args.getString(0);
         int messagingMode = Integer.parseInt(args.getString(1));
 

@@ -118,7 +118,7 @@ RCT_EXPORT_METHOD(setLoggingEnabled:(NSArray*)arguments)
   }
 }
 
-RCT_EXPORT_METHOD(setuserdata:(NSArray*)arguments)
+RCT_EXPORT_METHOD(setUserData:(NSArray*)arguments)
 {
   NSString* name = [arguments objectAtIndex:0];
   NSString* username = [arguments objectAtIndex:1];
@@ -143,7 +143,7 @@ RCT_EXPORT_METHOD(setuserdata:(NSArray*)arguments)
 }
 
 
-RCT_EXPORT_METHOD(onregistrationid:(NSArray*)arguments)
+RCT_EXPORT_METHOD(onRegistrationId:(NSArray*)arguments)
 {
   NSString* token = [arguments objectAtIndex:0];
   NSString* messagingMode = [arguments objectAtIndex:1];

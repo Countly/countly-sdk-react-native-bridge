@@ -101,7 +101,7 @@ Countly.sendPushToken = function(options){
     var args = [];
     args.push(options.token || "");
     args.push((options.messagingMode || "").toString());
-    CountlyReactNative.onregistrationid(args);
+    CountlyReactNative.onRegistrationId(args);
 }
 
 // countly start for android
@@ -283,7 +283,7 @@ Countly.setUserData = function(options){
     args.push(options.picturePath || "");
     args.push(options.gender || "");
     args.push(options.byear || 0);
-    CountlyReactNative.setuserdata(args);
+    CountlyReactNative.setUserData(args);
 }
 
 Countly.userData = {};

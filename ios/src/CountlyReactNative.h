@@ -5,9 +5,9 @@
 
 - (void)init:(NSArray*)arguments;
 - (void)event:(NSArray*)arguments;
-- (void)setloggingenabled:(NSArray*)arguments;
-- (void)setuserdata:(NSArray*)arguments;
-- (void)onregistrationid:(NSArray*)arguments;
+- (void)setLoggingEnabled:(NSArray*)arguments;
+- (void)setUserData:(NSArray*)arguments;
+- (void)onRegistrationId:(NSArray*)arguments;
 - (void)start;
 - (void)stop;
 - (void)recordView:(NSArray*)arguments;
