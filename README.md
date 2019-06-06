@@ -6,7 +6,7 @@
 
 ## About this SDK
 
-This repository includes the Countly React Native Bridge SDK. See [Countly React Native Bridge SDK](http://resources.count.ly/docs/react-native-bridge-1) documentation for installation.
+This repository includes the Countly React Native Bridge SDK. See [Countly React Native Bridge SDK](http://resources.count.ly/docs/react-native-bridge) documentation for installation.
 
 Note that previous React Native SDK (without bridge support) is discontinued and you are strongly adviced to  migrate to new SDK which includes same feature options as Android and iOS SDKs.
 
