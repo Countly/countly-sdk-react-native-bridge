@@ -397,6 +397,15 @@ Countly.testCrash = function(){
 }
 */
 
+Countly.setupPush = function() {
+    if (Platform.OS.match("android")) {
+        CountlyReactNative.setupPush();
+    }
+    else {
+        console.log("Not implemented for IOS yet.")
+    }
+}
+
 if (ErrorUtils) {
     var previousHandler = ErrorUtils.getGlobalHandler();
     ErrorUtils.setGlobalHandler(function (error, isFatal) {
