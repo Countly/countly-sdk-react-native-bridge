@@ -94,9 +94,15 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
  	}
 
 	@ReactMethod
-	public void setupPush(){
-        String channelName = "General Notifications";
-        String channelDescription = "<![CDATA[News & Announcements from Demo App]]>";
+	public void setupPush(Integer messagingMode, ReadableMap options){
+        String channelName = "Countly Notifications";
+        if (options.hasKey("channelName")) {
+           channelName = options.getString("channelName");
+        }
+        String channelDescription = "<![CDATA[Notifications from Countly React Bridge App]]>";
+        if (options.hasKey("channelDescription")) {
+           channelDescription = options.getString("channelDescription");
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 
             // Register the channel with the system; you can't change the importance
@@ -118,7 +124,11 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
                 // .init(this, serverUrl, appKey);
 
         final Activity activity = getCurrentActivity();
-        CountlyPush.init(activity.getApplication(), Countly.CountlyMessagingMode.PRODUCTION);
+        Countly.CountlyMessagingMode mode = Countly.CountlyMessagingMode.TEST;
+        if (messagingMode == 0) {
+           mode = Countly.CountlyMessagingMode.PRODUCTION;
+        }
+        CountlyPush.init(activity.getApplication(), mode);
 
 
         FirebaseInstanceId.getInstance().getInstanceId()

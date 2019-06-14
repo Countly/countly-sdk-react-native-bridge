@@ -397,9 +397,9 @@ Countly.testCrash = function(){
 }
 */
 
-Countly.setupPush = function() {
+Countly.setupPush = function(messagingMode, options) {
     if (Platform.OS.match("android")) {
-        CountlyReactNative.setupPush();
+        CountlyReactNative.setupPush(messagingMode, options);
     }
     else {
         console.log("Not implemented for IOS yet.")
