@@ -9,6 +9,16 @@ import com.google.firebase.messaging.RemoteMessage;
 
 import ly.count.android.sdk.messaging.CountlyPush;
 
+// modules needed for sending message data to JS
+import java.util.Map;
+import com.facebook.react.ReactApplication;
+import com.facebook.react.ReactInstanceManager;
+import com.facebook.react.bridge.ReactApplicationContext;
+import com.facebook.react.bridge.ReactContext;
+import com.facebook.react.modules.core.DeviceEventManagerModule;
+import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.bridge.WritableNativeMap;
+
 /**
  * Demo service explaining Firebase Messaging notifications handling:
  * - how to decode Countly messages;
@@ -36,6 +46,21 @@ public class DemoFirebaseMessagingService extends FirebaseMessagingService {
 
         // decode message data and extract meaningful information from it: title, body, badge, etc.
         CountlyPush.Message message = CountlyPush.decodeMessage(remoteMessage.getData());
+        // convert message data to react native WritableMap
+        final WritableMap params = new WritableNativeMap();
+        for(Map.Entry<String, String> entry : remoteMessage.getData().entrySet()) {
+            params.putString(entry.getKey(), entry.getValue());
+        }
+        // get react context
+        ReactInstanceManager mReactInstanceManager = ((ReactApplication) getApplication()).getReactNativeHost().getReactInstanceManager();
+        ReactContext context = mReactInstanceManager.getCurrentReactContext();
+        Log.d("DemoFirebaseService", "ReactContext constructed");
+        ((ReactApplicationContext) context)
+            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+            .emit("push_notification", params);
+        Log.d("DemoFirebaseService", "Event emitted");
+
+
 
         if (message != null && message.has("typ")) {
             // custom handling only for messages with specific "typ" keys

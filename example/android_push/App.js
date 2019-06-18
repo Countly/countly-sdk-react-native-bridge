@@ -5,6 +5,7 @@ import { PushNotificationIOS }  from 'react-native';
 // import StackTrace from '/Countly.StackTrace.js';
 // import stacktrace from 'react-native-stacktrace';
 // var PushNotification = require('react-native-push-notification');
+import { DeviceEventEmitter } from 'react-native';
 
 class AwesomeProject extends Component {
     constructor(props) {
@@ -46,6 +47,10 @@ class AwesomeProject extends Component {
       if (Platform.OS.match("android")) {
             var options = { channelName: "Demo App Notifications", channelDescription: "<![CDATA[Messages from Demo App]]>"}
             Countly.setupPush(Countly.messagingMode.DEVELOPMENT, options);
+            DeviceEventEmitter.addListener('push_notification', payload => {
+                console.log("Notification received", payload);
+            });
+
       }
       else {
           PushNotificationIOS.addEventListener('registrationError', function(error){
