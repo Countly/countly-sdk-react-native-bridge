@@ -323,20 +323,34 @@ Countly.setRequiresConsent = function(){
     CountlyReactNative.setRequiresConsent([]);
 }
 
-Countly.giveConsent = function(keyName){
-    CountlyReactNative.giveConsent([keyName.toString() || ""]);
+Countly.giveConsent = function(args){
+    var features = [];
+    if (typeof args == "string") {
+        features.push(args);
+    }
+    else {
+        features = args;
+    }
+    CountlyReactNative.giveConsent(features);
 }
 
-Countly.removeConsent = function(keyName){
-    CountlyReactNative.removeConsent([keyName.toString() || ""]);
+Countly.removeConsent = function(args){
+    var features = [];
+    if (typeof args == "string") {
+        features.push(args);
+    }
+    else {
+        features = args;
+    }
+    CountlyReactNative.giveConsent(features);
 }
 
 Countly.giveAllConsent = function(){
-    CountlyReactNative.giveAllConsent([]);
+    CountlyReactNative.giveAllConsent();
 }
 
 Countly.removeAllConsent = function(){
-    CountlyReactNative.removeAllConsent([]);
+    CountlyReactNative.removeAllConsent();
 }
 
 Countly.remoteConfigUpdate = function(callback){

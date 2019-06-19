@@ -186,12 +186,20 @@ class AwesomeProject extends Component {
       Countly.setRequiresConsent();
     }
 
-    giveConsent(){
+    giveEventsConsent(){
       Countly.giveConsent("events");
     };
 
-    removeConsent(){
+    removeEventsConsent(){
       Countly.removeConsent("events");
+    };
+
+    giveMultipleConsent(){
+        Countly.giveConsent(["events", "views", "star-rating", "crashes", "invalidFeatureName"]);
+    };
+
+    removeMultipleConsent(){
+        Countly.removeConsent(["events", "views"]);
     };
 
     giveAllConsent(){
@@ -429,10 +437,13 @@ class AwesomeProject extends Component {
 
             < Button onPress = { this.enableParameterTamperingProtection } title = "Enable Parameter Tapmering Protection" color = "#00b5ad"> </Button>
             < Button onPress = { this.setRequiresConsent } title = "Init Consent" color = "#00b5ad"> </Button>
-            < Button onPress = { this.giveConsent } title = "Events start Consent" color = "#00b5ad"> </Button>
-            < Button onPress = { this.removeConsent } title = "Events remove Consent" color = "#00b5ad"> </Button>
-            < Button onPress = { this.giveAllConsent } title = "Start all Consent" color = "#00b5ad"> </Button>
+            < Button onPress = { this.giveEventsConsent } title = "Give events consent" color = "#00b5ad"> </Button>
+            < Button onPress = { this.removeEventsConsent } title = "Remove events consent" color = "#00b5ad"> </Button>
+            < Button onPress = { this.giveMultipleConsent } title = "Give multiple consent" color = "#00b5ad"> </Button>
+            < Button onPress = { this.removeMultipleConsent } title = "Remove multiple consent" color = "#00b5ad"> </Button>
+            < Button onPress = { this.giveAllConsent } title = "Give all Consent" color = "#00b5ad"> </Button>
             < Button onPress = { this.removeAllConsent } title = "Remove all Consent" color = "#00b5ad"> </Button>
+
 
             < Button onPress = { this.setLocation } title = "Set Location" color = "#00b5ad"> </Button>
             < Button onPress = { this.disableLocation } title = "Disable Location" color = "#00b5ad"> </Button>

@@ -465,79 +465,20 @@ RCT_EXPORT_METHOD(setRequiresConsent:(NSArray*)arguments)
 
 RCT_EXPORT_METHOD(giveConsent:(NSArray*)arguments)
 {
-  NSString* keyName = [arguments objectAtIndex:0];
-  if ([keyName  isEqual: @"sessions"]) {
-    [Countly.sharedInstance giveConsentForFeature:CLYConsentSessions];
-  }
-  else if ([keyName  isEqual: @"events"]){
-    [Countly.sharedInstance giveConsentForFeature:CLYConsentEvents];
-  }
-  else if ([keyName  isEqual: @"users"]){
-    [Countly.sharedInstance giveConsentForFeature:CLYConsentUserDetails];
-  }
-  else if ([keyName  isEqual: @"crashes"]){
-    [Countly.sharedInstance giveConsentForFeature:CLYConsentCrashReporting];
-  }
-  else if ([keyName  isEqual: @"push"]){
-    [Countly.sharedInstance giveConsentForFeature:CLYConsentPushNotifications];
-  }
-  else if ([keyName  isEqual: @"location"]){
-    [Countly.sharedInstance giveConsentForFeature:CLYConsentLocation];
-  }
-  else if ([keyName  isEqual: @"views"]){
-    [Countly.sharedInstance giveConsentForFeature:CLYConsentViewTracking];
-  }
-  else if ([keyName  isEqual: @"attribution"]){
-    [Countly.sharedInstance giveConsentForFeature:CLYConsentAttribution];
-  }
-  else if ([keyName  isEqual: @"starRating"]){
-   [Countly.sharedInstance giveConsentForFeature:CLYConsentStarRating];
-  }
-  else if ([keyName  isEqual: @"accessory-devices"]){
-    [Countly.sharedInstance giveConsentForFeature:CLYConsentAppleWatch];
-  }
-}
-RCT_EXPORT_METHOD(removeConsent:(NSArray*)arguments)
-{
-  NSString* keyName = [arguments objectAtIndex:0];
-  if ([keyName  isEqual: @"sessions"]) {
-    [Countly.sharedInstance cancelConsentForFeature:CLYConsentSessions];
-  }
-  else if ([keyName  isEqual: @"events"]){
-    [Countly.sharedInstance cancelConsentForFeature:CLYConsentEvents];
-  }
-  else if ([keyName  isEqual: @"users"]){
-    [Countly.sharedInstance cancelConsentForFeature:CLYConsentUserDetails];
-  }
-  else if ([keyName  isEqual: @"crashes"]){
-    [Countly.sharedInstance cancelConsentForFeature:CLYConsentCrashReporting];
-  }
-  else if ([keyName  isEqual: @"push"]){
-    [Countly.sharedInstance cancelConsentForFeature:CLYConsentPushNotifications];
-  }
-  else if ([keyName  isEqual: @"location"]){
-    [Countly.sharedInstance cancelConsentForFeature:CLYConsentLocation];
-  }
-  else if ([keyName  isEqual: @"views"]){
-    [Countly.sharedInstance cancelConsentForFeature:CLYConsentViewTracking];
-  }
-  else if ([keyName  isEqual: @"attribution"]){
-    [Countly.sharedInstance cancelConsentForFeature:CLYConsentAttribution];
-  }
-  else if ([keyName  isEqual: @"starRating"]){
-   [Countly.sharedInstance cancelConsentForFeature:CLYConsentStarRating];
-  }
-  else if ([keyName  isEqual: @"accessory-devices"]){
-    [Countly.sharedInstance cancelConsentForFeature:CLYConsentAppleWatch];
-  }
+  [Countly.sharedInstance giveConsentForFeatures:arguments]
 }
 
-RCT_EXPORT_METHOD(giveAllConsent:(NSArray*)arguments)
+RCT_EXPORT_METHOD(removeConsent:(NSArray*)arguments)
+{
+  [Countly.sharedInstance cancelConsentForFeatures:arguments];
+}
+
+RCT_EXPORT_METHOD(giveAllConsent)
 {
   [Countly.sharedInstance giveConsentForAllFeatures];
 }
 
-RCT_EXPORT_METHOD(removeAllConsent:(NSArray*)arguments)
+RCT_EXPORT_METHOD(removeAllConsent)
 {
   [Countly.sharedInstance cancelConsentForAllFeatures];
 }

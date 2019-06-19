@@ -34,8 +34,8 @@
 - (void)setRequiresConsent:(NSArray*)arguments;
 - (void)giveConsent:(NSArray*)arguments;
 - (void)removeConsent:(NSArray*)arguments;
-- (void)giveAllConsent:(NSArray*)arguments;
-- (void)removeAllConsent:(NSArray*)arguments;
+- (void)giveAllConsent;
+- (void)removeAllConsent;
 - (void)remoteConfigUpdate:(NSArray*)arguments;
 - (void)updateRemoteConfigForKeysOnly:(NSArray*)arguments;
 - (void)updateRemoteConfigExceptKeys:(NSArray*)arguments;
