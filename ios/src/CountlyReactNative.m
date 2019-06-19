@@ -465,7 +465,7 @@ RCT_EXPORT_METHOD(setRequiresConsent:(NSArray*)arguments)
 
 RCT_EXPORT_METHOD(giveConsent:(NSArray*)arguments)
 {
-  [Countly.sharedInstance giveConsentForFeatures:arguments]
+  [Countly.sharedInstance giveConsentForFeatures:arguments];
 }
 
 RCT_EXPORT_METHOD(removeConsent:(NSArray*)arguments)
