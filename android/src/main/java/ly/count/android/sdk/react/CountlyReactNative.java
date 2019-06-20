@@ -488,7 +488,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     // GDPR
     @ReactMethod
     public void setRequiresConsent(ReadableArray args){
-        Countly.sharedInstance().setRequiresConsent(true);
+			  Boolean consentFlag = args.getBoolean(0);
+        Countly.sharedInstance().setRequiresConsent(consentFlag);
     }
 
     @ReactMethod

@@ -183,7 +183,7 @@ class AwesomeProject extends Component {
     };
 
     setRequiresConsent(){
-      Countly.setRequiresConsent();
+      Countly.setRequiresConsent(true);
     }
 
     giveEventsConsent(){

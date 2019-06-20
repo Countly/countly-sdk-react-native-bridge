@@ -319,8 +319,8 @@ Countly.userData.pullValue = function(keyName, keyValue){
 };
 
 // GDPR
-Countly.setRequiresConsent = function(){
-    CountlyReactNative.setRequiresConsent([]);
+Countly.setRequiresConsent = function(flag){
+    CountlyReactNative.setRequiresConsent([flag]);
 }
 
 Countly.giveConsent = function(args){

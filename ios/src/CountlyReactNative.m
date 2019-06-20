@@ -460,7 +460,8 @@ RCT_EXPORT_METHOD(setRequiresConsent:(NSArray*)arguments)
   if (config == nil){
     config = CountlyConfig.new;
   }
-  config.requiresConsent = YES;
+  BOOL consentFlag = [[arguments objectAtIndex:0] boolValue];
+  config.requiresConsent = consentFlag;
 }
 
 RCT_EXPORT_METHOD(giveConsent:(NSArray*)arguments)
