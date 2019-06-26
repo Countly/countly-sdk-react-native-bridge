@@ -10,6 +10,24 @@ class AwesomeProject extends Component {
     constructor(props) {
         super(props);
         this.config = {};
+
+        this.onInit = this.onInit.bind(this);
+        this.onStart = this.onStart.bind(this);
+        this.basicEvent = this.basicEvent.bind(this);
+        this.eventWithSum = this.eventWithSum.bind(this);
+        this.eventWithSegment = this.eventWithSegment.bind(this);
+        this.eventWithSumAndSegment = this.eventWithSumAndSegment.bind(this);
+        this.startEvent = this.startEvent.bind(this);
+        this.test = this.test.bind(this);
+        this.onSendUserData = this.onSendUserData.bind(this);
+        this.userData_setProperty = this.userData_setProperty.bind(this);
+        this.userData_increment = this.userData_increment.bind(this);
+        this.userData_multiply = this.userData_multiply.bind(this);
+        this.userData_saveMax = this.userData_saveMax.bind(this);
+        this.userData_saveMin = this.userData_saveMin.bind(this);
+        this.userData_setOnce = this.userData_setOnce.bind(this);
+        this.changeDeviceId = this.changeDeviceId.bind(this);
+        this.enableParameterTamperingProtection = this.enableParameterTamperingProtection.bind(this);
     };
     onInit(){
       Countly.init("https://trinisoft.count.ly","f0b2ac6919f718a13821575db28c0e2971e05ec5","","5", "Rate us.", "How would you rate the app?", "Dismiss",false);
@@ -363,7 +381,6 @@ class AwesomeProject extends Component {
       this.eventWithSumAndSegment();
 
       this.startEvent();
-      this.endEvent();
 
       this.onSendUserData();
       this.userData_setProperty();
