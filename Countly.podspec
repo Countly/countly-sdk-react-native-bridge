@@ -33,8 +33,8 @@ Pod::Spec.new do |s|
   s.social_media_url = 'https://twitter.com/gocountly'
   s.author = {'Countly' => 'hello@count.ly'}
   s.source = { :git => 'https://github.com/Countly/countly-sdk-ios.git', :tag => s.version.to_s }
-  s.source_files = '*.{h,m}'
-  s.public_header_files = 'Countly.h', 'CountlyUserDetails.h', 'CountlyConfig.h'
+  s.source_files = 'ios/src/*.{h,m}'
+  s.public_header_files = 'ios/src/Countly.h', 'ios/src/CountlyUserDetails.h', 'ios/src/CountlyConfig.h'
   s.requires_arc = true
   s.ios.deployment_target = '8.0'
   s.osx.deployment_target = '10.10'
@@ -42,7 +42,9 @@ Pod::Spec.new do |s|
   s.tvos.deployment_target = '9.0'
 
   s.subspec 'NotificationService' do |ns|
-    ns.source_files = 'CountlyNotificationService.{m,h}'
+    ns.source_files = 'ios/src/CountlyNotificationService.{m,h}'
   end
+
+  s.dependency "React"
 
 end
