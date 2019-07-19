@@ -21,18 +21,26 @@ if (Platform.OS.match("android")) {
 }
 
 // countly initialization
-Countly.init = function(serverUrl,appKey, deviceId, starRatingLimit, titleText, messageText, buttonText,consentFlag){
+Countly.init = function(serverUrl,
+                        appKey,
+                        deviceId = "",
+                        starRatingAutoSessionCount = "0",
+                        starRatingTitle = "Rate us.",
+                        starRatingMessage = "How would you rate the app?",
+                        starRatingButtonText = "Dismiss",
+                        consentFlag = false
+                        ){
     Countly.serverUrl = serverUrl;
     Countly.appKey = appKey;
     var args = [];
-    args.push(serverUrl || "");
-    args.push(appKey || "");
-    args.push(deviceId || "");
-    args.push(starRatingLimit || "5");
-    args.push(titleText || "Rate us.");
-    args.push(messageText || "How would you rate the app?");
-    args.push(buttonText || "Dismiss");
-    args.push(consentFlag || false);
+    args.push(serverUrl);
+    args.push(appKey);
+    args.push(deviceId);
+    args.push(starRatingAutoSessionCount);
+    args.push(starRatingTitle);
+    args.push(starRatingMessage);
+    args.push(starRatingButtonText);
+    args.push(consentFlag);
 
     CountlyReactNative.init(args);
 }
@@ -92,7 +100,6 @@ Countly.recordView = function(recordView){
     CountlyReactNative.recordView([recordView || ""]);
 };
 
-// countly enable logger
 Countly.setViewTracking = function(boolean){
     CountlyReactNative.setViewTracking([boolean || "false"]);
 }
