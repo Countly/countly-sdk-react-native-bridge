@@ -11,6 +11,7 @@ import android.util.Log;
 import android.os.Environment;
 
 import com.facebook.react.bridge.Callback;
+import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
@@ -48,7 +49,7 @@ import java.util.HashSet;
 import java.util.Arrays;
 
 // Push Related imports
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.os.Build;
@@ -600,8 +601,35 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     public void getRemoteConfigValueForKey(ReadableArray args, final Callback myCallback){
         String keyName = args.getString(0);
         Object keyValue = Countly.sharedInstance().getRemoteConfigValueForKey(keyName);
-        String resultString = (keyValue).toString();
-        myCallback.invoke(resultString);
+        if (keyValue == null) {
+            Log.d(TAG, keyName + ": ConfigKeyNotFound");
+            myCallback.invoke("ConfigKeyNotFound");
+        }
+        else {
+            String resultString = (keyValue).toString();
+            Log.d(TAG, keyName + ": " + resultString);
+            myCallback.invoke(resultString);
+        }
+    }
+
+    @ReactMethod
+    public void getRemoteConfigValueForKeyP(String keyName, Promise promise){
+        Object keyValue = Countly.sharedInstance().getRemoteConfigValueForKey(keyName);
+        if (keyValue == null) {
+            Log.d(TAG, keyName + ": ConfigKeyNotFound");
+            promise.reject("ConfigKeyNotFound");
+        }
+        else {
+            String resultString = (keyValue).toString();
+            Log.d(TAG, keyName + ": " + resultString);
+            promise.resolve(resultString);
+        }
+    }
+
+    @ReactMethod
+    public void remoteConfigClearValues(Promise promise){
+        Countly.sharedInstance().remoteConfigClearValues();
+        promise.resolve("done");
     }
 
     @ReactMethod

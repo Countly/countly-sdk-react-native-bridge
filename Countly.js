@@ -396,6 +396,23 @@ Countly.getRemoteConfigValueForKey = function(keyName, callback){
     });
 }
 
+Countly.getRemoteConfigValueForKeyP = async function(keyName){
+    try {
+        const value = await CountlyReactNative.getRemoteConfigValueForKeyP(keyName);
+        console.log("value for key", keyName, value);
+        return value;
+    }
+    catch (e) {
+        console.log("value not found for key", keyName);
+        return `Value not found for key: ${keyName}`;
+    }
+}
+
+Countly.remoteConfigClearValues = async function(){
+    const result = await CountlyReactNative.remoteConfigClearValues();
+    return result;
+}
+
 Countly.showStarRating = function(){
     CountlyReactNative.showStarRating([]);
 }
