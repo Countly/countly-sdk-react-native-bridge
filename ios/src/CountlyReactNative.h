@@ -44,6 +44,7 @@
 - (void)showStarRating:(NSArray*)arguments;
 - (void)showFeedbackPopup:(NSArray*)arguments;
 - (void)setEventSendThreshold:(NSArray*)arguments;
+- (void)clearCachedRemoteConfig:(NSArray*)arguments;
 
 
 @end
