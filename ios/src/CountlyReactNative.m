@@ -596,4 +596,9 @@ RCT_EXPORT_METHOD(clearCachedRemoteConfig:(NSArray*)arguments)
 {
   [CountlyRemoteConfig.sharedInstance clearCachedRemoteConfig];
 }
+RCT_EXPORT_METHOD(remoteConfigClearValues:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+{
+    [CountlyRemoteConfig.sharedInstance clearCachedRemoteConfig];
+    resolve(@"Done");
+}
 @end
