@@ -366,6 +366,10 @@ Countly.remoteConfigUpdate = function(callback){
     });
 }
 
+Countly.clearCachedRemoteConfig = function(){
+    CountlyReactNative.clearCachedRemoteConfig([]);
+}
+
 Countly.updateRemoteConfigForKeysOnly = function(keyNames, callback){
     var args = [];
     if(keyNames.length){

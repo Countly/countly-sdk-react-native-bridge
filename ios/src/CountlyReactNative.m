@@ -8,6 +8,7 @@
 #import "CountlyConfig.h"
 #import "CountlyPushNotifications.h"
 #import "CountlyConnectionManager.h"
+#import "CountlyRemoteConfig.h"
 
 
 CountlyConfig* config = nil;
@@ -591,4 +592,8 @@ RCT_EXPORT_METHOD(setEventSendThreshold:(NSArray*)arguments)
   config.eventSendThreshold = size;
 }
 
+RCT_EXPORT_METHOD(clearCachedRemoteConfig:(NSArray*)arguments)
+{
+  [CountlyRemoteConfig.sharedInstance clearCachedRemoteConfig];
+}
 @end

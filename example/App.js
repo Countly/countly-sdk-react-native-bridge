@@ -252,6 +252,10 @@ class AwesomeProject extends Component {
       });
     };
 
+    clearCachedRemoteConfig(){
+      Countly.clearCachedRemoteConfig();
+    };
+
     setLocation(){
       var countryCode = "us";
       var city = "Houston";
@@ -475,6 +479,7 @@ class AwesomeProject extends Component {
             < Button onPress = { this.updateRemoteConfigForKeysOnly } title = "Update Remote Config with Keys Only" color = "#00b5ad"> </Button>
             < Button onPress = { this.updateRemoteConfigExceptKeys } title = "Update Remote Config Except Keys" color = "#00b5ad"> </Button>
             < Button onPress = { this.getRemoteConfigValueForKey } title = "Get config value" color = "#00b5ad"> </Button>
+            < Button onPress = { this.clearCachedRemoteConfig } title = "Clear remote config cache" color = "#00b5ad"> </Button>
 
             < Button onPress = { this.showStarRating } title = "Show Star Rating Model" color = "#00b5ad"> </Button>
             < Button onPress = { this.showFeedbackPopup } title = "Show FeedBack Model" color = "#00b5ad"> </Button>
