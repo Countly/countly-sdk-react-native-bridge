@@ -541,9 +541,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
             @Override
             public void callback(String error) {
                 if(error == null) {
-                    resultString = "Update finished";
+                    resultString = "Remote Config is updated and ready to use!";
                 } else {
-                    resultString = "Error: " + error;
+                    resultString = "There was an error while updating Remote Config: " + error;
                 }
                 myCallback.invoke(resultString);
             }
@@ -564,9 +564,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
             @Override
             public void callback(String error) {
                 if(error == null) {
-                    resultString = "Update with inclusion finished";
+                    resultString = "Remote Config is updated only for given keys and ready to use!";
                 } else {
-                    resultString = "Error: " + error;
+                    resultString = "There was an error while updating Remote Config: " + error;
                 }
                 myCallback.invoke(resultString);
             }
@@ -588,9 +588,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
             @Override
             public void callback(String error) {
                 if (error == null) {
-                    resultString = "Update with exclusion finished";
+                    resultString = "Remote Config is updated except for given keys and ready to use !";
                 } else {
-                    resultString = "Error: " + error;
+                    resultString = "There was an error while updating Remote Config: " + error;
                 }
                 myCallback.invoke(resultString);
             }
@@ -602,12 +602,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         String keyName = args.getString(0);
         Object keyValue = Countly.sharedInstance().getRemoteConfigValueForKey(keyName);
         if (keyValue == null) {
-            Log.d(TAG, keyName + ": ConfigKeyNotFound");
+            // Log.d(TAG, keyName + ": ConfigKeyNotFound");
             myCallback.invoke("ConfigKeyNotFound");
         }
         else {
             String resultString = (keyValue).toString();
-            Log.d(TAG, keyName + ": " + resultString);
+            // Log.d(TAG, keyName + ": " + resultString);
             myCallback.invoke(resultString);
         }
     }
@@ -629,7 +629,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void remoteConfigClearValues(Promise promise){
         Countly.sharedInstance().remoteConfigClearValues();
-        promise.resolve("done");
+        promise.resolve("Remote Config Cleared.");
     }
 
     @ReactMethod

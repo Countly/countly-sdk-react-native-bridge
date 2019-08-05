@@ -44,7 +44,6 @@
 - (void)showStarRating:(NSArray*)arguments;
 - (void)showFeedbackPopup:(NSArray*)arguments;
 - (void)setEventSendThreshold:(NSArray*)arguments;
-- (void)clearCachedRemoteConfig:(NSArray*)arguments;
 - (void)remoteConfigClearValues:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject;
 
 @end

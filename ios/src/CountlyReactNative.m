@@ -496,7 +496,7 @@ RCT_EXPORT_METHOD(remoteConfigUpdate:(NSArray*)arguments:(RCTResponseSenderBlock
       }
       else
       {
-          NSString* returnString = [NSString stringWithFormat:@"There is an error while updating Remote Config:%@", error];
+          NSString* returnString = [NSString stringWithFormat:@"There was an error while updating Remote Config: %@", error];
           NSArray *result = @[returnString];
           callback(@[result]);
       }
@@ -519,7 +519,7 @@ RCT_EXPORT_METHOD(updateRemoteConfigForKeysOnly:(NSArray*)arguments:(RCTResponse
       }
       else
       {
-          NSString* returnString = [NSString stringWithFormat:@"There is an error while updating Remote Config:%@", error];
+          NSString* returnString = [NSString stringWithFormat:@"There was an error while updating Remote Config: %@", error];
           NSArray *result = @[returnString];
           callback(@[result]);
       }
@@ -542,7 +542,7 @@ RCT_EXPORT_METHOD(updateRemoteConfigExceptKeys:(NSArray*)arguments:(RCTResponseS
       }
       else
       {
-          NSString* returnString = [NSString stringWithFormat:@"There is an error while updating Remote Config:%@", error];
+          NSString* returnString = [NSString stringWithFormat:@"There was an error while updating Remote Config: %@", error];
           NSArray *result = @[returnString];
           callback(@[result]);
       }
@@ -555,7 +555,7 @@ RCT_EXPORT_METHOD(getRemoteConfigValueForKey:(NSArray*)arguments:(RCTResponseSen
   if (value){
   }
   else{
-    value = @"";
+    value = @"ConfigKeyNotFound";
   }
   NSString* returnString = [NSString stringWithFormat:@"%@", value];
   NSArray *result = @[returnString];
@@ -592,13 +592,9 @@ RCT_EXPORT_METHOD(setEventSendThreshold:(NSArray*)arguments)
   config.eventSendThreshold = size;
 }
 
-RCT_EXPORT_METHOD(clearCachedRemoteConfig:(NSArray*)arguments)
-{
-  [CountlyRemoteConfig.sharedInstance clearCachedRemoteConfig];
-}
 RCT_EXPORT_METHOD(remoteConfigClearValues:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 {
     [CountlyRemoteConfig.sharedInstance clearCachedRemoteConfig];
-    resolve(@"Done");
+    resolve(@"Remote Config Cleared.");
 }
 @end
