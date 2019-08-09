@@ -48,16 +48,6 @@ import java.util.Set;
 import java.util.HashSet;
 import java.util.Arrays;
 
-// Push Related imports
-import androidx.annotation.NonNull;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.os.Build;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.iid.InstanceIdResult;
-import ly.count.android.sdk.messaging.CountlyPush;
 
 // for debug logging
 import static ly.count.android.sdk.Countly.TAG;
@@ -108,60 +98,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         Countly.sharedInstance()
                 .init(_reactContext, serverUrl, appKey, deviceId, DeviceId.Type.OPEN_UDID, ratingLimit, null, ratingTitle, ratingMessage, ratingButton);
  	}
-
-	@ReactMethod
-	public void setupPush(Integer messagingMode, ReadableMap options){
-        String channelName = "Countly Notifications";
-        if (options.hasKey("channelName")) {
-           channelName = options.getString("channelName");
-        }
-        String channelDescription = "<![CDATA[Notifications from Countly React Bridge App]]>";
-        if (options.hasKey("channelDescription")) {
-           channelDescription = options.getString("channelDescription");
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-
-            // Register the channel with the system; you can't change the importance
-            // or other notification behaviors after this
-            NotificationManager notificationManager = (NotificationManager) _reactContext.getSystemService(_reactContext.NOTIFICATION_SERVICE);
-            if (notificationManager != null) {
-                // Create the NotificationChannel
-                NotificationChannel channel = new NotificationChannel(CountlyPush.CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_DEFAULT);
-                channel.setDescription(channelDescription);
-                notificationManager.createNotificationChannel(channel);
-            }
-        }
-
-        Countly.sharedInstance()
-                .setRequiresConsent(true)
-                .setConsent(new String[]{Countly.CountlyFeatureNames.push, Countly.CountlyFeatureNames.sessions, Countly.CountlyFeatureNames.location, Countly.CountlyFeatureNames.attribution, Countly.CountlyFeatureNames.crashes, Countly.CountlyFeatureNames.events, Countly.CountlyFeatureNames.starRating, Countly.CountlyFeatureNames.users, Countly.CountlyFeatureNames.views}, true)
-                .setLoggingEnabled(true)
-                .setPushIntentAddMetadata(true);
-                // .init(this, serverUrl, appKey);
-
-        final Activity activity = getCurrentActivity();
-        Countly.CountlyMessagingMode mode = Countly.CountlyMessagingMode.TEST;
-        if (messagingMode == 0) {
-           mode = Countly.CountlyMessagingMode.PRODUCTION;
-        }
-        CountlyPush.init(activity.getApplication(), mode);
-
-
-        FirebaseInstanceId.getInstance().getInstanceId()
-                .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<InstanceIdResult> task) {
-                        if (!task.isSuccessful()) {
-                            Log.w(TAG, "getInstanceId failed", task.getException());
-                            return;
-                        }
-
-                        // Get new Instance ID token
-                        String token = task.getResult().getToken();
-                        CountlyPush.onTokenRefresh(token);
-                    }
-                });
-    }
 
 	@ReactMethod
 	public void setLoggingEnabled(ReadableArray args){
