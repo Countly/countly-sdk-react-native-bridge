@@ -349,7 +349,7 @@ Countly.removeConsent = function(args){
     else {
         features = args;
     }
-    CountlyReactNative.giveConsent(features);
+    CountlyReactNative.removeConsent(features);
 }
 
 Countly.giveAllConsent = function(){
