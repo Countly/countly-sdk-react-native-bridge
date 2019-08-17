@@ -1,11 +1,10 @@
 package ly.count.android.sdk.react;
 
 import android.app.Activity;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.hardware.Camera;
-import android.util.Base64;
-import android.widget.Toast;
+// import android.graphics.Bitmap;
+// import android.graphics.BitmapFactory;
+// import android.hardware.Camera;
+// import android.util.Base64;
 import android.util.Log;
 
 import android.os.Environment;
@@ -20,18 +19,16 @@ import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.JavaScriptModule;
 
-import android.provider.MediaStore.Images.Media;
-import android.graphics.BitmapFactory;
-import android.graphics.Bitmap;
-import android.graphics.Matrix;
-import java.io.ByteArrayOutputStream;
-import java.util.Map;
-import java.util.HashMap;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+// import android.provider.MediaStore.Images.Media;
+// import android.graphics.BitmapFactory;
+// import android.graphics.Bitmap;
+// import android.graphics.Matrix;
+// import java.io.ByteArrayOutputStream;
+// import java.io.File;
+// import java.io.FileOutputStream;
+// import java.io.IOException;
+// import java.text.SimpleDateFormat;
+// import java.util.Date;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -47,6 +44,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.HashMap;
 
 
 // for debug logging
