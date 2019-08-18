@@ -1,4 +1,4 @@
-package com.testpush;
+package com.pushmodule;
 
 import android.content.Intent;
 import android.util.Log;
@@ -28,7 +28,7 @@ import com.facebook.react.bridge.WritableNativeMap;
  */
 
 public class DemoFirebaseMessagingService extends FirebaseMessagingService {
-    private static final String TAG = "DemoMessagingService";
+    private static final String TAG = "Countly";
 
     @Override
     public void onNewToken(String token) {
