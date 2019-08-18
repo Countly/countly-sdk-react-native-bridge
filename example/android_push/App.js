@@ -16,7 +16,7 @@ class AwesomeProject extends Component {
     this.config = {};
   };
   onInit(){
-    Countly.init("https://izzet.count.ly","6559f034a0a76bc7190d10a217a4052b9f8a2a59");
+    Countly.init("https://XXXX.count.ly","12345XYZ");
     Countly.enableLogging();
   }
   onStart(){
