@@ -1,11 +1,6 @@
 package ly.count.android.sdk.react;
 
 import android.app.Activity;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.hardware.Camera;
-import android.util.Base64;
-import android.widget.Toast;
 import android.util.Log;
 
 import android.os.Environment;
@@ -20,18 +15,6 @@ import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.JavaScriptModule;
 
-import android.provider.MediaStore.Images.Media;
-import android.graphics.BitmapFactory;
-import android.graphics.Bitmap;
-import android.graphics.Matrix;
-import java.io.ByteArrayOutputStream;
-import java.util.Map;
-import java.util.HashMap;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -47,17 +30,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.HashMap;
 
-// Push Related imports
-import androidx.annotation.NonNull;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.os.Build;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.iid.InstanceIdResult;
-import ly.count.android.sdk.messaging.CountlyPush;
 
 // for debug logging
 import static ly.count.android.sdk.Countly.TAG;
@@ -108,60 +83,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         Countly.sharedInstance()
                 .init(_reactContext, serverUrl, appKey, deviceId, DeviceId.Type.OPEN_UDID, ratingLimit, null, ratingTitle, ratingMessage, ratingButton);
  	}
-
-	@ReactMethod
-	public void setupPush(Integer messagingMode, ReadableMap options){
-        String channelName = "Countly Notifications";
-        if (options.hasKey("channelName")) {
-           channelName = options.getString("channelName");
-        }
-        String channelDescription = "<![CDATA[Notifications from Countly React Bridge App]]>";
-        if (options.hasKey("channelDescription")) {
-           channelDescription = options.getString("channelDescription");
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-
-            // Register the channel with the system; you can't change the importance
-            // or other notification behaviors after this
-            NotificationManager notificationManager = (NotificationManager) _reactContext.getSystemService(_reactContext.NOTIFICATION_SERVICE);
-            if (notificationManager != null) {
-                // Create the NotificationChannel
-                NotificationChannel channel = new NotificationChannel(CountlyPush.CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_DEFAULT);
-                channel.setDescription(channelDescription);
-                notificationManager.createNotificationChannel(channel);
-            }
-        }
-
-        Countly.sharedInstance()
-                .setRequiresConsent(true)
-                .setConsent(new String[]{Countly.CountlyFeatureNames.push, Countly.CountlyFeatureNames.sessions, Countly.CountlyFeatureNames.location, Countly.CountlyFeatureNames.attribution, Countly.CountlyFeatureNames.crashes, Countly.CountlyFeatureNames.events, Countly.CountlyFeatureNames.starRating, Countly.CountlyFeatureNames.users, Countly.CountlyFeatureNames.views}, true)
-                .setLoggingEnabled(true)
-                .setPushIntentAddMetadata(true);
-                // .init(this, serverUrl, appKey);
-
-        final Activity activity = getCurrentActivity();
-        Countly.CountlyMessagingMode mode = Countly.CountlyMessagingMode.TEST;
-        if (messagingMode == 0) {
-           mode = Countly.CountlyMessagingMode.PRODUCTION;
-        }
-        CountlyPush.init(activity.getApplication(), mode);
-
-
-        FirebaseInstanceId.getInstance().getInstanceId()
-                .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<InstanceIdResult> task) {
-                        if (!task.isSuccessful()) {
-                            Log.w(TAG, "getInstanceId failed", task.getException());
-                            return;
-                        }
-
-                        // Get new Instance ID token
-                        String token = task.getResult().getToken();
-                        CountlyPush.onTokenRefresh(token);
-                    }
-                });
-    }
 
 	@ReactMethod
 	public void setLoggingEnabled(ReadableArray args){

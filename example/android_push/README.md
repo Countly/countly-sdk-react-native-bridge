@@ -2,7 +2,7 @@
 ### Using Push Notification Example App
 Please visit [Countly React Native documentation page](https://resources.count.ly/docs/react-native-bridge) for further details.
 
-*Usual Instructions for setting up App but npm install from this branch*
+*Usual Instructions for setting up App*
 ```
 react-native init DemoProject       # Create a new project
 
@@ -10,7 +10,8 @@ cd DemoProject                      # Go to that directory
 cp <PATH_TO>/App.js .               # Copy App.js here into your new react project
 
 # Include SDK
-npm install --save https://github.com/Countly/countly-sdk-react-native-bridge.git#android-push
+npm install --save https://github.com/Countly/countly-sdk-react-native-bridge.git
+# this may not be necessary if you are using React Native >= 0.6
 react-native link countly-sdk-react-native-bridge
 
 # In a new terminal
@@ -18,8 +19,10 @@ adb reverse tcp:8081 tcp:8081       # Link Android port for development server
 npm start                           # Start development server
 
 # In root of DemoProject
-react-native run-android # OR       # Run the android project
-react-native run-ios                # Run the iOS project
+react-native run-android            # Run the android project
+# use following if you don't want androidx with React Native >= 0.6
+react-native run-android --no-jetifier
+
 
 
 ```
@@ -58,11 +61,22 @@ apply plugin: 'com.google.gms.google-services'
 
 ```
 
-* Copy `DemoFirebaseMessagingService.java` found here under `android/app/src/main/java/<YOUR_PACKAGE_PATH>`. It should reside near `MainActivity.java`. Change the package name at the top of this file to match your package name.
+* Copy `DemoFirebaseMessagingService.java`, `CountlyReactNativePushPackage.java`, `CountlyReactNativePush.java`, `MainApplication.java`, `MainActivity.java` found here under `android/app/src/main/java/<YOUR_PACKAGE_PATH>`. This is the folder where `react-native init` created `MainActivity.java` automatically. Change the package name at the top of these files to match your package name. Critical change in `MainApplication.java` to use new native module `CountlyReactNativePush` is this part:
 
-* Copy `ic_message.png` found here into `android/app/src/main/res/drawable`. Create `drawable` folder if necessary.
+```java
+    @Override
+    protected List<ReactPackage> getPackages() {
+      @SuppressWarnings("UnnecessaryLocalVariable")
+      List<ReactPackage> packages = new PackageList(this).getPackages();
+      // Packages that cannot be autolinked yet can be added manually here, for example:      
+      packages.add(new CountlyReactNativePushPackage());
+      return packages;
+    }
+```
 
-*I think that's it. After setting your countly server and app key, you can launch the app. First call/press init, start (may be send a basic event just to make sure) then hit "Setup Push" button. This will get the token from FCM service and send it to Countly (logs should look like below). Then you can test sending message from Countly server.*
+* Copy `ic_message.png` found here into `android/app/src/main/res/drawable`. Create `drawable` folder if necessary. This is the icon used in notifications.
+
+* After setting your countly server and app key in `App.js`, you can launch the app. First call/press init, start (may be send a basic event just to make sure) then hit "Setup Push" button. This will get the token from FCM service and send it to Countly (logs should look like below). Then you can test sending message from Countly server. If you want, you can test consent by requiring consent first and then removing consent for push.
 
 ```
 # Logs after Setup Push
