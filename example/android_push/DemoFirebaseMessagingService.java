@@ -7,6 +7,7 @@ import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
+import ly.count.android.sdk.Countly;
 import ly.count.android.sdk.messaging.CountlyPush;
 
 // modules needed for sending message data to JS
@@ -35,7 +36,22 @@ public class DemoFirebaseMessagingService extends FirebaseMessagingService {
         super.onNewToken(token);
 
         Log.d("DemoFirebaseService", "got new token: " + token);
-        CountlyPush.onTokenRefresh(token);
+        int retries = 1;
+        try {
+            while (retries <= 10 && !Countly.sharedInstance().isInitialized()) {
+              Log.d("DemoFirebaseService", "Waiting for Countly to get initialized");
+              Thread.sleep(retries * 1000);
+              retries++;
+            }
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+        if (!Countly.sharedInstance().isInitialized()) {
+          Log.d("DemoFirebaseService", "Gave up waiting for Countly to get initialized. Countly onTokenRefresh not called.");
+        }
+        else {
+          CountlyPush.onTokenRefresh(token);
+        }
     }
 
     @Override
@@ -46,23 +62,30 @@ public class DemoFirebaseMessagingService extends FirebaseMessagingService {
 
         // decode message data and extract meaningful information from it: title, body, badge, etc.
         CountlyPush.Message message = CountlyPush.decodeMessage(remoteMessage.getData());
-        // convert message data to react native WritableMap
-        final WritableMap params = new WritableNativeMap();
-        for(Map.Entry<String, String> entry : remoteMessage.getData().entrySet()) {
-            params.putString(entry.getKey(), entry.getValue());
-        }
         // get react context
         ReactInstanceManager mReactInstanceManager = ((ReactApplication) getApplication()).getReactNativeHost().getReactInstanceManager();
         ReactContext context = mReactInstanceManager.getCurrentReactContext();
-        Log.d("DemoFirebaseService", "ReactContext constructed");
-        ((ReactApplicationContext) context)
-            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-            .emit("push_notification", params);
-        Log.d("DemoFirebaseService", "Event emitted");
+        // If app is swiped from recent list context will be null
+        if (context != null) {
+          Log.d("DemoFirebaseService", "ReactContext constructed");
+          // convert message data to react native WritableMap
+          final WritableMap params = new WritableNativeMap();
+          for(Map.Entry<String, String> entry : remoteMessage.getData().entrySet()) {
+              params.putString(entry.getKey(), entry.getValue());
+          }
+          ((ReactApplicationContext) context)
+              .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+              .emit("push_notification", params);
+          Log.d("DemoFirebaseService", "React Native Event emitted");
+        }
+
+
+        Log.d("DemoFirebaseService", "Message: " + message.message());
 
 
 
         if (message != null && message.has("typ")) {
+            Log.d("DemoFirebaseService", "Message type: " + message.data("typ"));
             // custom handling only for messages with specific "typ" keys
             if (message.data("typ").equals("download")) {
                 // Some bg download case.
@@ -109,9 +132,8 @@ public class DemoFirebaseMessagingService extends FirebaseMessagingService {
         }
 
         Intent intent = null;
-        // if (message.has("another")) {
-        //     intent = new Intent(getApplicationContext(), AnotherActivity.class);
-        // }
+        intent = new Intent(getApplicationContext(), MainActivity.class);
+
         Boolean result = CountlyPush.displayMessage(getApplicationContext(), message, R.drawable.ic_message, intent);
         if (result == null) {
             Log.i(TAG, "Message wasn't sent from Countly server, so it cannot be handled by Countly SDK");
