@@ -49,7 +49,10 @@ RCT_EXPORT_METHOD(init:(NSArray*)arguments)
     [[Countly sharedInstance] startWithConfig:config];
   } else {
   }
+}
 
+RCT_EXPORT_METHOD(initWithConfig:(NSString*)host appKey:(NSString*)appKey config:(NSDictionary *)details)
+{
 
 }
 

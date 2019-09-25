@@ -22,6 +22,9 @@ import android.util.Log;
 import ly.count.android.sdk.Countly;
 import ly.count.android.sdk.RemoteConfig;
 import ly.count.android.sdk.DeviceId;
+import ly.count.sdk.android.Countly;
+import ly.count.sdk.android.Config;
+
 // import ly.count.android.sdknative.CountlyNative;
 
 import java.util.ArrayList;
@@ -83,6 +86,16 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         Countly.sharedInstance()
                 .init(_reactContext, serverUrl, appKey, deviceId, DeviceId.Type.OPEN_UDID, ratingLimit, null, ratingTitle, ratingMessage, ratingButton);
  	}
+
+    @ReactMethod
+    public void initWithConfig(String serverUrl, String appKey, ReadableMap jsConfig) {
+        Config javaConfig = new Config(serverUrl, appKey);
+        if (jsConfig.hasKey("enableDebug")) {
+            javaConfig.setLoggingEnabled(jsConfig.getBoolean("enableDebug"));
+        }
+
+        Countly.sharedInstance().init(_reactContext, javaConfig);
+    }
 
 	@ReactMethod
 	public void setLoggingEnabled(ReadableArray args){

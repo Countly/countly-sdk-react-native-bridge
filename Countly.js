@@ -44,9 +44,17 @@ Countly.init = function(serverUrl,
 
     CountlyReactNative.init(args);
 }
+
+Countly.initWithConfig = function(serverUrl, appKey, config) {
+    Countly.serverUrl = serverUrl;
+    Countly.appKey = appKey;
+    CountlyReactNative.initWithConfig(serverUrl, appKey, config);
+}
+
 Countly.isInitialized = function(){
     return CountlyReactNative.isInitialized([]);
 }
+
 Countly.hasBeenCalledOnStart = function(){
     return CountlyReactNative.hasBeenCalledOnStart([]);
 }
@@ -96,6 +104,7 @@ Countly.sendEvent = function(options){
     }
     CountlyReactNative.event(args);
 }
+
 Countly.recordView = function(recordView){
     CountlyReactNative.recordView([recordView || ""]);
 };
@@ -137,6 +146,7 @@ Countly.onError = function(error){
      // alert("error");
      // alert(error);
 }
+
 Countly.demo = function(){
 
 }
@@ -164,6 +174,7 @@ Countly.setLocation = function(countryCode, city, location, ipAddress){
     args.push(ipAddress || "0.0.0.0");
     CountlyReactNative.setLocation(args);
 }
+
 Countly.disableLocation = function(){
     CountlyReactNative.disableLocation();
 }
