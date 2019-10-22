@@ -19,11 +19,8 @@ import com.facebook.react.bridge.JavaScriptModule;
 import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
-import ly.count.android.sdk.Countly;
-import ly.count.android.sdk.RemoteConfig;
-import ly.count.android.sdk.DeviceId;
-import ly.count.sdk.android.Countly;
-import ly.count.sdk.android.Config;
+
+
 
 // import ly.count.android.sdknative.CountlyNative;
 
@@ -37,8 +34,14 @@ import java.util.Map;
 import java.util.HashMap;
 
 
-// for debug logging
-import static ly.count.android.sdk.Countly.TAG;
+
+
+import ly.count.android.sdk.Countly;
+import ly.count.android.sdk.CountlyConfig;
+import static ly.count.android.sdk.Countly.TAG;   // for debug logging
+import ly.count.android.sdk.RemoteConfig;
+import ly.count.android.sdk.DeviceId;
+
 
 public class CountlyReactNative extends ReactContextBaseJavaModule {
 	private ReactApplicationContext _reactContext;
@@ -89,12 +92,98 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void initWithConfig(String serverUrl, String appKey, ReadableMap jsConfig) {
-        Config javaConfig = new Config(serverUrl, appKey);
+        CountlyConfig javaConfig = new CountlyConfig();
+        javaConfig
+           .setContext(_reactContext)
+           .setServerURL(serverUrl)
+           .setAppKey(appKey);
         if (jsConfig.hasKey("enableDebug")) {
             javaConfig.setLoggingEnabled(jsConfig.getBoolean("enableDebug"));
         }
+        if (jsConfig.hasKey("requiresConsent")) {
+            boolean requiresConsent = jsConfig.getBoolean("requiresConsent");
+            if (requiresConsent) {
+                if (jsConfig.hasKey("consentFeatures")) {
+                     javaConfig.setRequiresConsent(requiresConsent);
+                     ReadableArray featuresList = jsConfig.getArray("consentFeatures");
+                     String featuresArr[] = new String[featuresList.size()];
+                     for (int j = 0; j < featuresList.size(); j++) {
+                         featuresArr[j] = featuresList.getString(j);
+                     }
+                     javaConfig.setConsentEnabled(featuresArr);
+                }
+                else {
+                     Log.w(TAG, "You need to specify consentFeatures array if requiresConsent is true");
+                }
+            }
+            else {
+               javaConfig.setRequiresConsent(requiresConsent);
+            }
+        }
+        if (jsConfig.hasKey("updateSessionPeriod")) {
+            // Not implemented yet. TIMER_DELAY_IN_SECONDS is static in Countly.java.
+        }
+        if (jsConfig.hasKey("alwaysUsePOST")) {
+            javaConfig.setHttpPostForced(jsConfig.getBoolean("alwaysUsePOST"));
+        }
+        if (jsConfig.hasKey("customHeaderFieldName") && jsConfig.hasKey("customHeaderFieldValue")) {
+            HashMap<String, String> customHeaderValues = new HashMap<String,String>();
+            String fieldName = jsConfig.getString("customHeaderFieldName");
+            String fieldValue = jsConfig.getString("customHeaderFieldValue");
+            customHeaderValues.put(fieldName, fieldValue);
+            javaConfig.addCustomNetworkRequestHeaders(customHeaderValues);
+        }
+        if (jsConfig.hasKey("starRating")) {
+            ReadableMap starRatingConfig = jsConfig.getMap("starRating");
+            if (starRatingConfig.hasKey("message")) {
+               javaConfig.setStarRatingTextMessage(starRatingConfig.getString("message"));
+            }
+            if (starRatingConfig.hasKey("sessionCount")) {
+               javaConfig.setStarRatingLimit(starRatingConfig.getInt("sessionCount"));
+            }
+        }
 
-        Countly.sharedInstance().init(_reactContext, javaConfig);
+        Countly.sharedInstance().init(javaConfig);
+
+        // First make sure init worked
+        int retries = 1;
+        try {
+            while (retries <= 5 && !Countly.sharedInstance().isInitialized()) {
+              Log.d(TAG, "Waiting for Countly to get initialized");
+              Thread.sleep(retries * 1000);
+              retries++;
+            }
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+
+        // Now we can set the following after Android init.
+        if (Countly.sharedInstance().isInitialized()) {
+            if (jsConfig.hasKey("eventSendThreshold")) {
+                Countly.sharedInstance().setEventQueueSizeToSend(jsConfig.getInt("eventSendThreshold"));
+            }
+            if (jsConfig.hasKey("location")) {
+                ReadableMap location = jsConfig.getMap("location");
+                String city = location.hasKey("city") ? location.getString("city") : null;
+                String country_code = location.hasKey("country_code") ? location.getString("country_code") : null;
+                String latLonCoordinates = location.hasKey("latLonCoordinates") ? location.getString("latLonCoordinates") : null;
+                String IP = location.hasKey("IP") ? location.getString("IP") : null;
+                Countly.sharedInstance().setLocation(country_code, city, latLonCoordinates, IP);
+            }
+            if (jsConfig.hasKey("secretSalt")) {
+                Countly.sharedInstance().enableParameterTamperingProtection(jsConfig.getString("secretSalt"));
+            }
+            if (jsConfig.hasKey("starRating")) {
+                ReadableMap starRatingConfig = jsConfig.getMap("starRating");
+                if (starRatingConfig.hasKey("disableAskingForEachAppVersion")) {
+                   Boolean disableAskingForEachAppVersion = starRatingConfig.getBoolean("disableAskingForEachAppVersion");
+                   Countly.sharedInstance().setStarRatingDisableAskingForEachAppVersion(disableAskingForEachAppVersion);
+                }
+            }
+        }
+        else {
+          Log.d(TAG, "Gave up waiting for Countly to get initialized.");
+        }
     }
 
 	@ReactMethod

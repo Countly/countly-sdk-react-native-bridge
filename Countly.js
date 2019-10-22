@@ -20,6 +20,11 @@ if (Platform.OS.match("android")) {
     Countly.messagingMode.DEVELOPMENT = 2;
 }
 
+const commonConsentFeatures = new Set(["sessions", "events", "users", "crashes", "push", "location",
+                                       "views", "attribution", "star-rating"]);
+const iosExtraConsentFeatures = new Set(["accessory-devices"]);
+const androidExtraConsentFeatures = new Set();
+
 // countly initialization
 Countly.init = function(serverUrl,
                         appKey,
@@ -48,6 +53,25 @@ Countly.init = function(serverUrl,
 Countly.initWithConfig = function(serverUrl, appKey, config) {
     Countly.serverUrl = serverUrl;
     Countly.appKey = appKey;
+    if (config.hasOwnProperty("consentFeatures")) {
+        // let's check validity of features
+        const validFeatures = [];
+        config.consentFeatures.forEach(feature => {
+            if (commonConsentFeatures.has(feature)) {
+                validFeatures.push(feature);
+            }
+            else if (Platform.OS === "ios" && iosExtraConsentFeatures.has(feature)) {
+                validFeatures.push(feature);
+            }
+            else if (Platform.OS === "android" && androidExtraConsentFeatures.has(feature)) {
+                validFeatures.push(feature);
+            }
+            else {
+                console.warn(`Consent feature ${feature} is unknown for ${Platform.OS} platform.`);
+            }
+        });
+        config.consentFeatures = validFeatures;
+    }
     CountlyReactNative.initWithConfig(serverUrl, appKey, config);
 }
 

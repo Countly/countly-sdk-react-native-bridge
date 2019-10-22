@@ -51,9 +51,20 @@ RCT_EXPORT_METHOD(init:(NSArray*)arguments)
   }
 }
 
-RCT_EXPORT_METHOD(initWithConfig:(NSString*)host appKey:(NSString*)appKey config:(NSDictionary *)details)
+RCT_EXPORT_METHOD(initWithConfig:(NSString*)host appKey:(NSString*)appKey config:(NSDictionary *)jsConfig)
 {
+   config = CountlyConfig.new;
+   config.appKey = appkey;
+   config.host = serverurl;
+   BOOL enableDebug = jsConfig[@"enableDebug"]
+   if (enableDebug != nil) {
+      config.enableDebug = enableDebug;
+   }
 
+   // process other properties from jsConfig in a similar way.
+   // available properties (see App.js): requiresConsent, updateSessionPeriod, eventSendThreshold
+
+   [[Countly sharedInstance] startWithConfig:config];
 }
 
 RCT_EXPORT_METHOD(event:(NSArray*)arguments)
@@ -171,7 +182,7 @@ RCT_EXPORT_METHOD(stop)
 RCT_EXPORT_METHOD(changeDeviceId:(NSArray*)arguments)
 {
   NSString* newDeviceID = [arguments objectAtIndex:0];
-  NSString* onServerString = [arguments objectAtIndex:0];
+  NSString* onServerString = [arguments objectAtIndex:1];
   if ([onServerString  isEqual: @"1"]) {
     [Countly.sharedInstance setNewDeviceID:newDeviceID onServer: YES];
   }else{
