@@ -168,7 +168,7 @@ RCT_EXPORT_METHOD(stop)
 RCT_EXPORT_METHOD(changeDeviceId:(NSArray*)arguments)
 {
   NSString* newDeviceID = [arguments objectAtIndex:0];
-  NSString* onServerString = [arguments objectAtIndex:0];
+  NSString* onServerString = [arguments objectAtIndex:1];
   if ([onServerString  isEqual: @"1"]) {
     [Countly.sharedInstance setNewDeviceID:newDeviceID onServer: YES];
   }else{
