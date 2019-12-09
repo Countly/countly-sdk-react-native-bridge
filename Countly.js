@@ -26,27 +26,13 @@ const iosExtraConsentFeatures = new Set(["accessory-devices"]);
 const androidExtraConsentFeatures = new Set();
 
 // countly initialization
-Countly.init = function(serverUrl,
-                        appKey,
-                        deviceId = "",
-                        starRatingAutoSessionCount = "0",
-                        starRatingTitle = "Rate us.",
-                        starRatingMessage = "How would you rate the app?",
-                        starRatingButtonText = "Dismiss",
-                        consentFlag = false
-                        ){
+Countly.init = function(serverUrl, appKey, deviceId = ""){
     Countly.serverUrl = serverUrl;
     Countly.appKey = appKey;
     var args = [];
     args.push(serverUrl);
     args.push(appKey);
     args.push(deviceId);
-    args.push(starRatingAutoSessionCount);
-    args.push(starRatingTitle);
-    args.push(starRatingMessage);
-    args.push(starRatingButtonText);
-    args.push(consentFlag);
-
     CountlyReactNative.init(args);
 }
 

@@ -22,12 +22,6 @@ RCT_EXPORT_METHOD(init:(NSArray*)arguments)
   NSString* serverurl = [arguments objectAtIndex:0];
   NSString* appkey = [arguments objectAtIndex:1];
   NSString* deviceID = [arguments objectAtIndex:2];
-  NSString* ratingTitle = [arguments objectAtIndex:4];
-  NSString* ratingMessage = [arguments objectAtIndex:5];
-  NSString* ratingButton = [arguments objectAtIndex:6];
-  BOOL consentFlag = [[arguments objectAtIndex:7] boolValue];
-  NSString* ratingLimitString = [arguments objectAtIndex:3];
-  int ratingLimit = [ratingLimitString intValue];
 
 
   if (config == nil){
@@ -38,16 +32,8 @@ RCT_EXPORT_METHOD(init:(NSArray*)arguments)
   }
   config.appKey = appkey;
   config.host = serverurl;
-  config.enableRemoteConfig = YES;
-  config.starRatingSessionCount = ratingLimit;
-  config.starRatingDisableAskingForEachAppVersion = YES;
-  config.starRatingMessage = ratingMessage;
-  config.requiresConsent = consentFlag;
-
-
   if (serverurl != nil && [serverurl length] > 0) {
     [[Countly sharedInstance] startWithConfig:config];
-  } else {
   }
 }
 

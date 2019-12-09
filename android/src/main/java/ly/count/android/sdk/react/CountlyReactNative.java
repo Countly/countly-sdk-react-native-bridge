@@ -77,17 +77,11 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         String serverUrl = args.getString(0);
         String appKey = args.getString(1);
         String deviceId = args.getString(2);
-        String ratingTitle = args.getString(4);
-        String ratingMessage = args.getString(5);
-        String ratingButton = args.getString(6);
-        Boolean consentFlag = args.getBoolean(7);
-        int ratingLimit = Integer.parseInt(args.getString(3));
         if("".equals(deviceId)){
             deviceId = null;
         }
-        Countly.sharedInstance().setRequiresConsent(consentFlag);
         Countly.sharedInstance()
-                .init(_reactContext, serverUrl, appKey, deviceId, DeviceId.Type.OPEN_UDID, ratingLimit, null, ratingTitle, ratingMessage, ratingButton);
+                .init(_reactContext, serverUrl, appKey, deviceId);
  	}
 
     @ReactMethod
