@@ -30,7 +30,7 @@ class AwesomeProject extends Component {
         this.enableParameterTamperingProtection = this.enableParameterTamperingProtection.bind(this);
     };
     onInit(){
-      Countly.init("https://try.count.ly","0e8a00e8c01395a0af8be0e55da05a404bb23c3e","","5", "Rate us.", "How would you rate the app?", "Dismiss",false);
+      Countly.init("https://try.count.ly","0e8a00e8c01395a0af8be0e55da05a404bb23c3e");
     }
     onStart(){
       Countly.start();
