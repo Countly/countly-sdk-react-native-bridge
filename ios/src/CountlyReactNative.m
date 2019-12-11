@@ -586,10 +586,11 @@ RCT_EXPORT_METHOD(showFeedbackPopup:(NSArray*)arguments)
 RCT_EXPORT_METHOD(setEventSendThreshold:(NSArray*)arguments)
 {
   NSString* size = [arguments objectAtIndex:0];
+  int sizeInt = [size intValue];
   if (config == nil){
     config = CountlyConfig.new;
   }
-  config.eventSendThreshold = size;
+  config.eventSendThreshold = sizeInt;
 }
 
 RCT_EXPORT_METHOD(remoteConfigClearValues:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
