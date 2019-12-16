@@ -32,6 +32,39 @@ class AwesomeProject extends Component {
     onInit(){
       Countly.init("https://try.count.ly","0e8a00e8c01395a0af8be0e55da05a404bb23c3e");
     }
+    onInitWithConfig(){
+      const config = {
+        enableDebug: true,
+        updateSessionPeriod: 15,
+        eventSendThreshold: 5,
+        alwaysUsePOST: false,
+        requiresConsent: true,
+        consentFeatures: ["sessions", "events", "users", "crashes", "push", "location",
+                          "views", "attribution", "star-rating", "accessory-devices"],
+        location: {
+          city: "London",
+          countryCode: "uk",
+          // latLonCoordinates: "53.36,-6.31",
+          // IP: "127.0.0.1"
+        },
+        customHeaderFieldName: "X-My-Custom-Field",    // HTTP header name
+        customHeaderFieldValue: "my_custom_value",
+        secretSalt: "vbdv12345cbd123scbsd",
+        starRating: {
+          message: "How would you rate our app?",
+          sessionCount: 5,   //  show automatically after X session, specify 0 for disabling starRating feature
+          disableAskingForEachAppVersion: true,     // if true ask only once during app's lifetime
+        },
+      };
+      Countly.initWithConfig(
+          "https://izzet.count.ly",
+          "fc50bdc1e5c3a01268828b858f95d928cb72ad34",
+           config
+      );
+      Countly.start();
+      Countly.setUserData({name: "Test User", email: "test@gmail.com", gender: "M"});
+      Countly.sendEvent({"eventName":"Demo Event","eventCount":1});
+    }
     onStart(){
       Countly.start();
     };
@@ -408,6 +441,7 @@ class AwesomeProject extends Component {
             </View>
             < Button onPress = { this.test } title = "Test" color = "#1b1c1d"> </Button>
             < Button onPress = { this.onInit } title = "Init"> </Button>
+            < Button onPress = { this.onInitWithConfig } title = "Init With Config"> </Button>
             < Button onPress = { this.onStart } title = "Start" color = "#5bbd72"> </Button>
             < Button onPress = { this.onStop } title = "Stop" color = "#d95c5c"> </Button>
 
