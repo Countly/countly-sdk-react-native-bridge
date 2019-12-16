@@ -40,18 +40,96 @@ RCT_EXPORT_METHOD(init:(NSArray*)arguments)
 RCT_EXPORT_METHOD(initWithConfig:(NSString*)host appKey:(NSString*)appKey config:(NSDictionary *)jsConfig)
 {
    config = CountlyConfig.new;
-   config.appKey = appkey;
-   config.host = serverurl;
-   BOOL enableDebug = jsConfig[@"enableDebug"]
-   if (enableDebug != nil) {
-      config.enableDebug = enableDebug;
+   config.appKey = appKey;
+   config.host = host;
+   int eventSendThreshold = [[jsConfig objectForKey:@"eventSendThreshold"] intValue];; //[jsConfig[@"eventSendThreshold"] intValue];
+//   BOOL alwaysUsePOST = jsConfig[@"alwaysUsePOST"];
+
+//    NSString* location = jsConfig[@"location"];
+//   NSString* conditionsecretSalt = jsConfig[@"conditionsecretSalt"];
+
+
+   if([[jsConfig allKeys] containsObject:@"enableDebug"]){
+      config.enableDebug = [[jsConfig objectForKey:@"enableDebug"] boolValue];
+   }else{
+      config.enableDebug = false;
    }
 
-   // process other properties from jsConfig in a similar way.
-   // available properties (see App.js): requiresConsent, updateSessionPeriod, eventSendThreshold
+   if([[jsConfig allKeys] containsObject:@"updateSessionPeriod"]){
+      config.updateSessionPeriod = [[jsConfig objectForKey:@"eventSendThreshold"] intValue];
+   }
 
-   [[Countly sharedInstance] startWithConfig:config];
-}
+   if([[jsConfig allKeys] containsObject:@"eventSendThreshold"]){
+        config.eventSendThreshold = [[jsConfig objectForKey:@"eventSendThreshold"] intValue];
+   }
+
+   if([[jsConfig allKeys] containsObject:@"alwaysUsePOST"] && [[jsConfig objectForKey:@"alwaysUsePOST"] boolValue]){
+        config.alwaysUsePOST = YES;
+   }else{
+        config.alwaysUsePOST = NO;
+   }
+
+    // consent check
+   if([[jsConfig allKeys] containsObject:@"consentFeatures"]){
+        config.requiresConsent = true;
+        NSArray* consentArray = jsConfig[@"consentFeatures"];
+        [Countly.sharedInstance giveConsentForFeatures:consentArray];
+   }
+
+   // custom header
+   if([[jsConfig allKeys] containsObject:@"customHeaderFieldName"] && [[jsConfig allKeys] containsObject:@"customHeaderFieldValue"] ){
+        config.customHeaderFieldName = [[jsConfig objectForKey:@"customHeaderFieldName"] stringValue];
+        config.customHeaderFieldValue = [[jsConfig objectForKey:@"customHeaderFieldValue"] stringValue];
+   }
+//
+//    if([[jsConfig allKeys] containsObject:@"location"]){
+//        config.location = [[jsConfig objectForKey:@"location"] stringValue];
+//    }
+   if([[jsConfig allKeys] containsObject:@"location"]){
+       (NSDictionary *) location =[jsConfig objectForKey:@"location"];
+        config.location = (CLLocationCoordinate2D){35.6895,139.6917};
+        config.city = @"Tokyo";
+        config.ISOCountryCode = @"JP";
+        config.IP = @"255.255.255.255";
+        NSArray* locationArray = jsConfig[@"location"];
+//        [Countly.sharedInstance recordLocation:locationArray];
+       [Countly.sharedInstance recordLocation:(CLLocationCoordinate2D){35.6895,139.6917}];
+       [Countly.sharedInstance recordCity:@"Tokyo" andISOCountryCode:@"JP"];
+       [Countly.sharedInstance recordIP:@"255.255.255.255"];
+   }
+
+//   if (location != nil){
+//       NSString* countryCode = [jsConfig objectAtIndex:0];
+//       NSString* city = [jsConfig objectAtIndex:1];
+//       NSString* location = [jsConfig objectAtIndex:2];
+//       NSString* IP = [jsConfig objectAtIndex:3];
+
+//       if ([location  isEqual: @"0,0"]){
+//
+//       }else{
+//           NSArray *locationArray = [location componentsSeparatedByString:@","];   //take the one array for split the string
+//           NSString* latitudeString = [locationArray objectAtIndex:0];
+//           NSString* longitudeString = [locationArray objectAtIndex:1];
+//
+//           double latitudeDouble = [latitudeString doubleValue];
+//           double longitudeDouble = [longitudeString doubleValue];
+//
+//           [Countly.sharedInstance recordLocation:(CLLocationCoordinate2D){latitudeDouble,longitudeDouble}];
+//       }
+//       [Countly.sharedInstance recordCity:city andISOCountryCode:countryCode];   //@nicolson Validation for city and countryCode is done on Countly js
+//       if ([IP  isEqual: @"0.0.0.0"]){
+//
+//       }else{
+//           [Countly.sharedInstance recordIP:IP];
+//       }
+//   }
+//   if (jsConfig.hasKey("customHeaderFieldName") && jsConfig.hasKey("customHeaderFieldValue")) {
+//       HashMap<String, String> customHeaderValues = new HashMap<String,String>();
+//       String fieldName = jsConfig.getString("customHeaderFieldName");
+//       String fieldValue = jsConfig.getString("customHeaderFieldValue");
+//       customHeaderValues.put(fieldName, fieldValue);
+//       javaConfig.addCustomNetworkRequestHeaders(customHeaderValues);
+//   }
 
 RCT_EXPORT_METHOD(event:(NSArray*)arguments)
 {
