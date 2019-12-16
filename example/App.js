@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { AppRegistry, Text, Button, ScrollView, Image, View, Alert } from 'react-native';
+import { Text, Button, ScrollView, Image, View } from 'react-native';
 import Countly from 'countly-sdk-react-native-bridge';
 import { PushNotificationIOS }  from 'react-native';
 // import StackTrace from '/Countly.StackTrace.js';
@@ -537,4 +537,4 @@ class AwesomeProject extends Component {
 }
 
 module.exports = AwesomeProject;
-AppRegistry.registerComponent('AwesomeProject', () => AwesomeProject);
+// AppRegistry.registerComponent('AwesomeProject', () => AwesomeProject);
