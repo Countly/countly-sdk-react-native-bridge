@@ -36,15 +36,14 @@
 - (void)removeConsent:(NSArray*)arguments;
 - (void)giveAllConsent;
 - (void)removeAllConsent;
-- (void)remoteConfigUpdate:(NSArray*)arguments;
-- (void)updateRemoteConfigForKeysOnly:(NSArray*)arguments;
-- (void)updateRemoteConfigExceptKeys:(NSArray*)arguments;
-- (void)getRemoteConfigValueForKey:(NSArray*)arguments;
-- (void)setStarRatingDialogTexts:(NSArray*)arguments;
+- (void)remoteConfigUpdate:(NSArray*)arguments: (RCTResponseSenderBlock)callback;
+- (void)updateRemoteConfigForKeysOnly:(NSArray*)arguments : (RCTResponseSenderBlock)callback;
+- (void)updateRemoteConfigExceptKeys:(NSArray*)arguments : (RCTResponseSenderBlock)callback;
+- (void)getRemoteConfigValueForKey: (NSArray *)arguments : (RCTResponseSenderBlock)callback;
+//- (void)setStarRatingDialogTexts:(NSArray*)arguments;
 - (void)showStarRating:(NSArray*)arguments;
 - (void)showFeedbackPopup:(NSArray*)arguments;
 - (void)setEventSendThreshold:(NSArray*)arguments;
-- (void)remoteConfigClearValues:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)- (void)initWithConfig:(NSString*)host appKey:(NSString*)appKey config:(NSDictionary *)jsConfig);
-reject;
-
+- (void)remoteConfigClearValues:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock) reject;
+- (void)initWithConfig:(NSString*)host appKey:(NSString*)appKey config:(NSDictionary *)jsConfig;
 @end

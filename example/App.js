@@ -57,8 +57,8 @@ class AwesomeProject extends Component {
         },
       };
       Countly.initWithConfig(
-          "https://izzet.count.ly",
-          "fc50bdc1e5c3a01268828b858f95d928cb72ad34",
+          "https://trinisoft.count.ly",
+          "f0b2ac6919f718a13821575db28c0e2971e05ec5",
            config
       );
       Countly.start();
