@@ -39,13 +39,12 @@ class AwesomeProject extends Component {
         eventSendThreshold: 5,
         alwaysUsePOST: false,
         requiresConsent: true,
-        consentFeatures: ["sessions", "events", "users", "crashes", "push", "location",
-                          "views", "attribution", "star-rating", "accessory-devices"],
+        consentFeatures: ["sessions", "events", "users", "crashes", "push", "location", "views", "attribution", "star-rating", "accessory-devices"],
         location: {
           city: "London",
-          countryCode: "uk",
-          // latLonCoordinates: "53.36,-6.31",
-          // IP: "127.0.0.1"
+          countryCode: "UK",
+          location: "35.6895,139.6917",
+          IP: "127.0.0.1"
         },
         customHeaderFieldName: "X-My-Custom-Field",    // HTTP header name
         customHeaderFieldValue: "my_custom_value",
