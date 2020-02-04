@@ -176,14 +176,6 @@ Countly.changeDeviceId = function(newDeviceID, onServer){
     newDeviceID = newDeviceID.toString() || "";
     CountlyReactNative.changeDeviceId([newDeviceID, onServer]);
 }
-Countly.userLoggedIn = function(deviceId){
-    var args = [];
-    args.push(deviceId || "");
-    CountlyReactNative.userLoggedIn(args);
-}
-Countly.userLoggedOut = function(){
-    CountlyReactNative.userLoggedOut([]);
-}
 Countly.setHttpPostForced = function(boolean){
     var args = [];
     args.push(boolean?"1":"0");
