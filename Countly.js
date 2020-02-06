@@ -8,6 +8,7 @@ import {
     Platform,
     NativeModules
 } from 'react-native';
+import parseErrorStackLib from '../react-native/Libraries/Core/Devtools/parseErrorStack.js';
 
 const CountlyReactNative = NativeModules.CountlyReactNative;
 
@@ -183,6 +184,26 @@ Countly.setHttpPostForced = function(boolean){
 }
 Countly.isCrashReportingEnabled = false;
 Countly.enableCrashReporting = function(){
+    if (ErrorUtils && !Countly.isCrashReportingEnabled) {
+        console.log("Adding Countly JS error handler.");
+        var previousHandler = ErrorUtils.getGlobalHandler();
+        ErrorUtils.setGlobalHandler(function (error, isFatal) {
+            var jsStackTrace = parseErrorStackLib(error);
+            // console.log(jsStackTrace[0]);
+            var fname = jsStackTrace[0].file;
+            if (fname.startsWith("http")) {
+                var chunks = fname.split("/");
+                fname = chunks[chunks.length-1].split("?")[0];
+            }
+            if (Platform.OS.match("android")) {
+                var errorTitle = `${error.name} (${jsStackTrace[0].methodName}@${fname})`;
+                CountlyReactNative.logJSException(errorTitle, error.message.trim(), error.stack.toString().trim());
+            }
+            if (previousHandler) {
+                previousHandler(error, isFatal);            
+            }
+        });
+    }    
     Countly.isCrashReportingEnabled = true;
     CountlyReactNative.enableCrashReporting();
 }
@@ -206,6 +227,13 @@ Countly.logException = function(exception, nonfatal, segments){
     CountlyReactNative.logException(args);
 }
 
+/*
+Countly.testAndroidCrash = function(x) {
+    if (Platform.OS.match("android")) {
+        CountlyReactNative.testCrash();
+    }
+}
+*/
 Countly.setCustomCrashSegments = function(logs){
     if(!logs){
         logs = [];
@@ -428,17 +456,5 @@ Countly.testCrash = function(){
 }
 */
 
-
-if (ErrorUtils) {
-    var previousHandler = ErrorUtils.getGlobalHandler();
-    ErrorUtils.setGlobalHandler(function (error, isFatal) {
-        if(Countly.isCrashReportingEnabled){
-            var stack = error.stack.toString();
-            Countly.logException(stack, isFatal, {});
-        }else{
-            previousHandler(error, isFatal);
-        }
-    });
-}
 
 export default Countly;

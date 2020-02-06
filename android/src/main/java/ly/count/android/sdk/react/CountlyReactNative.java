@@ -33,9 +33,23 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.HashMap;
 
-
 // for debug logging
 import static ly.count.android.sdk.Countly.TAG;
+
+class CountlyReactException extends Exception {
+  private String jsError;
+  private String jsStack;
+  private String jsMessage;
+
+  CountlyReactException(String err, String message, String stack){
+    jsError = err;
+    jsStack = stack;
+    jsMessage = message;
+  }
+  public String toString(){
+    return "React JS Error - " + jsError + ": " + jsMessage + "\n" + jsStack + "\n\nJava Stack:";
+  }
+}
 
 public class CountlyReactNative extends ReactContextBaseJavaModule {
 	private ReactApplicationContext _reactContext;
@@ -179,7 +193,23 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
         Countly.sharedInstance().logException(exception);
     }
-
+    @ReactMethod
+    public void logJSException(String err, String message, String stack){
+       Countly.sharedInstance().addCrashLog(stack); 
+       Countly.sharedInstance().logException(new CountlyReactException(err, message, stack));
+    }
+    /*
+    @ReactMethod
+    public void testCrash() throws Exception{
+       testCrashAux1(42);
+    }    
+    private void testCrashAux1(int x) throws Exception{
+        testCrashAux2(x*2, "test");   
+    }  
+    private void testCrashAux2(int x, String s) throws Exception{
+        Countly.sharedInstance().logException(new Exception("Some test exception"));   
+    }  
+    */
     @ReactMethod
     public void setCustomCrashSegments(ReadableArray args){
         Map<String, String> segments = null;
