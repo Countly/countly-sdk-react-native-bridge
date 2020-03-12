@@ -24,24 +24,25 @@ if (Platform.OS.match("android")) {
 // countly initialization
 Countly.init = function(serverUrl,
                         appKey,
-                        deviceId = "",
-                        starRatingAutoSessionCount = "0",
-                        starRatingTitle = "Rate us.",
-                        starRatingMessage = "How would you rate the app?",
-                        starRatingButtonText = "Dismiss",
-                        consentFlag = false
-                        ){
+                        deviceId = ""){
+                        //     ,
+                        // starRatingAutoSessionCount = "0",
+                        // starRatingTitle = "Rate us.",
+                        // starRatingMessage = "How would you rate the app?",
+                        // starRatingButtonText = "Dismiss",
+                        // consentFlag = false
+
     Countly.serverUrl = serverUrl;
     Countly.appKey = appKey;
     var args = [];
     args.push(serverUrl);
     args.push(appKey);
     args.push(deviceId);
-    args.push(starRatingAutoSessionCount);
-    args.push(starRatingTitle);
-    args.push(starRatingMessage);
-    args.push(starRatingButtonText);
-    args.push(consentFlag);
+    // args.push(starRatingAutoSessionCount);
+    // args.push(starRatingTitle);
+    // args.push(starRatingMessage);
+    // args.push(starRatingButtonText);
+    // args.push(consentFlag);
 
     CountlyReactNative.init(args);
 }
@@ -200,10 +201,10 @@ Countly.enableCrashReporting = function(){
                 CountlyReactNative.logJSException(errorTitle, error.message.trim(), error.stack.toString().trim());
             }
             if (previousHandler) {
-                previousHandler(error, isFatal);            
+                previousHandler(error, isFatal);
             }
         });
-    }    
+    }
     Countly.isCrashReportingEnabled = true;
     CountlyReactNative.enableCrashReporting();
 }

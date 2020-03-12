@@ -85,17 +85,19 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         String serverUrl = args.getString(0);
         String appKey = args.getString(1);
         String deviceId = args.getString(2);
-        String ratingTitle = args.getString(4);
-        String ratingMessage = args.getString(5);
-        String ratingButton = args.getString(6);
-        Boolean consentFlag = args.getBoolean(7);
-        int ratingLimit = Integer.parseInt(args.getString(3));
+        // String ratingTitle = args.getString(4);
+        // String ratingMessage = args.getString(5);
+        // String ratingButton = args.getString(6);
+        // Boolean consentFlag = args.getBoolean(7);
+        // int ratingLimit = Integer.parseInt(args.getString(3));
         if("".equals(deviceId)){
-            deviceId = null;
+            Countly.sharedInstance().init(context, serverUrl, appKey, null, DeviceId.Type.OPEN_UDID);
+        }else{
+            Countly.sharedInstance().init(context, serverUrl, appKey, deviceId, null);
         }
-        Countly.sharedInstance().setRequiresConsent(consentFlag);
-        Countly.sharedInstance()
-                .init(_reactContext, serverUrl, appKey, deviceId, DeviceId.Type.OPEN_UDID, ratingLimit, null, ratingTitle, ratingMessage, ratingButton);
+        // Countly.sharedInstance().setRequiresConsent(consentFlag);
+        // Countly.sharedInstance()
+        //         .init(_reactContext, serverUrl, appKey, deviceId, DeviceId.Type.OPEN_UDID, ratingLimit, null, ratingTitle, ratingMessage, ratingButton);
  	}
 
 	@ReactMethod
@@ -195,20 +197,20 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
     @ReactMethod
     public void logJSException(String err, String message, String stack){
-       Countly.sharedInstance().addCrashLog(stack); 
+       Countly.sharedInstance().addCrashLog(stack);
        Countly.sharedInstance().logException(new CountlyReactException(err, message, stack));
     }
     /*
     @ReactMethod
     public void testCrash() throws Exception{
        testCrashAux1(42);
-    }    
+    }
     private void testCrashAux1(int x) throws Exception{
-        testCrashAux2(x*2, "test");   
-    }  
+        testCrashAux2(x*2, "test");
+    }
     private void testCrashAux2(int x, String s) throws Exception{
-        Countly.sharedInstance().logException(new Exception("Some test exception"));   
-    }  
+        Countly.sharedInstance().logException(new Exception("Some test exception"));
+    }
     */
     @ReactMethod
     public void setCustomCrashSegments(ReadableArray args){
