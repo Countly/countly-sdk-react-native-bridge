@@ -152,7 +152,7 @@ RCT_EXPORT_METHOD(onRegistrationId:(NSArray*)arguments)
   //  NSInteger messagingModeInteger = [messagingMode intValue];
   //  NSData *tokenByte = [token dataUsingEncoding:NSUTF8StringEncoding];
 
-  [CountlyConnectionManager.sharedInstance sendPushTokenReactNative:token messagingMode:messagingMode];
+  // [CountlyConnectionManager.sharedInstance sendPushTokenReactNative:token messagingMode:messagingMode];
 }
 
 RCT_EXPORT_METHOD(start)
