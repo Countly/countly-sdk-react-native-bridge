@@ -148,11 +148,10 @@ RCT_EXPORT_METHOD(onRegistrationId:(NSArray*)arguments)
 {
   NSString* token = [arguments objectAtIndex:0];
   NSString* messagingMode = [arguments objectAtIndex:1];
-  //  int mode = [messagingMode intValue];
-  //  NSInteger messagingModeInteger = [messagingMode intValue];
-  //  NSData *tokenByte = [token dataUsingEncoding:NSUTF8StringEncoding];
-
-  // [CountlyConnectionManager.sharedInstance sendPushTokenReactNative:token messagingMode:messagingMode];
+    NSString *urlString = [ @"" stringByAppendingFormat:@"%@?device_id=%@&app_key=%@&token_session=1&test_mode=%@&ios_token=%@", config.host, [Countly.sharedInstance deviceID], config.appKey, messagingMode, token];
+    NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
+    [request setHTTPMethod:@"GET"];
+    [request setURL:[NSURL URLWithString:urlString]];
 }
 
 RCT_EXPORT_METHOD(start)
