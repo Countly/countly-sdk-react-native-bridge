@@ -1,5 +1,5 @@
 Pod::Spec.new do |s|
-  s.name = 'Countly'
+  s.name = 'CountlyReactNative'
   s.version = '19.02'
   s.license = {
     :type => 'COMMUNITY',
@@ -46,5 +46,5 @@ Pod::Spec.new do |s|
   end
 
   s.dependency "React"
-
+  s.dependency "Countly"
 end
