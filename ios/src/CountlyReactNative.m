@@ -556,7 +556,7 @@ RCT_EXPORT_METHOD(getRemoteConfigValueForKey:(NSArray*)arguments:(RCTResponseSen
   }
   NSString *theType = NSStringFromClass([value class]);
   if([theType isEqualToString:@"NSTaggedPointerString"]){
-      callback(value);
+      callback(@[value]);
   } else if([theType isEqualToString:@"__NSSingleEntryDictionaryI"]){
       NSDictionary *dictionaryOrArrayToOutput = (NSDictionary *) value;
       NSError *error;
@@ -565,43 +565,32 @@ RCT_EXPORT_METHOD(getRemoteConfigValueForKey:(NSArray*)arguments:(RCTResponseSen
 
       if (!jsonData) {
           NSLog(@"Got an error: %@", error);
-          callback(error);
+          callback(@[error]);
       } else {
           NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
-          callback(jsonString);
+          callback(@[jsonString]);
       }
   }else if([theType isEqualToString:@"__NSCFBoolean"]){
       NSString *boolean = [value stringValue];
       if([boolean isEqualToString:@"1"]){
-          callback(@"true");
+          callback(@[@"true"]);
       }else{
-          callback(@"false");
+          callback(@[@"false"]);
       }
   }else{
-      callback([value stringValue]);
+      callback(@[[value stringValue]]);
   }
-  // NSString* keyName = [arguments objectAtIndex:0];
-  // id value = [Countly.sharedInstance remoteConfigValueForKey:keyName];
-  // if (value){
-  // }
-  // else{
-  //   value = @"ConfigKeyNotFound";
-  // }
-  // NSString* returnString = [NSString stringWithFormat:@"%@", value];
-  // NSArray *result = @[returnString];
-  // callback(@[result]);
 }
 
 RCT_EXPORT_METHOD(showStarRating:(NSArray*)arguments)
 {
-  NSInteger* rating = 5;
-  if (config != nil){
-    if(config.starRatingSessionCount){
-      rating = config.starRatingSessionCount;
-    }
-  }
-  [Countly.sharedInstance askForStarRating:^(NSInteger rating){
-  }];
+     @try {
+        [Countly.sharedInstance askForStarRating:^(NSInteger rating){
+        }];
+     }
+     @catch (NSException * error) {
+         NSLog(@"%@",error);
+     }
 }
 
 RCT_EXPORT_METHOD(showFeedbackPopup:(NSArray*)arguments)
@@ -609,7 +598,7 @@ RCT_EXPORT_METHOD(showFeedbackPopup:(NSArray*)arguments)
   NSString* FEEDBACK_WIDGET_ID = [arguments objectAtIndex:0];
   [Countly.sharedInstance presentFeedbackWidgetWithID:FEEDBACK_WIDGET_ID completionHandler:^(NSError* error)
   {
-
+      NSLog(@"%@",error);
   }];
 }
 

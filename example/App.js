@@ -30,7 +30,8 @@ class AwesomeProject extends Component {
         this.enableParameterTamperingProtection = this.enableParameterTamperingProtection.bind(this);
     };
     onInit(){
-      Countly.init("https://try.count.ly","0e8a00e8c01395a0af8be0e55da05a404bb23c3e");
+      Countly.init("https://trinisoft.count.ly", "f0b2ac6919f718a13821575db28c0e2971e05ec5");
+      // Countly.init("https://try.count.ly","0e8a00e8c01395a0af8be0e55da05a404bb23c3e");
       // ,"","5", "Rate us.", "How would you rate the app?", "Dismiss",false
     }
     onStart(){
@@ -247,11 +248,31 @@ class AwesomeProject extends Component {
       });
     };
 
-    getRemoteConfigValueForKey(){
-      Countly.getRemoteConfigValueForKey("test1",function(data){
+    getRemoteConfigValueForKeyBoolean(){
+      Countly.getRemoteConfigValueForKey("booleanValue", function(data){
         console.log(data);
       });
-    };
+    }
+    getRemoteConfigValueForKeyFloat(){
+      Countly.getRemoteConfigValueForKey("floatValue", function(data){
+        console.log(data);
+      });
+    }
+    getRemoteConfigValueForKeyInteger(){
+      Countly.getRemoteConfigValueForKey("integerValue", function(data){
+        console.log(data);
+      });
+    }
+    getRemoteConfigValueForKeyString(){
+      Countly.getRemoteConfigValueForKey("stringValue", function(data){
+        console.log(data);
+      });
+    }
+    getRemoteConfigValueForKeyJSON(){
+      Countly.getRemoteConfigValueForKey("jsonValue", function(data){
+        console.log(data);
+      });
+    }
 
     remoteConfigClearValues(){
       Countly.remoteConfigClearValues();
@@ -328,7 +349,7 @@ class AwesomeProject extends Component {
     };
 
     showFeedbackPopup(){
-      Countly.showFeedbackPopup("5cda549bd9e26f31bca772c6", "Submit");
+      Countly.showFeedbackPopup("5e4254507975d006a22535fc", "Submit");
     }
 
     enableCrashReporting(){
@@ -479,7 +500,14 @@ class AwesomeProject extends Component {
             < Button onPress = { this.remoteConfigUpdate } title = "Update Remote Config" color = "#00b5ad"> </Button>
             < Button onPress = { this.updateRemoteConfigForKeysOnly } title = "Update Remote Config with Keys Only" color = "#00b5ad"> </Button>
             < Button onPress = { this.updateRemoteConfigExceptKeys } title = "Update Remote Config Except Keys" color = "#00b5ad"> </Button>
-            < Button onPress = { this.getRemoteConfigValueForKey } title = "Get config value" color = "#00b5ad"> </Button>
+
+            < Button onPress = { this.getRemoteConfigValueForKeyBoolean } title = "Boolean Test" color = "#00b5ad"> </Button>
+            < Button onPress = { this.getRemoteConfigValueForKeyFloat } title = "Float Test" color = "#00b5ad"> </Button>
+            < Button onPress = { this.getRemoteConfigValueForKeyInteger } title = "Integer Test" color = "#00b5ad"> </Button>
+            < Button onPress = { this.getRemoteConfigValueForKeyString } title = "String Test" color = "#00b5ad"> </Button>
+            < Button onPress = { this.getRemoteConfigValueForKeyJSON } title = "JSON Test" color = "#00b5ad"> </Button>
+
+
             < Button onPress = { this.remoteConfigClearValues } title = "Clear remote config cache" color = "#00b5ad"> </Button>
 
             < Button onPress = { this.showStarRating } title = "Show Star Rating Model" color = "#00b5ad"> </Button>
