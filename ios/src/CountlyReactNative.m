@@ -550,16 +550,46 @@ RCT_EXPORT_METHOD(updateRemoteConfigExceptKeys:(NSArray*)arguments:(RCTResponseS
 }
 RCT_EXPORT_METHOD(getRemoteConfigValueForKey:(NSArray*)arguments:(RCTResponseSenderBlock)callback)
 {
-  NSString* keyName = [arguments objectAtIndex:0];
-  id value = [Countly.sharedInstance remoteConfigValueForKey:keyName];
-  if (value){
+  id value = [Countly.sharedInstance remoteConfigValueForKey:[arguments objectAtIndex:0]];
+  if(!value){
+      value = @"Default Value";
   }
-  else{
-    value = @"ConfigKeyNotFound";
+  NSString *theType = NSStringFromClass([value class]);
+  if([theType isEqualToString:@"NSTaggedPointerString"]){
+      callback(value);
+  } else if([theType isEqualToString:@"__NSSingleEntryDictionaryI"]){
+      NSDictionary *dictionaryOrArrayToOutput = (NSDictionary *) value;
+      NSError *error;
+      NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dictionaryOrArrayToOutput options:NSJSONWritingPrettyPrinted // Pass 0 if you don't care about the readability of the generated string
+                                                            error:&error];
+
+      if (!jsonData) {
+          NSLog(@"Got an error: %@", error);
+          callback(error);
+      } else {
+          NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+          callback(jsonString);
+      }
+  }else if([theType isEqualToString:@"__NSCFBoolean"]){
+      NSString *boolean = [value stringValue];
+      if([boolean isEqualToString:@"1"]){
+          callback(@"true");
+      }else{
+          callback(@"false");
+      }
+  }else{
+      callback([value stringValue]);
   }
-  NSString* returnString = [NSString stringWithFormat:@"%@", value];
-  NSArray *result = @[returnString];
-  callback(@[result]);
+  // NSString* keyName = [arguments objectAtIndex:0];
+  // id value = [Countly.sharedInstance remoteConfigValueForKey:keyName];
+  // if (value){
+  // }
+  // else{
+  //   value = @"ConfigKeyNotFound";
+  // }
+  // NSString* returnString = [NSString stringWithFormat:@"%@", value];
+  // NSArray *result = @[returnString];
+  // callback(@[result]);
 }
 
 RCT_EXPORT_METHOD(showStarRating:(NSArray*)arguments)
