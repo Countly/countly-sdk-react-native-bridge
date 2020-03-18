@@ -428,6 +428,9 @@ RCT_EXPORT_METHOD(userData_pushUniqueValue:(NSArray*)arguments)
 {
   NSString* keyName = [arguments objectAtIndex:0];
   NSString* keyValue = [arguments objectAtIndex:1];
+
+  [Countly.user pushUnique:keyName value:keyValue];
+  [Countly.user save];
 }
 RCT_EXPORT_METHOD(userData_pushValue:(NSArray*)arguments)
 {
