@@ -300,7 +300,7 @@ RCT_EXPORT_METHOD(setLocation:(NSArray*)arguments)
   NSString* location = [arguments objectAtIndex:2];
   NSString* IP = [arguments objectAtIndex:3];
 
-  if ([location  isEqual: @"0,0"]){
+  if ([location  isEqual: @"0.0,0.0"]){
 
   }else{
     NSArray *locationArray = [location componentsSeparatedByString:@","];   //take the one array for split the string
