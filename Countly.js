@@ -101,6 +101,26 @@ Countly.sendEvent = function(options){
 Countly.recordView = function(recordView){
     CountlyReactNative.recordView([recordView || ""]);
 };
+// As per the above documentation apply auto tracking method.
+// https://reactnavigation.org/docs/screen-tracking
+Countly.previousRouteName = "";
+Countly.autoTrackingView = function(state){
+    const currentRouteName = getActiveRouteName(state);
+    if(currentRouteName != Countly.previousRouteName){
+        Countly.recordView(currentRouteName);
+    }
+    Countly.previousRouteName = currentRouteName;
+};
+const getActiveRouteName = function(state){
+  const route = state.routes[state.index];
+
+  if (route.state) {
+    // Dive into nested navigators
+    return getActiveRouteName(route.state);
+  }
+
+  return route.name;
+};
 
 Countly.setViewTracking = function(boolean){
     CountlyReactNative.setViewTracking([boolean || "false"]);

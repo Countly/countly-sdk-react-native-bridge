@@ -2,9 +2,52 @@ import React, { Component } from 'react';
 import { AppRegistry, Text, Button, ScrollView, Image, View, Alert } from 'react-native';
 import Countly from 'countly-sdk-react-native-bridge';
 import { PushNotificationIOS }  from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
 // import StackTrace from '/Countly.StackTrace.js';
 // import stacktrace from 'react-native-stacktrace';
 // var PushNotification = require('react-native-push-notification');
+
+
+// Auto Navigation Example.
+class PageOne extends Component {
+  render(){
+    return(
+      <ScrollView>
+        <Text>Page One</Text>
+        <Button onPress={() => navigation.navigate('PageOne')>Go to Page One</Button>
+        <Button onPress={() => navigation.navigate('PageTwo')>Go to Page Two</Button>
+        <Button onPress={() => navigation.navigate('PageThree')>Go to Page Three</Button>
+      </ScrollView>
+      );
+  }
+}
+class PageTwo extends Component {
+  render(){
+    return(
+    <ScrollView>
+      <Text>Page Two</Text>
+      <Button onPress={() => navigation.navigate('PageOne')>Go to Page One</Button>
+      <Button onPress={() => navigation.navigate('PageTwo')>Go to Page Two</Button>
+      <Button onPress={() => navigation.navigate('PageThree')>Go to Page Three</Button>
+    </ScrollView>
+      );
+  }
+}
+class PageTwo extends Component {
+  render(){
+    return(
+    <ScrollView>
+      <Text>Page Three</Text>
+      <Button onPress={() => navigation.navigate('PageOne')>Go to Page One</Button>
+      <Button onPress={() => navigation.navigate('PageTwo')>Go to Page Two</Button>
+      <Button onPress={() => navigation.navigate('PageThree')>Go to Page Three</Button>
+    </ScrollView>
+      );
+  }
+}
+// Auto Navigation Example.
+
 
 class AwesomeProject extends Component {
     constructor(props) {
@@ -424,6 +467,16 @@ class AwesomeProject extends Component {
 
         return (
           <ScrollView >
+            <NavigationContainer
+              ref={navigationRef}
+              onStateChange={Countly.autoTrackingView}>
+              <Stack.Navigator>
+                <Stack.Screen name="PageOne" component={PageOne} />
+                <Stack.Screen name="PageTwo" component={PageTwo} />
+                <Stack.Screen name="PageTwo" component={PageTwo} />
+              </Stack.Navigator>
+            </NavigationContainer>
+            
             <View style={{ justifyContent: 'center', alignItems: 'center', margin: 20 }}>
               <Image source={{uri: 'https://count.ly/images/logos/countly-logo.png'}} style={ {width: 144, height: 42} } onError={(e) => console.log(e.nativeEvent.error) }/>
               <Text style={[{fontSize:24, textAlign: 'center'}]}>React Native Demo App</Text>
