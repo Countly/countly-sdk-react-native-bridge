@@ -8,16 +8,25 @@ import { createStackNavigator } from '@react-navigation/stack';
 // import stacktrace from 'react-native-stacktrace';
 // var PushNotification = require('react-native-push-notification');
 
+Countly.autoTrackingView = function(state){
 
+}
 // Auto Navigation Example.
+const Stack = createStackNavigator();
+export const navigationRef = React.createRef();
+export function navigate(name){
+  navigationRef.current?.navigate(name);
+}
+
 class PageOne extends Component {
   render(){
     return(
       <ScrollView>
         <Text>Page One</Text>
-        <Button onPress={() => navigation.navigate('PageOne')>Go to Page One</Button>
-        <Button onPress={() => navigation.navigate('PageTwo')>Go to Page Two</Button>
-        <Button onPress={() => navigation.navigate('PageThree')>Go to Page Three</Button>
+        <Button onPress={() => navigate('PageOne')} title="Go to Page One"></Button>
+        <Button onPress={() => navigate('PageTwo')} title="Go to Page Two"></Button>
+        <Button onPress={() => navigate('PageThree')} title="Go to Page Three"></Button>
+        <Button onPress={() => navigate('Example')} title="Go to Page Example"></Button>
       </ScrollView>
       );
   }
@@ -25,31 +34,46 @@ class PageOne extends Component {
 class PageTwo extends Component {
   render(){
     return(
-    <ScrollView>
+    <View>
       <Text>Page Two</Text>
-      <Button onPress={() => navigation.navigate('PageOne')>Go to Page One</Button>
-      <Button onPress={() => navigation.navigate('PageTwo')>Go to Page Two</Button>
-      <Button onPress={() => navigation.navigate('PageThree')>Go to Page Three</Button>
-    </ScrollView>
+      <Button onPress={() => navigate('PageOne')} title="Go to Page One"></Button>
+      <Button onPress={() => navigate('PageTwo')} title="Go to Page Two"></Button>
+      <Button onPress={() => navigate('PageThree')} title="Go to Page Three"></Button>
+      <Button onPress={() => navigate('Example')} title="Go to Page Example"></Button>
+    </View>
       );
   }
 }
-class PageTwo extends Component {
+class PageThree extends Component {
   render(){
     return(
-    <ScrollView>
+    <View>
       <Text>Page Three</Text>
-      <Button onPress={() => navigation.navigate('PageOne')>Go to Page One</Button>
-      <Button onPress={() => navigation.navigate('PageTwo')>Go to Page Two</Button>
-      <Button onPress={() => navigation.navigate('PageThree')>Go to Page Three</Button>
-    </ScrollView>
+      <Button onPress={() => navigate('PageOne')} title="Go to Page One"></Button>
+      <Button onPress={() => navigate('PageTwo')} title="Go to Page Two"></Button>
+      <Button onPress={() => navigate('PageThree')} title="Go to Page Three"></Button>
+      <Button onPress={() => navigate('Example')} title="Go to Page Example"></Button>
+    </View>
       );
   }
 }
 // Auto Navigation Example.
 
-
 class AwesomeProject extends Component {
+  render() {
+    return (
+      <NavigationContainer onStateChange={Countly.autoTrackingView}>
+        <Stack.Navigator initialRouteName="Example">
+          <Stack.Screen name="Example" component = {Example} />
+          <Stack.Screen name="PageOne" component={PageOne} />
+          <Stack.Screen name="PageTwo" component={PageTwo} />
+          <Stack.Screen name="PageThree" component={PageThree} />
+        </Stack.Navigator>
+      </NavigationContainer>
+      )
+  }
+}
+class Example extends Component {
     constructor(props) {
         super(props);
         this.config = {};
@@ -466,21 +490,17 @@ class AwesomeProject extends Component {
     render() {
 
         return (
+
           <ScrollView >
-            <NavigationContainer
-              ref={navigationRef}
-              onStateChange={Countly.autoTrackingView}>
-              <Stack.Navigator>
-                <Stack.Screen name="PageOne" component={PageOne} />
-                <Stack.Screen name="PageTwo" component={PageTwo} />
-                <Stack.Screen name="PageTwo" component={PageTwo} />
-              </Stack.Navigator>
-            </NavigationContainer>
-            
+
             <View style={{ justifyContent: 'center', alignItems: 'center', margin: 20 }}>
               <Image source={{uri: 'https://count.ly/images/logos/countly-logo.png'}} style={ {width: 144, height: 42} } onError={(e) => console.log(e.nativeEvent.error) }/>
               <Text style={[{fontSize:24, textAlign: 'center'}]}>React Native Demo App</Text>
             </View>
+            
+
+            
+            <Button onPress={() => navigate('PageOne')} title="Go to Page One"></Button>
             < Button onPress = { this.test } title = "Test" color = "#1b1c1d"> </Button>
             < Button onPress = { this.onInit } title = "Init"> </Button>
             < Button onPress = { this.onStart } title = "Start" color = "#5bbd72"> </Button>
