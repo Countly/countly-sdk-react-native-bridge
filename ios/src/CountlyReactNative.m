@@ -548,18 +548,18 @@ RCT_EXPORT_METHOD(updateRemoteConfigExceptKeys:(NSArray*)arguments:(RCTResponseS
       }
   }];
 }
+
 RCT_EXPORT_METHOD(getRemoteConfigValueForKey:(NSArray*)arguments:(RCTResponseSenderBlock)callback)
 {
   NSString* keyName = [arguments objectAtIndex:0];
   id value = [Countly.sharedInstance remoteConfigValueForKey:keyName];
   if (value){
+    callback(@[value]); 
   }
   else{
-    value = @"ConfigKeyNotFound";
+    NSString *value = @"ConfigKeyNotFound";
+    callback(@[value]);
   }
-  NSString* returnString = [NSString stringWithFormat:@"%@", value];
-  NSArray *result = @[returnString];
-  callback(@[result]);
 }
 
 RCT_EXPORT_METHOD(showStarRating:(NSArray*)arguments)
