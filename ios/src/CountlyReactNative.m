@@ -359,6 +359,13 @@ RCT_EXPORT_METHOD(logException:(NSArray*)arguments)
   [Countly.sharedInstance recordHandledException:myException withStackTrace: nsException];
 }
 
+RCT_EXPORT_METHOD(logJSException:(NSString *)errTitle withMessage:(NSString *)message withStack:(NSString *)stackTrace) {
+  NSException* myException = [NSException exceptionWithName:errTitle reason:message 
+                              userInfo:@{@"nonfatal":@"1"}];
+  NSArray *stack = [stackTrace componentsSeparatedByString:@"\n"];
+  [Countly.sharedInstance recordHandledException:myException withStackTrace:stack];
+}
+
 RCT_EXPORT_METHOD(userData_setProperty:(NSArray*)arguments)
 {
   NSString* keyName = [arguments objectAtIndex:0];

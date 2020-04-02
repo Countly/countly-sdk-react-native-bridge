@@ -47,7 +47,7 @@ class CountlyReactException extends Exception {
     jsMessage = message;
   }
   public String toString(){
-    return "React JS Error - " + jsError + ": " + jsMessage + "\n" + jsStack + "\n\nJava Stack:";
+    return "[React] " + jsError + ": " + jsMessage + "\n" + jsStack + "\n\nJava Stack:";
   }
 }
 
