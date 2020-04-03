@@ -435,9 +435,15 @@ RCT_EXPORT_METHOD(userData_pushUniqueValue:(NSArray*)arguments)
 {
   NSString* keyName = [arguments objectAtIndex:0];
   NSString* keyValue = [arguments objectAtIndex:1];
+<<<<<<< HEAD
 
   [Countly.user pushUnique:keyName value:keyValue];
   [Countly.user save];
+=======
+  
+  [Countly.user pushUnique:keyName value:keyValue];
+  [Countly.user save];  
+>>>>>>> cecf5f065685e3a1235cdf877e952bfc4dbe9be0
 }
 RCT_EXPORT_METHOD(userData_pushValue:(NSArray*)arguments)
 {
@@ -558,27 +564,58 @@ RCT_EXPORT_METHOD(updateRemoteConfigExceptKeys:(NSArray*)arguments:(RCTResponseS
 
 RCT_EXPORT_METHOD(getRemoteConfigValueForKey:(NSArray*)arguments:(RCTResponseSenderBlock)callback)
 {
+<<<<<<< HEAD
   id value = [Countly.sharedInstance remoteConfigValueForKey:[arguments objectAtIndex:0]];
   if(!value){
       value = @"Default Value";
+  }
+  NSString *theType = NSStringFromClass([value class]);
+  if([theType isEqualToString:@"NSTaggedPointerString"]){
+      callback(@[value]);
+  } else if([theType isEqualToString:@"__NSSingleEntryDictionaryI"]){
+      NSDictionary *dictionaryOrArrayToOutput = (NSDictionary *) value;
+      NSError *error;
+      NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dictionaryOrArrayToOutput options:NSJSONWritingPrettyPrinted // Pass 0 if you don't care about the readability of the generated string
+                                                            error:&error];
+
+      if (!jsonData) {
+          NSLog(@"Got an error: %@", error);
+          callback(@[error]);
+      } else {
+          NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+          callback(@[jsonString]);
+      }
+  }else if([theType isEqualToString:@"__NSCFBoolean"]){
+      NSString *boolean = [value stringValue];
+      if([boolean isEqualToString:@"1"]){
+          callback(@[@"true"]);
+      }else{
+          callback(@[@"false"]);
+      }
+  }else{
+      callback(@[[value stringValue]]);
+=======
+  NSString* keyName = [arguments objectAtIndex:0];
+  id value = [Countly.sharedInstance remoteConfigValueForKey:keyName];
+  if (value){
     callback(@[value]); 
   }
   else{
     NSString *value = @"ConfigKeyNotFound";
     callback(@[value]);
+>>>>>>> cecf5f065685e3a1235cdf877e952bfc4dbe9be0
   }
 }
 
 RCT_EXPORT_METHOD(showStarRating:(NSArray*)arguments)
 {
-  NSInteger* rating = 5;
-  if (config != nil){
-    if(config.starRatingSessionCount){
-      rating = config.starRatingSessionCount;
-    }
-  }
-  [Countly.sharedInstance askForStarRating:^(NSInteger rating){
-  }];
+     @try {
+        [Countly.sharedInstance askForStarRating:^(NSInteger rating){
+        }];
+     }
+     @catch (NSException * error) {
+         NSLog(@"%@",error);
+     }
 }
 
 RCT_EXPORT_METHOD(showFeedbackPopup:(NSArray*)arguments)
@@ -586,7 +623,7 @@ RCT_EXPORT_METHOD(showFeedbackPopup:(NSArray*)arguments)
   NSString* FEEDBACK_WIDGET_ID = [arguments objectAtIndex:0];
   [Countly.sharedInstance presentFeedbackWidgetWithID:FEEDBACK_WIDGET_ID completionHandler:^(NSError* error)
   {
-
+      NSLog(@"%@",error);
   }];
 }
 

@@ -203,6 +203,7 @@ Countly.setHttpPostForced = function(boolean){
     args.push(boolean?"1":"0");
     CountlyReactNative.setHttpPostForced(args);
 }
+
 Countly.isCrashReportingEnabled = false;
 Countly.enableCrashReporting = function(){
     if (ErrorUtils && !Countly.isCrashReportingEnabled) {
@@ -210,15 +211,29 @@ Countly.enableCrashReporting = function(){
         var previousHandler = ErrorUtils.getGlobalHandler();
         ErrorUtils.setGlobalHandler(function (error, isFatal) {
             var jsStackTrace = parseErrorStackLib(error);
-            // console.log(jsStackTrace[0]);
             var fname = jsStackTrace[0].file;
             if (fname.startsWith("http")) {
                 var chunks = fname.split("/");
                 fname = chunks[chunks.length-1].split("?")[0];
             }
-            if (Platform.OS.match("android")) {
-                var errorTitle = `${error.name} (${jsStackTrace[0].methodName}@${fname})`;
-                CountlyReactNative.logJSException(errorTitle, error.message.trim(), error.stack.toString().trim());
+            var errorTitle = `${error.name} (${jsStackTrace[0].methodName}@${fname})`;
+            const regExp = "(.*)(@?)http(s?).*/(.*)\\?(.*):(.*):(.*)";
+            const stackArr = error.stack.split("\n").map(row => {
+                row = row.trim();
+                if (!row.includes("http")) return row;
+                else {
+                    const matches = row.match(regExp);
+                    return matches && matches.length == 8 ? `${matches[1]}${matches[2]}${matches[4]}(${matches[6]}:${matches[7]})` : row;
+                } 
+            })
+            const stack = stackArr.join("\n");
+            if (Platform.OS.match("android")) {                
+                CountlyReactNative.logJSException(errorTitle, error.message.trim(), stack);
+            }
+            else if (Platform.OS.match("ios")) {   
+                const errMessage = `[React] ${errorTitle}: ${error.message}`;
+                const errStack = error.message + "\n" + stack;
+                CountlyReactNative.logJSException(errorTitle, errMessage, errStack);
             }
             if (previousHandler) {
                 previousHandler(error, isFatal);
@@ -228,6 +243,7 @@ Countly.enableCrashReporting = function(){
     Countly.isCrashReportingEnabled = true;
     CountlyReactNative.enableCrashReporting();
 }
+
 Countly.addCrashLog = function(crashLog){
     CountlyReactNative.addCrashLog([crashLog]);
 }

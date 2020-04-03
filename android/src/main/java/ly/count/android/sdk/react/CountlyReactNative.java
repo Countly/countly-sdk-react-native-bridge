@@ -47,7 +47,7 @@ class CountlyReactException extends Exception {
     jsMessage = message;
   }
   public String toString(){
-    return "React JS Error - " + jsError + ": " + jsMessage + "\n" + jsStack + "\n\nJava Stack:";
+    return "[React] " + jsError + ": " + jsMessage + "\n" + jsStack + "\n\nJava Stack:";
   }
 }
 
@@ -325,7 +325,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         bundle.put("name", args.getString(0));
         bundle.put("username", args.getString(1));
         bundle.put("email", args.getString(2));
-        bundle.put("org", args.getString(3));
+        bundle.put("organization", args.getString(3));
         bundle.put("phone", args.getString(4));
         bundle.put("picture", args.getString(5));
         bundle.put("picturePath", args.getString(6));
