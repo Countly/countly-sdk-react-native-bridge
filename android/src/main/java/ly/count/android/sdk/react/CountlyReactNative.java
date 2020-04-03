@@ -336,7 +336,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 	}
 
 	@ReactMethod
-	 public void onRegistrationId(ReadableArray args){
+	 public void sendPushToken(ReadableArray args){
         String pushToken = args.getString(0);
         int messagingMode = Integer.parseInt(args.getString(1));
 

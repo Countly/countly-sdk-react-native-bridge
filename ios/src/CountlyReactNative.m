@@ -142,15 +142,42 @@ RCT_EXPORT_METHOD(setUserData:(NSArray*)arguments)
 }
 
 
-RCT_EXPORT_METHOD(onRegistrationId:(NSArray*)arguments)
+RCT_EXPORT_METHOD(sendPushToken:(NSArray*)arguments)
 {
-  NSString* token = [arguments objectAtIndex:0];
-  NSString* messagingMode = [arguments objectAtIndex:1];
+    NSString* token = [arguments objectAtIndex:0];
+    NSString* messagingMode = [arguments objectAtIndex:1];
     NSString *urlString = [ @"" stringByAppendingFormat:@"%@?device_id=%@&app_key=%@&token_session=1&test_mode=%@&ios_token=%@", config.host, [Countly.sharedInstance deviceID], config.appKey, messagingMode, token];
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
     [request setHTTPMethod:@"GET"];
     [request setURL:[NSURL URLWithString:urlString]];
 }
+RCT_EXPORT_METHOD(pushTokenType:(NSArray*)arguments)
+{
+  if (config == nil){
+    config = CountlyConfig.new;
+  }
+  config.sendPushTokenAlways = YES;
+  NSString* tokenType = [arguments objectAtIndex:0];
+  if([tokenType isEqualToString: @"1"]){
+      config.pushTestMode = @"CLYPushTestModeDevelopment";
+  }
+  else if([tokenType isEqualToString: @"2"]){
+      config.pushTestMode = @"CLYPushTestModeTestFlightOrAdHoc";
+  }else{
+  }
+  result(@"pushTokenType!");
+}
+
+RCT_EXPORT_METHOD(askForNotificationPermission:(NSArray*)arguments)
+{
+  UNAuthorizationOptions authorizationOptions = UNAuthorizationOptionProvisional;
+  [Countly.sharedInstance askForNotificationPermissionWithOptions:authorizationOptions completionHandler:^(BOOL granted, NSError *error)
+   {
+       NSLog(@"granted: %d", granted);
+       NSLog(@"error: %@", error);
+   }];
+}
+
 
 RCT_EXPORT_METHOD(start)
 {

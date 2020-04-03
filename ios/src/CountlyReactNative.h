@@ -7,7 +7,6 @@
 - (void)event:(NSArray*)arguments;
 - (void)setLoggingEnabled:(NSArray*)arguments;
 - (void)setUserData:(NSArray*)arguments;
-- (void)onRegistrationId:(NSArray*)arguments;
 - (void)start;
 - (void)stop;
 - (void)recordView:(NSArray*)arguments;
@@ -44,6 +43,9 @@
 - (void)showStarRating:(NSArray*)arguments;
 - (void)showFeedbackPopup:(NSArray*)arguments;
 - (void)setEventSendThreshold:(NSArray*)arguments;
+- (void)pushTokenType:(NSArray*)arguments;
+- (void)sendPushToken:(NSArray*)arguments;
+- (void)askForNotificationPermission:(NSArray*)arguments;
 - (void)remoteConfigClearValues:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject;
 
 @end

@@ -126,13 +126,20 @@ Countly.setViewTracking = function(boolean){
     CountlyReactNative.setViewTracking([boolean || "false"]);
 }
 
+Countly.pushTokenType = function(tokenType){
+    var args = [];
+    args.push(tokenType || "");
+    CountlyReactNative.pushTokenType(args);
+}
 Countly.sendPushToken = function(options){
     var args = [];
     args.push(options.token || "");
     args.push((options.messagingMode || "").toString());
-    CountlyReactNative.onRegistrationId(args);
+    CountlyReactNative.sendPushToken(args);
 }
-
+Countly.askForNotificationPermission = function(){
+    CountlyReactNative.sendPushToken([]);
+}
 // countly start for android
 Countly.start = function(){
     CountlyReactNative.start();
