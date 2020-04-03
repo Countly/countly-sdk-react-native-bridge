@@ -165,7 +165,6 @@ RCT_EXPORT_METHOD(pushTokenType:(NSArray*)arguments)
       config.pushTestMode = @"CLYPushTestModeTestFlightOrAdHoc";
   }else{
   }
-  result(@"pushTokenType!");
 }
 
 RCT_EXPORT_METHOD(askForNotificationPermission:(NSArray*)arguments)

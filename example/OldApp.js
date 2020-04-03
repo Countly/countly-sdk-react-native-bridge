@@ -10,7 +10,7 @@ import React, {Component} from 'react';
 import {Platform, StyleSheet, Text, View} from 'react-native';
 import { AppRegistry,  Button, ScrollView, Image, Alert } from 'react-native';
 import Countly from 'countly-sdk-react-native-bridge';
-
+// var PushNotification = require('react-native-push-notification');
 const instructions = Platform.select({
   ios: 'Press Cmd+R to reload,\n' + 'Cmd+D or shake for dev menu',
   android:
@@ -43,6 +43,7 @@ export default class App extends Component<Props> {
         this.enableParameterTamperingProtection = this.enableParameterTamperingProtection.bind(this);
     };
     onInit(){
+      Countly.pushTokenType(Countly.messagingMode.DEVELOPMENT);
       Countly.init("https://trinisoft.count.ly", "f0b2ac6919f718a13821575db28c0e2971e05ec5");
       // Countly.init("https://try.count.ly","0e8a00e8c01395a0af8be0e55da05a404bb23c3e");
       // ,"","5", "Rate us.", "How would you rate the app?", "Dismiss",false
@@ -304,45 +305,46 @@ export default class App extends Component<Props> {
     };
 
     setupPush(){
-      console.log('setupPush');
-      PushNotificationIOS.addEventListener('registrationError', function(error){
-        console.log('error:', error);
-      });
+      Countly.askForNotificationPermission();
+      // console.log('setupPush');
+      // PushNotificationIOS.addEventListener('registrationError', function(error){
+      //   console.log('error:', error);
+      // });
 
-      PushNotification.configure({
-          onRegister: function(token) {
-            console.log( 'TOKEN:', token );
-            var options = {
-              token: token.token,
-              messagingMode: Countly.messagingMode.DEVELOPMENT
-            }
-            Countly.sendPushToken(options)
-          },
-          onNotification: function(notification) {
-              console.log( 'NOTIFICATION:', notification );
-              // process the notification
-              // required on iOS only (see fetchCompletionHandler docs: https://facebook.github.io/react-native/docs/pushnotificationios.html)
-              notification.finish(PushNotificationIOS.FetchResult.NoData);
-          },
-          // ANDROID ONLY: GCM or FCM Sender ID (product_number) (optional - not required for local notifications, but is need to receive remote push notifications)
-          senderID: "881000050249",
-          // IOS ONLY (optional): default: all - Permissions to register.
-          permissions: {
-              alert: true,
-              badge: true,
-              sound: true
-          },
+      // PushNotification.configure({
+      //     onRegister: function(token) {
+      //       console.log( 'TOKEN:', token );
+      //       var options = {
+      //         token: token.token,
+      //         messagingMode: Countly.messagingMode.DEVELOPMENT
+      //       }
+      //       Countly.sendPushToken(options)
+      //     },
+      //     onNotification: function(notification) {
+      //         console.log( 'NOTIFICATION:', notification );
+      //         // process the notification
+      //         // required on iOS only (see fetchCompletionHandler docs: https://facebook.github.io/react-native/docs/pushnotificationios.html)
+      //         notification.finish(PushNotificationIOS.FetchResult.NoData);
+      //     },
+      //     // ANDROID ONLY: GCM or FCM Sender ID (product_number) (optional - not required for local notifications, but is need to receive remote push notifications)
+      //     senderID: "881000050249",
+      //     // IOS ONLY (optional): default: all - Permissions to register.
+      //     permissions: {
+      //         alert: true,
+      //         badge: true,
+      //         sound: true
+      //     },
 
-          // Should the initial notification be popped automatically
-          // default: true
-          popInitialNotification: true,
-          /**
-            * (optional) default: true
-            * - Specified if permissions (ios) and token (android and ios) will requested or not,
-            * - if not, you must call PushNotificationsHandler.requestPermissions() later
-            */
-          requestPermissions: true,
-      });
+      //     // Should the initial notification be popped automatically
+      //     // default: true
+      //     popInitialNotification: true,
+      //     /**
+      //       * (optional) default: true
+      //       * - Specified if permissions (ios) and token (android and ios) will requested or not,
+      //       * - if not, you must call PushNotificationsHandler.requestPermissions() later
+      //       */
+      //     requestPermissions: true,
+      // });
     }
 
     enableLogging(){

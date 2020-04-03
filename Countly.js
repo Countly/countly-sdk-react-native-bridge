@@ -16,7 +16,7 @@ const Countly = {};
 Countly.serverUrl = "";
 Countly.appKey = "";
 
-Countly.messagingMode = {"DEVELOPMENT":1,"PRODUCTION":0, "ADHOC": 2};
+Countly.messagingMode = {"DEVELOPMENT":"1","PRODUCTION":"0", "ADHOC": "2"};
 if (Platform.OS.match("android")) {
     Countly.messagingMode.DEVELOPMENT = 2;
 }
