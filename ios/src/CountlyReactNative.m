@@ -38,6 +38,8 @@ RCT_EXPORT_METHOD(init:(NSArray*)arguments)
   }
   config.appKey = appkey;
   config.host = serverurl;
+  // config.features = @[CLYCrashReporting, CLYPushNotifications]; // Had issues here on push notification.
+
   // config.enableRemoteConfig = YES;
   // config.starRatingSessionCount = ratingLimit;
   // config.starRatingDisableAskingForEachAppVersion = YES;
@@ -169,6 +171,7 @@ RCT_EXPORT_METHOD(pushTokenType:(NSArray*)arguments)
 
 RCT_EXPORT_METHOD(askForNotificationPermission:(NSArray*)arguments)
 {
+  [Countly.sharedInstance askForNotificationPermission];
   UNAuthorizationOptions authorizationOptions = UNAuthorizationOptionProvisional;
   [Countly.sharedInstance askForNotificationPermissionWithOptions:authorizationOptions completionHandler:^(BOOL granted, NSError *error)
    {

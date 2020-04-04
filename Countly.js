@@ -138,7 +138,7 @@ Countly.sendPushToken = function(options){
     CountlyReactNative.sendPushToken(args);
 }
 Countly.askForNotificationPermission = function(){
-    CountlyReactNative.sendPushToken([]);
+    CountlyReactNative.askForNotificationPermission([]);
 }
 // countly start for android
 Countly.start = function(){
