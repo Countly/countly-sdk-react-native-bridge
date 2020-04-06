@@ -22,14 +22,7 @@ RCT_EXPORT_METHOD(init:(NSArray*)arguments)
   NSString* serverurl = [arguments objectAtIndex:0];
   NSString* appkey = [arguments objectAtIndex:1];
   NSString* deviceID = [arguments objectAtIndex:2];
-  // NSString* ratingTitle = [arguments objectAtIndex:4];
-  // NSString* ratingMessage = [arguments objectAtIndex:5];
-  // NSString* ratingButton = [arguments objectAtIndex:6];
-  // BOOL consentFlag = [[arguments objectAtIndex:7] boolValue];
-  // NSString* ratingLimitString = [arguments objectAtIndex:3];
-  // int ratingLimit = [ratingLimitString intValue];
-
-
+  
   if (config == nil){
     config = CountlyConfig.new;
   }
@@ -38,19 +31,14 @@ RCT_EXPORT_METHOD(init:(NSArray*)arguments)
   }
   config.appKey = appkey;
   config.host = serverurl;
-  // config.features = @[CLYCrashReporting, CLYPushNotifications]; // Had issues here on push notification.
-
-  // config.enableRemoteConfig = YES;
-  // config.starRatingSessionCount = ratingLimit;
-  // config.starRatingDisableAskingForEachAppVersion = YES;
-  // config.starRatingMessage = ratingMessage;
-  // config.requiresConsent = consentFlag;
-
+  config.features = @[CLYCrashReporting, CLYPushNotifications];
 
   if (serverurl != nil && [serverurl length] > 0) {
-    [[Countly sharedInstance] startWithConfig:config];
+      dispatch_async(dispatch_get_main_queue(), ^
+      {
+          [[Countly sharedInstance] startWithConfig:config];
+      });
   }
-
 }
 
 RCT_EXPORT_METHOD(event:(NSArray*)arguments)
