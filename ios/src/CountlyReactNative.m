@@ -22,7 +22,7 @@ RCT_EXPORT_METHOD(init:(NSArray*)arguments)
   NSString* serverurl = [arguments objectAtIndex:0];
   NSString* appkey = [arguments objectAtIndex:1];
   NSString* deviceID = [arguments objectAtIndex:2];
-  
+
   if (config == nil){
     config = CountlyConfig.new;
   }
@@ -160,12 +160,6 @@ RCT_EXPORT_METHOD(pushTokenType:(NSArray*)arguments)
 RCT_EXPORT_METHOD(askForNotificationPermission:(NSArray*)arguments)
 {
   [Countly.sharedInstance askForNotificationPermission];
-  UNAuthorizationOptions authorizationOptions = UNAuthorizationOptionProvisional;
-  [Countly.sharedInstance askForNotificationPermissionWithOptions:authorizationOptions completionHandler:^(BOOL granted, NSError *error)
-   {
-       NSLog(@"granted: %d", granted);
-       NSLog(@"error: %@", error);
-   }];
 }
 
 
@@ -377,7 +371,7 @@ RCT_EXPORT_METHOD(logException:(NSArray*)arguments)
 }
 
 RCT_EXPORT_METHOD(logJSException:(NSString *)errTitle withMessage:(NSString *)message withStack:(NSString *)stackTrace) {
-  NSException* myException = [NSException exceptionWithName:errTitle reason:message 
+  NSException* myException = [NSException exceptionWithName:errTitle reason:message
                               userInfo:@{@"nonfatal":@"1"}];
   NSArray *stack = [stackTrace componentsSeparatedByString:@"\n"];
   [Countly.sharedInstance recordHandledException:myException withStackTrace:stack];
@@ -578,7 +572,7 @@ RCT_EXPORT_METHOD(getRemoteConfigValueForKey:(NSArray*)arguments:(RCTResponseSen
   id value = [Countly.sharedInstance remoteConfigValueForKey:[arguments objectAtIndex:0]];
   if(!value){
       value = @"Default Value";
-    callback(@[value]); 
+    callback(@[value]);
   }
   else{
     NSString *value = @"ConfigKeyNotFound";
