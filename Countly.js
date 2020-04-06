@@ -456,21 +456,35 @@ Countly.updateRemoteConfigExceptKeys = function(keyNames, callback){
 }
 
 Countly.getRemoteConfigValueForKey = function(keyName, callback){
-    CountlyReactNative.getRemoteConfigValueForKey([keyName.toString() || ""], (stringItem) => {
-        callback(stringItem);
+    CountlyReactNative.getRemoteConfigValueForKey([keyName.toString() || ""], (value) => {
+        if (Platform.OS == "android" ) {                       
+            try {
+                value = JSON.parse(value);
+            }  
+            catch (e) {
+               // console.log(e.message);
+               // noop. value will remain string if not JSON parsable and returned as string
+             }
+        }
+        callback(value);
     });
 }
 
-Countly.getRemoteConfigValueForKeyP = async function(keyName){
-    try {
-        const value = await CountlyReactNative.getRemoteConfigValueForKeyP(keyName);
-        console.log("value for key", keyName, value);
-        return value;
-    }
-    catch (e) {
-        console.log("value not found for key", keyName);
-        return `Value not found for key: ${keyName}`;
-    }
+Countly.getRemoteConfigValueForKeyP = function(keyName){
+        if (Platform.OS != "android" ) return "To be implemented"; 
+        const promise = CountlyReactNative.getRemoteConfigValueForKeyP(keyName);
+        return promise.then(value => {
+            if (Platform.OS == "android" ) {                       
+                try {
+                    value = JSON.parse(value);
+                }  
+                catch (e) {
+                   // console.log(e.message);
+                   // noop. value will remain string if not JSON parsable and returned as string
+                 }
+            }
+            return value;
+        })
 }
 
 Countly.remoteConfigClearValues = async function(){
