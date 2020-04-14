@@ -46,6 +46,8 @@
 - (void)pushTokenType:(NSArray*)arguments;
 - (void)sendPushToken:(NSArray*)arguments;
 - (void)askForNotificationPermission:(NSArray*)arguments;
+- (void)registerForNotification:(RCTResponseSenderBlock)callback;
++ (void)onNotification:(NSDictionary *)notification;
 - (void)remoteConfigClearValues:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject;
 
 @end

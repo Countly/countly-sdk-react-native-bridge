@@ -12,6 +12,7 @@
 
 
 CountlyConfig* config = nil;
+RCTResponseSenderBlock notificationListener = nil;
 
 @implementation CountlyReactNative
 
@@ -161,7 +162,16 @@ RCT_EXPORT_METHOD(askForNotificationPermission:(NSArray*)arguments)
 {
   [Countly.sharedInstance askForNotificationPermission];
 }
-
+RCT_EXPORT_METHOD(registerForNotification:(RCTResponseSenderBlock)callback)
+{
+    notificationListener = callback;
+}
++ (void)onNotification:(NSDictionary *)notification
+{
+  if(notificationListener != nil){
+      notificationListener(@[notification]);
+  }
+}
 
 RCT_EXPORT_METHOD(start)
 {

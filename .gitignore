@@ -10,3 +10,4 @@ yarn.lock
 .idea
 .orig
 ios/Pods
+ios/countly-sdk-react-native-bridge.xcworkspace
