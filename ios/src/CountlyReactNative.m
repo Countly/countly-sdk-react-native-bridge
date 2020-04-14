@@ -12,7 +12,7 @@
 
 
 CountlyConfig* config = nil;
-RCTResponseSenderBlock notificationListener = nil;
+RCTResponseSenderBlock countlyReactNativeNotificationListener = nil;
 
 @implementation CountlyReactNative
 
@@ -164,12 +164,12 @@ RCT_EXPORT_METHOD(askForNotificationPermission:(NSArray*)arguments)
 }
 RCT_EXPORT_METHOD(registerForNotification:(RCTResponseSenderBlock)callback)
 {
-    notificationListener = callback;
+    countlyReactNativeNotificationListener = callback;
 }
 + (void)onNotification:(NSDictionary *)notification
 {
-  if(notificationListener != nil){
-      notificationListener(@[notification]);
+  if(countlyReactNativeNotificationListener != nil){
+      countlyReactNativeNotificationListener(@[notification]);
   }
 }
 

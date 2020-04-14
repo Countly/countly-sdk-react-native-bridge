@@ -140,6 +140,16 @@ Countly.sendPushToken = function(options){
 Countly.askForNotificationPermission = function(){
     CountlyReactNative.askForNotificationPermission([]);
 }
+Countly.notificationListener = null;
+Countly.registerForNotification = function(theListener){
+    Countly.notificationListener = theListener;
+};
+CountlyReactNative.registerForNotification(function(notification){
+    console.log(notification);
+    if(Countly.notificationListener){
+        Countly.notificationListener(notification);
+    }
+});
 // countly start for android
 Countly.start = function(){
     CountlyReactNative.start();
