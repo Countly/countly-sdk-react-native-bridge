@@ -1,7 +1,7 @@
 #import "React/RCTBridgeModule.h"
+#import "React/RCTEventEmitter.h"
 
-@interface CountlyReactNative : NSObject <RCTBridgeModule>
-
+@interface CountlyReactNative : RCTEventEmitter <RCTBridgeModule>
 
 - (void)init:(NSArray*)arguments;
 - (void)event:(NSArray*)arguments;
@@ -35,19 +35,20 @@
 - (void)removeConsent:(NSArray*)arguments;
 - (void)giveAllConsent;
 - (void)removeAllConsent;
-- (void)remoteConfigUpdate:(NSArray*)arguments;
-- (void)updateRemoteConfigForKeysOnly:(NSArray*)arguments;
-- (void)updateRemoteConfigExceptKeys:(NSArray*)arguments;
-- (void)getRemoteConfigValueForKey:(NSArray*)arguments;
-- (void)setStarRatingDialogTexts:(NSArray*)arguments;
+- (void)remoteConfigUpdate:(NSArray*)arguments callback:(RCTResponseSenderBlock)callback;
+- (void)updateRemoteConfigForKeysOnly:(NSArray*)arguments callback:(RCTResponseSenderBlock)callback;
+- (void)updateRemoteConfigExceptKeys:(NSArray*)arguments callback:(RCTResponseSenderBlock)callback;
+- (void)getRemoteConfigValueForKey:(NSArray*)arguments callback:(RCTResponseSenderBlock)callback;
+//- (void)setStarRatingDialogTexts:(NSArray*)arguments;
 - (void)showStarRating:(NSArray*)arguments;
 - (void)showFeedbackPopup:(NSArray*)arguments;
 - (void)setEventSendThreshold:(NSArray*)arguments;
 - (void)pushTokenType:(NSArray*)arguments;
 - (void)sendPushToken:(NSArray*)arguments;
 - (void)askForNotificationPermission:(NSArray*)arguments;
-- (void)registerForNotification:(RCTResponseSenderBlock)callback;
+- (void)registerForNotification:(NSArray*)arguments;
 + (void)onNotification:(NSDictionary *)notification;
+- (void)handleRemoteNotificationReceived:(NSDictionary *)notification;
 - (void)remoteConfigClearValues:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject;
 
 @end

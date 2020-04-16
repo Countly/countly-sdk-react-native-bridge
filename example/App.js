@@ -97,6 +97,17 @@ class Example extends Component {
         this.changeDeviceId = this.changeDeviceId.bind(this);
         this.enableParameterTamperingProtection = this.enableParameterTamperingProtection.bind(this);
     };
+
+    componentDidMount(){
+      console.log("registerForNotification");
+      Countly.registerForNotification(function(theNotification){
+        console.log(JSON.stringify(theNotification));
+        console.log('theNotification');
+      });
+
+
+    }
+
     onInit(){
       Countly.pushTokenType(Countly.messagingMode.DEVELOPMENT);
       Countly.init("https://trinisoft.count.ly", "f0b2ac6919f718a13821575db28c0e2971e05ec5");

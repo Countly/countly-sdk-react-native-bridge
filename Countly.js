@@ -6,11 +6,13 @@
 
 import {
     Platform,
-    NativeModules
+    NativeModules,
+    NativeEventEmitter
 } from 'react-native';
 import parseErrorStackLib from '../react-native/Libraries/Core/Devtools/parseErrorStack.js';
 
 const CountlyReactNative = NativeModules.CountlyReactNative;
+const eventEmitter = new NativeEventEmitter(CountlyReactNative);
 
 const Countly = {};
 Countly.serverUrl = "";
@@ -140,16 +142,11 @@ Countly.sendPushToken = function(options){
 Countly.askForNotificationPermission = function(){
     CountlyReactNative.askForNotificationPermission([]);
 }
-Countly.notificationListener = null;
 Countly.registerForNotification = function(theListener){
-    Countly.notificationListener = theListener;
+    var event = eventEmitter.addListener('onCountlyPushNotification', theListener);
+    CountlyReactNative.registerForNotification([]);
+    return event;
 };
-CountlyReactNative.registerForNotification(function(notification){
-    console.log(notification);
-    if(Countly.notificationListener){
-        Countly.notificationListener(notification);
-    }
-});
 // countly start for android
 Countly.start = function(){
     CountlyReactNative.start();

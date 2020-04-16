@@ -1,6 +1,7 @@
 #import "CountlyReactNative.h"
 
-- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo
+- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)notification
+fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler
 {
-  [CountlyReactNative onNotification:userInfo];
+  [CountlyReactNative onNotification:notification];
 }

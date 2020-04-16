@@ -13,8 +13,14 @@
 
 CountlyConfig* config = nil;
 RCTResponseSenderBlock countlyReactNativeNotificationListener = nil;
+NSDictionary *lastStoredNotification = nil;
+Boolean isPushListenerEnabled = false;
 
 @implementation CountlyReactNative
+
+- (NSArray<NSString *> *)supportedEvents {
+    return @[@"onCountlyPushNotification"];
+}
 
 RCT_EXPORT_MODULE();
 
@@ -162,15 +168,31 @@ RCT_EXPORT_METHOD(askForNotificationPermission:(NSArray*)arguments)
 {
   [Countly.sharedInstance askForNotificationPermission];
 }
-RCT_EXPORT_METHOD(registerForNotification:(RCTResponseSenderBlock)callback)
+- (void)sendNotifitionToJS:(NSDictionary *)notification{
+    [self sendEventWithName:@"onCountlyPushNotification" body: notification];
+}
+RCT_EXPORT_METHOD(registerForNotification:(NSArray*)arguments)
 {
-    countlyReactNativeNotificationListener = callback;
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleRemoteNotificationReceived:)
+      name:@"onCountlyPushNotification"
+    object:nil];
+    if(lastStoredNotification != nil){
+        [self sendEventWithName:@"onCountlyPushNotification" body: [NSMutableDictionary dictionaryWithDictionary:lastStoredNotification[@"notification"]]];
+        lastStoredNotification = nil;
+        
+    }
+};
+- (void)handleRemoteNotificationReceived:(NSNotification *)notification{
+    NSMutableDictionary *remoteNotification = [NSMutableDictionary dictionaryWithDictionary:notification.userInfo[@"notification"]];
+    
+    [self sendEventWithName:@"onCountlyPushNotification" body: remoteNotification];
+    lastStoredNotification = nil;
 }
 + (void)onNotification:(NSDictionary *)notification
 {
-  if(countlyReactNativeNotificationListener != nil){
-      countlyReactNativeNotificationListener(@[notification]);
-  }
+    NSDictionary *userInfo = @{@"notification": notification};
+    lastStoredNotification = userInfo;
+    [[NSNotificationCenter defaultCenter] postNotificationName: @"onCountlyPushNotification" object:self userInfo:userInfo];
 }
 
 RCT_EXPORT_METHOD(start)
@@ -513,7 +535,7 @@ RCT_EXPORT_METHOD(removeAllConsent)
   [Countly.sharedInstance cancelConsentForAllFeatures];
 }
 
-RCT_EXPORT_METHOD(remoteConfigUpdate:(NSArray*)arguments:(RCTResponseSenderBlock)callback)
+RCT_EXPORT_METHOD(remoteConfigUpdate:(NSArray*)arguments callback:(RCTResponseSenderBlock)callback)
 {
   [Countly.sharedInstance updateRemoteConfigWithCompletionHandler:^(NSError * error)
   {
@@ -531,7 +553,7 @@ RCT_EXPORT_METHOD(remoteConfigUpdate:(NSArray*)arguments:(RCTResponseSenderBlock
   }];
 }
 
-RCT_EXPORT_METHOD(updateRemoteConfigForKeysOnly:(NSArray*)arguments:(RCTResponseSenderBlock)callback)
+RCT_EXPORT_METHOD(updateRemoteConfigForKeysOnly:(NSArray*)arguments callback:(RCTResponseSenderBlock)callback)
 {
   NSMutableArray *randomSelection = [[NSMutableArray alloc] init];
   for (int i = 0; i < (int)arguments.count; i++){
@@ -554,7 +576,7 @@ RCT_EXPORT_METHOD(updateRemoteConfigForKeysOnly:(NSArray*)arguments:(RCTResponse
   }];
 }
 
-RCT_EXPORT_METHOD(updateRemoteConfigExceptKeys:(NSArray*)arguments:(RCTResponseSenderBlock)callback)
+RCT_EXPORT_METHOD(updateRemoteConfigExceptKeys:(NSArray*)arguments callback:(RCTResponseSenderBlock)callback)
 {
   NSMutableArray *randomSelection = [[NSMutableArray alloc] init];
   for (int i = 0; i < (int)arguments.count; i++){
@@ -577,7 +599,7 @@ RCT_EXPORT_METHOD(updateRemoteConfigExceptKeys:(NSArray*)arguments:(RCTResponseS
   }];
 }
 
-RCT_EXPORT_METHOD(getRemoteConfigValueForKey:(NSArray*)arguments:(RCTResponseSenderBlock)callback)
+RCT_EXPORT_METHOD(getRemoteConfigValueForKey:(NSArray*)arguments callback:(RCTResponseSenderBlock)callback)
 {
   id value = [Countly.sharedInstance remoteConfigValueForKey:[arguments objectAtIndex:0]];
   if(!value){
