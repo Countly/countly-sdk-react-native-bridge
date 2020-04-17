@@ -12,7 +12,6 @@
 
 
 CountlyConfig* config = nil;
-RCTResponseSenderBlock countlyReactNativeNotificationListener = nil;
 NSDictionary *lastStoredNotification = nil;
 Boolean isPushListenerEnabled = false;
 
@@ -170,6 +169,7 @@ RCT_EXPORT_METHOD(askForNotificationPermission:(NSArray*)arguments)
 }
 RCT_EXPORT_METHOD(registerForNotification:(NSArray*)arguments)
 {
+    isPushListenerEnabled = true;
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleRemoteNotificationReceived:)
       name:@"onCountlyPushNotification"
     object:nil];
@@ -180,10 +180,12 @@ RCT_EXPORT_METHOD(registerForNotification:(NSArray*)arguments)
     }
 };
 - (void)handleRemoteNotificationReceived:(NSNotification *)notification{
-    NSMutableDictionary *remoteNotification = [NSMutableDictionary dictionaryWithDictionary:notification.userInfo[@"notification"]];
-    
-    [self sendEventWithName:@"onCountlyPushNotification" body: remoteNotification];
-    lastStoredNotification = nil;
+    if(isPushListenerEnabled){
+      NSMutableDictionary *remoteNotification = [NSMutableDictionary dictionaryWithDictionary:notification.userInfo[@"notification"]];
+      
+      [self sendEventWithName:@"onCountlyPushNotification" body: remoteNotification];
+      lastStoredNotification = nil;
+    }
 }
 + (void)onNotification:(NSDictionary *)notification
 {

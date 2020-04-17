@@ -11,3 +11,5 @@ yarn.lock
 .orig
 ios/Pods
 ios/countly-sdk-react-native-bridge.xcworkspace
+ios/Podfile.lock
+ios/countly-sdk-react-native-bridge.xcworkspace/* 
