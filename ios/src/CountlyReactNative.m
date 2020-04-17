@@ -364,7 +364,7 @@ RCT_EXPORT_METHOD(setLocation:(NSArray*)arguments)
 
 }
 
-RCT_EXPORT_METHOD(disableLocation:(NSArray*)arguments)
+RCT_EXPORT_METHOD(disableLocation)
 {
   [Countly.sharedInstance disableLocationInfo];
 }
