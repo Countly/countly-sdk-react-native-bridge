@@ -168,9 +168,6 @@ RCT_EXPORT_METHOD(askForNotificationPermission:(NSArray*)arguments)
 {
   [Countly.sharedInstance askForNotificationPermission];
 }
-- (void)sendNotifitionToJS:(NSDictionary *)notification{
-    [self sendEventWithName:@"onCountlyPushNotification" body: notification];
-}
 RCT_EXPORT_METHOD(registerForNotification:(NSArray*)arguments)
 {
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleRemoteNotificationReceived:)
