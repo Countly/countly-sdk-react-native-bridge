@@ -2,21 +2,24 @@ import React, { Component } from 'react';
 import { AppRegistry, Text, Button, ScrollView, Image, View, Alert } from 'react-native';
 import Countly from 'countly-sdk-react-native-bridge';
 // import { PushNotificationIOS }  from 'react-native';
-// import { NavigationContainer } from '@react-navigation/native';
-// import { createStackNavigator } from '@react-navigation/stack';
 // import StackTrace from '/Countly.StackTrace.js';
 // import stacktrace from 'react-native-stacktrace';
 // var PushNotification = require('react-native-push-notification');
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
 
-Countly.autoTrackingView = function(state){
-
+function autoTrackingView(state){
+  var viewName = state.routes[state.routes.length -1].name;
+  console.log("autoTrackingView");
+  console.log(viewName);
+  Countly.recordView(viewName);
 }
-// // Auto Navigation Example.
-// const Stack = createStackNavigator();
-// export const navigationRef = React.createRef();
-// export function navigate(name){
-//   navigationRef.current?.navigate(name);
-// }
+// Auto Navigation Example.
+const Stack = createStackNavigator();
+export const navigationRef = React.createRef();
+export function navigate(name){
+  navigationRef.current?.navigate(name);
+}
 
 class PageOne extends Component {
   render(){
@@ -62,15 +65,14 @@ class PageThree extends Component {
 class AwesomeProject extends Component {
   render() {
     return (
-      <Example />
-      // <NavigationContainer onStateChange={Countly.autoTrackingView}>
-      //   <Stack.Navigator initialRouteName="Example">
-      //     <Stack.Screen name="Example" component = {Example} />
-      //     <Stack.Screen name="PageOne" component={PageOne} />
-      //     <Stack.Screen name="PageTwo" component={PageTwo} />
-      //     <Stack.Screen name="PageThree" component={PageThree} />
-      //   </Stack.Navigator>
-      // </NavigationContainer>
+      <NavigationContainer ref={navigationRef} onStateChange={autoTrackingView}>
+        <Stack.Navigator initialRouteName="Example">
+          <Stack.Screen name="Example" component = {Example} />
+          <Stack.Screen name="PageOne" component={PageOne} />
+          <Stack.Screen name="PageTwo" component={PageTwo} />
+          <Stack.Screen name="PageThree" component={PageThree} />
+        </Stack.Navigator>
+      </NavigationContainer>
       )
   }
 }

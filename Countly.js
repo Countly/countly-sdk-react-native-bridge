@@ -100,28 +100,9 @@ Countly.sendEvent = function(options){
     }
     CountlyReactNative.event(args);
 }
+
 Countly.recordView = function(recordView){
     CountlyReactNative.recordView([recordView || ""]);
-};
-// As per the above documentation apply auto tracking method.
-// https://reactnavigation.org/docs/screen-tracking
-Countly.previousRouteName = "";
-Countly.autoTrackingView = function(state){
-    const currentRouteName = getActiveRouteName(state);
-    if(currentRouteName != Countly.previousRouteName){
-        Countly.recordView(currentRouteName);
-    }
-    Countly.previousRouteName = currentRouteName;
-};
-const getActiveRouteName = function(state){
-  const route = state.routes[state.index];
-
-  if (route.state) {
-    // Dive into nested navigators
-    return getActiveRouteName(route.state);
-  }
-
-  return route.name;
 };
 
 Countly.setViewTracking = function(boolean){
@@ -131,7 +112,11 @@ Countly.setViewTracking = function(boolean){
 Countly.pushTokenType = function(tokenType){
     var args = [];
     args.push(tokenType || "");
-    CountlyReactNative.pushTokenType(args);
+    if(CountlyReactNative.pushTokenType){
+        CountlyReactNative.pushTokenType(args);
+    }else{
+        console.log("CountlyReactNative.pushTokenType is only supported in iOS");
+    }
 }
 Countly.sendPushToken = function(options){
     var args = [];
@@ -144,7 +129,11 @@ Countly.askForNotificationPermission = function(){
 }
 Countly.registerForNotification = function(theListener){
     var event = eventEmitter.addListener('onCountlyPushNotification', theListener);
-    CountlyReactNative.registerForNotification([]);
+    if(CountlyReactNative.registerForNotification){
+        CountlyReactNative.registerForNotification([]);
+    }else{
+        console.log("Countly.registerForNotification is only available for iOS");
+    }
     return event;
 };
 // countly start for android
