@@ -107,13 +107,15 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 	}
 
     @ReactMethod
-    public Boolean isInitialized(ReadableArray args){
-        return Countly.sharedInstance().isInitialized();
+    public void isInitialized(Promise promise){
+        Boolean result = Countly.sharedInstance().isInitialized();
+        promise.resolve(result);
     }
 
     @ReactMethod
-    public Boolean hasBeenCalledOnStart(ReadableArray args){
-        return Countly.sharedInstance().hasBeenCalledOnStart();
+    public void hasBeenCalledOnStart(Promise promise){
+        Boolean result = Countly.sharedInstance().hasBeenCalledOnStart();
+        promise.resolve(result);
     }
 
     @ReactMethod

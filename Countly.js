@@ -48,11 +48,15 @@ Countly.init = function(serverUrl,
 
     CountlyReactNative.init(args);
 }
+
 Countly.isInitialized = function(){
-    return CountlyReactNative.isInitialized([]);
+    // returns a promise
+    return CountlyReactNative.isInitialized();
 }
+
 Countly.hasBeenCalledOnStart = function(){
-    return CountlyReactNative.hasBeenCalledOnStart([]);
+    // returns a promise
+    return CountlyReactNative.hasBeenCalledOnStart();
 }
 
 // countly sending various types of events
