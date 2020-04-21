@@ -642,6 +642,23 @@ RCT_EXPORT_METHOD(setEventSendThreshold:(NSArray*)arguments)
   config.eventSendThreshold = sizeInt;
 }
 
+RCT_REMAP_METHOD(isInitialized,
+                 isInitializedWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
+{
+    id result = [NSNumber numberWithBool:CountlyCommon.sharedInstance.hasStarted] ;
+    resolve(result);
+} 
+
+
+RCT_REMAP_METHOD(hasBeenCalledOnStart,
+                 hasBeenCalledOnStartWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
+{
+    id result = [NSNumber numberWithBool:CountlyCommon.sharedInstance.hasStarted] ;
+    resolve(result);
+} 
+
 RCT_EXPORT_METHOD(remoteConfigClearValues:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 {
     [CountlyRemoteConfig.sharedInstance clearCachedRemoteConfig];
