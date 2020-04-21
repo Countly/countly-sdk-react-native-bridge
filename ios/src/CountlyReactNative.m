@@ -9,6 +9,7 @@
 #import "CountlyPushNotifications.h"
 #import "CountlyConnectionManager.h"
 #import "CountlyRemoteConfig.h"
+#import "CountlyCommon.h"
 
 
 CountlyConfig* config = nil;
