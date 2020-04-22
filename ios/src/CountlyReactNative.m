@@ -602,8 +602,7 @@ RCT_EXPORT_METHOD(updateRemoteConfigExceptKeys:(NSArray*)arguments callback:(RCT
 RCT_EXPORT_METHOD(getRemoteConfigValueForKey:(NSArray*)arguments callback:(RCTResponseSenderBlock)callback)
 {
   id value = [Countly.sharedInstance remoteConfigValueForKey:[arguments objectAtIndex:0]];
-  if(!value){
-      value = @"Default Value";
+  if(value){    
     callback(@[value]);
   }
   else{
