@@ -134,7 +134,7 @@ public class DemoFirebaseMessagingService extends FirebaseMessagingService {
         Intent intent = null;
         intent = new Intent(getApplicationContext(), MainActivity.class);
 
-        Boolean result = CountlyPush.displayMessage(getApplicationContext(), message, R.drawable.ic_message, intent);
+        Boolean result = CountlyPush.displayMessage(getApplicationContext(), message, getApplicationContext().getApplicationInfo().icon, intent);
         if (result == null) {
             Log.i(TAG, "Message wasn't sent from Countly server, so it cannot be handled by Countly SDK");
         } else if (result) {
