@@ -21,3 +21,53 @@ react-native run-ios                # Run the iOS project
 
 
 ```
+
+iOS Push Notification Documentation
+
+#AppDelegate.h
+
+Add header file 
+`#import <UserNotifications/UNUserNotificationCenter.h>`
+Replace the following line with
+`@interface AppDelegate : UIResponder <UIApplicationDelegate, RCTBridgeDelegate>`
+With 
+`@interface AppDelegate : UIResponder <UIApplicationDelegate, RCTBridgeDelegate, UNUserNotificationCenterDelegate>`
+
+#AppDelegate.m
+
+Add header file 
+`
+#import "CountlyReactNative.h"
+#import <UserNotifications/UserNotifications.h>
+`
+
+Inside this function
+`- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
+`
+Add this code before `return YES;`
+`
+UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
+center.delegate = self;
+`
+
+Before `@end` add these method
+`
+- (void)userNotificationCenter:(UNUserNotificationCenter *)center didReceiveNotificationResponse:(UNNotificationResponse *)response withCompletionHandler:(void (^)(void))completionHandler{
+  NSLog(@"didReceiveNotificationResponse");
+  NSDictionary *notification = response.notification.request.content.userInfo;
+  NSLog(@"didReceiveNotificationResponse: %@", [notification description]);
+  [CountlyReactNative onNotification: notification];
+  completionHandler();
+}
+
+
+
+////Called when a notification is delivered to a foreground app.
+-(void)userNotificationCenter:(UNUserNotificationCenter *)center willPresentNotification:(UNNotification *)notification withCompletionHandler:(void (^)(UNNotificationPresentationOptions options))completionHandler
+{
+  NSLog(@"didReceiveNotificationResponse");
+  NSDictionary *userInfo = notification.request.content.userInfo;
+  [CountlyReactNative onNotification: userInfo];
+  completionHandler(UNAuthorizationOptionSound | UNAuthorizationOptionAlert | UNAuthorizationOptionBadge);
+}
+`

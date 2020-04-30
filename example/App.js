@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import React, { Component } from 'react';
 import { AppRegistry } from 'react-native';
 import Example from "./Example.js";
 // import AutoTracking from "./AutoTracking.js";
@@ -9,6 +9,7 @@ class AwesomeProject extends Component {
   render() {
     return (
         <Example/>
+        // <AutoTracking/>
       )
   }
 }

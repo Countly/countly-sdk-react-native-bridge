@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { AppRegistry, Text, Button, ScrollView, Image, View, Alert } from 'react-native';
+import { Text, Button, ScrollView, Image, View, Alert } from 'react-native';
 import Countly from 'countly-sdk-react-native-bridge';
 
 
@@ -28,20 +28,15 @@ class Example extends Component {
     };
 
     componentDidMount(){
-      console.log("registerForNotification");
       Countly.registerForNotification(function(theNotification){
-        console.log(JSON.stringify(theNotification));
-        console.log('theNotification');
+        alert('theNotification: ' +JSON.stringify(theNotification));
       });
-
-
     }
 
     onInit(){
       Countly.pushTokenType(Countly.messagingMode.DEVELOPMENT);
+      Countly.enableLogging();
       Countly.init("https://trinisoft.count.ly", "f0b2ac6919f718a13821575db28c0e2971e05ec5");
-      // Countly.init("https://try.count.ly","0e8a00e8c01395a0af8be0e55da05a404bb23c3e");
-      // ,"","5", "Rate us.", "How would you rate the app?", "Dismiss",false
     }
     onStart(){
       Countly.start();
@@ -56,7 +51,7 @@ class Example extends Component {
       options.username = "trinisofttechnologies";
       options.email = "trinisofttechnologies@gmail.com";
       options.org = "Trinisoft Technologies Pvt. Ltd.";
-      options.phone = "+91 812 840 2946";
+      options.phone = "+1 727 828 7040";
       options.picture = "http://www.trinisofttechnologies.com/images/logo.png";
       options.picturePath = "";
       options.gender = "M";
@@ -440,10 +435,9 @@ class Example extends Component {
               <Image source={{uri: 'https://count.ly/images/logos/countly-logo.png'}} style={ {width: 144, height: 42} } onError={(e) => console.log(e.nativeEvent.error) }/>
               <Text style={[{fontSize:24, textAlign: 'center'}]}>React Native Demo App</Text>
             </View>
-            
 
-            
-            <Button onPress={() => navigate('PageOne')} title="Go to Page One"></Button>
+
+
             < Button onPress = { this.test } title = "Test" color = "#1b1c1d"> </Button>
             < Button onPress = { this.onInit } title = "Init"> </Button>
             < Button onPress = { this.onStart } title = "Start" color = "#5bbd72"> </Button>
