@@ -24,6 +24,16 @@ react-native run-ios                # Run the iOS project
 
 iOS Push Notification Documentation
 
+Step 1: Add Capabilities : Background Mode - Remote Notifications
+
+	Go into your AwesomeProject/ios dir and open AwesomeProject.xcworkspace workspace. Select the top project "AwesomeProject" ans select the "Signing & Capabilities" tab. Add a 2 new Capabilities using "+" button:
+
+	Background Mode capability and tick Remote Notifications.
+	Push Notifications capability
+
+Step 2: Follow instruction from this link 
+	https://support.count.ly/hc/en-us/articles/360037813231-React-Native-Bridge-#ios-setup-and-usage-of-push-notifications
+
 #AppDelegate.h
 
 Add header file 
