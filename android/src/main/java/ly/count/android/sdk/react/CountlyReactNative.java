@@ -20,8 +20,10 @@ import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 import ly.count.android.sdk.Countly;
+import ly.count.android.sdk.CountlyConfig;
 import ly.count.android.sdk.RemoteConfig;
 import ly.count.android.sdk.DeviceId;
+import ly.count.android.sdk.RemoteConfigCallback;
 // import ly.count.android.sdknative.CountlyNative;
 
 import java.util.ArrayList;
@@ -40,7 +42,6 @@ class CountlyReactException extends Exception {
   private String jsError;
   private String jsStack;
   private String jsMessage;
-
   CountlyReactException(String err, String message, String stack){
     jsError = err;
     jsStack = stack;
@@ -52,7 +53,8 @@ class CountlyReactException extends Exception {
 }
 
 public class CountlyReactNative extends ReactContextBaseJavaModule {
-	private ReactApplicationContext _reactContext;
+    private static CountlyConfig config = new CountlyConfig();
+    private ReactApplicationContext _reactContext;
 
     private final Set<String> validConsentFeatureNames = new HashSet<String>(Arrays.asList(
             Countly.CountlyFeatureNames.sessions,
@@ -79,8 +81,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         return Collections.emptyList();
     }
 
-	@ReactMethod
-	public void init(ReadableArray args){
+    @ReactMethod
+    public void init(ReadableArray args){
         Log.d(Countly.TAG, "Initializing...");
         String serverUrl = args.getString(0);
         String appKey = args.getString(1);
@@ -90,21 +92,29 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         // String ratingButton = args.getString(6);
         // Boolean consentFlag = args.getBoolean(7);
         // int ratingLimit = Integer.parseInt(args.getString(3));
+        this.config.setServerURL(serverUrl);
+        this.config.setAppKey(appKey);
+        this.config.setContext(_reactContext);
         if("".equals(deviceId)){
-            Countly.sharedInstance().init(_reactContext, serverUrl, appKey, null, DeviceId.Type.OPEN_UDID);
         }else{
-            Countly.sharedInstance().init(_reactContext, serverUrl, appKey, deviceId, null);
+            if(deviceId.equals("TemporaryDeviceID")){
+                this.config.enableTemporaryDeviceIdMode();
+            }else{
+                this.config.setDeviceId(deviceId);
+            }
         }
+        Countly.sharedInstance().init(this.config);
         // Countly.sharedInstance().setRequiresConsent(consentFlag);
         // Countly.sharedInstance()
         //         .init(_reactContext, serverUrl, appKey, deviceId, DeviceId.Type.OPEN_UDID, ratingLimit, null, ratingTitle, ratingMessage, ratingButton);
- 	}
+    }
 
-	@ReactMethod
-	public void setLoggingEnabled(ReadableArray args){
+    @ReactMethod
+    public void setLoggingEnabled(ReadableArray args){
         Boolean enabled = args.getBoolean(0);
-        Countly.sharedInstance().setLoggingEnabled(enabled);
-	}
+        this.config.setLoggingEnabled(enabled);
+        // Countly.sharedInstance().setLoggingEnabled(enabled);
+    }
 
     @ReactMethod
     public void isInitialized(Promise promise){
@@ -122,10 +132,14 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     public void changeDeviceId(ReadableArray args){
         String newDeviceID = args.getString(0);
         String onServerString = args.getString(1);
-        if("1".equals(onServerString)){
-            Countly.sharedInstance().changeDeviceId(newDeviceID);
+        if(newDeviceID.equals("TemporaryDeviceID")){
+            Countly.sharedInstance().enableTemporaryIdMode();
         }else{
-            Countly.sharedInstance().changeDeviceId(DeviceId.Type.DEVELOPER_SUPPLIED, newDeviceID);
+            if ("1".equals(onServerString)) {
+                Countly.sharedInstance().changeDeviceIdWithMerge(newDeviceID);
+            } else {
+                Countly.sharedInstance().changeDeviceIdWithoutMerge(DeviceId.Type.DEVELOPER_SUPPLIED, newDeviceID);
+            }
         }
     }
 
@@ -133,16 +147,19 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     public void setHttpPostForced(ReadableArray args){
         int isEnabled = Integer.parseInt(args.getString(0));
         if(isEnabled == 1){
-            Countly.sharedInstance().setHttpPostForced(true);
+            this.config.setHttpPostForced(true);
+            // Countly.sharedInstance().setHttpPostForced(true);
         }else{
-            Countly.sharedInstance().setHttpPostForced(false);
+            this.config.setHttpPostForced(false);
+            // Countly.sharedInstance().setHttpPostForced(false);
         }
     }
 
     @ReactMethod
     public void enableParameterTamperingProtection(ReadableArray args){
         String salt = args.getString(0);
-        Countly.sharedInstance().enableParameterTamperingProtection(salt);
+        this.config.setParameterTamperingProtectionSalt(salt);
+        // Countly.sharedInstance().enableParameterTamperingProtection(salt);
     }
 
     @ReactMethod
@@ -173,13 +190,14 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void enableCrashReporting(){
-        Countly.sharedInstance().enableCrashReporting();
+        this.config.enableCrashReporting();
+        // Countly.sharedInstance().enableCrashReporting();
     }
 
     @ReactMethod
     public void addCrashLog(ReadableArray args){
         String record = args.getString(0);
-        Countly.sharedInstance().addCrashLog(record);
+        Countly.sharedInstance().crashes().addCrashBreadcrumb(record);
     }
     @ReactMethod
     public void logException(ReadableArray args){
@@ -188,19 +206,20 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
         Boolean nonfatal = args.getBoolean(1);
 
-        HashMap<String, String> segments = new HashMap<String, String>();
+        HashMap<String, Object> segments = new HashMap<String, Object>();
         for(int i=2,il=args.size();i<il;i+=2){
             segments.put(args.getString(i), args.getString(i+1));
         }
         segments.put("nonfatal", nonfatal.toString());
-        Countly.sharedInstance().setCustomCrashSegments(segments);
+        this.config.setCustomCrashSegment(segments);
+        // Countly.sharedInstance().setCustomCrashSegments(segments);
 
-        Countly.sharedInstance().logException(exception);
+        Countly.sharedInstance().crashes().recordHandledException(exception);
     }
     @ReactMethod
     public void logJSException(String err, String message, String stack){
-       Countly.sharedInstance().addCrashLog(stack);
-       Countly.sharedInstance().logException(new CountlyReactException(err, message, stack));
+        Countly.sharedInstance().crashes().addCrashBreadcrumb(stack);
+        Countly.sharedInstance().crashes().recordHandledException(new CountlyReactException(err, message, stack));
     }
     /*
     @ReactMethod
@@ -216,11 +235,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     */
     @ReactMethod
     public void setCustomCrashSegments(ReadableArray args){
-        Map<String, String> segments = null;
+        Map<String, Object> segments = new HashMap<String, Object>();
         for(int i=0,il=args.size();i<il;i++){
             segments.put(args.getString(i), args.getString(i));
         }
-        Countly.sharedInstance().setCustomCrashSegments(segments);
+        this.config.setCustomCrashSegment(segments);
+        // Countly.sharedInstance().setCustomCrashSegments(segments);
     }
 
    @ReactMethod
@@ -229,32 +249,32 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         if("event".equals(eventType)){
             String eventName = args.getString(1);
             int eventCount= Integer.parseInt(args.getString(2));
-            Countly.sharedInstance().recordEvent(eventName, eventCount);
+            Countly.sharedInstance().events().recordEvent(eventName, eventCount);
         }
         else if ("eventWithSum".equals(eventType)) {
             String eventName = args.getString(1);
             int eventCount= Integer.parseInt(args.getString(2));
             float eventSum= new Float(args.getString(3)).floatValue();
-            Countly.sharedInstance().recordEvent(eventName, eventCount, eventSum);
+            Countly.sharedInstance().events().recordEvent(eventName, eventCount, eventSum);
         }
         else if ("eventWithSegment".equals(eventType)) {
             String eventName = args.getString(1);
             int eventCount= Integer.parseInt(args.getString(2));
-            HashMap<String, String> segmentation = new HashMap<String, String>();
+            HashMap<String, Object> segmentation = new HashMap<String, Object>();
             for(int i=3,il=args.size();i<il;i+=2){
                 segmentation.put(args.getString(i), args.getString(i+1));
             }
-            Countly.sharedInstance().recordEvent(eventName, segmentation, eventCount);
+            Countly.sharedInstance().events().recordEvent(eventName, segmentation, eventCount);
             }
         else if ("eventWithSumSegment".equals(eventType)) {
             String eventName = args.getString(1);
             int eventCount= Integer.parseInt(args.getString(2));
             float eventSum= new Float(args.getString(3)).floatValue();
-            HashMap<String, String> segmentation = new HashMap<String, String>();
+            HashMap<String, Object> segmentation = new HashMap<String, Object>();
             for(int i=4,il=args.size();i<il;i+=2){
                 segmentation.put(args.getString(i), args.getString(i+1));
             }
-            Countly.sharedInstance().recordEvent(eventName, segmentation, eventCount,eventSum);
+            Countly.sharedInstance().events().recordEvent(eventName, segmentation, eventCount,eventSum);
         }
         else{
         }
@@ -263,13 +283,13 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void startEvent(ReadableArray args){
         String startEvent = args.getString(0);
-        Countly.sharedInstance().startEvent(startEvent);
+        Countly.sharedInstance().events().startEvent(startEvent);
     }
     
     @ReactMethod
     public void cancelEvent(ReadableArray args){
         String cancelEvent = args.getString(0);
-        Countly.sharedInstance().cancelEvent(cancelEvent);
+        Countly.sharedInstance().events().cancelEvent(cancelEvent);
     }
 
     @ReactMethod
@@ -277,58 +297,60 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         String eventType = args.getString(0);
         if("event".equals(eventType)){
             String eventName = args.getString(1);
-            Countly.sharedInstance().endEvent(eventName);
+            Countly.sharedInstance().events().endEvent(eventName);
         }
         else if ("eventWithSum".equals(eventType)) {
             String eventName = args.getString(1);
             int eventCount= Integer.parseInt(args.getString(2));
             float eventSum= new Float(args.getString(3)).floatValue();
-            Countly.sharedInstance().endEvent(eventName, null, eventCount,eventSum);
+            Countly.sharedInstance().events().endEvent(eventName, null, eventCount,eventSum);
         }
         else if ("eventWithSegment".equals(eventType)) {
             String eventName = args.getString(1);
             int eventCount= Integer.parseInt(args.getString(2));
-            HashMap<String, String> segmentation = new HashMap<String, String>();
+            HashMap<String, Object> segmentation = new HashMap<String, Object>();
             for(int i=4,il=args.size();i<il;i+=2){
                 segmentation.put(args.getString(i), args.getString(i+1));
             }
-            Countly.sharedInstance().endEvent(eventName, segmentation, eventCount,0);
+            Countly.sharedInstance().events().endEvent(eventName, segmentation, eventCount,0);
         }
         else if ("eventWithSumSegment".equals(eventType)) {
             String eventName = args.getString(1);
             int eventCount= Integer.parseInt(args.getString(2));
             float eventSum= new Float(args.getString(3)).floatValue();
-            HashMap<String, String> segmentation = new HashMap<String, String>();
+            HashMap<String, Object> segmentation = new HashMap<String, Object>();
             for(int i=4,il=args.size();i<il;i+=2){
                 segmentation.put(args.getString(i), args.getString(i+1));
             }
-            Countly.sharedInstance().endEvent(eventName, segmentation, eventCount,eventSum);
+            Countly.sharedInstance().events().endEvent(eventName, segmentation, eventCount,eventSum);
         }
         else{
         }
     }
 
-	@ReactMethod
-	public void recordView(ReadableArray args){
+    @ReactMethod
+    public void recordView(ReadableArray args){
         String viewName = args.getString(0);
-		Countly.sharedInstance().recordView(viewName);
+        Countly.sharedInstance().recordView(viewName);
     }
 
     @ReactMethod
     public void setViewTracking(ReadableArray args){
         String flag = args.getString(0);
         if("true".equals(flag)){
-            Countly.sharedInstance().setViewTracking(true);
+            this.config.setViewTracking(true);
+            // Countly.sharedInstance().setViewTracking(true);
         }else{
-            Countly.sharedInstance().setViewTracking(false);
+            this.config.setViewTracking(false);
+            // Countly.sharedInstance().setViewTracking(false);
         }
     }
 
 
 
 
-	@ReactMethod
-	public void setUserData(ReadableArray args){
+    @ReactMethod
+    public void setUserData(ReadableArray args){
         Map<String, String> bundle = new HashMap<String, String>();
         bundle.put("name", args.getString(0));
         bundle.put("username", args.getString(1));
@@ -341,10 +363,10 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         bundle.put("byear", String.valueOf(args.getInt(8)));
         Countly.userData.setUserData(bundle);
         Countly.userData.save();
-	}
+    }
 
-	@ReactMethod
-	 public void sendPushToken(ReadableArray args){
+    @ReactMethod
+     public void sendPushToken(ReadableArray args){
         String pushToken = args.getString(0);
         int messagingMode = Integer.parseInt(args.getString(1));
 
@@ -356,17 +378,17 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
             mode = Countly.CountlyMessagingMode.TEST;
         }
         Countly.sharedInstance().onRegistrationId(pushToken, mode);
-	}
+    }
 
-	@ReactMethod
-	public void start(){
-		Countly.sharedInstance().onStart(getCurrentActivity());
-	}
+    @ReactMethod
+    public void start(){
+        Countly.sharedInstance().onStart(getCurrentActivity());
+    }
 
-	@ReactMethod
-	public void stop(){
-		Countly.sharedInstance().onStop();
-	}
+    @ReactMethod
+    public void stop(){
+        Countly.sharedInstance().onStop();
+    }
 
     @ReactMethod
     public void userData_setProperty(ReadableArray args){
@@ -450,8 +472,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     // GDPR
     @ReactMethod
     public void setRequiresConsent(ReadableArray args){
-			  Boolean consentFlag = args.getBoolean(0);
-        Countly.sharedInstance().setRequiresConsent(consentFlag);
+        Boolean consentFlag = args.getBoolean(0);
+        this.config.setRequiresConsent(consentFlag);
+        // Countly.sharedInstance().setRequiresConsent(consentFlag);
     }
 
     @ReactMethod
@@ -466,7 +489,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
                Log.d(Countly.TAG, "Not a valid consent feature to add: " + featureName);
             }
         }
-        Countly.sharedInstance().giveConsent(features.toArray(new String[features.size()]));
+        Countly.sharedInstance().consent().giveConsent(features.toArray(new String[features.size()]));
     }
 
     @ReactMethod
@@ -481,23 +504,23 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
                Log.d(Countly.TAG, "Not a valid consent feature to remove: " + featureName);
             }
         }
-        Countly.sharedInstance().removeConsent(features.toArray(new String[features.size()]));
+        Countly.sharedInstance().consent().removeConsent(features.toArray(new String[features.size()]));
     }
 
     @ReactMethod
     public void giveAllConsent(){
-        Countly.sharedInstance().giveConsent(validConsentFeatureNames.toArray(new String[validConsentFeatureNames.size()]));
+        Countly.sharedInstance().consent().giveConsent(validConsentFeatureNames.toArray(new String[validConsentFeatureNames.size()]));
     }
 
     @ReactMethod
     public void removeAllConsent(){
-        Countly.sharedInstance().removeConsent(validConsentFeatureNames.toArray(new String[validConsentFeatureNames.size()]));
+        Countly.sharedInstance().consent().removeConsent(validConsentFeatureNames.toArray(new String[validConsentFeatureNames.size()]));
     }
 
 
     @ReactMethod
     public void remoteConfigUpdate(ReadableArray args, final Callback myCallback){
-        Countly.sharedInstance().remoteConfigUpdate(new RemoteConfig.RemoteConfigCallback() {
+        Countly.sharedInstance().remoteConfig().update(new RemoteConfigCallback() {
             String resultString = "";
             @Override
             public void callback(String error) {
@@ -520,7 +543,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         {
             newArray[cnt] = args.getString(cnt);
         }
-        Countly.sharedInstance().updateRemoteConfigForKeysOnly(newArray, new RemoteConfig.RemoteConfigCallback() {
+        Countly.sharedInstance().remoteConfig().updateForKeysOnly(newArray, new RemoteConfigCallback() {
             String resultString = "";
             @Override
             public void callback(String error) {
@@ -544,7 +567,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         {
             newArray[cnt] = args.getString(cnt);
         }
-        Countly.sharedInstance().updateRemoteConfigExceptKeys(newArray, new RemoteConfig.RemoteConfigCallback() {
+        Countly.sharedInstance().remoteConfig().updateExceptKeys(newArray, new RemoteConfigCallback() {
             String resultString = "";
             @Override
             public void callback(String error) {
@@ -561,7 +584,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void getRemoteConfigValueForKey(ReadableArray args, final Callback myCallback){
         String keyName = args.getString(0);
-        Object keyValue = Countly.sharedInstance().getRemoteConfigValueForKey(keyName);
+        Object keyValue = Countly.sharedInstance().remoteConfig().getValueForKey(keyName);
         if (keyValue == null) {
             // Log.d(TAG, keyName + ": ConfigKeyNotFound");
             myCallback.invoke("ConfigKeyNotFound");
@@ -575,10 +598,10 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void getRemoteConfigValueForKeyP(String keyName, Promise promise){
-        Object keyValue = Countly.sharedInstance().getRemoteConfigValueForKey(keyName);
+        Object keyValue = Countly.sharedInstance().remoteConfig().getValueForKey(keyName);
         if (keyValue == null) {
             Log.d(TAG, keyName + ": ConfigKeyNotFound");
-            promise.reject("ConfigKeyNotFound");
+            promise.reject("ConfigKeyNotFound", null, null, null);
         }
         else {
             String resultString = (keyValue).toString();
@@ -589,14 +612,14 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void remoteConfigClearValues(Promise promise){
-        Countly.sharedInstance().remoteConfigClearValues();
+        Countly.sharedInstance().remoteConfig().clearStoredValues();
         promise.resolve("Remote Config Cleared.");
     }
 
     @ReactMethod
     public void showStarRating(ReadableArray args){
         Activity activity = getCurrentActivity();
-        Countly.sharedInstance().showStarRating(activity, null);
+        Countly.sharedInstance().ratings().showStarRating(activity, null);
 
     }
 
@@ -605,13 +628,14 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         String widgetId = args.getString(0);
         String closeFeedBackButton = args.getString(1);
         Activity activity = getCurrentActivity();
-        Countly.sharedInstance().showFeedbackPopup( widgetId, closeFeedBackButton, activity, null);
+        Countly.sharedInstance().ratings().showFeedbackPopup( widgetId, closeFeedBackButton, activity, null);
     }
 
     @ReactMethod
     public void setEventSendThreshold(ReadableArray args){
         int size = Integer.parseInt(args.getString(0));
-        Countly.sharedInstance().setEventQueueSizeToSend(size);
+        this.config.setEventQueueSizeToSend(size);
+        // Countly.sharedInstance().setEventQueueSizeToSend(size);
     }
 
     /*
