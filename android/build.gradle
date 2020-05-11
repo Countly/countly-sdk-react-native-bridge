@@ -44,7 +44,7 @@ repositories {
 
 dependencies {
     implementation "com.facebook.react:react-native:${safeExtGet('reactNativeVersion', '+')}"
-    implementation 'ly.count.android:sdk:19.02.3'
+    implementation 'ly.count.android:sdk:20.04'
     // implementation 'ly.count.android:sdk-native:19.02.3'
     // implementation 'ly.count.android:sdk-messaging-fcm:19.02.1'
     // implementation 'com.google.firebase:firebase-messaging:17.3.0'

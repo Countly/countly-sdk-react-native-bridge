@@ -265,6 +265,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         String startEvent = args.getString(0);
         Countly.sharedInstance().startEvent(startEvent);
     }
+    
+    @ReactMethod
+    public void cancelEvent(ReadableArray args){
+        String cancelEvent = args.getString(0);
+        Countly.sharedInstance().cancelEvent(cancelEvent);
+    }
 
     @ReactMethod
     public void endEvent(ReadableArray args){

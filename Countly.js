@@ -296,6 +296,9 @@ Countly.enableParameterTamperingProtection = function(salt){
 Countly.startEvent = function(eventName){
     CountlyReactNative.startEvent([eventName.toString() || ""]);
 }
+Countly.cancelEvent = function(eventName){
+    CountlyReactNative.cancelEvent([eventName.toString() || ""]);
+}
 Countly.endEvent = function(options){
     if(typeof options === "string") {
         options = {eventName: options};

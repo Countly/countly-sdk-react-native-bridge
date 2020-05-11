@@ -250,8 +250,14 @@ RCT_EXPORT_METHOD(enableParameterTamperingProtection:(NSArray*)arguments)
 
 RCT_EXPORT_METHOD(startEvent:(NSArray*)arguments)
 {
-  NSString* eventName = [arguments objectAtIndex:0];
-  [Countly.sharedInstance startEvent:eventName];
+  NSString* startEvent = [arguments objectAtIndex:0];
+  [Countly.sharedInstance startEvent:startEvent];
+}
+
+RCT_EXPORT_METHOD(cancelEvent:(NSArray*)arguments)
+{
+  NSString* cancelEvent = [arguments objectAtIndex:0];
+  [Countly.sharedInstance cancelEvent:cancelEvent];
 }
 
 /*
