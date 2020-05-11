@@ -1,78 +1,35 @@
+# iOS Push Notification Documentation
 
-### Using Example App
-Please visit [Countly React Native documentation page](https://resources.count.ly/docs/react-native-bridge) for further details.
-```
-react-native init DemoProject       # Create a new project
+Note: This documentation assumes, that you have created necessary certficate, have proper app bundle id.
 
-cd DemoProject                      # Go to that directory
-cp <PATH_TO>/App.js .               # Copy App.js here into your new react project
+STEP 1: Make sure you have proper app bundle id and team selected.
 
-# Include SDK
-npm install --save https://github.com/Countly/countly-sdk-react-native-bridge.git
-react-native link countly-sdk-react-native-bridge
+STEP 2: Add Capabilities
+       1. Push Notification
+       2. Background Mode - Remote Notifications
+        Go into your AwesomeProject/ios dir and open AwesomeProject.xcworkspace workspace. Select the top project "AwesomeProject" ans select the "Signing & Capabilities" tab. Add a 2 new Capabilities using "+" button:
+        Background Mode capability and tick Remote Notifications.
+        Push Notifications capability
 
-# In a new terminal
-adb reverse tcp:8081 tcp:8081       # Link Android port for development server
-npm start                           # Start development server
+STEP 3: Place below code in there respective files.
 
-# In root of DemoProject
-react-native run-android # OR       # Run the android project
-react-native run-ios                # Run the iOS project
-
-
-```
-
-iOS Push Notification Documentation
-
-Step 1: Add Capabilities : Background Mode - Remote Notifications
-
-	Go into your AwesomeProject/ios dir and open AwesomeProject.xcworkspace workspace. Select the top project "AwesomeProject" ans select the "Signing & Capabilities" tab. Add a 2 new Capabilities using "+" button:
-
-	Background Mode capability and tick Remote Notifications.
-	Push Notifications capability
-
-Step 2: Follow instruction from this link 
-	https://support.count.ly/hc/en-us/articles/360037813231-React-Native-Bridge-#ios-setup-and-usage-of-push-notifications
-
-#AppDelegate.h
+### AppDelegate.m
 
 Add header file 
-`#import <UserNotifications/UNUserNotificationCenter.h>`
-Replace the following line with
-`@interface AppDelegate : UIResponder <UIApplicationDelegate, RCTBridgeDelegate>`
-With 
-`@interface AppDelegate : UIResponder <UIApplicationDelegate, RCTBridgeDelegate, UNUserNotificationCenterDelegate>`
+`#import "CountlyReactNative.h"`
+`#import <UserNotifications/UserNotifications.h>`
 
-#AppDelegate.m
-
-Add header file 
-`
-#import "CountlyReactNative.h"
-#import <UserNotifications/UserNotifications.h>
-`
-
-Inside this function
-`- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
-`
-Add this code before `return YES;`
-`
-UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
-center.delegate = self;
-`
 
 Before `@end` add these method
-`
-- (void)userNotificationCenter:(UNUserNotificationCenter *)center didReceiveNotificationResponse:(UNNotificationResponse *)response withCompletionHandler:(void (^)(void))completionHandler{
+
+-(void)userNotificationCenter:(UNUserNotificationCenter *)center didReceiveNotificationResponse:(UNNotificationResponse *)response withCompletionHandler:(void (^)(void))completionHandler{
   NSLog(@"didReceiveNotificationResponse");
   NSDictionary *notification = response.notification.request.content.userInfo;
-  NSLog(@"didReceiveNotificationResponse: %@", [notification description]);
   [CountlyReactNative onNotification: notification];
   completionHandler();
 }
 
-
-
-////Called when a notification is delivered to a foreground app.
+//Called when a notification is delivered to a foreground app.
 -(void)userNotificationCenter:(UNUserNotificationCenter *)center willPresentNotification:(UNNotification *)notification withCompletionHandler:(void (^)(UNNotificationPresentationOptions options))completionHandler
 {
   NSLog(@"didReceiveNotificationResponse");
@@ -80,4 +37,47 @@ Before `@end` add these method
   [CountlyReactNative onNotification: userInfo];
   completionHandler(UNAuthorizationOptionSound | UNAuthorizationOptionAlert | UNAuthorizationOptionBadge);
 }
-`
+
+
+# Rich Push Notification
+
+STEP 1: Creating Notification Service Extension
+        Editor -> Add Target -> 
+        Make sure `ios` is selected 
+        Make sure `Notification Service Extension` is selected
+        Click `Next`
+        Enter Product Name e.g. `CountlyNSE`
+        Language `Objective-C`
+        Click `Finish`
+        It will ask for a modal / popup `Activate “CountlyNSE” scheme?`
+        Choose `Cancel`
+
+STEP 2: Adding Compile Source
+        Under `TARGETS` select `CountlyNSE`
+        Select `Build Phases` 
+        Expand `Compile Sources`
+        Drag and Drop `CountlyNotificationService.h` and `CountlyNotificationService.m` file
+        Note: You may also find this file in `Xcode` under `Pods(Project) -> Pods(Folder) -> Countly`
+        Note: You may also find this file in `Finder` under `AwesomeProject/ios/Pods/Countly`
+        Note: You may also find this file in `Xcode` under `AwesomeProject(Project) -> Libraries(Folder) -> countly-sdk-react-native-bridge(Project)->src(Folder)`
+        Note: You may also find this file in `Finder` under `node_modules/countly-sdk-react-native-bridge/ios/Pods/Countly`
+
+STEP 3: Updating NotificationService file
+        Under `AwesomeProject(Project) -> CountlyNSE(Folder) -> NotificationService.m`
+        Add import header `#import "CountlyNotificationService.h"`
+        Add the following line at the end of `didReceiveNotificationRequest:withContentHandler:`
+        
+        - (void)didReceiveNotificationRequest:(UNNotificationRequest *)request withContentHandler:(void (^)(UNNotificationContent * _Nonnull))contentHandler
+        {
+            self.contentHandler = contentHandler;
+            self.bestAttemptContent = [request.content mutableCopy];    
+            //delete existing template code, and add this line
+            [CountlyNotificationService didReceiveNotificationRequest:request withContentHandler:contentHandler];
+        }
+        
+
+        Note: Please make sure you configure App Transport Security setting in extension's Info.plist file also, just like the main application. Otherwise media attachments from non-https sources can not be loaded.
+        
+        Note: Please make sure you check Deployment Target version of extension target is 10, not 10.3 (or whatever minor version Xcode set automatically). Otherwise users running iOS versions lower than Deployment Target value can not get rich push notifications.
+
+        Note: To send push messages to applications that are Debug build use Countly.messagingMode.DEVELOPMENT, for App Store built ones use Countly.messagingMode.PRODUCTION, and for TestFlight/Ad Hoc builds use Countly.messagingMode.ADHOC.    
