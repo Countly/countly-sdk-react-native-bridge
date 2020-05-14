@@ -204,7 +204,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         String exceptionString = args.getString(0);
         Exception exception = new Exception(exceptionString);
 
-        Boolean nonfatal = args.getBoolean(1);
+        // Boolean nonfatal = args.getBoolean(1);
 
         // HashMap<String, Object> segments = new HashMap<String, Object>();
         // for(int i=2,il=args.size();i<il;i+=2){
