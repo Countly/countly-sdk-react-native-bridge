@@ -206,12 +206,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
         Boolean nonfatal = args.getBoolean(1);
 
-        HashMap<String, Object> segments = new HashMap<String, Object>();
-        for(int i=2,il=args.size();i<il;i+=2){
-            segments.put(args.getString(i), args.getString(i+1));
-        }
-        segments.put("nonfatal", nonfatal.toString());
-        this.config.setCustomCrashSegment(segments);
+        // HashMap<String, Object> segments = new HashMap<String, Object>();
+        // for(int i=2,il=args.size();i<il;i+=2){
+        //     segments.put(args.getString(i), args.getString(i+1));
+        // }
+        // segments.put("nonfatal", nonfatal.toString());
+        // this.config.setCustomCrashSegment(segments);
         // Countly.sharedInstance().setCustomCrashSegments(segments);
 
         Countly.sharedInstance().crashes().recordHandledException(exception);
