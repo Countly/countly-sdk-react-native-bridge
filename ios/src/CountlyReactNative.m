@@ -621,13 +621,8 @@ RCT_EXPORT_METHOD(getRemoteConfigValueForKey:(NSArray*)arguments:(RCTResponseSen
 
 RCT_EXPORT_METHOD(showStarRating:(NSArray*)arguments)
 {
-  NSInteger* rating = 5;
-  if (config != nil){
-    if(config.starRatingSessionCount){
-      rating = config.starRatingSessionCount;
-    }
-  }
   [Countly.sharedInstance askForStarRating:^(NSInteger rating){
+    // callback(@[[@(rating) stringValue]]);
   }];
 }
 
