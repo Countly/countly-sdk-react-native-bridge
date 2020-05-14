@@ -621,9 +621,13 @@ RCT_EXPORT_METHOD(getRemoteConfigValueForKey:(NSArray*)arguments:(RCTResponseSen
 
 RCT_EXPORT_METHOD(showStarRating:(NSArray*)arguments)
 {
-  [Countly.sharedInstance askForStarRating:^(NSInteger rating){
-    // callback(@[[@(rating) stringValue]]);
-  }];
+    dispatch_async(dispatch_get_main_queue(), ^
+    {
+        [Countly.sharedInstance askForStarRating:^(NSInteger rating){
+          // callback(@[[@(rating) stringValue]]);
+        }];
+
+    });
 }
 
 RCT_EXPORT_METHOD(showFeedbackPopup:(NSArray*)arguments)
