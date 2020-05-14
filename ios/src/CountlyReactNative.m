@@ -617,16 +617,13 @@ RCT_EXPORT_METHOD(getRemoteConfigValueForKey:(NSArray*)arguments callback:(RCTRe
   }
 }
 
-RCT_EXPORT_METHOD(showStarRating:(NSArray*)arguments)
+RCT_EXPORT_METHOD(showStarRating:(NSArray*)arguments callback:(RCTResponseSenderBlock)callback)
 {
-  NSInteger* rating = 5;
-  if (config != nil){
-    if(config.starRatingSessionCount){
-      rating = config.starRatingSessionCount;
-    }
-  }
-  [Countly.sharedInstance askForStarRating:^(NSInteger rating){
-  }];
+  dispatch_async(dispatch_get_main_queue(), ^ {
+    [Countly.sharedInstance askForStarRating:^(NSInteger rating){
+      callback(@[[@(rating) stringValue]]);
+    }];
+  });
 }
 
 RCT_EXPORT_METHOD(showFeedbackPopup:(NSArray*)arguments)

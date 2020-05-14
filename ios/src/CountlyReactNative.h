@@ -40,7 +40,7 @@
 - (void)updateRemoteConfigExceptKeys:(NSArray*)arguments callback:(RCTResponseSenderBlock)callback;
 - (void)getRemoteConfigValueForKey:(NSArray*)arguments callback:(RCTResponseSenderBlock)callback;
 //- (void)setStarRatingDialogTexts:(NSArray*)arguments;
-- (void)showStarRating:(NSArray*)arguments;
+- (void)showStarRating:(NSArray*)arguments callback:(RCTResponseSenderBlock)callback;
 - (void)showFeedbackPopup:(NSArray*)arguments;
 - (void)setEventSendThreshold:(NSArray*)arguments;
 - (void)pushTokenType:(NSArray*)arguments;

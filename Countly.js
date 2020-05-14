@@ -495,8 +495,9 @@ Countly.remoteConfigClearValues = async function(){
     return result;
 }
 
-Countly.showStarRating = function(){
-    CountlyReactNative.showStarRating([]);
+Countly.showStarRating = function(callback){
+    if(!callback){callback = function(){}};
+    CountlyReactNative.showStarRating([], callback);
 }
 
 Countly.showFeedbackPopup = function(widgetId, closeButtonText,){
