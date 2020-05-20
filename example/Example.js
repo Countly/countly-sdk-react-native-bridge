@@ -478,7 +478,7 @@ class Example extends Component {
             <Text style={[{textAlign: 'center'}]}>Other Methods Start</Text>
             < Button onPress = { function(){Countly.recordView("HomePage")} } title = "Record View: 'HomePage'" color = "#e0e0e0"> </Button>
             < Button onPress = { function(){Countly.recordView("Dashboard")} } title = "Record View: 'Dashboard'" color = "#e0e0e0"> </Button>
-            < Button onPress = { function(){Countly.recordView("HomePage", {"version": "1.0"})} } title = "Record View: 'HomePage' with Segment" color = "#e0e0e0"> </Button>
+            < Button onPress = { function(){Countly.recordView("HomePage", {"version": "1.0", "_facebook_version": "0.0.1"})} } title = "Record View: 'HomePage' with Segment" color = "#e0e0e0"> </Button>
             < Button onPress={this.enableLogging} title='Enable Logging' color='#00b5ad' />
             < Button onPress={this.disableLogging} title='Disable Logging' color='#00b5ad' />
 
