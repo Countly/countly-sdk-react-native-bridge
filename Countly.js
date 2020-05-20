@@ -105,8 +105,17 @@ Countly.sendEvent = function(options){
     CountlyReactNative.event(args);
 }
 
-Countly.recordView = function(recordView){
-    CountlyReactNative.recordView([recordView || ""]);
+Countly.recordView = function(recordView, segments){
+    var args = [];
+    args.push(String(recordView) || "");
+    if(!segments){
+        segments = {};
+    }
+    for(var key in segments){
+        args.push(key);
+        args.push(segments[key]);
+    }
+    CountlyReactNative.recordView(args);
 };
 
 Countly.setViewTracking = function(boolean){

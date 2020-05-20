@@ -96,7 +96,12 @@ RCT_EXPORT_METHOD(event:(NSArray*)arguments)
 RCT_EXPORT_METHOD(recordView:(NSArray*)arguments)
 {
   NSString* recordView = [arguments objectAtIndex:0];
-  [Countly.sharedInstance recordView:recordView];
+  NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
+  for(int i=1,il=(int)arguments.count;i<il;i+=2){
+    dict[[arguments objectAtIndex:i]] = [arguments objectAtIndex:i+1];
+  }
+      
+  [Countly.sharedInstance recordView:recordView segmentation: dict];
 }
 
 RCT_EXPORT_METHOD(setViewTracking:(NSArray*)arguments)

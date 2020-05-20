@@ -331,7 +331,11 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void recordView(ReadableArray args){
         String viewName = args.getString(0);
-        Countly.sharedInstance().recordView(viewName);
+        HashMap<String, Object> segmentation = new HashMap<String, Object>();
+        for(int i=1,il=args.size();i<il;i+=2){
+            segmentation.put(args.getString(i), args.getString(i+1));
+        }   
+        Countly.sharedInstance().recordView(viewName, segmentation);
     }
 
     @ReactMethod
