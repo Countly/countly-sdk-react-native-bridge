@@ -1,10 +1,10 @@
 # Uncomment the next line to define a global platform for your project
-# platform :ios, '9.0'
+platform :ios, '8.0'
 
 target 'countly-sdk-react-native-bridge' do
   # Comment the next line if you don't want to use dynamic frameworks
   use_frameworks!
-  pod 'Countly'
+  pod 'Countly', "20.04"
   # Pods for countly-sdk-react-native-bridge
 
 end
