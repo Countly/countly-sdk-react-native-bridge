@@ -205,7 +205,9 @@ class Example extends Component {
     enableParameterTamperingProtection(){
       Countly.enableParameterTamperingProtection("salt");
     };
-
+    pinnedCertificates(){
+      Countly.enableParameterTamperingProtection("count.ly.cer");
+    }
     setRequiresConsent(){
       Countly.setRequiresConsent(true);
     }
@@ -489,6 +491,7 @@ class Example extends Component {
             < Text style={[{ textAlign: 'center' }]}>Push Notification End</Text>
 
 
+            < Button onPress = { this.pinnedCertificates } title = "Pinned Certificates" color = "#00b5ad"> </Button>
             < Button onPress = { this.enableParameterTamperingProtection } title = "Enable Parameter Tapmering Protection" color = "#00b5ad"> </Button>
             < Button onPress = { this.setRequiresConsent } title = "Init Consent" color = "#00b5ad"> </Button>
             < Button onPress = { this.giveEventsConsent } title = "Give events consent" color = "#00b5ad"> </Button>

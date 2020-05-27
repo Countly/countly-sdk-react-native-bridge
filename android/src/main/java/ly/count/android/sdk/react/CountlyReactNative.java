@@ -163,6 +163,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void pinnedCertificates(ReadableArray args){
+        String certificateName = args.getString(0);
+        this.config.enablePublicKeyPinning(Arrays.asList(certificateName));
+    }
+
+    @ReactMethod
     public void setLocation(ReadableArray args){
         String countryCode = args.getString(0);
         String city = args.getString(1);

@@ -302,6 +302,9 @@ Countly.endSession = function(){
 Countly.enableParameterTamperingProtection = function(salt){
     CountlyReactNative.enableParameterTamperingProtection([salt.toString() || ""]);
 }
+Countly.pinnedCertificates = function(certificateName){
+    CountlyReactNative.pinnedCertificates([certificateName || ""]);
+}
 Countly.startEvent = function(eventName){
     CountlyReactNative.startEvent([eventName.toString() || ""]);
 }

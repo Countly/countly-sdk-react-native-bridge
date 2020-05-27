@@ -18,6 +18,7 @@
 
 - (void)changeDeviceId:(NSArray*)arguments;
 - (void)enableParameterTamperingProtection:(NSArray*)arguments;
+- (void)pinnedCertificates:(NSArray*)arguments;
 // - (void)startEvent:(NSString*)arguments;
 // - (void)endEvent:(NSDictionary*)arguments;
 - (void)startEvent:(NSArray*)arguments;

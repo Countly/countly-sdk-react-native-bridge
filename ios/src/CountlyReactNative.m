@@ -253,6 +253,15 @@ RCT_EXPORT_METHOD(enableParameterTamperingProtection:(NSArray*)arguments)
   config.secretSalt = salt;
 }
 
+RCT_EXPORT_METHOD(pinnedCertificates:(NSArray*)arguments)
+{
+  NSString* certificateName = [arguments objectAtIndex:0];
+  if (config == nil){
+    config = CountlyConfig.new;
+  }
+  config.pinnedCertificates = @[certificateName];
+}
+
 RCT_EXPORT_METHOD(startEvent:(NSArray*)arguments)
 {
   NSString* startEvent = [arguments objectAtIndex:0];
