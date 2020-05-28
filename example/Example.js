@@ -25,6 +25,7 @@ class Example extends Component {
         this.userData_setOnce = this.userData_setOnce.bind(this);
         this.changeDeviceId = this.changeDeviceId.bind(this);
         this.enableParameterTamperingProtection = this.enableParameterTamperingProtection.bind(this);
+        this.pinnedCertificates = this.pinnedCertificates.bind(this);
     };
 
     componentDidMount(){
@@ -206,7 +207,7 @@ class Example extends Component {
       Countly.enableParameterTamperingProtection("salt");
     };
     pinnedCertificates(){
-      Countly.enableParameterTamperingProtection("count.ly.cer");
+      Countly.pinnedCertificates("count.ly.cer");
     }
     setRequiresConsent(){
       Countly.setRequiresConsent(true);

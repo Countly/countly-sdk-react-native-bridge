@@ -165,7 +165,36 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void pinnedCertificates(ReadableArray args){
         String certificateName = args.getString(0);
-        this.config.enablePublicKeyPinning(Arrays.asList(certificateName));
+        this.config.enablePublicKeyPinning(this.readCertificate(certificateName));
+    }
+
+    public String [] readCertificate(String certificateName){
+        String certificateString = "";
+        BufferedReader reader = null;
+        try {
+            reader = new BufferedReader(
+                    new InputStreamReader(this._reactContext.getAssets().open(certificateName)));
+
+            // do reading, usually loop until end of file reading
+            String mLine;
+            while ((mLine = reader.readLine()) != null) {
+                certificateString += mLine;
+            }
+            String certificateArray[] = new String[] {certificateString};
+            return certificateArray;
+        } catch (IOException e) {
+            //log the exception
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                    //log the exception
+                }
+            }
+        }
+        Log.i("Countly", "Certificate failed.");
+        return new String[]{};
     }
 
     @ReactMethod
