@@ -9,6 +9,9 @@
   "bugs": {
     "url": "https://github.com/Countly/countly-sdk-react-native-bridge/issues"
   },
+  "scripts": {
+    "postinstall": "node ./hooks/createNotificationService.js"
+  },
   "dependencies": {},
   "deprecated": false,
   "description": "Countly is an innovative, real-time, open source mobile analytics and push notifications platform.",
