@@ -26,6 +26,7 @@ class Example extends Component {
         this.changeDeviceId = this.changeDeviceId.bind(this);
         this.enableParameterTamperingProtection = this.enableParameterTamperingProtection.bind(this);
         this.pinnedCertificates = this.pinnedCertificates.bind(this);
+        this.askForNotificationPermission = this.askForNotificationPermission.bind(this);
     };
 
     componentDidMount(){
@@ -297,8 +298,10 @@ class Example extends Component {
       Countly.disableLocation();
     };
 
-    setupPush(){
+    askForNotificationPermission(){
       Countly.askForNotificationPermission();
+    }
+    oldPushBackup(){
       // console.log('setupPush');
       // PushNotificationIOS.addEventListener('registrationError', function(error){
       //   console.log('error:', error);
@@ -487,7 +490,7 @@ class Example extends Component {
 
 
             < Text style={[{ textAlign: 'center' }]}>Push Notification Start</Text>
-            < Button onPress={this.setupPush} title='Register Device' color='#00b5ad' />
+            < Button onPress={this.askForNotificationPermission} title='askForNotificationPermission' color='#00b5ad' />
             < Button onPress={this.changeDeviceId} title='Change Device ID' color='#00b5ad' />
             < Text style={[{ textAlign: 'center' }]}>Push Notification End</Text>
 
