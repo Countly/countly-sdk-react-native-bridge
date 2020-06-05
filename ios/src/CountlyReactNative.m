@@ -193,11 +193,26 @@ RCT_EXPORT_METHOD(registerForNotification:(NSArray*)arguments)
       lastStoredNotification = nil;
     }
 }
-+ (void)onNotification:(NSDictionary *)notification
++ (void)onNotification:(NSDictionary *)notificationMessage
 {
-    NSDictionary *userInfo = @{@"notification": notification};
-    lastStoredNotification = userInfo;
-    [[NSNotificationCenter defaultCenter] postNotificationName: @"onCountlyPushNotification" object:self userInfo:userInfo];
+    NSLog(@"Notification received");
+    NSLog(@"The notification %@", notificationMessage);
+    if(notificationMessage && notificationListener != nil){
+        notificationListener(@[[NSString stringWithFormat:@"%@",notificationMessage]]);
+    }else{
+        lastStoredNotification = notificationMessage;
+    }
+    if(notificationMessage){
+        if(notificationIDs == nil){
+            notificationIDs = [[NSMutableArray alloc] init];
+        }
+        NSDictionary* countlyPayload = notificationMessage[@"c"];
+        NSString *notificationID = countlyPayload[@"i"];
+        [notificationIDs insertObject:notificationID atIndex:[notificationIDs count]];
+    }
+//    NSDictionary *userInfo = @{@"notification": notification};
+//    lastStoredNotification = userInfo;
+//    [[NSNotificationCenter defaultCenter] postNotificationName: @"onCountlyPushNotification" object:self userInfo:userInfo];
 }
 
 RCT_EXPORT_METHOD(start)
