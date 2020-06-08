@@ -142,10 +142,10 @@ didReceiveNotificationResponse:(UNNotificationResponse *)response
         {
             NSLog(@"UIApplicationStateActive");
             [CountlyReactNative onNotification: response.notification.request.content.userInfo];
-            RCTResponseSenderBlock notificationListener = [CountlyReactNative getCallback];
-            if(notificationListener != nil){
+//            RCTResponseSenderBlock notificationListener = [CountlyReactNative getCallback];
+//            if(notificationListener != nil){
                 completionHandler();
-            }
+//            }
             break;
         }
         case UIApplicationStateInactive:
@@ -159,10 +159,10 @@ didReceiveNotificationResponse:(UNNotificationResponse *)response
         {
             NSLog(@"UIApplicationStateBackground");
             [CountlyReactNative onNotification: response.notification.request.content.userInfo];
-            RCTResponseSenderBlock notificationListener = [CountlyReactNative getCallback];
-            if(notificationListener != nil){
+//            RCTResponseSenderBlock notificationListener = [CountlyReactNative getCallback];
+//            if(notificationListener != nil){
                 completionHandler();
-            }
+//            }
         }
     }
 }

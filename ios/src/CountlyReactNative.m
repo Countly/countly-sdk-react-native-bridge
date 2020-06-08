@@ -15,6 +15,8 @@
 CountlyConfig* config = nil;
 NSDictionary *lastStoredNotification = nil;
 Boolean isPushListenerEnabled = false;
+Result notificationListener = nil;
+NSMutableArray *notificationIDs = nil;        // alloc here
 
 @implementation CountlyReactNative
 
