@@ -102,7 +102,7 @@ RCT_EXPORT_METHOD(recordView:(NSArray*)arguments)
   for(int i=1,il=(int)arguments.count;i<il;i+=2){
     dict[[arguments objectAtIndex:i]] = [arguments objectAtIndex:i+1];
   }
-      
+
   [Countly.sharedInstance recordView:recordView segmentation: dict];
 }
 
@@ -184,13 +184,13 @@ RCT_EXPORT_METHOD(registerForNotification:(NSArray*)arguments)
     if(lastStoredNotification != nil){
         [self sendEventWithName:@"onCountlyPushNotification" body: [NSMutableDictionary dictionaryWithDictionary:lastStoredNotification[@"notification"]]];
         lastStoredNotification = nil;
-        
+
     }
 };
 - (void)handleRemoteNotificationReceived:(NSNotification *)notification{
     if(isPushListenerEnabled){
       NSMutableDictionary *remoteNotification = [NSMutableDictionary dictionaryWithDictionary:notification.userInfo[@"notification"]];
-      
+
       [self sendEventWithName:@"onCountlyPushNotification" body: remoteNotification];
       lastStoredNotification = nil;
     }
@@ -380,10 +380,10 @@ RCT_EXPORT_METHOD(setLocation:(NSArray*)arguments)
   NSString* location = [arguments objectAtIndex:2];
   NSString* IP = [arguments objectAtIndex:3];
 
-  if ([location  isEqual: @"0.0,0.0"]){
-
+  if ([location  isEqual: @"null"]){
+    location = nil;
   }else{
-    NSArray *locationArray = [location componentsSeparatedByString:@","];   //take the one array for split the string
+    NSArray *locationArray = [location componentsSeparatedByString:@","];
     NSString* latitudeString = [locationArray objectAtIndex:0];
     NSString* longitudeString = [locationArray objectAtIndex:1];
 
@@ -392,14 +392,46 @@ RCT_EXPORT_METHOD(setLocation:(NSArray*)arguments)
 
     [Countly.sharedInstance recordLocation:(CLLocationCoordinate2D){latitudeDouble,longitudeDouble}];
   }
-  [Countly.sharedInstance recordCity:city andISOCountryCode:countryCode];   //@nicolson Validation for city and countryCode is done on Countly js
-  if ([IP  isEqual: @"0.0.0.0"]){
+  if ([andISOCountryCode  isEqual: @"null"] && [city  isEqual: @"null"]){
+  }else{
+    [Countly.sharedInstance recordCity:city andISOCountryCode:countryCode];
+  }
+  if ([IP  isEqual: @"null"]){
 
   }else{
     [Countly.sharedInstance recordIP:IP];
   }
 
+  NSString* city = [arguments objectAtIndex:0];
+  NSString* country = [arguments objectAtIndex:1];
+  NSString* locationString = [arguments objectAtIndex:2];
+  NSString* ipAddress = [arguments objectAtIndex:3];
 
+  if([@"null" isEqualToString:city]){
+      city = nil;
+  }
+  if([@"null" isEqualToString:country]){
+      country = nil;
+  }
+  if([@"null" isEqualToString:locationString]){
+      locationString = nil;
+  }
+  if([@"null" isEqualToString:ipAddress]){
+      ipAddress = nil;
+  }
+
+  if(locationString != nil){
+    NSArray *locationArray = [locationString componentsSeparatedByString:@","];
+    NSString* latitudeString = [locationArray objectAtIndex:0];
+    NSString* longitudeString = [locationArray objectAtIndex:1];
+
+    double latitudeDouble = [latitudeString doubleValue];
+    double longitudeDouble = [longitudeString doubleValue];
+    [Countly.sharedInstance recordLocation:(CLLocationCoordinate2D){latitudeDouble,longitudeDouble}];
+  }
+
+  [Countly.sharedInstance recordCity:city andISOCountryCode:country];
+  [Countly.sharedInstance recordIP:ipAddress];
 }
 
 RCT_EXPORT_METHOD(disableLocation)
@@ -639,7 +671,7 @@ RCT_EXPORT_METHOD(updateRemoteConfigExceptKeys:(NSArray*)arguments callback:(RCT
 RCT_EXPORT_METHOD(getRemoteConfigValueForKey:(NSArray*)arguments callback:(RCTResponseSenderBlock)callback)
 {
   id value = [Countly.sharedInstance remoteConfigValueForKey:[arguments objectAtIndex:0]];
-  if(value){    
+  if(value){
     callback(@[value]);
   }
   else{
@@ -682,7 +714,7 @@ RCT_REMAP_METHOD(isInitialized,
 {
     id result = [NSNumber numberWithBool:CountlyCommon.sharedInstance.hasStarted] ;
     resolve(result);
-} 
+}
 
 
 RCT_REMAP_METHOD(hasBeenCalledOnStart,
@@ -691,7 +723,7 @@ RCT_REMAP_METHOD(hasBeenCalledOnStart,
 {
     id result = [NSNumber numberWithBool:CountlyCommon.sharedInstance.hasStarted] ;
     resolve(result);
-} 
+}
 
 RCT_EXPORT_METHOD(remoteConfigClearValues:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 {
