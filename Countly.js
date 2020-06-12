@@ -24,15 +24,7 @@ if (Platform.OS.match("android")) {
 }
 
 // countly initialization
-Countly.init = function(serverUrl,
-                        appKey,
-                        deviceId = ""){
-                        //     ,
-                        // starRatingAutoSessionCount = "0",
-                        // starRatingTitle = "Rate us.",
-                        // starRatingMessage = "How would you rate the app?",
-                        // starRatingButtonText = "Dismiss",
-                        // consentFlag = false
+Countly.init = function(serverUrl, appKey, deviceId = ""){
 
     Countly.serverUrl = serverUrl;
     Countly.appKey = appKey;
@@ -40,11 +32,6 @@ Countly.init = function(serverUrl,
     args.push(serverUrl);
     args.push(appKey);
     args.push(deviceId);
-    // args.push(starRatingAutoSessionCount);
-    // args.push(starRatingTitle);
-    // args.push(starRatingMessage);
-    // args.push(starRatingButtonText);
-    // args.push(consentFlag);
 
     CountlyReactNative.init(args);
 }
@@ -181,25 +168,12 @@ Countly.demo = function(){
 
 Countly.setLocation = function(countryCode, city, location, ipAddress){
     var args = [];
-    args.push(countryCode || "");
-    args.push(city || "");
+    args.push(countryCode || "null");
+    args.push(city || "null");
     if(!location){
-        location = "0.0,0.0";
+        args.push("null");
     }
-    var locationArray = location.split(",")
-    var newStringLocation = "";
-    if(locationArray[0].indexOf(".") == -1){
-        newStringLocation = newStringLocation+""+parseFloat(locationArray[0]).toFixed(2);
-    }else{
-        newStringLocation = newStringLocation+""+locationArray[0]
-    }
-    if(locationArray[1].indexOf(".") == -1){
-        newStringLocation = newStringLocation+","+ parseFloat(locationArray[1]).toFixed(2);
-    }else{
-        newStringLocation = newStringLocation+","+locationArray[1]
-    }
-    args.push(newStringLocation);
-    args.push(ipAddress || "0.0.0.0");
+    args.push(ipAddress || "null");
     CountlyReactNative.setLocation(args);
 }
 Countly.disableLocation = function(){
@@ -240,13 +214,13 @@ Countly.enableCrashReporting = function(){
                 else {
                     const matches = row.match(regExp);
                     return matches && matches.length == 8 ? `${matches[1]}${matches[2]}${matches[4]}(${matches[6]}:${matches[7]})` : row;
-                } 
+                }
             })
             const stack = stackArr.join("\n");
-            if (Platform.OS.match("android")) {                
+            if (Platform.OS.match("android")) {
                 CountlyReactNative.logJSException(errorTitle, error.message.trim(), stack);
             }
-            else if (Platform.OS.match("ios")) {   
+            else if (Platform.OS.match("ios")) {
                 const errMessage = `[React] ${errorTitle}: ${error.message}`;
                 const errStack = error.message + "\n" + stack;
                 CountlyReactNative.logJSException(errorTitle, errMessage, errStack);
@@ -472,10 +446,10 @@ Countly.updateRemoteConfigExceptKeys = function(keyNames, callback){
 
 Countly.getRemoteConfigValueForKey = function(keyName, callback){
     CountlyReactNative.getRemoteConfigValueForKey([keyName.toString() || ""], (value) => {
-        if (Platform.OS == "android" ) {                       
+        if (Platform.OS == "android" ) {
             try {
                 value = JSON.parse(value);
-            }  
+            }
             catch (e) {
                // console.log(e.message);
                // noop. value will remain string if not JSON parsable and returned as string
@@ -486,13 +460,13 @@ Countly.getRemoteConfigValueForKey = function(keyName, callback){
 }
 
 Countly.getRemoteConfigValueForKeyP = function(keyName){
-        if (Platform.OS != "android" ) return "To be implemented"; 
+        if (Platform.OS != "android" ) return "To be implemented";
         const promise = CountlyReactNative.getRemoteConfigValueForKeyP(keyName);
         return promise.then(value => {
-            if (Platform.OS == "android" ) {                       
+            if (Platform.OS == "android" ) {
                 try {
                     value = JSON.parse(value);
-                }  
+                }
                 catch (e) {
                    // console.log(e.message);
                    // noop. value will remain string if not JSON parsable and returned as string

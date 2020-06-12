@@ -206,17 +206,17 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         String city = args.getString(1);
         String location = args.getString(2);
         String ipAddress = args.getString(3);
-        if("".equals(countryCode)){
+        if("null".equals(countryCode)){
             countryCode = null;
         }
-        if("".equals(city)){
+        if("null".equals(city)){
             city = null;
         }
-        if("0.0.0.0".equals(ipAddress)){
-            ipAddress = null;
-        }
-        if("0.0,0.0".equals(location)){
+        if("null".equals(location)){
             location = null;
+        }
+        if("null".equals(ipAddress)){
+            ipAddress = null;
         }
         Countly.sharedInstance().setLocation(countryCode, city, location, ipAddress);
     }
@@ -323,7 +323,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         String startEvent = args.getString(0);
         Countly.sharedInstance().events().startEvent(startEvent);
     }
-    
+
     @ReactMethod
     public void cancelEvent(ReadableArray args){
         String cancelEvent = args.getString(0);
@@ -372,7 +372,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         HashMap<String, Object> segmentation = new HashMap<String, Object>();
         for(int i=1,il=args.size();i<il;i+=2){
             segmentation.put(args.getString(i), args.getString(i+1));
-        }   
+        }
         Countly.sharedInstance().recordView(viewName, segmentation);
     }
 
