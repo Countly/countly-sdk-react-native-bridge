@@ -375,33 +375,6 @@ RCT_EXPORT_METHOD(endEvent:(NSArray*)arguments)
 
 RCT_EXPORT_METHOD(setLocation:(NSArray*)arguments)
 {
-  NSString* countryCode = [arguments objectAtIndex:0];
-  NSString* city = [arguments objectAtIndex:1];
-  NSString* location = [arguments objectAtIndex:2];
-  NSString* IP = [arguments objectAtIndex:3];
-
-  if ([location  isEqual: @"null"]){
-    location = nil;
-  }else{
-    NSArray *locationArray = [location componentsSeparatedByString:@","];
-    NSString* latitudeString = [locationArray objectAtIndex:0];
-    NSString* longitudeString = [locationArray objectAtIndex:1];
-
-    double latitudeDouble = [latitudeString doubleValue];
-    double longitudeDouble = [longitudeString doubleValue];
-
-    [Countly.sharedInstance recordLocation:(CLLocationCoordinate2D){latitudeDouble,longitudeDouble}];
-  }
-  if ([andISOCountryCode  isEqual: @"null"] && [city  isEqual: @"null"]){
-  }else{
-    [Countly.sharedInstance recordCity:city andISOCountryCode:countryCode];
-  }
-  if ([IP  isEqual: @"null"]){
-
-  }else{
-    [Countly.sharedInstance recordIP:IP];
-  }
-
   NSString* city = [arguments objectAtIndex:0];
   NSString* country = [arguments objectAtIndex:1];
   NSString* locationString = [arguments objectAtIndex:2];
