@@ -292,6 +292,14 @@ class Example extends Component {
       var latitude = "29.634933";
       var longitude = "-95.220255";
       var ipAddress = "103.238.105.167";
+      Countly.setLocation(null, city, latitude + "," + longitude, ipAddress);
+      Countly.setLocation(null, null, latitude + "," + longitude, ipAddress);
+      Countly.setLocation(null, null, null, ipAddress);
+      Countly.setLocation(null, null, null, null);
+      Countly.setLocation(countryCode, null, null, null);
+      Countly.setLocation(countryCode, city, null, null);
+      Countly.setLocation(countryCode, city, latitude + "," + longitude, null);
+      Countly.setLocation(countryCode, city, latitude + "," + longitude, null);
       Countly.setLocation(countryCode, city, latitude + "," + longitude, ipAddress);
     };
     disableLocation(){
