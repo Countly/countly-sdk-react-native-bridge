@@ -393,14 +393,19 @@ RCT_EXPORT_METHOD(setLocation:(NSArray*)arguments)
       ipAddress = nil;
   }
 
-  if(locationString != nil){
-    NSArray *locationArray = [locationString componentsSeparatedByString:@","];
-    NSString* latitudeString = [locationArray objectAtIndex:0];
-    NSString* longitudeString = [locationArray objectAtIndex:1];
+  if(locationString != nil && [locationString containsString:@","]){
+      @try{
+          NSArray *locationArray = [locationString componentsSeparatedByString:@","];
+          NSString* latitudeString = [locationArray objectAtIndex:0];
+          NSString* longitudeString = [locationArray objectAtIndex:1];
 
-    double latitudeDouble = [latitudeString doubleValue];
-    double longitudeDouble = [longitudeString doubleValue];
-    [Countly.sharedInstance recordLocation:(CLLocationCoordinate2D){latitudeDouble,longitudeDouble}];
+          double latitudeDouble = [latitudeString doubleValue];
+          double longitudeDouble = [longitudeString doubleValue];
+          [Countly.sharedInstance recordLocation:(CLLocationCoordinate2D){latitudeDouble,longitudeDouble}];
+      }
+      @catch(NSException *exception){
+          NSLog(@"[Countly] Invalid location: %@", locationString);
+      }
   }
 
   [Countly.sharedInstance recordCity:city andISOCountryCode:country];

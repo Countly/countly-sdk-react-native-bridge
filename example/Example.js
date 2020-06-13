@@ -299,7 +299,12 @@ class Example extends Component {
       Countly.setLocation(countryCode, null, null, null);
       Countly.setLocation(countryCode, city, null, null);
       Countly.setLocation(countryCode, city, latitude + "," + longitude, null);
-      Countly.setLocation(countryCode, city, latitude + "," + longitude, null);
+
+      Countly.setLocation(countryCode, city, ",", ipAddress);
+      Countly.setLocation(countryCode, city, "0,0", ipAddress);
+      Countly.setLocation(countryCode, city, "a,b", ipAddress);
+      Countly.setLocation(countryCode, city, "abcd", ipAddress);
+
       Countly.setLocation(countryCode, city, latitude + "," + longitude, ipAddress);
     };
     disableLocation(){
