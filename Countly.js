@@ -21,6 +21,7 @@ Countly.appKey = "";
 Countly.messagingMode = {"DEVELOPMENT":"1","PRODUCTION":"0", "ADHOC": "2"};
 if (Platform.OS.match("android")) {
     Countly.messagingMode.DEVELOPMENT = 2;
+    Countly.messagingMode.PRODUCTION = 0;
 }
 
 // countly initialization
