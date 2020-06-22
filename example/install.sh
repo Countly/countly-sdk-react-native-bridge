@@ -13,3 +13,7 @@ pod install
 cd ..
 
 open ./ios/AwesomeProject.xcworkspace/
+
+cd ./AwesomeProject
+
+npm start
