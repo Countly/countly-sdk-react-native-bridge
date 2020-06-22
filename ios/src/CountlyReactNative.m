@@ -375,8 +375,8 @@ RCT_EXPORT_METHOD(endEvent:(NSArray*)arguments)
 
 RCT_EXPORT_METHOD(setLocation:(NSArray*)arguments)
 {
-  NSString* city = [arguments objectAtIndex:0];
-  NSString* country = [arguments objectAtIndex:1];
+  NSString* country = [arguments objectAtIndex:0];
+  NSString* city = [arguments objectAtIndex:1];
   NSString* locationString = [arguments objectAtIndex:2];
   NSString* ipAddress = [arguments objectAtIndex:3];
 

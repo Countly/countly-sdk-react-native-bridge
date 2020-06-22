@@ -10,7 +10,6 @@
     "url": "https://github.com/Countly/countly-sdk-react-native-bridge/issues"
   },
   "scripts": {
-    "postinstall": "node ./hooks/createNotificationService.js"
   },
   "dependencies": {},
   "deprecated": false,
