@@ -14,7 +14,6 @@
 
 CountlyConfig* config = nil;
 NSDictionary *lastStoredNotification = nil;
-Boolean isPushListenerEnabled = false;
 Result notificationListener = nil;
 NSMutableArray *notificationIDs = nil;        // alloc here
 
@@ -189,54 +188,61 @@ RCT_EXPORT_METHOD(askForNotificationPermission:(NSArray*)arguments)
   [Countly.sharedInstance askForNotificationPermission];
   });
 }
+- (void) saveListener:(Result) result{
+    notificationListener = result;
+}
 RCT_EXPORT_METHOD(registerForNotification:(NSArray*)arguments)
 {
-  dispatch_async(dispatch_get_main_queue(), ^ {
-    isPushListenerEnabled = true;
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleRemoteNotificationReceived:)
-      name:@"onCountlyPushNotification"
-    object:nil];
+    [self saveListener: ^(id  _Nullable result) {
+         [self sendEventWithName:@"onCountlyPushNotification" body: [CountlyReactNative toJSON:lastStoredNotification]];
+         lastStoredNotification = nil;
+    }];
     if(lastStoredNotification != nil){
-        [self sendEventWithName:@"onCountlyPushNotification" body: [NSMutableDictionary dictionaryWithDictionary:lastStoredNotification[@"notification"]]];
+        [self sendEventWithName:@"onCountlyPushNotification" body: [CountlyReactNative toJSON:lastStoredNotification]];
         lastStoredNotification = nil;
-
     }
-  });
 };
-- (void)handleRemoteNotificationReceived:(NSNotification *)notification{
-  dispatch_async(dispatch_get_main_queue(), ^ {
-    if(isPushListenerEnabled){
-      NSMutableDictionary *remoteNotification = [NSMutableDictionary dictionaryWithDictionary:notification.userInfo[@"notification"]];
 
-      [self sendEventWithName:@"onCountlyPushNotification" body: remoteNotification];
-      lastStoredNotification = nil;
-    }
-  });
-}
 + (void)onNotification:(NSDictionary *)notificationMessage
 {
-  dispatch_async(dispatch_get_main_queue(), ^ {
     NSLog(@"Notification received");
-    NSLog(@"The notification %@", notificationMessage);
+    NSLog(@"The notification %@", [CountlyReactNative toJSON:notificationMessage]);
     if(notificationMessage && notificationListener != nil){
-        notificationListener(@[[NSString stringWithFormat:@"%@",notificationMessage]]);
+      lastStoredNotification = notificationMessage;
+      notificationListener(@[[CountlyReactNative toJSON:notificationMessage]]);
     }else{
-        lastStoredNotification = notificationMessage;
+      lastStoredNotification = notificationMessage;
     }
     if(notificationMessage){
-        if(notificationIDs == nil){
-            notificationIDs = [[NSMutableArray alloc] init];
-        }
+      if(notificationIDs == nil){
+        notificationIDs = [[NSMutableArray alloc] init];
+      }
+      if ([[notificationMessage allKeys] containsObject:@"c"]) {
         NSDictionary* countlyPayload = notificationMessage[@"c"];
-        NSString *notificationID = countlyPayload[@"i"];
-        [notificationIDs insertObject:notificationID atIndex:[notificationIDs count]];
+        if ([[countlyPayload allKeys] containsObject:@"c"]) {
+          NSString *notificationID = countlyPayload[@"i"];
+          [notificationIDs insertObject:notificationID atIndex:[notificationIDs count]];
+        }
+      }
     }
-//    NSDictionary *userInfo = @{@"notification": notification};
-//    lastStoredNotification = userInfo;
-//    [[NSNotificationCenter defaultCenter] postNotificationName: @"onCountlyPushNotification" object:self userInfo:userInfo];
-  });
 }
++ (NSString *) toJSON: (NSDictionary  *) json{
+    NSError *error;
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:json options:NSJSONWritingPrettyPrinted error:&error];
 
+    if (! jsonData) {
+        NSLog(@"Got an error: %@", error);
+        return [NSString stringWithFormat:@"{'error': '%@'}", error];
+    } else {
+        NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+        return jsonString;
+    }
+}
++ (void) log: (NSString *) theMessage{
+    if(config.enableDebug == YES){
+        NSLog(@"[CountlyReactNative] %@", theMessage);
+    }
+}
 RCT_EXPORT_METHOD(start)
 {
   // [Countly.sharedInstance resume];
@@ -414,7 +420,7 @@ RCT_EXPORT_METHOD(endEvent:(NSArray*)arguments)
 RCT_EXPORT_METHOD(setLocation:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
-  NSString* country = [arguments objectAtIndex:0];
+  NSString* countryCode = [arguments objectAtIndex:0];
   NSString* city = [arguments objectAtIndex:1];
   NSString* locationString = [arguments objectAtIndex:2];
   NSString* ipAddress = [arguments objectAtIndex:3];
@@ -422,8 +428,8 @@ RCT_EXPORT_METHOD(setLocation:(NSArray*)arguments)
   if([@"null" isEqualToString:city]){
       city = nil;
   }
-  if([@"null" isEqualToString:country]){
-      country = nil;
+  if([@"null" isEqualToString:countryCode]){
+      countryCode = nil;
   }
   if([@"null" isEqualToString:locationString]){
       locationString = nil;
@@ -447,7 +453,7 @@ RCT_EXPORT_METHOD(setLocation:(NSArray*)arguments)
       }
   }
 
-  [Countly.sharedInstance recordCity:city andISOCountryCode:country];
+  [Countly.sharedInstance recordCity:city andISOCountryCode:countryCode];
   [Countly.sharedInstance recordIP:ipAddress];
   });
 }
