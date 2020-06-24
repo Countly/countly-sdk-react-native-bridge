@@ -19,8 +19,6 @@ typedef void (^Result)(id _Nullable result);
 - (void)changeDeviceId:(NSArray*_Nullable)arguments;
 - (void)enableParameterTamperingProtection:(NSArray*_Nullable)arguments;
 - (void)pinnedCertificates:(NSArray*_Nullable)arguments;
-// - (void)startEvent:(NSString*)arguments;
-// - (void)endEvent:(NSDictionary*)arguments;
 - (void)startEvent:(NSArray*_Nullable)arguments;
 - (void)endEvent:(NSArray*_Nullable)arguments;
 
@@ -40,7 +38,6 @@ typedef void (^Result)(id _Nullable result);
 - (void)updateRemoteConfigForKeysOnly:(NSArray*_Nullable)arguments callback:(RCTResponseSenderBlock _Nullable)callback;
 - (void)updateRemoteConfigExceptKeys:(NSArray*_Nullable)arguments callback:(RCTResponseSenderBlock _Nullable)callback;
 - (void)getRemoteConfigValueForKey:(NSArray*_Nullable)arguments callback:(RCTResponseSenderBlock _Nullable)callback;
-//- (void)setStarRatingDialogTexts:(NSArray*_Nullable)arguments;
 - (void)showStarRating:(NSArray*_Nullable)arguments callback:(RCTResponseSenderBlock _Nullable)callback;
 - (void)showFeedbackPopup:(NSArray*_Nullable)arguments;
 - (void)setEventSendThreshold:(NSArray*_Nullable)arguments;
@@ -51,5 +48,6 @@ typedef void (^Result)(id _Nullable result);
 + (void)onNotification:(NSDictionary *_Nullable)notification;
 - (void)handleRemoteNotificationReceived:(NSDictionary *_Nullable)notification;
 - (void)remoteConfigClearValues:(RCTPromiseResolveBlock _Nullable )resolve rejecter:(RCTPromiseRejectBlock _Nullable )reject;
-
++ (NSString *_Nullable) toJSON: (NSDictionary  * _Nullable) json;
+- (void) saveListener:(Result _Nullable ) result;
 @end

@@ -1,3 +1,8 @@
+#!/bin/sh
+
+# This is a shell script to create sample app for Countly React Native.
+# Created At: 24-June-2020
+
 rm -rf ./AwesomeProject
 react-native init AwesomeProject
 cd AwesomeProject
