@@ -127,11 +127,7 @@ Countly.askForNotificationPermission = function(){
 }
 Countly.registerForNotification = function(theListener){
     var event = eventEmitter.addListener('onCountlyPushNotification', theListener);
-    if(CountlyReactNative.registerForNotification){
-        CountlyReactNative.registerForNotification([]);
-    }else{
-        console.log("Countly.registerForNotification is only available for iOS");
-    }
+    CountlyReactNative.registerForNotification([]);
     return event;
 };
 // countly start for android

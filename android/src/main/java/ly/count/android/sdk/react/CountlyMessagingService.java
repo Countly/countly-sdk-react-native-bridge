@@ -1,4 +1,4 @@
-package ly.count.android.sdk;
+package ly.count.android.sdk.react;
 
 import android.content.Intent;
 import android.util.Log;
@@ -7,7 +7,7 @@ import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
 import ly.count.android.sdk.messaging.CountlyPush;
-import ly.count.android.sdk.react.CountlyReactNative;
+import ly.count.android.sdk.Countly;
 
 public class CountlyMessagingService extends FirebaseMessagingService {
     private static final String TAG = "CountlyMessagingService";
@@ -16,7 +16,9 @@ public class CountlyMessagingService extends FirebaseMessagingService {
     public void onNewToken(String token) {
         super.onNewToken(token);
         Log.d(TAG, "got new token: " + token);
-        CountlyPush.onTokenRefresh(token);
+        if(Countly.sharedInstance().isInitialized()) {
+            CountlyPush.onTokenRefresh(token);
+        }
     }
 
     @Override

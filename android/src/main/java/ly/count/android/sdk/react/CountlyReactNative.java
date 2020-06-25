@@ -3,8 +3,6 @@ package ly.count.android.sdk.react;
 import android.app.Activity;
 import android.util.Log;
 
-import android.os.Environment;
-
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -17,14 +15,10 @@ import com.facebook.react.bridge.JavaScriptModule;
 
 
 import android.content.Context;
-import android.os.Bundle;
-import android.util.Log;
 import ly.count.android.sdk.Countly;
 import ly.count.android.sdk.CountlyConfig;
-import ly.count.android.sdk.RemoteConfig;
 import ly.count.android.sdk.DeviceId;
 import ly.count.android.sdk.RemoteConfigCallback;
-// import ly.count.android.sdknative.CountlyNative;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -47,7 +41,6 @@ import android.app.NotificationManager;
 import android.app.NotificationChannel;
 import ly.count.android.sdk.messaging.CountlyPush;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.facebook.react.modules.core.DeviceEventManagerModule;
@@ -77,7 +70,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     private static Countly.CountlyMessagingMode messagingMode = Countly.CountlyMessagingMode.PRODUCTION;
     private static String channelName = "Default Name";
     private static String channelDescription = "Default Description";
-    private static Callback notificationListener = null;
+    private static CCallback notificationListener = null;
     private static String lastStoredNotification = null;
 
     private ReactApplicationContext _reactContext;
@@ -465,36 +458,31 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         String notificationString = json.toString();
         Log.i("Countly onNotification", notificationString);
         if(notificationListener != null){
-            notificationListener.invoke(notificationString);
+            notificationListener.callback(notificationString);
         }else{
             lastStoredNotification = notificationString;
         }
     }
-//    public interface Callback {
-//        void callback(String result);
-//    }
-
-    public String registerForNotification(JSONArray args){
+    public interface CCallback {
+        void callback(String result);
+    }
+    @ReactMethod
+    public void registerForNotification(ReadableArray args){
         final Context context = this._reactContext;
-        notificationListener = new Callback(){
+        notificationListener = new CCallback(){
             @Override
-            public void invoke(Object... args) {
-
+            public void callback(String result) {
+                Log.w("Countly", result);
+                ((ReactApplicationContext) context)
+                        .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                        .emit("onCountlyPushNotification", result);
             }
-
-//            @Override
-//            public void invoke(String result) {
-//                ((ReactApplicationContext) context)
-//                        .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-//                        .emit("onCountlyPushNotification", result);
-//            }
         };
         Log.i("CountlyNative", "registerForNotification theCallback");
         if(lastStoredNotification != null){
-            notificationListener.invoke(lastStoredNotification);
+            notificationListener.callback(lastStoredNotification);
             lastStoredNotification = null;
         }
-        return "pushTokenType: success";
     }
 
     @ReactMethod
