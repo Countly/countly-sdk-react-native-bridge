@@ -36,7 +36,7 @@ class Example extends Component {
     }
 
     onInit(){
-      Countly.pushTokenType(Countly.messagingMode.DEVELOPMENT);
+      Countly.pushTokenType(Countly.messagingMode.DEVELOPMENT, "Channel Name", "Channel Description");
       Countly.enableLogging();
       Countly.init("https://trinisoft.count.ly", "f0b2ac6919f718a13821575db28c0e2971e05ec5");
     }

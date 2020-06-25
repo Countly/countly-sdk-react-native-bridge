@@ -20,8 +20,7 @@ Countly.appKey = "";
 
 Countly.messagingMode = {"DEVELOPMENT":"1","PRODUCTION":"0", "ADHOC": "2"};
 if (Platform.OS.match("android")) {
-    Countly.messagingMode.DEVELOPMENT = 2;
-    Countly.messagingMode.PRODUCTION = 0;
+    Countly.messagingMode.DEVELOPMENT = "2";
 }
 
 // countly initialization
@@ -110,14 +109,12 @@ Countly.setViewTracking = function(boolean){
     CountlyReactNative.setViewTracking([boolean || "false"]);
 }
 
-Countly.pushTokenType = function(tokenType){
+Countly.pushTokenType = function(tokenType, channelName, channelDescription){
     var args = [];
     args.push(tokenType || "");
-    if(CountlyReactNative.pushTokenType){
-        CountlyReactNative.pushTokenType(args);
-    }else{
-        console.log("CountlyReactNative.pushTokenType is only supported in iOS");
-    }
+    args.push(channelName || "");
+    args.push(channelDescription || "");
+    CountlyReactNative.pushTokenType(args);
 }
 Countly.sendPushToken = function(options){
     var args = [];
@@ -130,11 +127,7 @@ Countly.askForNotificationPermission = function(){
 }
 Countly.registerForNotification = function(theListener){
     var event = eventEmitter.addListener('onCountlyPushNotification', theListener);
-    if(CountlyReactNative.registerForNotification){
-        CountlyReactNative.registerForNotification([]);
-    }else{
-        console.log("Countly.registerForNotification is only available for iOS");
-    }
+    CountlyReactNative.registerForNotification([]);
     return event;
 };
 // countly start for android
