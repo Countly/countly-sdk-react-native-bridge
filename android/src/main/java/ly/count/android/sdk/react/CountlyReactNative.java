@@ -39,6 +39,8 @@ import static ly.count.android.sdk.Countly.TAG;
 import android.os.Build;
 import android.app.NotificationManager;
 import android.app.NotificationChannel;
+
+import ly.count.android.sdk.StarRatingCallback;
 import ly.count.android.sdk.messaging.CountlyPush;
 
 import org.json.JSONObject;
@@ -750,9 +752,20 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void showStarRating(ReadableArray args){
+    public void showStarRating(ReadableArray args, final Callback callback){
         Activity activity = getCurrentActivity();
-        Countly.sharedInstance().ratings().showStarRating(activity, null);
+        Countly.sharedInstance().ratings().showStarRating(activity, new StarRatingCallback(){
+
+            @Override
+            public void onRate(int rating) {
+                callback.invoke("Rating: "+rating);
+            }
+
+            @Override
+            public void onDismiss() {
+                callback.invoke("User canceled");
+            }
+        });
 
     }
 
