@@ -9,8 +9,7 @@
   "bugs": {
     "url": "https://github.com/Countly/countly-sdk-react-native-bridge/issues"
   },
-  "scripts": {
-  },
+  "scripts": {},
   "dependencies": {},
   "deprecated": false,
   "description": "Countly is an innovative, real-time, open source mobile analytics and push notifications platform.",
@@ -24,5 +23,8 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Countly/countly-sdk-react-native-bridge.git"
+  },
+  "devDependencies": {
+    "xcode": "^3.0.1"
   }
 }
