@@ -661,9 +661,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void updateRemoteConfigForKeysOnly(ReadableArray args, final Callback myCallback){
-        int i = args.size();
-        int n = ++i;
-        String[] newArray = new String[n];
+        String[] newArray = new String[args.size()];
         for(int cnt=0;cnt<args.size();cnt++)
         {
             newArray[cnt] = args.getString(cnt);
@@ -685,9 +683,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void updateRemoteConfigExceptKeys(ReadableArray args, final Callback myCallback){
-        int i = args.size();
-        int n = ++i;
-        String[] newArray = new String[n];
+        String[] newArray = new String[args.size()];
         for(int cnt=0;cnt<args.size();cnt++)
         {
             newArray[cnt] = args.getString(cnt);
