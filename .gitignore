@@ -14,3 +14,6 @@ ios/countly-sdk-react-native-bridge.xcworkspace
 ios/Podfile.lock
 ios/countly-sdk-react-native-bridge.xcworkspace/*
 .project
+android/local.properties
+android/android.iml
+android/.settings/org.eclipse.buildship.core.prefs

@@ -32,9 +32,6 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.HashMap;
 
-// for debug logging
-import static ly.count.android.sdk.Countly.TAG;
-
 //Push Plugin
 import android.os.Build;
 import android.app.NotificationManager;
@@ -104,7 +101,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void init(ReadableArray args){
-        Log.d(Countly.TAG, "Initializing...");
+        Log.d(Countly.TAG, "[CountlyReactNative] Initializing...");
         String serverUrl = args.getString(0);
         String appKey = args.getString(1);
         String deviceId = args.getString(2);
@@ -169,10 +166,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         int isEnabled = Integer.parseInt(args.getString(0));
         if(isEnabled == 1){
             this.config.setHttpPostForced(true);
-            // Countly.sharedInstance().setHttpPostForced(true);
         }else{
             this.config.setHttpPostForced(false);
-            // Countly.sharedInstance().setHttpPostForced(false);
         }
     }
 
@@ -180,7 +175,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     public void enableParameterTamperingProtection(ReadableArray args){
         String salt = args.getString(0);
         this.config.setParameterTamperingProtectionSalt(salt);
-        // Countly.sharedInstance().enableParameterTamperingProtection(salt);
     }
 
     @ReactMethod
@@ -214,7 +208,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
                 }
             }
         }
-        Log.i("Countly", "Certificate failed.");
+        Log.i(Countly.TAG, "[CountlyReactNative] Certificate failed.");
         return new String[]{};
     }
 
@@ -247,7 +241,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void enableCrashReporting(){
         this.config.enableCrashReporting();
-        // Countly.sharedInstance().enableCrashReporting();
     }
 
     @ReactMethod
@@ -406,9 +399,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         }
     }
 
-
-
-
     @ReactMethod
     public void setUserData(ReadableArray args){
         Map<String, String> bundle = new HashMap<String, String>();
@@ -458,7 +448,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     public static void onNotification(Map<String, String> notification){
         JSONObject json = new JSONObject(notification);
         String notificationString = json.toString();
-        Log.i("Countly onNotification", notificationString);
+        Log.i(Countly.TAG, "[CountlyReactNative] onNotification [" + notificationString + "]");
         if(notificationListener != null){
             notificationListener.callback(notificationString);
         }else{
@@ -474,13 +464,13 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         notificationListener = new CCallback(){
             @Override
             public void callback(String result) {
-                Log.w("Countly", result);
+                Log.w(Countly.TAG, "[CountlyReactNative] registerForNotification callback result [" + result + "]");
                 ((ReactApplicationContext) context)
                         .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                         .emit("onCountlyPushNotification", result);
             }
         };
-        Log.i("CountlyNative", "registerForNotification theCallback");
+        Log.i(Countly.TAG, "[CountlyReactNative] registerForNotification theCallback");
         if(lastStoredNotification != null){
             notificationListener.callback(lastStoredNotification);
             lastStoredNotification = null;
@@ -506,7 +496,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
                     @Override
                     public void onComplete(Task<InstanceIdResult> task) {
                         if (!task.isSuccessful()) {
-                            Log.w("[CountlyReactNative]", "getInstanceId failed", task.getException());
+                            Log.w(Countly.TAG, "[CountlyReactNative] getInstanceId failed", task.getException());
                             return;
                         }
                         String token = task.getResult().getToken();
@@ -621,7 +611,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
                 features.add(featureName);
             }
             else {
-                Log.d(Countly.TAG, "Not a valid consent feature to add: " + featureName);
+                Log.d(Countly.TAG, "[CountlyReactNative] Not a valid consent feature to add: " + featureName);
             }
         }
         Countly.sharedInstance().consent().giveConsent(features.toArray(new String[features.size()]));
@@ -636,7 +626,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
                 features.add(featureName);
             }
             else {
-                Log.d(Countly.TAG, "Not a valid consent feature to remove: " + featureName);
+                Log.d(Countly.TAG, "[CountlyReactNative] Not a valid consent feature to remove: " + featureName);
             }
         }
         Countly.sharedInstance().consent().removeConsent(features.toArray(new String[features.size()]));
@@ -721,12 +711,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         String keyName = args.getString(0);
         Object keyValue = Countly.sharedInstance().remoteConfig().getValueForKey(keyName);
         if (keyValue == null) {
-            // Log.d(TAG, keyName + ": ConfigKeyNotFound");
+            Log.d(Countly.TAG, "[CountlyReactNative] getRemoteConfigValueForKey, [" + keyName + "]: ConfigKeyNotFound");
             myCallback.invoke("ConfigKeyNotFound");
         }
         else {
             String resultString = (keyValue).toString();
-            // Log.d(TAG, keyName + ": " + resultString);
+            Log.d(Countly.TAG, "[CountlyReactNative] getRemoteConfigValueForKey, [" + keyName + "]: " + resultString);
             myCallback.invoke(resultString);
         }
     }
@@ -735,12 +725,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     public void getRemoteConfigValueForKeyP(String keyName, Promise promise){
         Object keyValue = Countly.sharedInstance().remoteConfig().getValueForKey(keyName);
         if (keyValue == null) {
-            Log.d(TAG, keyName + ": ConfigKeyNotFound");
+            Log.d(Countly.TAG, "[CountlyReactNative] getRemoteConfigValueForKeyP, [" + keyName + "]: ConfigKeyNotFound");
             promise.reject("ConfigKeyNotFound", null, null, null);
         }
         else {
             String resultString = (keyValue).toString();
-            Log.d(TAG, keyName + ": " + resultString);
+            Log.d(Countly.TAG, "[CountlyReactNative] getRemoteConfigValueForKeyP, [" + keyName + "]: " + resultString);
             promise.resolve(resultString);
         }
     }
