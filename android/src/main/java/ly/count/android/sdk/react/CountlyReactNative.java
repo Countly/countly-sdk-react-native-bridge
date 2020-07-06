@@ -71,6 +71,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     private static String channelDescription = "Default Description";
     private static CCallback notificationListener = null;
     private static String lastStoredNotification = null;
+    protected static boolean loggingEnabled = false;
 
     private ReactApplicationContext _reactContext;
 
@@ -131,7 +132,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     public void setLoggingEnabled(ReadableArray args){
         Boolean enabled = args.getBoolean(0);
         this.config.setLoggingEnabled(enabled);
-        // Countly.sharedInstance().setLoggingEnabled(enabled);
+        loggingEnabled = enabled;
     }
 
     @ReactMethod
@@ -431,15 +432,18 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void pushTokenType(ReadableArray args){
+    public void pushTokenType(ReadableArray args) {
         int messagingMode = Integer.parseInt(args.getString(0));
         this.channelName = args.getString(1);
         this.channelDescription = args.getString(2);
 
-        if(messagingMode == 0){
-            this.messagingMode = Countly.CountlyMessagingMode.PRODUCTION;
+        if (loggingEnabled) {
+            Log.i(Countly.TAG, "[CountlyReactNative] pushTokenType [" + messagingMode + "][" + this.channelName + "][" + this.channelDescription + "]");
         }
-        else{
+
+        if (messagingMode == 0) {
+            this.messagingMode = Countly.CountlyMessagingMode.PRODUCTION;
+        } else {
             this.messagingMode = Countly.CountlyMessagingMode.TEST;
         }
     }
@@ -448,10 +452,22 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     public static void onNotification(Map<String, String> notification){
         JSONObject json = new JSONObject(notification);
         String notificationString = json.toString();
-        Log.i(Countly.TAG, "[CountlyReactNative] onNotification [" + notificationString + "]");
+
+        if(loggingEnabled) {
+            Log.i(Countly.TAG, "[CountlyReactNative] onNotification [" + notificationString + "]");
+        }
+
         if(notificationListener != null){
+            //there is a listener for notifications, send the just received notification to it
+            if(loggingEnabled) {
+                Log.i(Countly.TAG, "[CountlyReactNative] onNotification, listener exists");
+            }
             notificationListener.callback(notificationString);
         }else{
+            //there is no listener for notifications. Store this notification for when a listener is created
+            if(loggingEnabled) {
+                Log.i(Countly.TAG, "[CountlyReactNative] onNotification, listener does not exist");
+            }
             lastStoredNotification = notificationString;
         }
     }
@@ -464,13 +480,17 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         notificationListener = new CCallback(){
             @Override
             public void callback(String result) {
-                Log.w(Countly.TAG, "[CountlyReactNative] registerForNotification callback result [" + result + "]");
+                if(loggingEnabled) {
+                    Log.w(Countly.TAG, "[CountlyReactNative] registerForNotification callback result [" + result + "]");
+                }
                 ((ReactApplicationContext) context)
                         .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                         .emit("onCountlyPushNotification", result);
             }
         };
-        Log.i(Countly.TAG, "[CountlyReactNative] registerForNotification theCallback");
+        if(loggingEnabled) {
+            Log.i(Countly.TAG, "[CountlyReactNative] registerForNotification theCallback");
+        }
         if(lastStoredNotification != null){
             notificationListener.callback(lastStoredNotification);
             lastStoredNotification = null;
@@ -496,7 +516,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
                     @Override
                     public void onComplete(Task<InstanceIdResult> task) {
                         if (!task.isSuccessful()) {
-                            Log.w(Countly.TAG, "[CountlyReactNative] getInstanceId failed", task.getException());
+                            if(loggingEnabled) {
+                                Log.w(Countly.TAG, "[CountlyReactNative] getInstanceId failed", task.getException());
+                            }
                             return;
                         }
                         String token = task.getResult().getToken();
@@ -611,7 +633,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
                 features.add(featureName);
             }
             else {
-                Log.d(Countly.TAG, "[CountlyReactNative] Not a valid consent feature to add: " + featureName);
+                if(loggingEnabled) {
+                    Log.d(Countly.TAG, "[CountlyReactNative] Not a valid consent feature to add: " + featureName);
+                }
             }
         }
         Countly.sharedInstance().consent().giveConsent(features.toArray(new String[features.size()]));
@@ -626,7 +650,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
                 features.add(featureName);
             }
             else {
-                Log.d(Countly.TAG, "[CountlyReactNative] Not a valid consent feature to remove: " + featureName);
+                if(loggingEnabled) {
+                    Log.d(Countly.TAG, "[CountlyReactNative] Not a valid consent feature to remove: " + featureName);
+                }
             }
         }
         Countly.sharedInstance().consent().removeConsent(features.toArray(new String[features.size()]));
