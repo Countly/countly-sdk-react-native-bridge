@@ -33,7 +33,7 @@ function addListener(){
         H.setLine(source, endLineNumber, listenerLine);
         H.log("iOS: Listener added.");
       }else{
-        H.log("iOS: Listener already added.");
+        H.log("iOS: Listener already exists.");
       }
     }else{
       H.log("iOS: Unable to find line to append listener");
@@ -62,29 +62,33 @@ function addServiceCountlyNSE(){
         if (err) {
           return H.log(`iOS: Error parsing iOS project: ${err}`);
         }
+        console.log(proj.prototype);
         fs.mkdirSync(config.ios.app_dir +"/" +extName);
         extFiles.forEach(function (extFile) {
             let targetFile = config.ios.app_dir +"/" +extName +"/" +extFile;//  `${iosPath}${extName}/${extFile}`;
             fs.createReadStream(`${sourceDir}${extFile}`)
                 .pipe(fs.createWriteStream(targetFile));
         });
-
         var countlyFiles = [
-            config.ios.app_dir +'/Pods/Countly/' +'CountlyNotificationService.h',
-            config.ios.app_dir +'/Pods/Countly/' +'CountlyNotificationService.m'
+            config.ios.app_dir +'/Pods/Countly/Core/' +'CountlyNotificationService.h',
+            config.ios.app_dir +'/Pods/Countly/Core/' +'CountlyNotificationService.m'
         ];
         extFiles.push(countlyFiles[0]);
         extFiles.push(countlyFiles[1]);
+        console.log(extFiles);
         // Create new PBXGroup for the extension
         let extGroup = proj.addPbxGroup(extFiles, extName, extName);
+        console.log(extGroup);
         // Add the new PBXGroup to the CustomTemplate group. This makes the
         // files appear in the file explorer in Xcode.
-        let groups = proj.hash.project.objects['PBXGroup'];
-        Object.keys(groups).forEach(function (key) {
-            if (groups[key].name === 'CustomTemplate') {
-                proj.addToPbxGroup(extGroup.uuid, key);
-            }
-        });
+        // proj.addToPbxGroup(extGroup.uuid, key);
+
+        // let groups = proj.hash.project.objects['PBXGroup'];
+        // Object.keys(groups).forEach(function (key) {
+        //     if (groups[key].name === 'CustomTemplate') {
+        //         proj.addToPbxGroup(extGroup.uuid, key);
+        //     }
+        // });
         // Add a target for the extension
         let target = proj.addTarget(extName, 'app_extension');
 
@@ -95,6 +99,11 @@ function addServiceCountlyNSE(){
         fs.writeFileSync(projPath, proj.writeSync());
         H.log(`iOS: Added ${extName} notification extension to project`);
     });
+}
+
+function isServiceExists(proj){
+  console.log(proj);
+  return true;
 }
 // Run all files here
 addListener();
