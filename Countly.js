@@ -486,6 +486,60 @@ Countly.setEventSendThreshold = function(size){
     CountlyReactNative.setEventSendThreshold([size.toString() || ""]);
 }
 
+Countly.apm = function(){
+    var args = [];
+    CountlyReactNative.apm(args);
+}
+
+Countly.startTrace = function(traceKey){
+    var args = [];
+    args.push(traceKey);
+    CountlyReactNative.startTrace(args);
+}
+
+Countly.endTrace = function(traceKey, customMetric){
+    var args = [];
+    args.push(traceKey);
+    customMetric = customMetric || {};
+    for(var key in customMetric){
+        args.push(key.toString());
+        args.push(customMetric[key].toString());
+    }
+    CountlyReactNative.endTrace(args);
+}
+
+Countly.startNetworkRequest = function(networkTraceKey, uniqueId){
+    var args = [];
+    args.push(networkTraceKey);
+    args.push(uniqueId);
+    CountlyReactNative.startNetworkRequest(args);
+}
+
+Countly.endNetworkRequest = function(networkTraceKey, uniqueId, uniqueId, responseCode, requestPayloadSize, responsePayloadSize){
+    var args = [];
+    args.push(networkTraceKey);
+    args.push(uniqueId);
+    args.push(responseCode.toString());
+    args.push(requestPayloadSize.toString());
+    args.push(responsePayloadSize.toString());
+    CountlyReactNative.endNetworkRequest(args);
+}
+
+
+Countly.setRecordAppStartTime = function(isRecordAppStartTime){
+    var args = [];
+    if(isRecordAppStartTime){
+        args.push("true");
+    }else{
+        args.push("false");
+    }
+    CountlyReactNative.setRecordAppStartTime(args);
+}
+
+Countly.applicationOnCreate = function(){
+    var args = [];
+    CountlyReactNative.applicationOnCreate(args);
+}
 /*
 Countly.initNative = function(){
     CountlyReactNative.initNative();

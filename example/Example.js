@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 import { Text, Button, ScrollView, Image, View, Alert } from 'react-native';
 import Countly from 'countly-sdk-react-native-bridge';
 
+var successCodes = [100, 101, 200, 201, 202, 205, 300, 301, 303, 305];
+var failureCodes = [400, 402, 405, 408, 500, 501, 502, 505];
 
 class Example extends Component {
     constructor(props) {
@@ -27,6 +29,14 @@ class Example extends Component {
         this.enableParameterTamperingProtection = this.enableParameterTamperingProtection.bind(this);
         this.pinnedCertificates = this.pinnedCertificates.bind(this);
         this.askForNotificationPermission = this.askForNotificationPermission.bind(this);
+
+        this.apm = this.apm.bind(this);
+        this.startTrace = this.startTrace.bind(this);
+        this.endTrace = this.endTrace.bind(this);
+        this.startNetworkRequest = this.startNetworkRequest.bind(this);
+        this.endNetworkRequest = this.endNetworkRequest.bind(this);
+        this.setRecordAppStartTime = this.setRecordAppStartTime.bind(this);
+        this.applicationOnCreate = this.applicationOnCreate.bind(this);
     };
 
     componentDidMount(){
@@ -398,6 +408,57 @@ class Example extends Component {
     setEventSendThreshold(){
       Countly.setEventSendThreshold("3");
     }
+
+  // APM Examples
+  apm(){
+    Countly.apm();
+  }
+  startTrace(){
+    var traceKey = "Trace Key";
+    Countly.startTrace(traceKey);
+  }
+  endTrace(){
+    var traceKey = "Trace Key";
+    var customMetric = {
+      "ABC": 1233,
+      "C44C": 1337
+    };
+    Countly.endTrace(traceKey, customMetric);
+  }
+  startNetworkRequestSuccess(){
+    var networkTraceKey = "api/endpoint.1";
+    var uniqueId = "1337";
+    Countly.startNetworkRequest(networkTraceKey, uniqueId);
+  }
+  endNetworkRequestSuccess(){
+    var networkTraceKey = "api/endpoint.1";
+    var uniqueId = "1337";
+    var rnd = new Random();
+    var responseCode = successCodes[rnd.nextInt(successCodes.length)];
+    var requestPayloadSize = rnd.nextInt(700) + 200;
+    var responsePayloadSize = rnd.nextInt(700) + 200;
+    Countly.endNetworkRequest(networkTraceKey, uniqueId, responseCode, requestPayloadSize, responsePayloadSize);
+  }
+  startNetworkRequestFailure(){
+    var networkTraceKey = "api/endpoint.1";
+    var uniqueId = "7331";
+    Countly.startNetworkRequest(networkTraceKey, uniqueId);
+  }
+  endNetworkRequestFailure(){
+    var networkTraceKey = "api/endpoint.1";
+    var uniqueId = "7331";
+    var rnd = new Random();
+    var responseCode = failureCodes[rnd.nextInt(failureCodes.length)];
+    var requestPayloadSize = rnd.nextInt(700) + 250;
+    var responsePayloadSize = rnd.nextInt(700) + 250;
+    Countly.endNetworkRequest(networkTraceKey, uniqueId, responseCode, requestPayloadSize, responsePayloadSize);
+  }
+  setRecordAppStartTime(){
+    Countly.setRecordAppStartTime(true);
+  }
+  applicationOnCreate(){
+    Countly.applicationOnCreate();
+  }
     /*
     initNative(){
         Countly.initNative();
@@ -555,6 +616,18 @@ class Example extends Component {
             <Text style={[{textAlign: 'center'}]}>Crash Event End</Text>
 
             < Button onPress = { this.eventSendThreshold } title = "Set Event Threshold" color = "#00b5ad"> </Button>
+
+            <Text style={[{textAlign: 'center'}]}>Performance Example</Text>
+            <Button onPress={ this.apm } title="APM" color = "#1b1c1d"> </Button>
+            <Button onPress={ this.startTrace } title="Start Trace" color = "#1b1c1d"> </Button>
+            <Button onPress={ this.endTrace } title="End Trace" color = "#1b1c1d"> </Button>
+            <Button onPress={ this.startNetworkRequestSuccess } title="Start Network Request Success" color = "#1b1c1d"> </Button>
+            <Button onPress={ this.endNetworkRequestSuccess } title="End Network Request Success" color = "#1b1c1d"> </Button>
+            <Button onPress={ this.startNetworkRequestFailure } title="Start Network Request Failure" color = "#1b1c1d"> </Button>
+            <Button onPress={ this.endNetworkRequestFailure } title="End Network Request Failure" color = "#1b1c1d"> </Button>
+            <Button onPress={ this.setRecordAppStartTime } title="Set Record App Start Time" color = "#1b1c1d"> </Button>
+            <Button onPress={ this.applicationOnCreate } title="Application on create" color = "#1b1c1d"> </Button>
+
             {/*
             < Button onPress = { this.initNative } title = "Init Native" color = "#00b5ad"> </Button>
             < Button onPress = { this.testCrash } title = "Test Native Crash" color = "crimson"> </Button>

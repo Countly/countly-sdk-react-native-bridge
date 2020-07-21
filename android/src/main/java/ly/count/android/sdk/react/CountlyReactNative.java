@@ -784,6 +784,58 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         // Countly.sharedInstance().setEventQueueSizeToSend(size);
     }
 
+    @ReactMethod
+    public void apm(ReadableArray args){
+        Countly.sharedInstance().apm();
+    }
+
+    @ReactMethod
+    public void startTrace(ReadableArray args){
+        String traceKey = args.getString(0);
+        Countly.sharedInstance().apm().startTrace(traceKey);
+    }
+
+    @ReactMethod
+    public void endTrace(ReadableArray args){
+        String traceKey = args.getString(0);
+        HashMap<String, Integer> customMetric = new HashMap<String, Integer>();
+        for (int i = 1, il = args.length(); i < il; i += 2) {
+            customMetric.put(args.getString(i), Integer.parseInt(args.getString(i + 1)));
+        }
+        Countly.sharedInstance().apm().endTrace(traceKey, customMetric);
+    }
+
+    @ReactMethod
+    public void startNetworkRequest(ReadableArray args){
+        String networkTraceKey = args.getString(0);
+        String uniqueId = args.getString(1);
+        Countly.sharedInstance().apm().startNetworkRequest(networkTraceKey, uniqueId);
+    }
+
+    @ReactMethod
+    public void endNetworkRequest(ReadableArray args){
+        String networkTraceKey = args.getString(0);
+        String uniqueId = args.getString(1);
+        int responseCode = Integer.parseInt(args.getString(1));
+        int requestPayloadSize = Integer.parseInt(args.getString(1));
+        int responsePayloadSize = Integer.parseInt(args.getString(1));
+        Countly.sharedInstance().apm().endNetworkRequest(networkTraceKey, uniqueId, responseCode, requestPayloadSize, responsePayloadSize);
+    }
+
+    @ReactMethod
+    public void setRecordAppStartTime(ReadableArray args){
+        String isStart = args.getString(0);
+        if(isStart.equals("true")){
+            this.config.setRecordAppStartTime(true);
+        }else{
+            this.config.setRecordAppStartTime(false);
+        }
+    }
+
+    @ReactMethod
+    public void applicationOnCreate(ReadableArray args){
+        Countly.applicationOnCreate();
+    }
     /*
     @ReactMethod
     public void initNative(){
