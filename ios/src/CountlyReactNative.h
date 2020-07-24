@@ -50,4 +50,15 @@ typedef void (^Result)(id _Nullable result);
 - (void)remoteConfigClearValues:(RCTPromiseResolveBlock _Nullable )resolve rejecter:(RCTPromiseRejectBlock _Nullable )reject;
 + (NSString *_Nullable) toJSON: (NSDictionary  * _Nullable) json;
 - (void) saveListener:(Result _Nullable ) result;
+
+- (void)apm:(NSArray*_Nullable)arguments;
+- (void)startTrace:(NSArray*_Nullable)arguments;
+- (void)cancelTrace:(NSArray*_Nullable)arguments;
+- (void)clearAllTrace:(NSArray*_Nullable)arguments;
+- (void)endTrace:(NSArray*_Nullable)arguments;
+- (void)startNetworkRequest:(NSArray*_Nullable)arguments;
+- (void)endNetworkRequest:(NSArray*_Nullable)arguments;
+- (void)setRecordAppStartTime:(NSArray*_Nullable)arguments;
+- (void)applicationOnCreate:(NSArray*_Nullable)arguments;
+
 @end

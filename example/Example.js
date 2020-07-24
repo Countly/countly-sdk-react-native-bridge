@@ -224,12 +224,12 @@ class Example extends Component {
       Countly.setRequiresConsent(true);
     }
 
-    giveEventsConsent(){
-      Countly.giveConsent("events");
+    giveConsent(name){
+      Countly.giveConsent([name]);
     };
 
-    removeEventsConsent(){
-      Countly.removeConsent("events");
+    removeConsent(){
+      Countly.removeConsent([name]);
     };
 
     giveMultipleConsent(){
@@ -574,13 +574,42 @@ class Example extends Component {
 
             < Button onPress = { this.pinnedCertificates } title = "Pinned Certificates" color = "#00b5ad"> </Button>
             < Button onPress = { this.enableParameterTamperingProtection } title = "Enable Parameter Tapmering Protection" color = "#00b5ad"> </Button>
+
+            < Text style={[{ textAlign: 'center' }]}>Consent Start</Text>
             < Button onPress = { this.setRequiresConsent } title = "Init Consent" color = "#00b5ad"> </Button>
-            < Button onPress = { this.giveEventsConsent } title = "Give events consent" color = "#00b5ad"> </Button>
-            < Button onPress = { this.removeEventsConsent } title = "Remove events consent" color = "#00b5ad"> </Button>
-            < Button onPress = { this.giveMultipleConsent } title = "Give multiple consent" color = "#00b5ad"> </Button>
-            < Button onPress = { this.removeMultipleConsent } title = "Remove multiple consent" color = "#00b5ad"> </Button>
             < Button onPress = { this.giveAllConsent } title = "Give all Consent" color = "#00b5ad"> </Button>
             < Button onPress = { this.removeAllConsent } title = "Remove all Consent" color = "#00b5ad"> </Button>
+
+            {/* Give Consent */}
+            < Button onPress = { this.giveConsent("sessions") } title = "Give sessions" color = "#00b5ad"> </Button>
+            < Button onPress = { this.giveConsent("events") } title = "Give events" color = "#00b5ad"> </Button>
+            < Button onPress = { this.giveConsent("views") } title = "Give views" color = "#00b5ad"> </Button>
+            < Button onPress = { this.giveConsent("location") } title = "Give location" color = "#00b5ad"> </Button>
+            < Button onPress = { this.giveConsent("crashes") } title = "Give crashes" color = "#00b5ad"> </Button>
+            < Button onPress = { this.giveConsent("attribution") } title = "Give attribution" color = "#00b5ad"> </Button>
+            < Button onPress = { this.giveConsent("users") } title = "Give users" color = "#00b5ad"> </Button>
+            < Button onPress = { this.giveConsent("push") } title = "Give push" color = "#00b5ad"> </Button>
+            < Button onPress = { this.giveConsent("star-rating") } title = "Give star-rating" color = "#00b5ad"> </Button>
+            < Button onPress = { this.giveConsent("performance") } title = "Give performance" color = "#00b5ad"> </Button>
+
+            {/* Remove Consent */}
+
+            < Button onPress = { this.removeConsent("sessions") } title = "Remove sessions" color = "#00b5ad"> </Button>
+            < Button onPress = { this.removeConsent("events") } title = "Remove events" color = "#00b5ad"> </Button>
+            < Button onPress = { this.removeConsent("views") } title = "Remove views" color = "#00b5ad"> </Button>
+            < Button onPress = { this.removeConsent("location") } title = "Remove location" color = "#00b5ad"> </Button>
+            < Button onPress = { this.removeConsent("crashes") } title = "Remove crashes" color = "#00b5ad"> </Button>
+            < Button onPress = { this.removeConsent("attribution") } title = "Remove attribution" color = "#00b5ad"> </Button>
+            < Button onPress = { this.removeConsent("users") } title = "Remove users" color = "#00b5ad"> </Button>
+            < Button onPress = { this.removeConsent("push") } title = "Remove push" color = "#00b5ad"> </Button>
+            < Button onPress = { this.removeConsent("star-rating") } title = "Remove star-rating" color = "#00b5ad"> </Button>
+            < Button onPress = { this.removeConsent("performance") } title = "Remove performance" color = "#00b5ad"> </Button>
+
+
+            < Button onPress = { this.giveMultipleConsent } title = "Give multiple consent" color = "#00b5ad"> </Button>
+            < Button onPress = { this.removeMultipleConsent } title = "Remove multiple consent" color = "#00b5ad"> </Button>
+
+            < Text style={[{ textAlign: 'center' }]}>Consent End</Text>
 
 
             < Button onPress = { this.setLocation } title = "Set Location" color = "#00b5ad"> </Button>

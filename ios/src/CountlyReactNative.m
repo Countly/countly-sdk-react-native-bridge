@@ -643,14 +643,87 @@ RCT_EXPORT_METHOD(setRequiresConsent:(NSArray*)arguments)
 RCT_EXPORT_METHOD(giveConsent:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
-  [Countly.sharedInstance giveConsentForFeatures:arguments];
+  NSString* consent = @"";
+  // NSMutableDictionary *giveConsentAll = [[NSMutableDictionary alloc] init];
+  for(int i=0,il=(int)giveAllConsent.count; i<il;i++){
+      consent = [giveAllConsent objectAtIndex:i];
+      if([@"sessions" isEqualToString:consent]){
+          [Countly.sharedInstance giveConsentForFeature:CLYConsentSessions];
+      }
+      if([@"events" isEqualToString:consent]){
+          [Countly.sharedInstance giveConsentForFeature:CLYConsentEvents];
+      }
+      if([@"users" isEqualToString:consent]){
+          [Countly.sharedInstance giveConsentForFeature:CLYConsentUserDetails];
+      }
+      if([@"crashes" isEqualToString:consent]){
+          [Countly.sharedInstance giveConsentForFeature:CLYConsentCrashReporting];
+      }
+      if([@"push" isEqualToString:consent]){
+          [Countly.sharedInstance giveConsentForFeature:CLYConsentPushNotifications];
+      }
+      if([@"location" isEqualToString:consent]){
+          [Countly.sharedInstance giveConsentForFeature:CLYConsentLocation];
+      }
+      if([@"views" isEqualToString:consent]){
+          [Countly.sharedInstance giveConsentForFeature:CLYConsentViewTracking];
+      }
+      if([@"attribution" isEqualToString:consent]){
+          [Countly.sharedInstance giveConsentForFeature:CLYConsentAttribution];
+      }
+      if([@"star-rating" isEqualToString:consent]){
+          [Countly.sharedInstance giveConsentForFeature:CLYConsentStarRating];
+      }
+      if([@"accessory-devices" isEqualToString:consent]){
+          [Countly.sharedInstance giveConsentForFeature:CLYConsentAppleWatch];
+      }
+      if([@"performance" isEqualToString:consent]){
+          [Countly.sharedInstance giveConsentForFeature:CLYConsentPerformanceMonitoring];
+      }
+  }
   });
 }
 
 RCT_EXPORT_METHOD(removeConsent:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
-  [Countly.sharedInstance cancelConsentForFeatures:arguments];
+  NSString* consent = @"";
+  for(int i=0,il=(int)command.count; i<il;i++){
+      consent = [command objectAtIndex:i];
+      if([@"sessions" isEqualToString:consent]){
+          [Countly.sharedInstance cancelConsentForFeature:CLYConsentSessions];
+      }
+      if([@"events" isEqualToString:consent]){
+          [Countly.sharedInstance cancelConsentForFeature:CLYConsentEvents];
+      }
+      if([@"users" isEqualToString:consent]){
+          [Countly.sharedInstance cancelConsentForFeature:CLYConsentUserDetails];
+      }
+      if([@"crashes" isEqualToString:consent]){
+          [Countly.sharedInstance cancelConsentForFeature:CLYConsentCrashReporting];
+      }
+      if([@"push" isEqualToString:consent]){
+          [Countly.sharedInstance cancelConsentForFeature:CLYConsentPushNotifications];
+      }
+      if([@"location" isEqualToString:consent]){
+          [Countly.sharedInstance cancelConsentForFeature:CLYConsentLocation];
+      }
+      if([@"views" isEqualToString:consent]){
+          [Countly.sharedInstance cancelConsentForFeature:CLYConsentViewTracking];
+      }
+      if([@"attribution" isEqualToString:consent]){
+          [Countly.sharedInstance cancelConsentForFeature:CLYConsentAttribution];
+      }
+      if([@"star-rating" isEqualToString:consent]){
+          [Countly.sharedInstance cancelConsentForFeature:CLYConsentStarRating];
+      }
+      if([@"accessory-devices" isEqualToString:consent]){
+          [Countly.sharedInstance cancelConsentForFeature:CLYConsentAppleWatch];
+      }
+      if([@"performance" isEqualToString:consent]){
+          [Countly.sharedInstance cancelConsentForFeature:CLYConsentPerformanceMonitoring];
+      }
+  }
   });
 }
 
@@ -811,5 +884,72 @@ RCT_EXPORT_METHOD(remoteConfigClearValues:(RCTPromiseResolveBlock)resolve reject
     [CountlyRemoteConfig.sharedInstance clearCachedRemoteConfig];
     resolve(@"Remote Config Cleared.");
   });
+}
+
+RCT_EXPORT_METHOD(apm:(NSArray*)arguments) {
+  dispatch_async(dispatch_get_main_queue(), ^ {
+    config.enablePerformanceMonitoring = YES;
+  });
+}
+RCT_EXPORT_METHOD(startTrace:(NSArray*)arguments) {
+    dispatch_async(dispatch_get_main_queue(), ^ {
+        NSString* traceKey = [arguments objectAtIndex:0];
+        [Countly.sharedInstance startCustomTrace: traceKey];
+    });
+}
+RCT_EXPORT_METHOD(cancelTrace:(NSArray*)arguments) {
+    dispatch_async(dispatch_get_main_queue(), ^ {
+        NSString* traceKey = [arguments objectAtIndex:0];
+        [Countly.sharedInstance cancelCustomTrace: traceKey];
+    });
+}
+RCT_EXPORT_METHOD(clearAllTrace:(NSArray*)arguments) {
+    dispatch_async(dispatch_get_main_queue(), ^ {
+        [Countly.sharedInstance clearAllCustomTraces];
+    });
+}
+RCT_EXPORT_METHOD(endTrace:(NSArray*)arguments) {
+    dispatch_async(dispatch_get_main_queue(), ^ {
+        NSString* traceKey = [arguments objectAtIndex:0];
+        NSMutableDictionary *metrics = [[NSMutableDictionary alloc] init];
+        for(int i=1,il=(int)arguments.count;i<il;i+=2){
+            metrics[[arguments objectAtIndex:i]] = [arguments objectAtIndex:i+1];
+        }
+        [Countly.sharedInstance endCustomTrace: traceKey metrics: metrics];
+    });
+}
+RCT_EXPORT_METHOD(startNetworkRequest:(NSArray*)arguments) {
+    // NSString* networkTraceKey = [arguments objectAtIndex:0];
+    NSString* uniqueId = [arguments objectAtIndex:1];
+    int startTime = [self getTime];
+    if(networkRequest == nil){
+        networkRequest = [[NSMutableDictionary alloc] init];
+    }
+    [networkRequest setValue: [NSNumber numberWithInt: startTime] forKey:uniqueId];
+}
+RCT_EXPORT_METHOD(endNetworkRequest:(NSArray*)arguments) {
+    dispatch_async(dispatch_get_main_queue(), ^ {
+        NSString* networkTraceKey = [arguments objectAtIndex:0];
+        NSString* uniqueId = [arguments objectAtIndex:1];
+        if(networkRequest == nil){
+            networkRequest = [[NSMutableDictionary alloc] init];
+        }
+        if(networkRequest[uniqueId]){
+            int responseCode = [[arguments objectAtIndex:2] intValue];
+            int requestPayloadSize = [[arguments objectAtIndex:3] intValue];
+            int responsePayloadSize = [[arguments objectAtIndex:4] intValue];
+            int startTime = [networkRequest[uniqueId] intValue];
+            int endTime = [self getTime];
+            [Countly.sharedInstance recordNetworkTrace: networkTraceKey requestPayloadSize: requestPayloadSize responsePayloadSize: responsePayloadSize responseStatusCode: responseCode startTime: startTime endTime: endTime];
+        }
+    });
+}
+RCT_EXPORT_METHOD(setRecordAppStartTime:(NSArray*)arguments) {
+  NSLog(@"No implementation for iOS for setRecordAppStartTime.");
+}
+RCT_EXPORT_METHOD(applicationOnCreate:(NSArray*)arguments) {
+    dispatch_async(dispatch_get_main_queue(), ^ {
+        [Countly.sharedInstance appLoadingFinished];
+    });
 }
 @end
