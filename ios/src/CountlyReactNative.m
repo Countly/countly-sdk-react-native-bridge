@@ -11,6 +11,8 @@
 #import "CountlyRemoteConfig.h"
 #import "CountlyCommon.h"
 
+NSString* const kCountlyReactNativeSDKVersion = @"20.04.5";
+NSString* const kCountlyReactNativeSDKName = @"js-rnb-ios";
 
 CountlyConfig* config = nil;
 NSDictionary *lastStoredNotification = nil;
@@ -39,6 +41,10 @@ RCT_EXPORT_METHOD(init:(NSArray*)arguments)
   }
   config.appKey = appkey;
   config.host = serverurl;
+    
+  CountlyCommon.sharedInstance.SDKName = kCountlyReactNativeSDKName;
+  CountlyCommon.sharedInstance.SDKVersion = kCountlyReactNativeSDKVersion;
+    
   config.features = @[CLYCrashReporting, CLYPushNotifications];
 
   if (serverurl != nil && [serverurl length] > 0) {
