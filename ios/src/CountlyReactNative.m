@@ -12,7 +12,7 @@
 #import "CountlyCommon.h"
 
 NSString* const kCountlyReactNativeSDKVersion = @"20.04.5";
-NSString* const kCountlyReactNativeSDKName = @"js-reactnative-ios";
+NSString* const kCountlyReactNativeSDKName = @"js-rnb-ios";
 
 CountlyConfig* config = nil;
 NSDictionary *lastStoredNotification = nil;
