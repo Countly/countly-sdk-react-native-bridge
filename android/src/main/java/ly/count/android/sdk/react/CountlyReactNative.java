@@ -65,6 +65,9 @@ class CountlyReactException extends Exception {
 }
 
 public class CountlyReactNative extends ReactContextBaseJavaModule {
+    private String COUNTLY_RN_SDK_VERSION_STRING = "20.04.5";
+    private String COUNTLY_RN_SDK_NAME = "js-rnb-android";
+
     private static CountlyConfig config = new CountlyConfig();
     private static Countly.CountlyMessagingMode messagingMode = Countly.CountlyMessagingMode.PRODUCTION;
     private static String channelName = "Default Name";
@@ -113,6 +116,10 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         // int ratingLimit = Integer.parseInt(args.getString(3));
         this.config.setServerURL(serverUrl);
         this.config.setAppKey(appKey);
+
+        Countly.sharedInstance().COUNTLY_SDK_NAME = COUNTLY_RN_SDK_NAME;
+        Countly.sharedInstance().COUNTLY_SDK_VERSION_STRING = COUNTLY_RN_SDK_VERSION_STRING;
+
         this.config.setContext(_reactContext);
         if("".equals(deviceId)){
         }else{
