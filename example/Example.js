@@ -39,6 +39,7 @@ class Example extends Component {
         this.endNetworkRequestFailure = this.endNetworkRequestFailure.bind(this);
         this.setRecordAppStartTime = this.setRecordAppStartTime.bind(this);
         this.applicationOnCreate = this.applicationOnCreate.bind(this);
+        this.random = this.random.bind(this);
     };
 
     componentDidMount(){
@@ -432,13 +433,15 @@ class Example extends Component {
     var uniqueId = "1337";
     Countly.startNetworkRequest(networkTraceKey, uniqueId);
   }
+  random(number){
+    return Math.floor(Math.random() * number);
+  }
   endNetworkRequestSuccess(){
     var networkTraceKey = "api/endpoint.1";
     var uniqueId = "1337";
-    var rnd = new Random();
-    var responseCode = successCodes[rnd.nextInt(successCodes.length)];
-    var requestPayloadSize = rnd.nextInt(700) + 200;
-    var responsePayloadSize = rnd.nextInt(700) + 200;
+    var responseCode = successCodes[this.random(successCodes.length)];
+    var requestPayloadSize = this.random(700) + 200;
+    var responsePayloadSize = this.random(700) + 200;
     Countly.endNetworkRequest(networkTraceKey, uniqueId, responseCode, requestPayloadSize, responsePayloadSize);
   }
   startNetworkRequestFailure(){
@@ -449,10 +452,9 @@ class Example extends Component {
   endNetworkRequestFailure(){
     var networkTraceKey = "api/endpoint.1";
     var uniqueId = "7331";
-    var rnd = new Random();
-    var responseCode = failureCodes[rnd.nextInt(failureCodes.length)];
-    var requestPayloadSize = rnd.nextInt(700) + 250;
-    var responsePayloadSize = rnd.nextInt(700) + 250;
+    var responseCode = failureCodes[this.random(failureCodes.length)];
+    var requestPayloadSize = this.random(700) + 250;
+    var responsePayloadSize = this.random(700) + 250;
     Countly.endNetworkRequest(networkTraceKey, uniqueId, responseCode, requestPayloadSize, responsePayloadSize);
   }
   setRecordAppStartTime(){
