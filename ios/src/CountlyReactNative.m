@@ -16,6 +16,7 @@ CountlyConfig* config = nil;
 NSDictionary *lastStoredNotification = nil;
 Result notificationListener = nil;
 NSMutableArray *notificationIDs = nil;        // alloc here
+NSMutableDictionary *networkRequest = nil;
 
 @implementation CountlyReactNative
 
@@ -951,5 +952,11 @@ RCT_EXPORT_METHOD(applicationOnCreate:(NSArray*)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^ {
         [Countly.sharedInstance appLoadingFinished];
     });
+}
+- (int)getTime
+{
+    NSTimeInterval time = ([[NSDate date] timeIntervalSince1970]); // returned as a double
+    int decimalDigits = (int)(fmod(time, 1) * 1000); // this will get the 3 missing digits
+    return decimalDigits;
 }
 @end

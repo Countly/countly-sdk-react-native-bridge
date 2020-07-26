@@ -615,7 +615,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void giveConsent(ReadableArray args){
         List<String> features = new ArrayList<>();
-        for (int i = 0; i < args.length(); i++) {
+        for (int i = 0; i < args.size(); i++) {
             String theConsent = args.getString(i);
             if (theConsent.equals("sessions")) {
                 Countly.sharedInstance().consent().giveConsent(new String[]{Countly.CountlyFeatureNames.sessions});
@@ -661,9 +661,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void removeConsent(ReadableArray featureNames){
-        List<String> features = new ArrayList<>();
-        for (int i = 0; i < args.length(); i++) {
+    public void removeConsent(ReadableArray args){
+        // List<String> features = new ArrayList<>();
+        for (int i = 0; i < args.size(); i++) {
             String theConsent = args.getString(i);
             if (theConsent.equals("sessions")) {
                 Countly.sharedInstance().consent().removeConsent(new String[]{Countly.CountlyFeatureNames.sessions});
@@ -865,19 +865,19 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void cancelTrace(ReadableArray args){
         String traceKey = args.getString(0);
-        Countly.sharedInstance().apm().cancelTrace(traceKey);
+        // Countly.sharedInstance().apm().cancelTrace(traceKey);
     }
 
     @ReactMethod
     public void clearAllTrace(ReadableArray args){
-        Countly.sharedInstance().apm().clearAllTrace(traceKey);
+        // Countly.sharedInstance().apm().clearAllTrace(traceKey);
     }
 
     @ReactMethod
     public void endTrace(ReadableArray args){
         String traceKey = args.getString(0);
         HashMap<String, Integer> customMetric = new HashMap<String, Integer>();
-        for (int i = 1, il = args.length(); i < il; i += 2) {
+        for (int i = 1, il = args.size(); i < il; i += 2) {
             customMetric.put(args.getString(i), Integer.parseInt(args.getString(i + 1)));
         }
         Countly.sharedInstance().apm().endTrace(traceKey, customMetric);

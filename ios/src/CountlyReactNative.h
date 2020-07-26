@@ -60,5 +60,5 @@ typedef void (^Result)(id _Nullable result);
 - (void)endNetworkRequest:(NSArray*_Nullable)arguments;
 - (void)setRecordAppStartTime:(NSArray*_Nullable)arguments;
 - (void)applicationOnCreate:(NSArray*_Nullable)arguments;
-
+- (int)getTime;
 @end

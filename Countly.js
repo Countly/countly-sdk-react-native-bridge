@@ -523,7 +523,7 @@ Countly.startNetworkRequest = function(networkTraceKey, uniqueId){
     CountlyReactNative.startNetworkRequest(args);
 }
 
-Countly.endNetworkRequest = function(networkTraceKey, uniqueId, uniqueId, responseCode, requestPayloadSize, responsePayloadSize){
+Countly.endNetworkRequest = function(networkTraceKey, uniqueId, responseCode, requestPayloadSize, responsePayloadSize){
     var args = [];
     args.push(networkTraceKey);
     args.push(uniqueId);
