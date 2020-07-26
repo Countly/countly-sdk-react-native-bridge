@@ -645,8 +645,8 @@ RCT_EXPORT_METHOD(giveConsent:(NSArray*)arguments)
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* consent = @"";
   // NSMutableDictionary *giveConsentAll = [[NSMutableDictionary alloc] init];
-  for(int i=0,il=(int)giveAllConsent.count; i<il;i++){
-      consent = [giveAllConsent objectAtIndex:i];
+  for(int i=0,il=(int)arguments.count; i<il;i++){
+      consent = [arguments objectAtIndex:i];
       if([@"sessions" isEqualToString:consent]){
           [Countly.sharedInstance giveConsentForFeature:CLYConsentSessions];
       }
@@ -688,8 +688,8 @@ RCT_EXPORT_METHOD(removeConsent:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* consent = @"";
-  for(int i=0,il=(int)command.count; i<il;i++){
-      consent = [command objectAtIndex:i];
+  for(int i=0,il=(int)arguments.count; i<il;i++){
+      consent = [arguments objectAtIndex:i];
       if([@"sessions" isEqualToString:consent]){
           [Countly.sharedInstance cancelConsentForFeature:CLYConsentSessions];
       }

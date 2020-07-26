@@ -46,5 +46,5 @@ Pod::Spec.new do |s|
   end
 
   s.dependency "React"
-  s.dependency "Countly"
+  s.dependency "Countly", '20.04.1'
 end
