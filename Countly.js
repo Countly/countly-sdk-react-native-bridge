@@ -24,14 +24,13 @@ if (Platform.OS.match("android")) {
 }
 
 // countly initialization
-Countly.init = function(serverUrl, appKey){
-    this.init(serverUrl, appKey, null);
-}
-Countly.init = function(serverUrl, appKey, deviceId){
+Countly.init = function(serverUrl, appKey, deviceId = ""){
 
     if(deviceId == "") {
         deviceId = null;
-        console.warn("[CountlyReactNative] init, Device Id is emppty");
+        if(Countly.isLoggingEnabled) {
+            console.error("[CountlyReactNative] init, Device Id is empty");
+        }
     }
     Countly.serverUrl = serverUrl;
     Countly.appKey = appKey;
@@ -41,6 +40,11 @@ Countly.init = function(serverUrl, appKey, deviceId){
     args.push(deviceId);
 
     CountlyReactNative.init(args);
+}
+
+Countly.isLoggingEnabled = async function(){
+    // returns a promise
+    return await CountlyReactNative.isLoggingEnabled();
 }
 
 Countly.isInitialized = function(){

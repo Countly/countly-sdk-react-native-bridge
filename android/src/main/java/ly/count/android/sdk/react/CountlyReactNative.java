@@ -143,6 +143,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void isLoggingEnabled(final Promise promise){
+        Boolean result = loggingEnabled;
+        promise.resolve(result);
+    }
+
+    @ReactMethod
     public void isInitialized(Promise promise){
         Boolean result = Countly.sharedInstance().isInitialized();
         promise.resolve(result);
