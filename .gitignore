@@ -17,3 +17,4 @@ ios/countly-sdk-react-native-bridge.xcworkspace/*
 android/local.properties
 android/android.iml
 android/.settings/org.eclipse.buildship.core.prefs
+android/.classpath
