@@ -24,11 +24,12 @@ if (Platform.OS.match("android")) {
 }
 
 // countly initialization
-Countly.init = function(serverUrl, appKey, deviceId = ""){
+Countly.init = async function(serverUrl, appKey, deviceId = ""){
 
     if(deviceId == "") {
         deviceId = null;
-        if(Countly.isLoggingEnabled) {
+        const isLoggingEnabled =  await CountlyReactNative.isLoggingEnabled();
+        if(isLoggingEnabled) {
             console.error("[CountlyReactNative] init, Device Id is empty");
         }
     }
