@@ -24,8 +24,15 @@ if (Platform.OS.match("android")) {
 }
 
 // countly initialization
-Countly.init = function(serverUrl, appKey, deviceId = ""){
+Countly.init = function(serverUrl, appKey){
+    this.init(serverUrl, appKey, null);
+}
+Countly.init = function(serverUrl, appKey, deviceId){
 
+    if(deviceId == "") {
+        deviceId = null;
+        console.warn("[CountlyReactNative] init, Device Id is emppty");
+    }
     Countly.serverUrl = serverUrl;
     Countly.appKey = appKey;
     var args = [];
