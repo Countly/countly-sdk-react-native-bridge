@@ -28,8 +28,7 @@ Countly.init = async function(serverUrl, appKey, deviceId = ""){
 
     if(deviceId == "") {
         deviceId = null;
-        const isLoggingEnabled =  await CountlyReactNative.isLoggingEnabled();
-        if(isLoggingEnabled) {
+        if(await CountlyReactNative.isLoggingEnabled()) {
             console.error("[CountlyReactNative] init, Device Id is empty");
         }
     }
