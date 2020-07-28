@@ -606,10 +606,10 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void giveConsent(ReadableArray args){
+    public void giveConsent(ReadableArray featureNames){
         List<String> features = new ArrayList<>();
-        for (int i = 0; i < args.size(); i++) {
-            String featureName = args.getString(i);
+        for (int i = 0; i < featureNames.size(); i++) {
+            String featureName = featureNames.getString(i);
             if (validConsentFeatureNames.contains(featureName)) {
                 features.add(featureName);
             }
@@ -623,10 +623,10 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void removeConsent(ReadableArray args){
+    public void removeConsent(ReadableArray featureNames){
         List<String> features = new ArrayList<>();
-        for (int i = 0; i < args.size(); i++) {
-            String featureName = args.getString(i);
+        for (int i = 0; i < featureNames.size(); i++) {
+            String featureName = featureNames.getString(i);
             if (validConsentFeatureNames.contains(featureName)) {
                 features.add(featureName);
             }
