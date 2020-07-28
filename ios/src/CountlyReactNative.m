@@ -616,86 +616,14 @@ RCT_EXPORT_METHOD(setRequiresConsent:(NSArray*)arguments)
 RCT_EXPORT_METHOD(giveConsent:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
-  NSString* consent = @"";
-  for(int i=0,il=(int)arguments.count; i<il;i++){
-      consent = [arguments objectAtIndex:i];
-      if([@"sessions" isEqualToString:consent]){
-          [Countly.sharedInstance giveConsentForFeature:CLYConsentSessions];
-      }
-      if([@"events" isEqualToString:consent]){
-          [Countly.sharedInstance giveConsentForFeature:CLYConsentEvents];
-      }
-      if([@"users" isEqualToString:consent]){
-          [Countly.sharedInstance giveConsentForFeature:CLYConsentUserDetails];
-      }
-      if([@"crashes" isEqualToString:consent]){
-          [Countly.sharedInstance giveConsentForFeature:CLYConsentCrashReporting];
-      }
-      if([@"push" isEqualToString:consent]){
-          [Countly.sharedInstance giveConsentForFeature:CLYConsentPushNotifications];
-      }
-      if([@"location" isEqualToString:consent]){
-          [Countly.sharedInstance giveConsentForFeature:CLYConsentLocation];
-      }
-      if([@"views" isEqualToString:consent]){
-          [Countly.sharedInstance giveConsentForFeature:CLYConsentViewTracking];
-      }
-      if([@"attribution" isEqualToString:consent]){
-          [Countly.sharedInstance giveConsentForFeature:CLYConsentAttribution];
-      }
-      if([@"star-rating" isEqualToString:consent]){
-          [Countly.sharedInstance giveConsentForFeature:CLYConsentStarRating];
-      }
-      if([@"accessory-devices" isEqualToString:consent]){
-          [Countly.sharedInstance giveConsentForFeature:CLYConsentAppleWatch];
-      }
-      if([@"apm" isEqualToString:consent]){
-          [Countly.sharedInstance giveConsentForFeature:CLYConsentPerformanceMonitoring];
-      }
-  }
+  [Countly.sharedInstance giveConsentForFeatures:arguments];
   });
 }
 
 RCT_EXPORT_METHOD(removeConsent:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
-  NSString* consent = @"";
-  for(int i=0,il=(int)arguments.count; i<il;i++){
-      consent = [arguments objectAtIndex:i];
-      if([@"sessions" isEqualToString:consent]){
-          [Countly.sharedInstance cancelConsentForFeature:CLYConsentSessions];
-      }
-      if([@"events" isEqualToString:consent]){
-          [Countly.sharedInstance cancelConsentForFeature:CLYConsentEvents];
-      }
-      if([@"users" isEqualToString:consent]){
-          [Countly.sharedInstance cancelConsentForFeature:CLYConsentUserDetails];
-      }
-      if([@"crashes" isEqualToString:consent]){
-          [Countly.sharedInstance cancelConsentForFeature:CLYConsentCrashReporting];
-      }
-      if([@"push" isEqualToString:consent]){
-          [Countly.sharedInstance cancelConsentForFeature:CLYConsentPushNotifications];
-      }
-      if([@"location" isEqualToString:consent]){
-          [Countly.sharedInstance cancelConsentForFeature:CLYConsentLocation];
-      }
-      if([@"views" isEqualToString:consent]){
-          [Countly.sharedInstance cancelConsentForFeature:CLYConsentViewTracking];
-      }
-      if([@"attribution" isEqualToString:consent]){
-          [Countly.sharedInstance cancelConsentForFeature:CLYConsentAttribution];
-      }
-      if([@"star-rating" isEqualToString:consent]){
-          [Countly.sharedInstance cancelConsentForFeature:CLYConsentStarRating];
-      }
-      if([@"accessory-devices" isEqualToString:consent]){
-          [Countly.sharedInstance cancelConsentForFeature:CLYConsentAppleWatch];
-      }
-      if([@"apm" isEqualToString:consent]){
-          [Countly.sharedInstance cancelConsentForFeature:CLYConsentPerformanceMonitoring];
-      }
-  }
+  [Countly.sharedInstance cancelConsentForFeatures:arguments];
   });
 }
 

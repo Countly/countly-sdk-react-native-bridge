@@ -86,8 +86,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
             Countly.CountlyFeatureNames.attribution,
             Countly.CountlyFeatureNames.users,
             Countly.CountlyFeatureNames.push,
-            Countly.CountlyFeatureNames.starRating
-    ));
+            Countly.CountlyFeatureNames.starRating,
+            Countly.CountlyFeatureNames.apm
+            ));
 
     public CountlyReactNative(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -579,76 +580,30 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     public void giveConsent(ReadableArray args){
         List<String> features = new ArrayList<>();
         for (int i = 0; i < args.size(); i++) {
-            String theConsent = args.getString(i);
-            if (theConsent.equals("sessions")) {
-                Countly.sharedInstance().consent().giveConsent(new String[]{Countly.CountlyFeatureNames.sessions});
+            String featureName = args.getString(i);
+            if (validConsentFeatureNames.contains(featureName)) {
+                features.add(featureName);
             }
-            if (theConsent.equals("events")) {
-                Countly.sharedInstance().consent().giveConsent(new String[]{Countly.CountlyFeatureNames.events});
-            }
-            if (theConsent.equals("views")) {
-                Countly.sharedInstance().consent().giveConsent(new String[]{Countly.CountlyFeatureNames.views});
-            }
-            if (theConsent.equals("location")) {
-                Countly.sharedInstance().consent().giveConsent(new String[]{Countly.CountlyFeatureNames.location});
-            }
-            if (theConsent.equals("crashes")) {
-                Countly.sharedInstance().consent().giveConsent(new String[]{Countly.CountlyFeatureNames.crashes});
-            }
-            if (theConsent.equals("attribution")) {
-                Countly.sharedInstance().consent().giveConsent(new String[]{Countly.CountlyFeatureNames.attribution});
-            }
-            if (theConsent.equals("users")) {
-                Countly.sharedInstance().consent().giveConsent(new String[]{Countly.CountlyFeatureNames.users});
-            }
-            if (theConsent.equals("push")) {
-                Countly.sharedInstance().consent().giveConsent(new String[]{Countly.CountlyFeatureNames.push});
-            }
-            if (theConsent.equals("starRating")) {
-                Countly.sharedInstance().consent().giveConsent(new String[]{Countly.CountlyFeatureNames.starRating});
-            }
-            if (theConsent.equals("apm")) {
-                Countly.sharedInstance().consent().giveConsent(new String[]{Countly.CountlyFeatureNames.apm});
+            else {
+                Log.d(Countly.TAG, "[CountlyReactNative] Not a valid consent feature to add: " + featureName);
             }
         }
+        Countly.sharedInstance().consent().giveConsent(features.toArray(new String[features.size()]));
     }
 
     @ReactMethod
     public void removeConsent(ReadableArray args){
-        // List<String> features = new ArrayList<>();
+        List<String> features = new ArrayList<>();
         for (int i = 0; i < args.size(); i++) {
-            String theConsent = args.getString(i);
-            if (theConsent.equals("sessions")) {
-                Countly.sharedInstance().consent().removeConsent(new String[]{Countly.CountlyFeatureNames.sessions});
+            String featureName = args.getString(i);
+            if (validConsentFeatureNames.contains(featureName)) {
+                features.add(featureName);
             }
-            if (theConsent.equals("events")) {
-                Countly.sharedInstance().consent().removeConsent(new String[]{Countly.CountlyFeatureNames.events});
-            }
-            if (theConsent.equals("views")) {
-                Countly.sharedInstance().consent().removeConsent(new String[]{Countly.CountlyFeatureNames.views});
-            }
-            if (theConsent.equals("location")) {
-                Countly.sharedInstance().consent().removeConsent(new String[]{Countly.CountlyFeatureNames.location});
-            }
-            if (theConsent.equals("crashes")) {
-                Countly.sharedInstance().consent().removeConsent(new String[]{Countly.CountlyFeatureNames.crashes});
-            }
-            if (theConsent.equals("attribution")) {
-                Countly.sharedInstance().consent().removeConsent(new String[]{Countly.CountlyFeatureNames.attribution});
-            }
-            if (theConsent.equals("users")) {
-                Countly.sharedInstance().consent().removeConsent(new String[]{Countly.CountlyFeatureNames.users});
-            }
-            if (theConsent.equals("push")) {
-                Countly.sharedInstance().consent().removeConsent(new String[]{Countly.CountlyFeatureNames.push});
-            }
-            if (theConsent.equals("starRating")) {
-                Countly.sharedInstance().consent().removeConsent(new String[]{Countly.CountlyFeatureNames.starRating});
-            }
-            if (theConsent.equals("apm")) {
-                Countly.sharedInstance().consent().removeConsent(new String[]{Countly.CountlyFeatureNames.apm});
+            else {
+                Log.d(Countly.TAG, "[CountlyReactNative] Not a valid consent feature to remove: " + featureName);
             }
         }
+        Countly.sharedInstance().consent().removeConsent(features.toArray(new String[features.size()]));
     }
 
     @ReactMethod
