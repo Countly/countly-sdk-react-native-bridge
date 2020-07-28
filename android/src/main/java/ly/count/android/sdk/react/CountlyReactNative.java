@@ -799,7 +799,11 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         String traceKey = args.getString(0);
         HashMap<String, Integer> customMetric = new HashMap<String, Integer>();
         for (int i = 1, il = args.size(); i < il; i += 2) {
-            customMetric.put(args.getString(i), args.getString(i + 1));
+            try{
+                customMetric.put(args.getString(i), args.getString(i + 1));
+            }catch(Exception exception){
+                this.log(exception.toString());
+            }
         }
         Countly.sharedInstance().apm().endTrace(traceKey, customMetric);
     }
@@ -820,5 +824,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     public void enableApm(ReadableArray args){
         this.config.setRecordAppStartTime(true);
     }
-
+    public void log(String msg){
+        if(loggingEnabled){
+            Log.i(Countly.TAG, msg);
+        }
+    }
 }
