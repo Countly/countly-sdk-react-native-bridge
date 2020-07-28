@@ -644,7 +644,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
             if (theConsent.equals("starRating")) {
                 Countly.sharedInstance().consent().giveConsent(new String[]{Countly.CountlyFeatureNames.starRating});
             }
-            if (theConsent.equals("performance")) {
+            if (theConsent.equals("apm")) {
                 Countly.sharedInstance().consent().giveConsent(new String[]{Countly.CountlyFeatureNames.apm});
             }
         }
@@ -692,7 +692,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
             if (theConsent.equals("starRating")) {
                 Countly.sharedInstance().consent().removeConsent(new String[]{Countly.CountlyFeatureNames.starRating});
             }
-            if (theConsent.equals("performance")) {
+            if (theConsent.equals("apm")) {
                 Countly.sharedInstance().consent().removeConsent(new String[]{Countly.CountlyFeatureNames.apm});
             }
         }

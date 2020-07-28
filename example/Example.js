@@ -594,7 +594,7 @@ class Example extends Component {
             < Button onPress = { ()=>{ this.giveConsent("users") } } title = "Give users" color = "#00b5ad"> </Button>
             < Button onPress = { ()=>{ this.giveConsent("push") } } title = "Give push" color = "#00b5ad"> </Button>
             < Button onPress = { ()=>{ this.giveConsent("star-rating") } } title = "Give star-rating" color = "#00b5ad"> </Button>
-            < Button onPress = { ()=>{ this.giveConsent("performance") } } title = "Give performance" color = "#00b5ad"> </Button>
+            < Button onPress = { ()=>{ this.giveConsent("apm") } } title = "Give APM" color = "#00b5ad"> </Button>
 
             {/* Remove Consent */}
 
@@ -607,7 +607,7 @@ class Example extends Component {
             < Button onPress = { ()=>{ this.removeConsent("users") } } title = "Remove users" color = "#00b5ad"> </Button>
             < Button onPress = { ()=>{ this.removeConsent("push") } } title = "Remove push" color = "#00b5ad"> </Button>
             < Button onPress = { ()=>{ this.removeConsent("star-rating") } } title = "Remove star-rating" color = "#00b5ad"> </Button>
-            < Button onPress = { ()=>{ this.removeConsent("performance") } } title = "Remove performance" color = "#00b5ad"> </Button>
+            < Button onPress = { ()=>{ this.removeConsent("apm") } } title = "Remove APM" color = "#00b5ad"> </Button>
 
 
             < Button onPress = { this.giveMultipleConsent } title = "Give multiple consent" color = "#00b5ad"> </Button>
@@ -650,7 +650,7 @@ class Example extends Component {
 
             < Button onPress = { this.eventSendThreshold } title = "Set Event Threshold" color = "#00b5ad"> </Button>
 
-            <Text style={[{textAlign: 'center'}]}>Performance Example</Text>
+            <Text style={[{textAlign: 'center'}]}>APM Example</Text>
             <Button onPress={ this.apm } title="APM" color = "#1b1c1d"> </Button>
             <Button onPress={ this.startTrace } title="Start Trace" color = "#1b1c1d"> </Button>
             <Button onPress={ this.endTrace } title="End Trace" color = "#1b1c1d"> </Button>
