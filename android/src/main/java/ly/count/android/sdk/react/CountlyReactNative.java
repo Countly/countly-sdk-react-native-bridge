@@ -808,19 +808,14 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void startNetworkRequest(ReadableArray args){
-        String networkTraceKey = args.getString(0);
-        String uniqueId = args.getString(1);
-        Countly.sharedInstance().apm().startNetworkRequest(networkTraceKey, uniqueId);
-    }
-
-    @ReactMethod
     public void recordNetworkTrace(ReadableArray args){
         String networkTraceKey = args.getString(0);
         String uniqueId = args.getString(1);
-        int responseCode = Integer.parseInt(args.getString(1));
-        int requestPayloadSize = Integer.parseInt(args.getString(1));
-        int responsePayloadSize = Integer.parseInt(args.getString(1));
+        int responseCode = Integer.parseInt(args.getString(2));
+        int requestPayloadSize = Integer.parseInt(args.getString(3));
+        int responsePayloadSize = Integer.parseInt(args.getString(4));
+        int startTime = Integer.parseInt(args.getString(5));
+        int endTime = Integer.parseInt(args.getString(6));
         Countly.sharedInstance().apm().endNetworkRequest(networkTraceKey, uniqueId, responseCode, requestPayloadSize, responsePayloadSize);
     }
 

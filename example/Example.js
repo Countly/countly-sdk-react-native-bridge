@@ -32,9 +32,7 @@ class Example extends Component {
 
         this.startTrace = this.startTrace.bind(this);
         this.endTrace = this.endTrace.bind(this);
-        this.startNetworkRequestSuccess = this.startNetworkRequestSuccess.bind(this);
         this.recordNetworkTraceSuccess = this.recordNetworkTraceSuccess.bind(this);
-        this.startNetworkRequestFailure = this.startNetworkRequestFailure.bind(this);
         this.recordNetworkTraceFailure = this.recordNetworkTraceFailure.bind(this);
         this.enableApm = this.enableApm.bind(this);
         this.applicationOnCreate = this.applicationOnCreate.bind(this);
@@ -380,11 +378,6 @@ class Example extends Component {
     };
     Countly.endTrace(traceKey, customMetric);
   }
-  startNetworkRequestSuccess(){
-    var networkTraceKey = "api/endpoint.1";
-    var uniqueId = "1337";
-    Countly.startNetworkRequest(networkTraceKey, uniqueId);
-  }
   random(number){
     return Math.floor(Math.random() * number);
   }
@@ -396,18 +389,15 @@ class Example extends Component {
     var responsePayloadSize = this.random(700) + 200;
     Countly.recordNetworkTrace(networkTraceKey, uniqueId, responseCode, requestPayloadSize, responsePayloadSize);
   }
-  startNetworkRequestFailure(){
-    var networkTraceKey = "api/endpoint.1";
-    var uniqueId = "7331";
-    Countly.startNetworkRequest(networkTraceKey, uniqueId);
-  }
   recordNetworkTraceFailure(){
     var networkTraceKey = "api/endpoint.1";
     var uniqueId = "7331";
     var responseCode = failureCodes[this.random(failureCodes.length)];
     var requestPayloadSize = this.random(700) + 250;
     var responsePayloadSize = this.random(700) + 250;
-    Countly.recordNetworkTrace(networkTraceKey, uniqueId, responseCode, requestPayloadSize, responsePayloadSize);
+    var startTime = new Date().getTime();
+    var endTime = startTime + 500;
+    Countly.recordNetworkTrace(networkTraceKey, uniqueId, responseCode, requestPayloadSize, responsePayloadSize, startTime, endTime);
   }
   enableApm(){
     Countly.enableApm(true);
@@ -600,9 +590,7 @@ class Example extends Component {
             <Text style={[{textAlign: 'center'}]}>APM Example</Text>
             <Button onPress={ this.startTrace } title="Start Trace" color = "#1b1c1d"> </Button>
             <Button onPress={ this.endTrace } title="End Trace" color = "#1b1c1d"> </Button>
-            <Button onPress={ this.startNetworkRequestSuccess } title="Start Network Request Success" color = "#1b1c1d"> </Button>
             <Button onPress={ this.recordNetworkTraceSuccess } title="End Network Request Success" color = "#1b1c1d"> </Button>
-            <Button onPress={ this.startNetworkRequestFailure } title="Start Network Request Failure" color = "#1b1c1d"> </Button>
             <Button onPress={ this.recordNetworkTraceFailure } title="End Network Request Failure" color = "#1b1c1d"> </Button>
             <Button onPress={ this.enableApm } title="Enable APM" color = "#1b1c1d"> </Button>
             <Button onPress={ this.applicationOnCreate } title="Application on create" color = "#1b1c1d"> </Button>

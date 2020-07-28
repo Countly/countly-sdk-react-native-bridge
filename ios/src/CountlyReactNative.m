@@ -18,7 +18,6 @@ CountlyConfig* config = nil;
 NSDictionary *lastStoredNotification = nil;
 Result notificationListener = nil;
 NSMutableArray *notificationIDs = nil;        // alloc here
-NSMutableDictionary *networkRequest = nil;
 
 @implementation CountlyReactNative
 
@@ -829,32 +828,17 @@ RCT_EXPORT_METHOD(endTrace:(NSArray*)arguments) {
         [Countly.sharedInstance endCustomTrace: traceKey metrics: metrics];
     });
 }
-RCT_EXPORT_METHOD(startNetworkRequest:(NSArray*)arguments) {
-    dispatch_async(dispatch_get_main_queue(), ^ {
-    // NSString* networkTraceKey = [arguments objectAtIndex:0];
-    NSString* uniqueId = [arguments objectAtIndex:1];
-    int startTime = [self getTime];
-    if(networkRequest == nil){
-        networkRequest = [[NSMutableDictionary alloc] init];
-    }
-    [networkRequest setValue: [NSNumber numberWithInt: startTime] forKey:uniqueId];
-    });
-}
 RCT_EXPORT_METHOD(recordNetworkTrace:(NSArray*)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^ {
         NSString* networkTraceKey = [arguments objectAtIndex:0];
         NSString* uniqueId = [arguments objectAtIndex:1];
-        if(networkRequest == nil){
-            networkRequest = [[NSMutableDictionary alloc] init];
-        }
-        if(networkRequest[uniqueId]){
-            int responseCode = [[arguments objectAtIndex:2] intValue];
-            int requestPayloadSize = [[arguments objectAtIndex:3] intValue];
-            int responsePayloadSize = [[arguments objectAtIndex:4] intValue];
-            int startTime = [networkRequest[uniqueId] intValue];
-            int endTime = [self getTime];
-            [Countly.sharedInstance recordNetworkTrace: networkTraceKey requestPayloadSize: requestPayloadSize responsePayloadSize: responsePayloadSize responseStatusCode: responseCode startTime: startTime endTime: endTime];
-        }
+        int responseCode = [[arguments objectAtIndex:2] intValue];
+        int requestPayloadSize = [[arguments objectAtIndex:3] intValue];
+        int responsePayloadSize = [[arguments objectAtIndex:4] intValue];
+        int startTime = [[arguments objectAtIndex:5] intValue];
+        int endTime = [[arguments objectAtIndex:6] intValue];
+        [Countly.sharedInstance recordNetworkTrace: networkTraceKey requestPayloadSize: requestPayloadSize responsePayloadSize: responsePayloadSize responseStatusCode: responseCode startTime: startTime endTime: endTime];
+
     });
 }
 RCT_EXPORT_METHOD(enableApm:(NSArray*)arguments) {

@@ -513,20 +513,16 @@ Countly.endTrace = function(traceKey, customMetric){
     CountlyReactNative.endTrace(args);
 }
 
-Countly.startNetworkRequest = function(networkTraceKey, uniqueId){
-    var args = [];
-    args.push(networkTraceKey);
-    args.push(uniqueId);
-    CountlyReactNative.startNetworkRequest(args);
-}
 
-Countly.recordNetworkTrace = function(networkTraceKey, uniqueId, responseCode, requestPayloadSize, responsePayloadSize){
+Countly.recordNetworkTrace = function(networkTraceKey, uniqueId, responseCode, requestPayloadSize, responsePayloadSize, startTime, endTime){
     var args = [];
     args.push(networkTraceKey);
     args.push(uniqueId);
     args.push(responseCode.toString());
     args.push(requestPayloadSize.toString());
     args.push(responsePayloadSize.toString());
+    args.push(startTime.toString());
+    args.push(endTime.toString());
     CountlyReactNative.recordNetworkTrace(args);
 }
 
