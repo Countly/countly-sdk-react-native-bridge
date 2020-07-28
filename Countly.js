@@ -519,14 +519,14 @@ Countly.startNetworkRequest = function(networkTraceKey, uniqueId){
     CountlyReactNative.startNetworkRequest(args);
 }
 
-Countly.endNetworkRequest = function(networkTraceKey, uniqueId, responseCode, requestPayloadSize, responsePayloadSize){
+Countly.recordNetworkTrace = function(networkTraceKey, uniqueId, responseCode, requestPayloadSize, responsePayloadSize){
     var args = [];
     args.push(networkTraceKey);
     args.push(uniqueId);
     args.push(responseCode.toString());
     args.push(requestPayloadSize.toString());
     args.push(responsePayloadSize.toString());
-    CountlyReactNative.endNetworkRequest(args);
+    CountlyReactNative.recordNetworkTrace(args);
 }
 
 

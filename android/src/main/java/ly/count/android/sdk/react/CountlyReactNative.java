@@ -831,7 +831,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void endNetworkRequest(ReadableArray args){
+    public void recordNetworkTrace(ReadableArray args){
         String networkTraceKey = args.getString(0);
         String uniqueId = args.getString(1);
         int responseCode = Integer.parseInt(args.getString(1));

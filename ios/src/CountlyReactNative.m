@@ -901,7 +901,7 @@ RCT_EXPORT_METHOD(startNetworkRequest:(NSArray*)arguments) {
     [networkRequest setValue: [NSNumber numberWithInt: startTime] forKey:uniqueId];
     });
 }
-RCT_EXPORT_METHOD(endNetworkRequest:(NSArray*)arguments) {
+RCT_EXPORT_METHOD(recordNetworkTrace:(NSArray*)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^ {
         NSString* networkTraceKey = [arguments objectAtIndex:0];
         NSString* uniqueId = [arguments objectAtIndex:1];

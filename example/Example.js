@@ -34,9 +34,9 @@ class Example extends Component {
         this.startTrace = this.startTrace.bind(this);
         this.endTrace = this.endTrace.bind(this);
         this.startNetworkRequestSuccess = this.startNetworkRequestSuccess.bind(this);
-        this.endNetworkRequestSuccess = this.endNetworkRequestSuccess.bind(this);
+        this.recordNetworkTraceSuccess = this.recordNetworkTraceSuccess.bind(this);
         this.startNetworkRequestFailure = this.startNetworkRequestFailure.bind(this);
-        this.endNetworkRequestFailure = this.endNetworkRequestFailure.bind(this);
+        this.recordNetworkTraceFailure = this.recordNetworkTraceFailure.bind(this);
         this.setRecordAppStartTime = this.setRecordAppStartTime.bind(this);
         this.applicationOnCreate = this.applicationOnCreate.bind(this);
         this.random = this.random.bind(this);
@@ -391,26 +391,26 @@ class Example extends Component {
   random(number){
     return Math.floor(Math.random() * number);
   }
-  endNetworkRequestSuccess(){
+  recordNetworkTraceSuccess(){
     var networkTraceKey = "api/endpoint.1";
     var uniqueId = "1337";
     var responseCode = successCodes[this.random(successCodes.length)];
     var requestPayloadSize = this.random(700) + 200;
     var responsePayloadSize = this.random(700) + 200;
-    Countly.endNetworkRequest(networkTraceKey, uniqueId, responseCode, requestPayloadSize, responsePayloadSize);
+    Countly.recordNetworkTrace(networkTraceKey, uniqueId, responseCode, requestPayloadSize, responsePayloadSize);
   }
   startNetworkRequestFailure(){
     var networkTraceKey = "api/endpoint.1";
     var uniqueId = "7331";
     Countly.startNetworkRequest(networkTraceKey, uniqueId);
   }
-  endNetworkRequestFailure(){
+  recordNetworkTraceFailure(){
     var networkTraceKey = "api/endpoint.1";
     var uniqueId = "7331";
     var responseCode = failureCodes[this.random(failureCodes.length)];
     var requestPayloadSize = this.random(700) + 250;
     var responsePayloadSize = this.random(700) + 250;
-    Countly.endNetworkRequest(networkTraceKey, uniqueId, responseCode, requestPayloadSize, responsePayloadSize);
+    Countly.recordNetworkTrace(networkTraceKey, uniqueId, responseCode, requestPayloadSize, responsePayloadSize);
   }
   setRecordAppStartTime(){
     Countly.setRecordAppStartTime(true);
@@ -605,9 +605,9 @@ class Example extends Component {
             <Button onPress={ this.startTrace } title="Start Trace" color = "#1b1c1d"> </Button>
             <Button onPress={ this.endTrace } title="End Trace" color = "#1b1c1d"> </Button>
             <Button onPress={ this.startNetworkRequestSuccess } title="Start Network Request Success" color = "#1b1c1d"> </Button>
-            <Button onPress={ this.endNetworkRequestSuccess } title="End Network Request Success" color = "#1b1c1d"> </Button>
+            <Button onPress={ this.recordNetworkTraceSuccess } title="End Network Request Success" color = "#1b1c1d"> </Button>
             <Button onPress={ this.startNetworkRequestFailure } title="Start Network Request Failure" color = "#1b1c1d"> </Button>
-            <Button onPress={ this.endNetworkRequestFailure } title="End Network Request Failure" color = "#1b1c1d"> </Button>
+            <Button onPress={ this.recordNetworkTraceFailure } title="End Network Request Failure" color = "#1b1c1d"> </Button>
             <Button onPress={ this.setRecordAppStartTime } title="Set Record App Start Time" color = "#1b1c1d"> </Button>
             <Button onPress={ this.applicationOnCreate } title="Application on create" color = "#1b1c1d"> </Button>
 
