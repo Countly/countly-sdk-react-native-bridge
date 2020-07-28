@@ -527,13 +527,8 @@ Countly.recordNetworkTrace = function(networkTraceKey, uniqueId, responseCode, r
 }
 
 
-Countly.enableApm = function(isRecordAppStartTime){
+Countly.enableApm = function(){
     var args = [];
-    if(isRecordAppStartTime){
-        args.push("true");
-    }else{
-        args.push("false");
-    }
     CountlyReactNative.enableApm(args);
 }
 

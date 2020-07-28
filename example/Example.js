@@ -399,7 +399,7 @@ class Example extends Component {
     Countly.recordNetworkTrace(networkTraceKey, uniqueId, responseCode, requestPayloadSize, responsePayloadSize, startTime, endTime);
   }
   enableApm(){
-    Countly.enableApm(true);
+    Countly.enableApm();
   }
     /*
     testCrash(){
