@@ -10,12 +10,13 @@ import ly.count.android.sdk.messaging.CountlyPush;
 import ly.count.android.sdk.Countly;
 
 public class CountlyMessagingService extends FirebaseMessagingService {
-    private static final String TAG = "CountlyMessagingService";
 
     @Override
     public void onNewToken(String token) {
         super.onNewToken(token);
-        Log.d(TAG, "got new token: " + token);
+        if(Countly.sharedInstance().isLoggingEnabled()) {
+            Log.d(Countly.TAG, "[CountlyMessagingService] got new token: " + token);
+        }
         if(Countly.sharedInstance().isInitialized()) {
             CountlyPush.onTokenRefresh(token);
         }
@@ -34,7 +35,9 @@ public class CountlyMessagingService extends FirebaseMessagingService {
             }
         }
 
-        Log.d(TAG, "got new message: " + remoteMessage.getData().toString());
+        if(Countly.sharedInstance().isLoggingEnabled()) {
+            Log.d(Countly.TAG, "[CountlyMessagingService] got new message: " + remoteMessage.getData().toString());
+        }
 
         // decode message data and extract meaningful information from it: title, body, badge, etc.
         CountlyPush.Message message = CountlyPush.decodeMessage(remoteMessage.getData());
@@ -45,16 +48,17 @@ public class CountlyMessagingService extends FirebaseMessagingService {
             return;
         }
 
-        Intent notificationIntent = null;//new Intent(getApplicationContext(), MainActivity.class);
-
-        Boolean result = CountlyPush.displayMessage(getApplicationContext(), message, getApplicationContext().getApplicationInfo().icon, notificationIntent);
-        if (result == null) {
-            Log.i(TAG, "Message wasn't sent from Countly server, so it cannot be handled by Countly SDK");
-        } else if (result) {
-            Log.i(TAG, "Message was handled by Countly SDK");
-        } else {
-            Log.i(TAG, "Message wasn't handled by Countly SDK because API level is too low for Notification support or because currentActivity is null (not enough lifecycle method calls)");
+        Boolean result = CountlyPush.displayNotification(getApplicationContext(), message, getApplicationContext().getApplicationInfo().icon, null);
+        if(Countly.sharedInstance().isLoggingEnabled()) {
+            if (result == null) {
+                Log.i(Countly.TAG, "[CountlyMessagingService] Message wasn't sent from Countly server, so it cannot be handled by Countly SDK");
+            } else if (result) {
+                Log.i(Countly.TAG, "[CountlyMessagingService] Message was handled by Countly SDK");
+            } else {
+                Log.i(Countly.TAG, "[CountlyMessagingService] Message wasn't handled by Countly SDK because API level is too low for Notification support or because currentActivity is null (not enough lifecycle method calls)");
+            }
         }
+
         CountlyReactNative.onNotification(remoteMessage.getData());
     }
 

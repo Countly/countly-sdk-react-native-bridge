@@ -44,9 +44,8 @@ repositories {
 
 dependencies {
     implementation "com.facebook.react:react-native:${safeExtGet('reactNativeVersion', '+')}"
-    implementation 'ly.count.android:sdk:20.04.3'
-    implementation 'com.google.firebase:firebase-messaging:20.1.7'
-    // implementation 'ly.count.android:sdk-native:19.02.3'
-    // implementation 'ly.count.android:sdk-messaging-fcm:19.02.1'
-    // implementation 'com.google.firebase:firebase-messaging:17.3.0'
+    implementation 'ly.count.android:sdk:20.04.4'
+
+    //if any version higher than 18.0.0 is used then it forces AndroidX
+    implementation 'com.google.firebase:firebase-messaging:18.0.0'
 }

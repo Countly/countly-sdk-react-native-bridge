@@ -32,9 +32,6 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.HashMap;
 
-// for debug logging
-import static ly.count.android.sdk.Countly.TAG;
-
 //Push Plugin
 import android.os.Build;
 import android.app.NotificationManager;
@@ -135,6 +132,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     public void setLoggingEnabled(ReadableArray args){
         Boolean enabled = args.getBoolean(0);
         this.config.setLoggingEnabled(enabled);
+<<<<<<< HEAD
+=======
         loggingEnabled = enabled;
     }
 
@@ -142,6 +141,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     public void isLoggingEnabled(final Promise promise){
         Boolean result = loggingEnabled;
         promise.resolve(result);
+>>>>>>> b0d3fa5b1181e77edbc97805ecf5c02e7f745ac3
     }
 
     @ReactMethod
@@ -617,9 +617,13 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
                 features.add(featureName);
             }
             else {
+<<<<<<< HEAD
+                Log.d(Countly.TAG, "[CountlyReactNative] Not a valid consent feature to add: " + featureName);
+=======
                 if(loggingEnabled) {
                     Log.d(Countly.TAG, "[CountlyReactNative] Not a valid consent feature to add: " + featureName);
                 }
+>>>>>>> b0d3fa5b1181e77edbc97805ecf5c02e7f745ac3
             }
         }
         Countly.sharedInstance().consent().giveConsent(features.toArray(new String[features.size()]));
@@ -634,9 +638,13 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
                 features.add(featureName);
             }
             else {
+<<<<<<< HEAD
+                Log.d(Countly.TAG, "[CountlyReactNative] Not a valid consent feature to remove: " + featureName);
+=======
                 if(loggingEnabled) {
                     Log.d(Countly.TAG, "[CountlyReactNative] Not a valid consent feature to remove: " + featureName);
                 }
+>>>>>>> b0d3fa5b1181e77edbc97805ecf5c02e7f745ac3
             }
         }
         Countly.sharedInstance().consent().removeConsent(features.toArray(new String[features.size()]));
@@ -717,12 +725,18 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         String keyName = args.getString(0);
         Object keyValue = Countly.sharedInstance().remoteConfig().getValueForKey(keyName);
         if (keyValue == null) {
+<<<<<<< HEAD
+=======
             Log.d(Countly.TAG, "[CountlyReactNative] getRemoteConfigValueForKey, [" + keyName + "]: ConfigKeyNotFound");
+>>>>>>> b0d3fa5b1181e77edbc97805ecf5c02e7f745ac3
             myCallback.invoke("ConfigKeyNotFound");
         }
         else {
             String resultString = (keyValue).toString();
+<<<<<<< HEAD
+=======
             Log.d(Countly.TAG, "[CountlyReactNative] getRemoteConfigValueForKey, [" + keyName + "]: " + resultString);
+>>>>>>> b0d3fa5b1181e77edbc97805ecf5c02e7f745ac3
             myCallback.invoke(resultString);
         }
     }

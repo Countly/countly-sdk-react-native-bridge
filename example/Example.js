@@ -44,7 +44,8 @@ class Example extends Component {
 
     componentDidMount(){
       Countly.registerForNotification(function(theNotification){
-        alert('theNotification: ' +JSON.stringify(theNotification));
+        console.log("Just received this notification data: " + JSON.stringify(theNotification));
+        alert('theNotification: ' + JSON.stringify(theNotification));
       });
     }
 

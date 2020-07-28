@@ -11,6 +11,8 @@
 #import "CountlyRemoteConfig.h"
 #import "CountlyCommon.h"
 
+NSString* const kCountlyReactNativeSDKVersion = @"20.04.5";
+NSString* const kCountlyReactNativeSDKName = @"js-rnb-ios";
 
 CountlyConfig* config = nil;
 NSDictionary *lastStoredNotification = nil;
@@ -35,11 +37,15 @@ RCT_EXPORT_METHOD(init:(NSArray*)arguments)
   if (config == nil){
     config = CountlyConfig.new;
   }
-  if(![deviceID  isEqual: @""]){
+  if(deviceID != nil && ![deviceID  isEqual: @""]){
     config.deviceID = deviceID;
   }
   config.appKey = appkey;
   config.host = serverurl;
+    
+  CountlyCommon.sharedInstance.SDKName = kCountlyReactNativeSDKName;
+  CountlyCommon.sharedInstance.SDKVersion = kCountlyReactNativeSDKVersion;
+    
   config.features = @[CLYCrashReporting, CLYPushNotifications];
 
   if (serverurl != nil && [serverurl length] > 0) {
@@ -754,6 +760,16 @@ RCT_EXPORT_METHOD(setEventSendThreshold:(NSArray*)arguments)
     config = CountlyConfig.new;
   }
   config.eventSendThreshold = sizeInt;
+  });
+}
+
+RCT_REMAP_METHOD(isLoggingEnabled,
+                 isLoggingEnabledWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+    id result = [NSNumber numberWithBool:config.enableDebug] ;
+    resolve(result);
   });
 }
 
