@@ -208,10 +208,6 @@ class Example extends Component {
     };
 
 
-    onRegisterDevice(){
-      // Countly.initMessaging('403185924621', Countly.TEST);
-    }
-
 
     changeDeviceId(){
       Countly.changeDeviceId('02d56d66-6a39-482d-aff0-d14e4d5e5fda');
@@ -314,47 +310,6 @@ class Example extends Component {
 
     askForNotificationPermission(){
       Countly.askForNotificationPermission();
-    }
-    oldPushBackup(){
-      // console.log('setupPush');
-      // PushNotificationIOS.addEventListener('registrationError', function(error){
-      //   console.log('error:', error);
-      // });
-
-      // PushNotification.configure({
-      //     onRegister: function(token) {
-      //       console.log( 'TOKEN:', token );
-      //       var options = {
-      //         token: token.token,
-      //         messagingMode: Countly.messagingMode.DEVELOPMENT
-      //       }
-      //       Countly.sendPushToken(options)
-      //     },
-      //     onNotification: function(notification) {
-      //         console.log( 'NOTIFICATION:', notification );
-      //         // process the notification
-      //         // required on iOS only (see fetchCompletionHandler docs: https://facebook.github.io/react-native/docs/pushnotificationios.html)
-      //         notification.finish(PushNotificationIOS.FetchResult.NoData);
-      //     },
-      //     // ANDROID ONLY: GCM or FCM Sender ID (product_number) (optional - not required for local notifications, but is need to receive remote push notifications)
-      //     senderID: "881000050249",
-      //     // IOS ONLY (optional): default: all - Permissions to register.
-      //     permissions: {
-      //         alert: true,
-      //         badge: true,
-      //         sound: true
-      //     },
-
-      //     // Should the initial notification be popped automatically
-      //     // default: true
-      //     popInitialNotification: true,
-      //     /**
-      //       * (optional) default: true
-      //       * - Specified if permissions (ios) and token (android and ios) will requested or not,
-      //       * - if not, you must call PushNotificationsHandler.requestPermissions() later
-      //       */
-      //     requestPermissions: true,
-      // });
     }
 
     enableLogging(){
@@ -464,10 +419,6 @@ class Example extends Component {
     Countly.applicationOnCreate();
   }
     /*
-    initNative(){
-        Countly.initNative();
-    };
-
     testCrash(){
         Countly.testCrash();
     }
@@ -494,7 +445,6 @@ class Example extends Component {
       this.userData_saveMin();
       this.userData_setOnce();
 
-      // this.changeDeviceId();
       this.enableParameterTamperingProtection();
 
       // Note: Crash test for setLocation method.
@@ -662,7 +612,6 @@ class Example extends Component {
             <Button onPress={ this.applicationOnCreate } title="Application on create" color = "#1b1c1d"> </Button>
 
             {/*
-            < Button onPress = { this.initNative } title = "Init Native" color = "#00b5ad"> </Button>
             < Button onPress = { this.testCrash } title = "Test Native Crash" color = "crimson"> </Button>
             */}
 

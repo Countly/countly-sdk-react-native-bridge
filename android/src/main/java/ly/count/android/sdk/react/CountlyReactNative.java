@@ -108,11 +108,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         String serverUrl = args.getString(0);
         String appKey = args.getString(1);
         String deviceId = args.getString(2);
-        // String ratingTitle = args.getString(4);
-        // String ratingMessage = args.getString(5);
-        // String ratingButton = args.getString(6);
-        // Boolean consentFlag = args.getBoolean(7);
-        // int ratingLimit = Integer.parseInt(args.getString(3));
         this.config.setServerURL(serverUrl);
         this.config.setAppKey(appKey);
         this.config.setContext(_reactContext);
@@ -125,16 +120,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
             }
         }
         Countly.sharedInstance().init(this.config);
-        // Countly.sharedInstance().setRequiresConsent(consentFlag);
-        // Countly.sharedInstance()
-        //         .init(_reactContext, serverUrl, appKey, deviceId, DeviceId.Type.OPEN_UDID, ratingLimit, null, ratingTitle, ratingMessage, ratingButton);
     }
 
     @ReactMethod
     public void setLoggingEnabled(ReadableArray args){
         Boolean enabled = args.getBoolean(0);
         this.config.setLoggingEnabled(enabled);
-        // Countly.sharedInstance().setLoggingEnabled(enabled);
     }
 
     @ReactMethod
@@ -169,10 +160,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         int isEnabled = Integer.parseInt(args.getString(0));
         if(isEnabled == 1){
             this.config.setHttpPostForced(true);
-            // Countly.sharedInstance().setHttpPostForced(true);
         }else{
             this.config.setHttpPostForced(false);
-            // Countly.sharedInstance().setHttpPostForced(false);
         }
     }
 
@@ -180,7 +169,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     public void enableParameterTamperingProtection(ReadableArray args){
         String salt = args.getString(0);
         this.config.setParameterTamperingProtectionSalt(salt);
-        // Countly.sharedInstance().enableParameterTamperingProtection(salt);
     }
 
     @ReactMethod
@@ -260,16 +248,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         String exceptionString = args.getString(0);
         Exception exception = new Exception(exceptionString);
 
-        // Boolean nonfatal = args.getBoolean(1);
-
-        // HashMap<String, Object> segments = new HashMap<String, Object>();
-        // for(int i=2,il=args.size();i<il;i+=2){
-        //     segments.put(args.getString(i), args.getString(i+1));
-        // }
-        // segments.put("nonfatal", nonfatal.toString());
-        // this.config.setCustomCrashSegment(segments);
-        // Countly.sharedInstance().setCustomCrashSegments(segments);
-
         Countly.sharedInstance().crashes().recordHandledException(exception);
     }
     @ReactMethod
@@ -277,18 +255,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         Countly.sharedInstance().crashes().addCrashBreadcrumb(stack);
         Countly.sharedInstance().crashes().recordHandledException(new CountlyReactException(err, message, stack));
     }
-    /*
-    @ReactMethod
-    public void testCrash() throws Exception{
-       testCrashAux1(42);
-    }
-    private void testCrashAux1(int x) throws Exception{
-        testCrashAux2(x*2, "test");
-    }
-    private void testCrashAux2(int x, String s) throws Exception{
-        Countly.sharedInstance().logException(new Exception("Some test exception"));
-    }
-    */
+
     @ReactMethod
     public void setCustomCrashSegments(ReadableArray args){
         Map<String, Object> segments = new HashMap<String, Object>();
@@ -296,7 +263,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
             segments.put(args.getString(i), args.getString(i));
         }
         this.config.setCustomCrashSegment(segments);
-        // Countly.sharedInstance().setCustomCrashSegments(segments);
     }
 
     @ReactMethod
@@ -399,10 +365,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         String flag = args.getString(0);
         if("true".equals(flag)){
             this.config.setViewTracking(true);
-            // Countly.sharedInstance().setViewTracking(true);
         }else{
             this.config.setViewTracking(false);
-            // Countly.sharedInstance().setViewTracking(false);
         }
     }
 
@@ -609,7 +573,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     public void setRequiresConsent(ReadableArray args){
         Boolean consentFlag = args.getBoolean(0);
         this.config.setRequiresConsent(consentFlag);
-        // Countly.sharedInstance().setRequiresConsent(consentFlag);
     }
 
     @ReactMethod
@@ -648,16 +611,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
                 Countly.sharedInstance().consent().giveConsent(new String[]{Countly.CountlyFeatureNames.apm});
             }
         }
-        // for (int i = 0; i < featureNames.size(); i++) {
-        //     String featureName = featureNames.getString(i);
-        //     if (validConsentFeatureNames.contains(featureName)) {
-        //         features.add(featureName);
-        //     }
-        //     else {
-        //         Log.d(Countly.TAG, "Not a valid consent feature to add: " + featureName);
-        //     }
-        // }
-        // Countly.sharedInstance().consent().giveConsent(features.toArray(new String[features.size()]));
     }
 
     @ReactMethod
@@ -696,17 +649,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
                 Countly.sharedInstance().consent().removeConsent(new String[]{Countly.CountlyFeatureNames.apm});
             }
         }
-        // List<String> features = new ArrayList<>();
-        // for (int i = 0; i < featureNames.size(); i++) {
-        //     String featureName = featureNames.getString(i);
-        //     if (validConsentFeatureNames.contains(featureName)) {
-        //         features.add(featureName);
-        //     }
-        //     else {
-        //         Log.d(Countly.TAG, "Not a valid consent feature to remove: " + featureName);
-        //     }
-        // }
-        // Countly.sharedInstance().consent().removeConsent(features.toArray(new String[features.size()]));
     }
 
     @ReactMethod
@@ -788,12 +730,10 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         String keyName = args.getString(0);
         Object keyValue = Countly.sharedInstance().remoteConfig().getValueForKey(keyName);
         if (keyValue == null) {
-            // Log.d(TAG, keyName + ": ConfigKeyNotFound");
             myCallback.invoke("ConfigKeyNotFound");
         }
         else {
             String resultString = (keyValue).toString();
-            // Log.d(TAG, keyName + ": " + resultString);
             myCallback.invoke(resultString);
         }
     }
@@ -870,7 +810,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void clearAllTrace(ReadableArray args){
-        // Countly.sharedInstance().apm().clearAllTrace(traceKey);
+        // Countly.sharedInstance().apm().clearAllTrace();
     }
 
     @ReactMethod
@@ -914,16 +854,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     public void applicationOnCreate(ReadableArray args){
         Countly.applicationOnCreate();
     }
-    /*
-    @ReactMethod
-    public void initNative(){
-            CountlyNative.initNative(getReactApplicationContext());
-    }
 
-    @ReactMethod
-    public void testCrash(){
-            CountlyNative.crash();
-    }
-    */
 
 }

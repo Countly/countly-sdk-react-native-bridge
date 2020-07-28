@@ -334,34 +334,6 @@ RCT_EXPORT_METHOD(cancelEvent:(NSArray*)arguments)
   });
 }
 
-/*
-RCT_EXPORT_METHOD(endEvent:(NSDictionary*)options)
-{
-  NSString* eventName = "";
-
-  if ([options valueForKey:@"eventName"] == nil) {
-    // log error as in android method
-    return;
-  }
-  else {
-    eventName = (String) [options valueForKey:@"eventName"];
-  }
-  int eventCount = 1;
-  if ([options valueForKey:@"eventCount"] != nil) {
-    eventCount = (int) [options valueForKey:@"eventCount"]
-  }
-  double eventSum = 0;
-  if ([options valueForKey:@"eventSum"] != nil) {
-    eventSum = (double) [options valueForKey:@"eventSum"]
-  }
-  NSMutableDictionary *segments = [NSMutableDictionary dictionary]
-  if ([options valueForKey:@"segments"] != nil) {
-    NSDictionary *segmentation = (NSDictionary*) [options valueForKey:@"segments"];
-    [segments addEntriesFromDictionary:segmentation];
-  }
-  [Countly.sharedInstance endEvent:eventName segmentation:segments count:eventCount sum:eventSum];
-}
-*/
 
 RCT_EXPORT_METHOD(endEvent:(NSArray*)arguments)
 {
@@ -645,7 +617,6 @@ RCT_EXPORT_METHOD(giveConsent:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* consent = @"";
-  // NSMutableDictionary *giveConsentAll = [[NSMutableDictionary alloc] init];
   for(int i=0,il=(int)arguments.count; i<il;i++){
       consent = [arguments objectAtIndex:i];
       if([@"sessions" isEqualToString:consent]){

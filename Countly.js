@@ -246,13 +246,6 @@ Countly.logException = function(exception, nonfatal, segments){
     CountlyReactNative.logException(args);
 }
 
-/*
-Countly.testAndroidCrash = function(x) {
-    if (Platform.OS.match("android")) {
-        CountlyReactNative.testCrash();
-    }
-}
-*/
 Countly.setCustomCrashSegments = function(logs){
     if(!logs){
         logs = [];
