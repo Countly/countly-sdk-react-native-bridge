@@ -30,7 +30,6 @@ class Example extends Component {
         this.pinnedCertificates = this.pinnedCertificates.bind(this);
         this.askForNotificationPermission = this.askForNotificationPermission.bind(this);
 
-        this.apm = this.apm.bind(this);
         this.startTrace = this.startTrace.bind(this);
         this.endTrace = this.endTrace.bind(this);
         this.startNetworkRequestSuccess = this.startNetworkRequestSuccess.bind(this);
@@ -369,9 +368,6 @@ class Example extends Component {
     }
 
   // APM Examples
-  apm(){
-    Countly.apm();
-  }
   startTrace(){
     var traceKey = "Trace Key";
     Countly.startTrace(traceKey);
@@ -602,7 +598,6 @@ class Example extends Component {
             < Button onPress = { this.eventSendThreshold } title = "Set Event Threshold" color = "#00b5ad"> </Button>
 
             <Text style={[{textAlign: 'center'}]}>APM Example</Text>
-            <Button onPress={ this.apm } title="APM" color = "#1b1c1d"> </Button>
             <Button onPress={ this.startTrace } title="Start Trace" color = "#1b1c1d"> </Button>
             <Button onPress={ this.endTrace } title="End Trace" color = "#1b1c1d"> </Button>
             <Button onPress={ this.startNetworkRequestSuccess } title="Start Network Request Success" color = "#1b1c1d"> </Button>

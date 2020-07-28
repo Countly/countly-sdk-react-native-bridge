@@ -781,11 +781,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void apm(ReadableArray args){
-        Countly.sharedInstance().apm();
-    }
-
-    @ReactMethod
     public void startTrace(ReadableArray args){
         String traceKey = args.getString(0);
         Countly.sharedInstance().apm().startTrace(traceKey);
@@ -831,12 +826,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void enableApm(ReadableArray args){
-        String isStart = args.getString(0);
-        if(isStart.equals("true")){
-            this.config.setRecordAppStartTime(true);
-        }else{
-            this.config.setRecordAppStartTime(false);
-        }
+        this.config.setRecordAppStartTime(true);
     }
 
     @ReactMethod

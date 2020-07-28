@@ -42,10 +42,10 @@ RCT_EXPORT_METHOD(init:(NSArray*)arguments)
   }
   config.appKey = appkey;
   config.host = serverurl;
-    
+
   CountlyCommon.sharedInstance.SDKName = kCountlyReactNativeSDKName;
   CountlyCommon.sharedInstance.SDKVersion = kCountlyReactNativeSDKVersion;
-    
+
   config.features = @[CLYCrashReporting, CLYPushNotifications];
 
   if (serverurl != nil && [serverurl length] > 0) {
@@ -802,11 +802,6 @@ RCT_EXPORT_METHOD(remoteConfigClearValues:(RCTPromiseResolveBlock)resolve reject
   });
 }
 
-RCT_EXPORT_METHOD(apm:(NSArray*)arguments) {
-  dispatch_async(dispatch_get_main_queue(), ^ {
-    config.enablePerformanceMonitoring = YES;
-  });
-}
 RCT_EXPORT_METHOD(startTrace:(NSArray*)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^ {
         NSString* traceKey = [arguments objectAtIndex:0];
@@ -863,7 +858,9 @@ RCT_EXPORT_METHOD(recordNetworkTrace:(NSArray*)arguments) {
     });
 }
 RCT_EXPORT_METHOD(enableApm:(NSArray*)arguments) {
-  NSLog(@"No implementation for iOS for enableApm.");
+  dispatch_async(dispatch_get_main_queue(), ^ {
+    config.enablePerformanceMonitoring = YES;
+  });
 }
 RCT_EXPORT_METHOD(applicationOnCreate:(NSArray*)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^ {

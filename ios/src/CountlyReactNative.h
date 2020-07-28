@@ -51,7 +51,6 @@ typedef void (^Result)(id _Nullable result);
 + (NSString *_Nullable) toJSON: (NSDictionary  * _Nullable) json;
 - (void) saveListener:(Result _Nullable ) result;
 
-- (void)apm:(NSArray*_Nullable)arguments;
 - (void)startTrace:(NSArray*_Nullable)arguments;
 - (void)cancelTrace:(NSArray*_Nullable)arguments;
 - (void)clearAllTrace:(NSArray*_Nullable)arguments;

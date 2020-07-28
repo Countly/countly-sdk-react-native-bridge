@@ -485,11 +485,6 @@ Countly.setEventSendThreshold = function(size){
     CountlyReactNative.setEventSendThreshold([size.toString() || ""]);
 }
 
-Countly.apm = function(){
-    var args = [];
-    CountlyReactNative.apm(args);
-}
-
 Countly.startTrace = function(traceKey){
     var args = [];
     args.push(traceKey);
