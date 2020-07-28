@@ -36,7 +36,7 @@ RCT_EXPORT_METHOD(init:(NSArray*)arguments)
   if (config == nil){
     config = CountlyConfig.new;
   }
-  if(![deviceID  isEqual: @""]){
+  if(deviceID != nil && ![deviceID  isEqual: @""]){
     config.deviceID = deviceID;
   }
   config.appKey = appkey;
@@ -787,6 +787,16 @@ RCT_EXPORT_METHOD(setEventSendThreshold:(NSArray*)arguments)
     config = CountlyConfig.new;
   }
   config.eventSendThreshold = sizeInt;
+  });
+}
+
+RCT_REMAP_METHOD(isLoggingEnabled,
+                 isLoggingEnabledWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+    id result = [NSNumber numberWithBool:config.enableDebug] ;
+    resolve(result);
   });
 }
 

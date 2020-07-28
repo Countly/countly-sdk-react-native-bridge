@@ -121,7 +121,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         Countly.sharedInstance().COUNTLY_SDK_VERSION_STRING = COUNTLY_RN_SDK_VERSION_STRING;
 
         this.config.setContext(_reactContext);
-        if("".equals(deviceId)){
+        if(deviceId == null || "".equals(deviceId)){
         }else{
             if(deviceId.equals("TemporaryDeviceID")){
                 this.config.enableTemporaryDeviceIdMode();
@@ -140,6 +140,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         Boolean enabled = args.getBoolean(0);
         this.config.setLoggingEnabled(enabled);
         loggingEnabled = enabled;
+    }
+
+    @ReactMethod
+    public void isLoggingEnabled(final Promise promise){
+        Boolean result = loggingEnabled;
+        promise.resolve(result);
     }
 
     @ReactMethod
