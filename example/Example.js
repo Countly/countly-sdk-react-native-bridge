@@ -37,7 +37,7 @@ class Example extends Component {
         this.recordNetworkTraceSuccess = this.recordNetworkTraceSuccess.bind(this);
         this.startNetworkRequestFailure = this.startNetworkRequestFailure.bind(this);
         this.recordNetworkTraceFailure = this.recordNetworkTraceFailure.bind(this);
-        this.setRecordAppStartTime = this.setRecordAppStartTime.bind(this);
+        this.enableApm = this.enableApm.bind(this);
         this.applicationOnCreate = this.applicationOnCreate.bind(this);
         this.random = this.random.bind(this);
     };
@@ -412,8 +412,8 @@ class Example extends Component {
     var responsePayloadSize = this.random(700) + 250;
     Countly.recordNetworkTrace(networkTraceKey, uniqueId, responseCode, requestPayloadSize, responsePayloadSize);
   }
-  setRecordAppStartTime(){
-    Countly.setRecordAppStartTime(true);
+  enableApm(){
+    Countly.enableApm(true);
   }
   applicationOnCreate(){
     Countly.applicationOnCreate();
@@ -608,7 +608,7 @@ class Example extends Component {
             <Button onPress={ this.recordNetworkTraceSuccess } title="End Network Request Success" color = "#1b1c1d"> </Button>
             <Button onPress={ this.startNetworkRequestFailure } title="Start Network Request Failure" color = "#1b1c1d"> </Button>
             <Button onPress={ this.recordNetworkTraceFailure } title="End Network Request Failure" color = "#1b1c1d"> </Button>
-            <Button onPress={ this.setRecordAppStartTime } title="Set Record App Start Time" color = "#1b1c1d"> </Button>
+            <Button onPress={ this.enableApm } title="Enable APM" color = "#1b1c1d"> </Button>
             <Button onPress={ this.applicationOnCreate } title="Application on create" color = "#1b1c1d"> </Button>
 
             {/*

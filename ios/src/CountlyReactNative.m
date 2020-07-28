@@ -918,8 +918,8 @@ RCT_EXPORT_METHOD(recordNetworkTrace:(NSArray*)arguments) {
         }
     });
 }
-RCT_EXPORT_METHOD(setRecordAppStartTime:(NSArray*)arguments) {
-  NSLog(@"No implementation for iOS for setRecordAppStartTime.");
+RCT_EXPORT_METHOD(enableApm:(NSArray*)arguments) {
+  NSLog(@"No implementation for iOS for enableApm.");
 }
 RCT_EXPORT_METHOD(applicationOnCreate:(NSArray*)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^ {

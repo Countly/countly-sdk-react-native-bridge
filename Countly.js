@@ -530,14 +530,14 @@ Countly.recordNetworkTrace = function(networkTraceKey, uniqueId, responseCode, r
 }
 
 
-Countly.setRecordAppStartTime = function(isRecordAppStartTime){
+Countly.enableApm = function(isRecordAppStartTime){
     var args = [];
     if(isRecordAppStartTime){
         args.push("true");
     }else{
         args.push("false");
     }
-    CountlyReactNative.setRecordAppStartTime(args);
+    CountlyReactNative.enableApm(args);
 }
 
 Countly.applicationOnCreate = function(){
