@@ -35,7 +35,6 @@ class Example extends Component {
         this.recordNetworkTraceSuccess = this.recordNetworkTraceSuccess.bind(this);
         this.recordNetworkTraceFailure = this.recordNetworkTraceFailure.bind(this);
         this.enableApm = this.enableApm.bind(this);
-        this.applicationOnCreate = this.applicationOnCreate.bind(this);
         this.random = this.random.bind(this);
     };
 
@@ -402,9 +401,6 @@ class Example extends Component {
   enableApm(){
     Countly.enableApm(true);
   }
-  applicationOnCreate(){
-    Countly.applicationOnCreate();
-  }
     /*
     testCrash(){
         Countly.testCrash();
@@ -593,7 +589,6 @@ class Example extends Component {
             <Button onPress={ this.recordNetworkTraceSuccess } title="End Network Request Success" color = "#1b1c1d"> </Button>
             <Button onPress={ this.recordNetworkTraceFailure } title="End Network Request Failure" color = "#1b1c1d"> </Button>
             <Button onPress={ this.enableApm } title="Enable APM" color = "#1b1c1d"> </Button>
-            <Button onPress={ this.applicationOnCreate } title="Application on create" color = "#1b1c1d"> </Button>
 
             {/*
             < Button onPress = { this.testCrash } title = "Test Native Crash" color = "crimson"> </Button>

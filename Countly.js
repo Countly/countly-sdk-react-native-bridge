@@ -537,10 +537,6 @@ Countly.enableApm = function(isRecordAppStartTime){
     CountlyReactNative.enableApm(args);
 }
 
-Countly.applicationOnCreate = function(){
-    var args = [];
-    CountlyReactNative.applicationOnCreate(args);
-}
 /*
 Countly.initNative = function(){
     CountlyReactNative.initNative();

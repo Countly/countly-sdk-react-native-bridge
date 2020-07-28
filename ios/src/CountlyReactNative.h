@@ -57,5 +57,4 @@ typedef void (^Result)(id _Nullable result);
 - (void)endTrace:(NSArray*_Nullable)arguments;
 - (void)recordNetworkTrace:(NSArray*_Nullable)arguments;
 - (void)enableApm:(NSArray*_Nullable)arguments;
-- (void)applicationOnCreate:(NSArray*_Nullable)arguments;
 @end

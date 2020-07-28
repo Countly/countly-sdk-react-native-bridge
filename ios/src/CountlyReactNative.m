@@ -846,9 +846,4 @@ RCT_EXPORT_METHOD(enableApm:(NSArray*)arguments) {
     config.enablePerformanceMonitoring = YES;
   });
 }
-RCT_EXPORT_METHOD(applicationOnCreate:(NSArray*)arguments) {
-    dispatch_async(dispatch_get_main_queue(), ^ {
-        [Countly.sharedInstance appLoadingFinished];
-    });
-}
 @end

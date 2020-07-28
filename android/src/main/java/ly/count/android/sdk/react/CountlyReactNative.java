@@ -824,10 +824,4 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         this.config.setRecordAppStartTime(true);
     }
 
-    @ReactMethod
-    public void applicationOnCreate(ReadableArray args){
-        Countly.applicationOnCreate();
-    }
-
-
 }
