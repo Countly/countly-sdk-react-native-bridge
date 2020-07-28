@@ -29,7 +29,7 @@ Countly.init = async function(serverUrl, appKey, deviceId = ""){
     if(deviceId == "") {
         deviceId = null;
         if(await CountlyReactNative.isLoggingEnabled()) {
-            console.error("[CountlyReactNative] init, Device Id is empty");
+            console.error("[CountlyReactNative] init, Device Id during init can't be empty string");
         }
     }
     Countly.serverUrl = serverUrl;
@@ -40,11 +40,6 @@ Countly.init = async function(serverUrl, appKey, deviceId = ""){
     args.push(deviceId);
 
     CountlyReactNative.init(args);
-}
-
-Countly.isLoggingEnabled = async function(){
-    // returns a promise
-    return await CountlyReactNative.isLoggingEnabled();
 }
 
 Countly.isInitialized = function(){
