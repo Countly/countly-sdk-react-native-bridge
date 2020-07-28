@@ -32,9 +32,6 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.HashMap;
 
-// for debug logging
-import static ly.count.android.sdk.Countly.TAG;
-
 //Push Plugin
 import android.os.Build;
 import android.app.NotificationManager;
