@@ -851,10 +851,4 @@ RCT_EXPORT_METHOD(applicationOnCreate:(NSArray*)arguments) {
         [Countly.sharedInstance appLoadingFinished];
     });
 }
-- (int)getTime
-{
-    NSTimeInterval time = ([[NSDate date] timeIntervalSince1970]); // returned as a double
-    int decimalDigits = (int)(fmod(time, 1) * 1000); // this will get the 3 missing digits
-    return decimalDigits;
-}
 @end
