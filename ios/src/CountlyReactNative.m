@@ -813,7 +813,7 @@ RCT_EXPORT_METHOD(cancelTrace:(NSArray*)arguments) {
         [Countly.sharedInstance cancelCustomTrace: traceKey];
     });
 }
-RCT_EXPORT_METHOD(clearAllTrace:(NSArray*)arguments) {
+RCT_EXPORT_METHOD(clearAllTraces:(NSArray*)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^ {
         [Countly.sharedInstance clearAllCustomTraces];
     });

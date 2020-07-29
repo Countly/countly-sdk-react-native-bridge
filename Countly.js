@@ -497,9 +497,9 @@ Countly.cancelTrace = function(traceKey){
     CountlyReactNative.cancelTrace(args);
 }
 
-Countly.clearAllTrace = function(){
+Countly.clearAllTraces = function(){
     var args = [];
-    CountlyReactNative.clearAllTrace(args);
+    CountlyReactNative.clearAllTraces(args);
 }
 
 Countly.endTrace = function(traceKey, customMetric){

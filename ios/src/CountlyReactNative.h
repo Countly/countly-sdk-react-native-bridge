@@ -53,7 +53,7 @@ typedef void (^Result)(id _Nullable result);
 
 - (void)startTrace:(NSArray*_Nullable)arguments;
 - (void)cancelTrace:(NSArray*_Nullable)arguments;
-- (void)clearAllTrace:(NSArray*_Nullable)arguments;
+- (void)clearAllTraces:(NSArray*_Nullable)arguments;
 - (void)endTrace:(NSArray*_Nullable)arguments;
 - (void)recordNetworkTrace:(NSArray*_Nullable)arguments;
 - (void)enableApm:(NSArray*_Nullable)arguments;

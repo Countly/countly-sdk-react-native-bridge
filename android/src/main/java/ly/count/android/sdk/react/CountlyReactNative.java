@@ -790,7 +790,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void clearAllTrace(ReadableArray args){
+    public void clearAllTraces(ReadableArray args){
         // Countly.sharedInstance().apm().clearAllTrace();
     }
 
