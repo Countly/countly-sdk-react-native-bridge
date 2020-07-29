@@ -170,7 +170,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void setHttpPostForced(ReadableArray args){
-        int isEnabled = Integer.parseInt(args.getString(0));
+        int isEnabled = this.getInteger(args, 0);
         if(isEnabled == 1){
             this.config.setHttpPostForced(true);
         }else{
@@ -282,18 +282,18 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         String eventType = args.getString(0);
         if("event".equals(eventType)){
             String eventName = args.getString(1);
-            int eventCount= Integer.parseInt(args.getString(2));
+            int eventCount= this.getInteger(args, 2);
             Countly.sharedInstance().events().recordEvent(eventName, eventCount);
         }
         else if ("eventWithSum".equals(eventType)) {
             String eventName = args.getString(1);
-            int eventCount= Integer.parseInt(args.getString(2));
+            int eventCount= this.getInteger(args, 2);
             float eventSum= new Float(args.getString(3)).floatValue();
             Countly.sharedInstance().events().recordEvent(eventName, eventCount, eventSum);
         }
         else if ("eventWithSegment".equals(eventType)) {
             String eventName = args.getString(1);
-            int eventCount= Integer.parseInt(args.getString(2));
+            int eventCount= this.getInteger(args, 2);
             HashMap<String, Object> segmentation = new HashMap<String, Object>();
             for(int i=3,il=args.size();i<il;i+=2){
                 segmentation.put(args.getString(i), args.getString(i+1));
@@ -302,7 +302,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         }
         else if ("eventWithSumSegment".equals(eventType)) {
             String eventName = args.getString(1);
-            int eventCount= Integer.parseInt(args.getString(2));
+            int eventCount= this.getInteger(args, 2);
             float eventSum= new Float(args.getString(3)).floatValue();
             HashMap<String, Object> segmentation = new HashMap<String, Object>();
             for(int i=4,il=args.size();i<il;i+=2){
@@ -335,13 +335,13 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         }
         else if ("eventWithSum".equals(eventType)) {
             String eventName = args.getString(1);
-            int eventCount= Integer.parseInt(args.getString(2));
+            int eventCount= this.getInteger(args, 2);
             float eventSum= new Float(args.getString(3)).floatValue();
             Countly.sharedInstance().events().endEvent(eventName, null, eventCount,eventSum);
         }
         else if ("eventWithSegment".equals(eventType)) {
             String eventName = args.getString(1);
-            int eventCount= Integer.parseInt(args.getString(2));
+            int eventCount= this.getInteger(args, 2);
             HashMap<String, Object> segmentation = new HashMap<String, Object>();
             for(int i=4,il=args.size();i<il;i+=2){
                 segmentation.put(args.getString(i), args.getString(i+1));
@@ -350,7 +350,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         }
         else if ("eventWithSumSegment".equals(eventType)) {
             String eventName = args.getString(1);
-            int eventCount= Integer.parseInt(args.getString(2));
+            int eventCount= this.getInteger(args, 2);
             float eventSum= new Float(args.getString(3)).floatValue();
             HashMap<String, Object> segmentation = new HashMap<String, Object>();
             for(int i=4,il=args.size();i<il;i+=2){
@@ -401,7 +401,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void sendPushToken(ReadableArray args){
         String pushToken = args.getString(0);
-        int messagingMode = Integer.parseInt(args.getString(1));
+        int messagingMode = this.getInteger(args, 1);
 
         Countly.CountlyMessagingMode mode = null;
         if(messagingMode == 0){
@@ -415,7 +415,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void pushTokenType(ReadableArray args) {
-        int messagingMode = Integer.parseInt(args.getString(0));
+        int messagingMode = this.getInteger(args, 0);
         this.channelName = args.getString(1);
         this.channelDescription = args.getString(2);
 
@@ -537,7 +537,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void userData_incrementBy(ReadableArray args){
         String keyName = args.getString(0);
-        int keyIncrement = Integer.parseInt(args.getString(1));
+        int keyIncrement = this.getInteger(args, 1);
         Countly.userData.incrementBy(keyName, keyIncrement);
         Countly.userData.save();
     }
@@ -545,7 +545,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void userData_multiply(ReadableArray args){
         String keyName = args.getString(0);
-        int multiplyValue = Integer.parseInt(args.getString(1));
+        int multiplyValue = this.getInteger(args, 1);
         Countly.userData.multiply(keyName, multiplyValue);
         Countly.userData.save();
     }
@@ -553,7 +553,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void userData_saveMax(ReadableArray args){
         String keyName = args.getString(0);
-        int maxScore = Integer.parseInt(args.getString(1));
+        int maxScore = this.getInteger(args, 1);
         Countly.userData.saveMax(keyName, maxScore);
         Countly.userData.save();
     }
@@ -561,7 +561,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void userData_saveMin(ReadableArray args){
         String keyName = args.getString(0);
-        int minScore = Integer.parseInt(args.getString(1));
+        int minScore = this.getInteger(args, 1);
         Countly.userData.saveMin(keyName, minScore);
         Countly.userData.save();
     }
@@ -772,7 +772,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void setEventSendThreshold(ReadableArray args){
-        int size = Integer.parseInt(args.getString(0));
+        int size = this.getInteger(args, 0);
         this.config.setEventQueueSizeToSend(size);
         // Countly.sharedInstance().setEventQueueSizeToSend(size);
     }
@@ -812,11 +812,11 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     public void recordNetworkTrace(ReadableArray args){
         String networkTraceKey = args.getString(0);
         String uniqueId = args.getString(1);
-        int responseCode = Integer.parseInt(args.getString(2));
-        int requestPayloadSize = Integer.parseInt(args.getString(3));
-        int responsePayloadSize = Integer.parseInt(args.getString(4));
-        int startTime = Integer.parseInt(args.getString(5));
-        int endTime = Integer.parseInt(args.getString(6));
+        int responseCode = this.getInteger(args, 2);
+        int requestPayloadSize = this.getInteger(args, 3);
+        int responsePayloadSize = this.getInteger(args, 4));
+        int startTime = this.getInteger(args, 5));
+        int endTime = this.getInteger(args, 6));
         Countly.sharedInstance().apm().endNetworkRequest(networkTraceKey, uniqueId, responseCode, requestPayloadSize, responsePayloadSize);
     }
 
@@ -829,4 +829,14 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
             Log.i(Countly.TAG, msg);
         }
     }
+
+    public int getInteger(ReadableArray args, int position){
+        try{
+            return Integer.parseInt(args.getString(position));
+        }catch(Exception exception){
+            this.log(exception.toString());
+        }
+        return 0;
+    }
+
 }
