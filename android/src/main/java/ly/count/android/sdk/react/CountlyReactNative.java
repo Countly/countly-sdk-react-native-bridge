@@ -800,12 +800,10 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         HashMap<String, Integer> customMetric = new HashMap<String, Integer>();
         for (int i = 1, il = args.size(); i < il; i += 2) {
             try{
-                if(validate("Integer", args, new int[] {i + 1})){
-                    customMetric.put(args.getString(i), this.getInteger(args, i + 1));
-                }
+                customMetric.put(args.getString(i), this.getInteger(args, i + 1));
             }catch(Exception exception){
                 if(loggingEnabled){
-                    Log.i(Countly.TAG, exception.toString());
+                    Log.i(Countly.TAG, "Exception occured at endTrace method: " +exception.toString());
                 }
             }
         }
@@ -814,7 +812,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void recordNetworkTrace(ReadableArray args){
-        if(validate("Integer", args, new int[] {2,3,4,5,6})){
+        try{
             String networkTraceKey = args.getString(0);
             String uniqueId = args.getString(1);
             int responseCode = this.getInteger(args, 2);
@@ -823,6 +821,10 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
             int startTime = this.getInteger(args, 5);
             int endTime = this.getInteger(args, 6);
             Countly.sharedInstance().apm().endNetworkRequest(networkTraceKey, uniqueId, responseCode, requestPayloadSize, responsePayloadSize);
+        }catch(Exception exception){
+            if(loggingEnabled){
+                Log.i(Countly.TAG, "Exception occured at recordNetworkTrace method: " +exception.toString());
+            }
         }
     }
 
