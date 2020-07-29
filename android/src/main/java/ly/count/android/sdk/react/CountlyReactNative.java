@@ -800,7 +800,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         HashMap<String, Integer> customMetric = new HashMap<String, Integer>();
         for (int i = 1, il = args.size(); i < il; i += 2) {
             try{
-                customMetric.put(args.getString(i), args.getString(i + 1));
+                customMetric.put(args.getString(i), this.getInteger(args, i + 1);
             }catch(Exception exception){
                 this.log(exception.toString());
             }
