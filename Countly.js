@@ -514,10 +514,9 @@ Countly.endTrace = function(traceKey, customMetric){
 }
 
 
-Countly.recordNetworkTrace = function(networkTraceKey, uniqueId, responseCode, requestPayloadSize, responsePayloadSize, startTime, endTime){
+Countly.recordNetworkTrace = function(networkTraceKey, responseCode, requestPayloadSize, responsePayloadSize, startTime, endTime){
     var args = [];
     args.push(networkTraceKey);
-    args.push(uniqueId);
     args.push(responseCode.toString());
     args.push(requestPayloadSize.toString());
     args.push(responsePayloadSize.toString());

@@ -831,12 +831,11 @@ RCT_EXPORT_METHOD(endTrace:(NSArray*)arguments) {
 RCT_EXPORT_METHOD(recordNetworkTrace:(NSArray*)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^ {
         NSString* networkTraceKey = [arguments objectAtIndex:0];
-        NSString* uniqueId = [arguments objectAtIndex:1];
-        int responseCode = [[arguments objectAtIndex:2] intValue];
-        int requestPayloadSize = [[arguments objectAtIndex:3] intValue];
-        int responsePayloadSize = [[arguments objectAtIndex:4] intValue];
-        int startTime = [[arguments objectAtIndex:5] intValue];
-        int endTime = [[arguments objectAtIndex:6] intValue];
+        int responseCode = [[arguments objectAtIndex:1] intValue];
+        int requestPayloadSize = [[arguments objectAtIndex:2] intValue];
+        int responsePayloadSize = [[arguments objectAtIndex:3] intValue];
+        int startTime = [[arguments objectAtIndex:4] intValue];
+        int endTime = [[arguments objectAtIndex:5] intValue];
         [Countly.sharedInstance recordNetworkTrace: networkTraceKey requestPayloadSize: requestPayloadSize responsePayloadSize: responsePayloadSize responseStatusCode: responseCode startTime: startTime endTime: endTime];
 
     });

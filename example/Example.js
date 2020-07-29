@@ -382,21 +382,19 @@ class Example extends Component {
   }
   recordNetworkTraceSuccess(){
     var networkTraceKey = "api/endpoint.1";
-    var uniqueId = "1337";
     var responseCode = successCodes[this.random(successCodes.length)];
     var requestPayloadSize = this.random(700) + 200;
     var responsePayloadSize = this.random(700) + 200;
-    Countly.recordNetworkTrace(networkTraceKey, uniqueId, responseCode, requestPayloadSize, responsePayloadSize);
+    Countly.recordNetworkTrace(networkTraceKey, responseCode, requestPayloadSize, responsePayloadSize);
   }
   recordNetworkTraceFailure(){
     var networkTraceKey = "api/endpoint.1";
-    var uniqueId = "7331";
     var responseCode = failureCodes[this.random(failureCodes.length)];
     var requestPayloadSize = this.random(700) + 250;
     var responsePayloadSize = this.random(700) + 250;
     var startTime = new Date().getTime();
     var endTime = startTime + 500;
-    Countly.recordNetworkTrace(networkTraceKey, uniqueId, responseCode, requestPayloadSize, responsePayloadSize, startTime, endTime);
+    Countly.recordNetworkTrace(networkTraceKey, responseCode, requestPayloadSize, responsePayloadSize, startTime, endTime);
   }
   enableApm(){
     Countly.enableApm();

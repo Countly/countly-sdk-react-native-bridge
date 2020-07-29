@@ -814,13 +814,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     public void recordNetworkTrace(ReadableArray args){
         try{
             String networkTraceKey = args.getString(0);
-            String uniqueId = args.getString(1);
-            int responseCode = Integer.parseInt(args.getString(2));
-            int requestPayloadSize = Integer.parseInt(args.getString(3));
-            int responsePayloadSize = Integer.parseInt(args.getString(4));
-            int startTime = Integer.parseInt(args.getString(5));
-            int endTime = Integer.parseInt(args.getString(6));
-            Countly.sharedInstance().apm().endNetworkRequest(networkTraceKey, uniqueId, responseCode, requestPayloadSize, responsePayloadSize);
+            int responseCode = Integer.parseInt(args.getString(1));
+            int requestPayloadSize = Integer.parseInt(args.getString(2));
+            int responsePayloadSize = Integer.parseInt(args.getString(3));
+            int startTime = Integer.parseInt(args.getString(4));
+            int endTime = Integer.parseInt(args.getString(5));
+            Countly.sharedInstance().apm().endNetworkRequest(networkTraceKey, responseCode, requestPayloadSize, responsePayloadSize);
         }catch(Exception exception){
             if(loggingEnabled){
                 Log.e(Countly.TAG, "Exception occured at recordNetworkTrace method: " +exception.toString());
