@@ -62,23 +62,20 @@ RCT_EXPORT_METHOD(event:(NSArray*)arguments)
   if (eventType != nil && [eventType length] > 0) {
     if ([eventType  isEqual: @"event"]) {
       NSString* eventName = [arguments objectAtIndex:1];
-      NSString* countString = [arguments objectAtIndex:2];
-      int countInt = [countString intValue];
+      int countInt = [self getInteger: arguments position: 2];
       [[Countly sharedInstance] recordEvent:eventName count:countInt];
 
     }
     else if ([eventType  isEqual: @"eventWithSum"]){
       NSString* eventName = [arguments objectAtIndex:1];
-      NSString* countString = [arguments objectAtIndex:2];
-      int countInt = [countString intValue];
+      int countInt = [self getInteger: arguments position: 2];
       NSString* sumString = [arguments objectAtIndex:3];
       float sumFloat = [sumString floatValue];
       [[Countly sharedInstance] recordEvent:eventName count:countInt  sum:sumFloat];
     }
     else if ([eventType  isEqual: @"eventWithSegment"]){
       NSString* eventName = [arguments objectAtIndex:1];
-      NSString* countString = [arguments objectAtIndex:2];
-      int countInt = [countString intValue];
+      int countInt = [self getInteger: arguments position: 2];
       NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
 
       for(int i=3,il=(int)arguments.count;i<il;i+=2){
@@ -88,8 +85,7 @@ RCT_EXPORT_METHOD(event:(NSArray*)arguments)
     }
     else if ([eventType  isEqual: @"eventWithSumSegment"]){
       NSString* eventName = [arguments objectAtIndex:1];
-      NSString* countString = [arguments objectAtIndex:2];
-      int countInt = [countString intValue];
+      int countInt = [self getInteger: arguments position: 2];
       NSString* sumString = [arguments objectAtIndex:3];
       float sumFloat = [sumString floatValue];
       NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
@@ -352,8 +348,7 @@ RCT_EXPORT_METHOD(endEvent:(NSArray*)arguments)
   else if ([eventType  isEqual: @"eventWithSum"]){
     NSString* eventName = [arguments objectAtIndex:1];
 
-    NSString* countString = [arguments objectAtIndex:2];
-    int countInt = [countString intValue];
+    int countInt = [self getInteger: arguments position: 2];
 
     NSString* sumString = [arguments objectAtIndex:3];
     float sumInt = [sumString floatValue];
@@ -364,8 +359,7 @@ RCT_EXPORT_METHOD(endEvent:(NSArray*)arguments)
   else if ([eventType  isEqual: @"eventWithSegment"]){
     NSString* eventName = [arguments objectAtIndex:1];
 
-    NSString* countString = [arguments objectAtIndex:2];
-    int countInt = [countString intValue];
+    int countInt = [self getInteger: arguments position: 2];
 
     NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
     for(int i=4,il=(int)arguments.count;i<il;i+=2){
@@ -378,7 +372,7 @@ RCT_EXPORT_METHOD(endEvent:(NSArray*)arguments)
     NSString* eventName = [arguments objectAtIndex:1];
 
     NSString* countString = [arguments objectAtIndex:2];
-    int countInt = [countString intValue];
+    int countInt = [self getInteger: arguments position: 2];
 
     NSString* sumString = [arguments objectAtIndex:3];
     float sumInt = [sumString floatValue];
@@ -515,8 +509,7 @@ RCT_EXPORT_METHOD(userData_incrementBy:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* keyName = [arguments objectAtIndex:0];
-  NSString* keyValue = [arguments objectAtIndex:1];
-  int keyValueInteger = [keyValue intValue];
+  int keyValueInteger = [self getInteger: arguments position: 1];
 
   [Countly.user incrementBy:keyName value:[NSNumber numberWithInt:keyValueInteger]];
   [Countly.user save];
@@ -527,8 +520,7 @@ RCT_EXPORT_METHOD(userData_multiply:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* keyName = [arguments objectAtIndex:0];
-  NSString* keyValue = [arguments objectAtIndex:1];
-  int keyValueInteger = [keyValue intValue];
+  int keyValueInteger = [self getInteger: arguments position: 1];
 
   [Countly.user multiply:keyName value:[NSNumber numberWithInt:keyValueInteger]];
   [Countly.user save];
@@ -539,8 +531,7 @@ RCT_EXPORT_METHOD(userData_saveMax:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* keyName = [arguments objectAtIndex:0];
-  NSString* keyValue = [arguments objectAtIndex:1];
-  int keyValueInteger = [keyValue intValue];
+  int keyValueInteger = [self getInteger: arguments position: 1];
 
   [Countly.user max:keyName value:[NSNumber numberWithInt:keyValueInteger]];
   [Countly.user save];
@@ -551,8 +542,7 @@ RCT_EXPORT_METHOD(userData_saveMin:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* keyName = [arguments objectAtIndex:0];
-  NSString* keyValue = [arguments objectAtIndex:1];
-  int keyValueInteger = [keyValue intValue];
+  int keyValueInteger = [self getInteger: arguments position: 1];
 
   [Countly.user min:keyName value:[NSNumber numberWithInt:keyValueInteger]];
   [Countly.user save];
@@ -753,8 +743,7 @@ RCT_EXPORT_METHOD(showFeedbackPopup:(NSArray*)arguments)
 RCT_EXPORT_METHOD(setEventSendThreshold:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
-  NSString* size = [arguments objectAtIndex:0];
-  int sizeInt = [size intValue];
+  int sizeInt = [self getInteger: arguments position: 0];
   if (config == nil){
     config = CountlyConfig.new;
   }
@@ -832,11 +821,11 @@ RCT_EXPORT_METHOD(recordNetworkTrace:(NSArray*)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^ {
         NSString* networkTraceKey = [arguments objectAtIndex:0];
         NSString* uniqueId = [arguments objectAtIndex:1];
-        int responseCode = [[arguments objectAtIndex:2] intValue];
-        int requestPayloadSize = [[arguments objectAtIndex:3] intValue];
-        int responsePayloadSize = [[arguments objectAtIndex:4] intValue];
-        int startTime = [[arguments objectAtIndex:5] intValue];
-        int endTime = [[arguments objectAtIndex:6] intValue];
+        int responseCode = [self getInteger: arguments position: 2];
+        int requestPayloadSize = [self getInteger: arguments position: 3];
+        int responsePayloadSize = [self getInteger: arguments position: 4];
+        int startTime = [self getInteger: arguments position: 5];
+        int endTime = [self getInteger: arguments position: 6];
         [Countly.sharedInstance recordNetworkTrace: networkTraceKey requestPayloadSize: requestPayloadSize responsePayloadSize: responsePayloadSize responseStatusCode: responseCode startTime: startTime endTime: endTime];
 
     });
@@ -846,4 +835,14 @@ RCT_EXPORT_METHOD(enableApm:(NSArray*)arguments) {
     config.enablePerformanceMonitoring = YES;
   });
 }
+- (int)getInteger:(NSArray*)arguments :(int) position{
+  @try{
+    return [[arguments objectAtIndex:position] intValue];
+  }
+  @catch(NSException *exception){
+      NSLog(@"[Countly] Invalid integer at position: %d", position);
+  }
+  return 0;
+}
+
 @end
