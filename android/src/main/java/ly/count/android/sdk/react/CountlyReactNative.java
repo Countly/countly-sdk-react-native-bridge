@@ -803,7 +803,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
                 customMetric.put(args.getString(i), this.getInteger(args, i + 1));
             }catch(Exception exception){
                 if(loggingEnabled){
-                    Log.i(Countly.TAG, "Exception occured at endTrace method: " +exception.toString());
+                    Log.i(Countly.TAG, "[CountlyReactNative] endTrace, could not parse metrics, skipping it. ");
                 }
             }
         }
