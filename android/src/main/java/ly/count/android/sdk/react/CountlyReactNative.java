@@ -89,7 +89,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
             Countly.CountlyFeatureNames.push,
             Countly.CountlyFeatureNames.starRating,
             Countly.CountlyFeatureNames.apm
-            ));
+    ));
 
     public CountlyReactNative(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -113,8 +113,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         this.config.setServerURL(serverUrl);
         this.config.setAppKey(appKey);
 
-        Countly.sharedInstance().COUNTLY_SDK_NAME = COUNTLY_RN_SDK_NAME;
-        Countly.sharedInstance().COUNTLY_SDK_VERSION_STRING = COUNTLY_RN_SDK_VERSION_STRING;
+        // Countly.sharedInstance().COUNTLY_SDK_NAME = COUNTLY_RN_SDK_NAME;
+        // Countly.sharedInstance().COUNTLY_SDK_VERSION_STRING = COUNTLY_RN_SDK_VERSION_STRING;
 
         this.config.setContext(_reactContext);
         if(deviceId == null || "".equals(deviceId)){
@@ -800,7 +800,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         HashMap<String, Integer> customMetric = new HashMap<String, Integer>();
         for (int i = 1, il = args.size(); i < il; i += 2) {
             try{
-                customMetric.put(args.getString(i), this.getInteger(args, i + 1);
+                if(validate("Integer", args, new int[] {i + 1})){
+                    customMetric.put(args.getString(i), this.getInteger(args, i + 1));
+                }
             }catch(Exception exception){
                 if(loggingEnabled){
                     Log.i(Countly.TAG, exception.toString());
@@ -812,14 +814,16 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void recordNetworkTrace(ReadableArray args){
-        String networkTraceKey = args.getString(0);
-        String uniqueId = args.getString(1);
-        int responseCode = this.getInteger(args, 2);
-        int requestPayloadSize = this.getInteger(args, 3);
-        int responsePayloadSize = this.getInteger(args, 4));
-        int startTime = this.getInteger(args, 5));
-        int endTime = this.getInteger(args, 6));
-        Countly.sharedInstance().apm().endNetworkRequest(networkTraceKey, uniqueId, responseCode, requestPayloadSize, responsePayloadSize);
+        if(validate("Integer", args, new int[] {2,3,4,5,6})){
+            String networkTraceKey = args.getString(0);
+            String uniqueId = args.getString(1);
+            int responseCode = this.getInteger(args, 2);
+            int requestPayloadSize = this.getInteger(args, 3);
+            int responsePayloadSize = this.getInteger(args, 4);
+            int startTime = this.getInteger(args, 5);
+            int endTime = this.getInteger(args, 6);
+            Countly.sharedInstance().apm().endNetworkRequest(networkTraceKey, uniqueId, responseCode, requestPayloadSize, responsePayloadSize);
+        }
     }
 
     @ReactMethod
@@ -832,10 +836,28 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
             return Integer.parseInt(args.getString(position));
         }catch(Exception exception){
             if(loggingEnabled){
-                Log.e(Countly.TAG, exception.toString());
+                Log.e(Countly.TAG, "Exception occurred while getInteger: " +exception.toString());
             }
         }
         return 0;
     }
 
+    public static boolean validate(String type, ReadableArray args, int []positions) {
+        int position = 0;
+        for(int i=0,il=positions.length;i<il;i++){
+            try{
+                position = positions[i];
+                if(type == "Integer"){
+                    Integer.parseInt(args.getString(position));
+                }
+                if(type == "String"){
+                    args.getString(position);
+                }
+            }catch(Exception exception){
+                Log.e(Countly.TAG, "Exception occurred while validate: " +exception.toString());
+                return false;
+            }
+        }
+        return true;
+    }
 }
