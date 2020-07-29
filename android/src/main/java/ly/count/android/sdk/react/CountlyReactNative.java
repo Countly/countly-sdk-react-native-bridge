@@ -844,22 +844,4 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         return 0;
     }
 
-    public static boolean validate(String type, ReadableArray args, int []positions) {
-        int position = 0;
-        for(int i=0,il=positions.length;i<il;i++){
-            try{
-                position = positions[i];
-                if(type == "Integer"){
-                    Integer.parseInt(args.getString(position));
-                }
-                if(type == "String"){
-                    args.getString(position);
-                }
-            }catch(Exception exception){
-                Log.e(Countly.TAG, "Exception occurred while validate: " +exception.toString());
-                return false;
-            }
-        }
-        return true;
-    }
 }
