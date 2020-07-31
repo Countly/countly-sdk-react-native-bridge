@@ -386,7 +386,9 @@ class Example extends Component {
     var responseCode = successCodes[this.random(successCodes.length)];
     var requestPayloadSize = this.random(700) + 200;
     var responsePayloadSize = this.random(700) + 200;
-    Countly.recordNetworkTrace(networkTraceKey, responseCode, requestPayloadSize, responsePayloadSize);
+    var startTime = new Date().getTime();
+    var endTime = startTime + 500;
+    Countly.recordNetworkTrace(networkTraceKey, responseCode, requestPayloadSize, responsePayloadSize, startTime, endTime);
   }
   recordNetworkTraceFailure(){
     var networkTraceKey = "api/endpoint.1";
@@ -516,7 +518,8 @@ class Example extends Component {
             < Button onPress = { this.showStarRating } title = "Show Star Rating Model" color = "#00b5ad"> </Button>
             < Button onPress = { this.showFeedbackPopup } title = "Show FeedBack Model" color = "#00b5ad"> </Button>
             < Button onPress = { this.eventSendThreshold } title = "Set Event Threshold" color = "#00b5ad"> </Button>
-            < Button onPress = { this.setCustomCrashSegments } title = "Set Custom Crash Segment" color = "#00b5ad"> </Button>            <Text style={[{textAlign: 'center'}]}>Other Methods End</Text>
+            < Button onPress = { this.setCustomCrashSegments } title = "Set Custom Crash Segment" color = "#00b5ad"> </Button>
+            <Text style={[{textAlign: 'center'}]}>Other Methods End</Text>
             <Text style={[{textAlign: 'center'}]}>.</Text>
 
 
