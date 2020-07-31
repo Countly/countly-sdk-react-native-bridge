@@ -598,8 +598,8 @@ class Example extends Component {
             <Text style={[{textAlign: 'center'}]}>APM Example Start</Text>
             <Button onPress={ this.startTrace } title="Start Trace" color = "#1b1c1d"> </Button>
             <Button onPress={ this.endTrace } title="End Trace" color = "#1b1c1d"> </Button>
-            <Button onPress={ this.recordNetworkTraceSuccess } title="End Network Request Success" color = "#1b1c1d"> </Button>
-            <Button onPress={ this.recordNetworkTraceFailure } title="End Network Request Failure" color = "#1b1c1d"> </Button>
+            <Button onPress={ this.recordNetworkTraceSuccess } title="Record Network Trace Success" color = "#1b1c1d"> </Button>
+            <Button onPress={ this.recordNetworkTraceFailure } title="Record Network Trace Failure" color = "#1b1c1d"> </Button>
             <Button onPress={ this.enableApm } title="Enable APM" color = "#1b1c1d"> </Button>
             <Text style={[{textAlign: 'center'}]}>APM Example Start</Text>
             <Text style={[{textAlign: 'center'}]}>.</Text>

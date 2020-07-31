@@ -274,7 +274,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         for(int i=0,il=args.size();i<il;i+=2){
             segments.put(args.getString(i), args.getString(i+1));
         }
-        this.config.setCustomCrashSegment(segments);
+        this.config.setCustomCrashSegments(segments);
     }
 
     @ReactMethod
