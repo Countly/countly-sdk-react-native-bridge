@@ -41,10 +41,10 @@ RCT_EXPORT_METHOD(init:(NSArray*)arguments)
   }
   config.appKey = appkey;
   config.host = serverurl;
-    
+
   CountlyCommon.sharedInstance.SDKName = kCountlyReactNativeSDKName;
   CountlyCommon.sharedInstance.SDKVersion = kCountlyReactNativeSDKVersion;
-    
+
   config.features = @[CLYCrashReporting, CLYPushNotifications];
 
   if (serverurl != nil && [serverurl length] > 0) {
@@ -339,34 +339,6 @@ RCT_EXPORT_METHOD(cancelEvent:(NSArray*)arguments)
   });
 }
 
-/*
-RCT_EXPORT_METHOD(endEvent:(NSDictionary*)options)
-{
-  NSString* eventName = "";
-
-  if ([options valueForKey:@"eventName"] == nil) {
-    // log error as in android method
-    return;
-  }
-  else {
-    eventName = (String) [options valueForKey:@"eventName"];
-  }
-  int eventCount = 1;
-  if ([options valueForKey:@"eventCount"] != nil) {
-    eventCount = (int) [options valueForKey:@"eventCount"]
-  }
-  double eventSum = 0;
-  if ([options valueForKey:@"eventSum"] != nil) {
-    eventSum = (double) [options valueForKey:@"eventSum"]
-  }
-  NSMutableDictionary *segments = [NSMutableDictionary dictionary]
-  if ([options valueForKey:@"segments"] != nil) {
-    NSDictionary *segmentation = (NSDictionary*) [options valueForKey:@"segments"];
-    [segments addEntriesFromDictionary:segmentation];
-  }
-  [Countly.sharedInstance endEvent:eventName segmentation:segments count:eventCount sum:eventSum];
-}
-*/
 
 RCT_EXPORT_METHOD(endEvent:(NSArray*)arguments)
 {
@@ -486,6 +458,20 @@ RCT_EXPORT_METHOD(addCrashLog:(NSArray*)arguments)
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* logs = [arguments objectAtIndex:0];
   [Countly.sharedInstance recordCrashLog:logs];
+  });
+}
+
+RCT_EXPORT_METHOD(setCustomCrashSegments:(NSArray*)arguments)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+  NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
+  for(int i=0,il=(int)arguments.count;i<il;i+=2){
+      dict[[arguments objectAtIndex:i]] = [arguments objectAtIndex:i+1];
+  }
+  if (config == nil){
+    config = CountlyConfig.new;
+  }
+  config.crashSegmentation = dict;
   });
 }
 
@@ -826,6 +812,51 @@ RCT_EXPORT_METHOD(remoteConfigClearValues:(RCTPromiseResolveBlock)resolve reject
   dispatch_async(dispatch_get_main_queue(), ^ {
     [CountlyRemoteConfig.sharedInstance clearCachedRemoteConfig];
     resolve(@"Remote Config Cleared.");
+  });
+}
+
+RCT_EXPORT_METHOD(startTrace:(NSArray*)arguments) {
+    dispatch_async(dispatch_get_main_queue(), ^ {
+        NSString* traceKey = [arguments objectAtIndex:0];
+        [Countly.sharedInstance startCustomTrace: traceKey];
+    });
+}
+RCT_EXPORT_METHOD(cancelTrace:(NSArray*)arguments) {
+    dispatch_async(dispatch_get_main_queue(), ^ {
+        NSString* traceKey = [arguments objectAtIndex:0];
+        [Countly.sharedInstance cancelCustomTrace: traceKey];
+    });
+}
+RCT_EXPORT_METHOD(clearAllTraces:(NSArray*)arguments) {
+    dispatch_async(dispatch_get_main_queue(), ^ {
+        [Countly.sharedInstance clearAllCustomTraces];
+    });
+}
+RCT_EXPORT_METHOD(endTrace:(NSArray*)arguments) {
+    dispatch_async(dispatch_get_main_queue(), ^ {
+        NSString* traceKey = [arguments objectAtIndex:0];
+        NSMutableDictionary *metrics = [[NSMutableDictionary alloc] init];
+        for(int i=1,il=(int)arguments.count;i<il;i+=2){
+            metrics[[arguments objectAtIndex:i]] = [arguments objectAtIndex:i+1];
+        }
+        [Countly.sharedInstance endCustomTrace: traceKey metrics: metrics];
+    });
+}
+RCT_EXPORT_METHOD(recordNetworkTrace:(NSArray*)arguments) {
+    dispatch_async(dispatch_get_main_queue(), ^ {
+        NSString* networkTraceKey = [arguments objectAtIndex:0];
+        int responseCode = [[arguments objectAtIndex:1] intValue];
+        int requestPayloadSize = [[arguments objectAtIndex:2] intValue];
+        int responsePayloadSize = [[arguments objectAtIndex:3] intValue];
+        int startTime = [[arguments objectAtIndex:4] intValue];
+        int endTime = [[arguments objectAtIndex:5] intValue];
+        [Countly.sharedInstance recordNetworkTrace: networkTraceKey requestPayloadSize: requestPayloadSize responsePayloadSize: responsePayloadSize responseStatusCode: responseCode startTime: startTime endTime: endTime];
+
+    });
+}
+RCT_EXPORT_METHOD(enableApm:(NSArray*)arguments) {
+  dispatch_async(dispatch_get_main_queue(), ^ {
+    config.enablePerformanceMonitoring = YES;
   });
 }
 @end

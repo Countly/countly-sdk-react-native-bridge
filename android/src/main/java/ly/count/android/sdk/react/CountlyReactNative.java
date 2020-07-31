@@ -87,7 +87,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
             Countly.CountlyFeatureNames.attribution,
             Countly.CountlyFeatureNames.users,
             Countly.CountlyFeatureNames.push,
-            Countly.CountlyFeatureNames.starRating
+            Countly.CountlyFeatureNames.starRating,
+            Countly.CountlyFeatureNames.apm
     ));
 
     public CountlyReactNative(ReactApplicationContext reactContext) {
@@ -109,16 +110,11 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         String serverUrl = args.getString(0);
         String appKey = args.getString(1);
         String deviceId = args.getString(2);
-        // String ratingTitle = args.getString(4);
-        // String ratingMessage = args.getString(5);
-        // String ratingButton = args.getString(6);
-        // Boolean consentFlag = args.getBoolean(7);
-        // int ratingLimit = Integer.parseInt(args.getString(3));
         this.config.setServerURL(serverUrl);
         this.config.setAppKey(appKey);
 
-        Countly.sharedInstance().COUNTLY_SDK_NAME = COUNTLY_RN_SDK_NAME;
-        Countly.sharedInstance().COUNTLY_SDK_VERSION_STRING = COUNTLY_RN_SDK_VERSION_STRING;
+          Countly.sharedInstance().COUNTLY_SDK_NAME = COUNTLY_RN_SDK_NAME;
+          Countly.sharedInstance().COUNTLY_SDK_VERSION_STRING = COUNTLY_RN_SDK_VERSION_STRING;
 
         this.config.setContext(_reactContext);
         if(deviceId == null || "".equals(deviceId)){
@@ -130,9 +126,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
             }
         }
         Countly.sharedInstance().init(this.config);
-        // Countly.sharedInstance().setRequiresConsent(consentFlag);
-        // Countly.sharedInstance()
-        //         .init(_reactContext, serverUrl, appKey, deviceId, DeviceId.Type.OPEN_UDID, ratingLimit, null, ratingTitle, ratingMessage, ratingButton);
     }
 
     @ReactMethod
@@ -267,16 +260,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         String exceptionString = args.getString(0);
         Exception exception = new Exception(exceptionString);
 
-        // Boolean nonfatal = args.getBoolean(1);
-
-        // HashMap<String, Object> segments = new HashMap<String, Object>();
-        // for(int i=2,il=args.size();i<il;i+=2){
-        //     segments.put(args.getString(i), args.getString(i+1));
-        // }
-        // segments.put("nonfatal", nonfatal.toString());
-        // this.config.setCustomCrashSegment(segments);
-        // Countly.sharedInstance().setCustomCrashSegments(segments);
-
         Countly.sharedInstance().crashes().recordHandledException(exception);
     }
     @ReactMethod
@@ -284,26 +267,14 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         Countly.sharedInstance().crashes().addCrashBreadcrumb(stack);
         Countly.sharedInstance().crashes().recordHandledException(new CountlyReactException(err, message, stack));
     }
-    /*
-    @ReactMethod
-    public void testCrash() throws Exception{
-       testCrashAux1(42);
-    }
-    private void testCrashAux1(int x) throws Exception{
-        testCrashAux2(x*2, "test");
-    }
-    private void testCrashAux2(int x, String s) throws Exception{
-        Countly.sharedInstance().logException(new Exception("Some test exception"));
-    }
-    */
+
     @ReactMethod
     public void setCustomCrashSegments(ReadableArray args){
         Map<String, Object> segments = new HashMap<String, Object>();
-        for(int i=0,il=args.size();i<il;i++){
-            segments.put(args.getString(i), args.getString(i));
+        for(int i=0,il=args.size();i<il;i+=2){
+            segments.put(args.getString(i), args.getString(i+1));
         }
         this.config.setCustomCrashSegment(segments);
-        // Countly.sharedInstance().setCustomCrashSegments(segments);
     }
 
     @ReactMethod
@@ -406,10 +377,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         String flag = args.getString(0);
         if("true".equals(flag)){
             this.config.setViewTracking(true);
-            // Countly.sharedInstance().setViewTracking(true);
         }else{
             this.config.setViewTracking(false);
-            // Countly.sharedInstance().setViewTracking(false);
         }
     }
 
@@ -634,7 +603,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     public void setRequiresConsent(ReadableArray args){
         Boolean consentFlag = args.getBoolean(0);
         this.config.setRequiresConsent(consentFlag);
-        // Countly.sharedInstance().setRequiresConsent(consentFlag);
     }
 
     @ReactMethod
@@ -809,16 +777,60 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         // Countly.sharedInstance().setEventQueueSizeToSend(size);
     }
 
-    /*
     @ReactMethod
-    public void initNative(){
-            CountlyNative.initNative(getReactApplicationContext());
+    public void startTrace(ReadableArray args){
+        String traceKey = args.getString(0);
+        Countly.sharedInstance().apm().startTrace(traceKey);
     }
 
     @ReactMethod
-    public void testCrash(){
-            CountlyNative.crash();
+    public void cancelTrace(ReadableArray args){
+        String traceKey = args.getString(0);
+        // Countly.sharedInstance().apm().cancelTrace(traceKey);
     }
-    */
+
+    @ReactMethod
+    public void clearAllTraces(ReadableArray args){
+        // Countly.sharedInstance().apm().clearAllTrace();
+    }
+
+    @ReactMethod
+    public void endTrace(ReadableArray args){
+        String traceKey = args.getString(0);
+        HashMap<String, Integer> customMetric = new HashMap<String, Integer>();
+        for (int i = 1, il = args.size(); i < il; i += 2) {
+            try{
+                customMetric.put(args.getString(i), Integer.parseInt(args.getString(i + 1)));
+            }catch(Exception exception){
+                if(loggingEnabled){
+                    Log.e(Countly.TAG, "[CountlyReactNative] endTrace, could not parse metrics, skipping it. ");
+                }
+            }
+        }
+        Countly.sharedInstance().apm().endTrace(traceKey, customMetric);
+    }
+
+    @ReactMethod
+    public void recordNetworkTrace(ReadableArray args){
+        try{
+            String networkTraceKey = args.getString(0);
+            int responseCode = Integer.parseInt(args.getString(1));
+            int requestPayloadSize = Integer.parseInt(args.getString(2));
+            int responsePayloadSize = Integer.parseInt(args.getString(3));
+            int startTime = Integer.parseInt(args.getString(4));
+            int endTime = Integer.parseInt(args.getString(5));
+            // Countly.sharedInstance().apm().endNetworkRequest(networkTraceKey, null, responseCode, requestPayloadSize, responsePayloadSize);
+        }catch(Exception exception){
+            if(loggingEnabled){
+                Log.e(Countly.TAG, "Exception occured at recordNetworkTrace method: " +exception.toString());
+            }
+        }
+    }
+
+    @ReactMethod
+    public void enableApm(ReadableArray args){
+        this.config.setRecordAppStartTime(true);
+    }
+
 
 }

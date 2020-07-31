@@ -251,19 +251,13 @@ Countly.logException = function(exception, nonfatal, segments){
     }
     CountlyReactNative.logException(args);
 }
-
-/*
-Countly.testAndroidCrash = function(x) {
-    if (Platform.OS.match("android")) {
-        CountlyReactNative.testCrash();
+Countly.setCustomCrashSegments = function(segments){
+    var args = [];
+    for(var key in segments){
+        args.push(key.toString());
+        args.push(segments[key].toString());
     }
-}
-*/
-Countly.setCustomCrashSegments = function(logs){
-    if(!logs){
-        logs = [];
-    }
-    CountlyReactNative.setCustomCrashSegments(logs);
+    CountlyReactNative.setCustomCrashSegments(args);
 }
 Countly.startSession = function(){
     CountlyReactNative.startSession();
@@ -490,6 +484,52 @@ Countly.showFeedbackPopup = function(widgetId, closeButtonText,){
 
 Countly.setEventSendThreshold = function(size){
     CountlyReactNative.setEventSendThreshold([size.toString() || ""]);
+}
+
+Countly.startTrace = function(traceKey){
+    var args = [];
+    args.push(traceKey);
+    CountlyReactNative.startTrace(args);
+}
+
+Countly.cancelTrace = function(traceKey){
+    var args = [];
+    args.push(traceKey);
+    CountlyReactNative.cancelTrace(args);
+}
+
+Countly.clearAllTraces = function(){
+    var args = [];
+    CountlyReactNative.clearAllTraces(args);
+}
+
+Countly.endTrace = function(traceKey, customMetric){
+    var args = [];
+    args.push(traceKey);
+    customMetric = customMetric || {};
+    for(var key in customMetric){
+        args.push(key.toString());
+        args.push(customMetric[key].toString());
+    }
+    CountlyReactNative.endTrace(args);
+}
+
+
+Countly.recordNetworkTrace = function(networkTraceKey, responseCode, requestPayloadSize, responsePayloadSize, startTime, endTime){
+    var args = [];
+    args.push(networkTraceKey);
+    args.push(responseCode.toString());
+    args.push(requestPayloadSize.toString());
+    args.push(responsePayloadSize.toString());
+    args.push(startTime.toString());
+    args.push(endTime.toString());
+    CountlyReactNative.recordNetworkTrace(args);
+}
+
+
+Countly.enableApm = function(){
+    var args = [];
+    CountlyReactNative.enableApm(args);
 }
 
 /*
