@@ -36,6 +36,7 @@ class Example extends Component {
         this.recordNetworkTraceFailure = this.recordNetworkTraceFailure.bind(this);
         this.enableApm = this.enableApm.bind(this);
         this.random = this.random.bind(this);
+        this.setCustomCrashSegments = this.setCustomCrashSegments.bind(this);
     };
 
     componentDidMount(){
@@ -399,6 +400,11 @@ class Example extends Component {
   enableApm(){
     Countly.enableApm();
   }
+
+  setCustomCrashSegments(){
+    var segment = {"Key": "Value"};
+    Countly.setCustomCrashSegments(segment);
+  }
     /*
     testCrash(){
         Countly.testCrash();
@@ -461,6 +467,7 @@ class Example extends Component {
             < Button onPress = { this.onStart } title = "Start" color = "#5bbd72"> </Button>
             < Button onPress = { this.onStop } title = "Stop" color = "#d95c5c"> </Button>
 
+            <Text style={[{textAlign: 'center'}]}>.</Text>
             <Text style={[{textAlign: 'center'}]}>Events Start</Text>
 
             < Button onPress = { this.basicEvent } title = "Basic Events" color = "#e0e0e0"> </Button>
@@ -475,6 +482,7 @@ class Example extends Component {
 
 
             <Text style={[{textAlign: 'center'}]}>Events End</Text>
+            <Text style={[{textAlign: 'center'}]}>.</Text>
 
             <Text style={[{textAlign: 'center'}]}>2017</Text>
             <Text style={[{textAlign: 'center'}]}>User Methods Start</Text>
@@ -492,6 +500,8 @@ class Example extends Component {
             < Button onPress = { this.userData_pullValue } title = "UserData.pullValue" color = "#00b5ad"> </Button>
 
             <Text style={[{textAlign: 'center'}]}>User Methods End</Text>
+            <Text style={[{textAlign: 'center'}]}>.</Text>
+
 
             <Text style={[{textAlign: 'center'}]}>Other Methods Start</Text>
             < Button onPress = { function(){Countly.recordView("HomePage")} } title = "Record View: 'HomePage'" color = "#e0e0e0"> </Button>
@@ -499,16 +509,23 @@ class Example extends Component {
             < Button onPress = { function(){Countly.recordView("HomePage", {"version": "1.0", "_facebook_version": "0.0.1"})} } title = "Record View: 'HomePage' with Segment" color = "#e0e0e0"> </Button>
             < Button onPress={this.enableLogging} title='Enable Logging' color='#00b5ad' />
             < Button onPress={this.disableLogging} title='Disable Logging' color='#00b5ad' />
+            < Button onPress = { this.pinnedCertificates } title = "Pinned Certificates" color = "#00b5ad"> </Button>
+            < Button onPress = { this.enableParameterTamperingProtection } title = "Enable Parameter Tapmering Protection" color = "#00b5ad"> </Button>
+            < Button onPress = { this.setLocation } title = "Set Location" color = "#00b5ad"> </Button>
+            < Button onPress = { this.disableLocation } title = "Disable Location" color = "#00b5ad"> </Button>
+            < Button onPress = { this.showStarRating } title = "Show Star Rating Model" color = "#00b5ad"> </Button>
+            < Button onPress = { this.showFeedbackPopup } title = "Show FeedBack Model" color = "#00b5ad"> </Button>
+            < Button onPress = { this.eventSendThreshold } title = "Set Event Threshold" color = "#00b5ad"> </Button>
+            < Button onPress = { this.setCustomCrashSegments } title = "Set Custom Crash Segment" color = "#00b5ad"> </Button>            <Text style={[{textAlign: 'center'}]}>Other Methods End</Text>
+            <Text style={[{textAlign: 'center'}]}>.</Text>
 
 
             < Text style={[{ textAlign: 'center' }]}>Push Notification Start</Text>
             < Button onPress={this.askForNotificationPermission} title='askForNotificationPermission' color='#00b5ad' />
             < Button onPress={this.changeDeviceId} title='Change Device ID' color='#00b5ad' />
             < Text style={[{ textAlign: 'center' }]}>Push Notification End</Text>
+            <Text style={[{textAlign: 'center'}]}>.</Text>
 
-
-            < Button onPress = { this.pinnedCertificates } title = "Pinned Certificates" color = "#00b5ad"> </Button>
-            < Button onPress = { this.enableParameterTamperingProtection } title = "Enable Parameter Tapmering Protection" color = "#00b5ad"> </Button>
 
             < Text style={[{ textAlign: 'center' }]}>Consent Start</Text>
             < Button onPress = { this.setRequiresConsent } title = "Init Consent" color = "#00b5ad"> </Button>
@@ -545,10 +562,7 @@ class Example extends Component {
             < Button onPress = { this.removeMultipleConsent } title = "Remove multiple consent" color = "#00b5ad"> </Button>
 
             < Text style={[{ textAlign: 'center' }]}>Consent End</Text>
-
-
-            < Button onPress = { this.setLocation } title = "Set Location" color = "#00b5ad"> </Button>
-            < Button onPress = { this.disableLocation } title = "Disable Location" color = "#00b5ad"> </Button>
+            <Text style={[{textAlign: 'center'}]}>.</Text>
 
 
 
@@ -556,6 +570,9 @@ class Example extends Component {
 
 
 
+
+
+            < Text style={[{ textAlign: 'center' }]}>Remote Config Start</Text>
             < Button onPress = { this.remoteConfigUpdate } title = "Update Remote Config" color = "#00b5ad"> </Button>
             < Button onPress = { this.updateRemoteConfigForKeysOnly } title = "Update Remote Config with Keys Only" color = "#00b5ad"> </Button>
             < Button onPress = { this.updateRemoteConfigExceptKeys } title = "Update Remote Config Except Keys" color = "#00b5ad"> </Button>
@@ -565,28 +582,24 @@ class Example extends Component {
             < Button onPress = { this.getRemoteConfigValueForKeyInteger } title = "Integer Test" color = "#00b5ad"> </Button>
             < Button onPress = { this.getRemoteConfigValueForKeyString } title = "String Test" color = "#00b5ad"> </Button>
             < Button onPress = { this.getRemoteConfigValueForKeyJSON } title = "JSON Test" color = "#00b5ad"> </Button>
-
-
             < Button onPress = { this.remoteConfigClearValues } title = "Clear remote config cache" color = "#00b5ad"> </Button>
+            < Text style={[{ textAlign: 'center' }]}>Remote Config End</Text>
+            <Text style={[{textAlign: 'center'}]}>.</Text>
 
-            < Button onPress = { this.showStarRating } title = "Show Star Rating Model" color = "#00b5ad"> </Button>
-            < Button onPress = { this.showFeedbackPopup } title = "Show FeedBack Model" color = "#00b5ad"> </Button>
-
-
-            <Text style={[{textAlign: 'center'}]}>Other Methods End</Text>
             <Text style={[{textAlign: 'center'}]}>Crash Event start</Text>
             < Button onPress = { this.enableCrashReporting } title = "Enable Crash Reporting" color = "#00b5ad"> </Button>
             < Button onPress = { this.addCrashLog } title = "Add Crash Log" color = "#00b5ad"> </Button>
             <Text style={[{textAlign: 'center'}]}>Crash Event End</Text>
+            <Text style={[{textAlign: 'center'}]}>.</Text>
 
-            < Button onPress = { this.eventSendThreshold } title = "Set Event Threshold" color = "#00b5ad"> </Button>
-
-            <Text style={[{textAlign: 'center'}]}>APM Example</Text>
+            <Text style={[{textAlign: 'center'}]}>APM Example Start</Text>
             <Button onPress={ this.startTrace } title="Start Trace" color = "#1b1c1d"> </Button>
             <Button onPress={ this.endTrace } title="End Trace" color = "#1b1c1d"> </Button>
             <Button onPress={ this.recordNetworkTraceSuccess } title="End Network Request Success" color = "#1b1c1d"> </Button>
             <Button onPress={ this.recordNetworkTraceFailure } title="End Network Request Failure" color = "#1b1c1d"> </Button>
             <Button onPress={ this.enableApm } title="Enable APM" color = "#1b1c1d"> </Button>
+            <Text style={[{textAlign: 'center'}]}>APM Example Start</Text>
+            <Text style={[{textAlign: 'center'}]}>.</Text>
 
             {/*
             < Button onPress = { this.testCrash } title = "Test Native Crash" color = "crimson"> </Button>

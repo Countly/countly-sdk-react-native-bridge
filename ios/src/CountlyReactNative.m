@@ -461,6 +461,20 @@ RCT_EXPORT_METHOD(addCrashLog:(NSArray*)arguments)
   });
 }
 
+RCT_EXPORT_METHOD(setCustomCrashSegments:(NSArray*)arguments)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+  NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
+  for(int i=0,il=(int)arguments.count;i<il;i+=2){
+      dict[[arguments objectAtIndex:i]] = [arguments objectAtIndex:i+1];
+  }
+  if (config == nil){
+    config = CountlyConfig.new;
+  }
+  config.crashSegmentation = dict;
+  });
+}
+
 RCT_EXPORT_METHOD(logException:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {

@@ -113,8 +113,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         this.config.setServerURL(serverUrl);
         this.config.setAppKey(appKey);
 
-        // Countly.sharedInstance().COUNTLY_SDK_NAME = COUNTLY_RN_SDK_NAME;
-        // Countly.sharedInstance().COUNTLY_SDK_VERSION_STRING = COUNTLY_RN_SDK_VERSION_STRING;
+          Countly.sharedInstance().COUNTLY_SDK_NAME = COUNTLY_RN_SDK_NAME;
+          Countly.sharedInstance().COUNTLY_SDK_VERSION_STRING = COUNTLY_RN_SDK_VERSION_STRING;
 
         this.config.setContext(_reactContext);
         if(deviceId == null || "".equals(deviceId)){
@@ -271,8 +271,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void setCustomCrashSegments(ReadableArray args){
         Map<String, Object> segments = new HashMap<String, Object>();
-        for(int i=0,il=args.size();i<il;i++){
-            segments.put(args.getString(i), args.getString(i));
+        for(int i=0,il=args.size();i<il;i+=2){
+            segments.put(args.getString(i), args.getString(i+1));
         }
         this.config.setCustomCrashSegment(segments);
     }
