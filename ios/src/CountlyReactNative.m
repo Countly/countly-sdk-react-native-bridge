@@ -841,7 +841,7 @@ RCT_EXPORT_METHOD(endTrace:(NSArray*)arguments) {
               metrics[[arguments objectAtIndex:i]] = [arguments objectAtIndex:i+1];
           }
           @catch(NSException *exception){
-              NSLog(@"[CountlyReactNative] Exception occured while parsing metrics: %@", locationString);
+              NSLog(@"[CountlyReactNative] Exception occured while parsing metrics: %@", exception);
           }
         }
         [Countly.sharedInstance endCustomTrace: traceKey metrics: metrics];
