@@ -427,7 +427,7 @@ RCT_EXPORT_METHOD(setLocation:(NSArray*)arguments)
           [Countly.sharedInstance recordLocation:(CLLocationCoordinate2D){latitudeDouble,longitudeDouble}];
       }
       @catch(NSException *exception){
-          NSLog(@"[Countly] Invalid location: %@", locationString);
+          NSLog(@"[CountlyReactNative] Invalid location: %@", locationString);
       }
   }
 
@@ -837,21 +837,30 @@ RCT_EXPORT_METHOD(endTrace:(NSArray*)arguments) {
         NSString* traceKey = [arguments objectAtIndex:0];
         NSMutableDictionary *metrics = [[NSMutableDictionary alloc] init];
         for(int i=1,il=(int)arguments.count;i<il;i+=2){
-            metrics[[arguments objectAtIndex:i]] = [arguments objectAtIndex:i+1];
+          @try{
+              metrics[[arguments objectAtIndex:i]] = [arguments objectAtIndex:i+1];
+          }
+          @catch(NSException *exception){
+              NSLog(@"[CountlyReactNative] Exception occured while parsing metrics: %@", locationString);
+          }
         }
         [Countly.sharedInstance endCustomTrace: traceKey metrics: metrics];
     });
 }
 RCT_EXPORT_METHOD(recordNetworkTrace:(NSArray*)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^ {
-        NSString* networkTraceKey = [arguments objectAtIndex:0];
-        int responseCode = [[arguments objectAtIndex:1] intValue];
-        int requestPayloadSize = [[arguments objectAtIndex:2] intValue];
-        int responsePayloadSize = [[arguments objectAtIndex:3] intValue];
-        int startTime = [[arguments objectAtIndex:4] intValue];
-        int endTime = [[arguments objectAtIndex:5] intValue];
-        [Countly.sharedInstance recordNetworkTrace: networkTraceKey requestPayloadSize: requestPayloadSize responsePayloadSize: responsePayloadSize responseStatusCode: responseCode startTime: startTime endTime: endTime];
-
+      @try{
+          NSString* networkTraceKey = [arguments objectAtIndex:0];
+          int responseCode = [[arguments objectAtIndex:1] intValue];
+          int requestPayloadSize = [[arguments objectAtIndex:2] intValue];
+          int responsePayloadSize = [[arguments objectAtIndex:3] intValue];
+          int startTime = [[arguments objectAtIndex:4] intValue];
+          int endTime = [[arguments objectAtIndex:5] intValue];
+          [Countly.sharedInstance recordNetworkTrace: networkTraceKey requestPayloadSize: requestPayloadSize responsePayloadSize: responsePayloadSize responseStatusCode: responseCode startTime: startTime endTime: endTime];
+      }
+      @catch(NSException *exception){
+          NSLog(@"[CountlyReactNative] Exception occured at recordNetworkTrace method: %@", exception);
+      }
     });
 }
 RCT_EXPORT_METHOD(enableApm:(NSArray*)arguments) {

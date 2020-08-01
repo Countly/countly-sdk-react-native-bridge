@@ -419,7 +419,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         this.channelName = args.getString(1);
         this.channelDescription = args.getString(2);
 
-        if (loggingEnabled) {
+        if (Countly.sharedInstance().isLoggingEnabled()) {
             Log.i(Countly.TAG, "[CountlyReactNative] pushTokenType [" + messagingMode + "][" + this.channelName + "][" + this.channelDescription + "]");
         }
 
@@ -435,19 +435,19 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         JSONObject json = new JSONObject(notification);
         String notificationString = json.toString();
 
-        if(loggingEnabled) {
+        if(Countly.sharedInstance().isLoggingEnabled()) {
             Log.i(Countly.TAG, "[CountlyReactNative] onNotification [" + notificationString + "]");
         }
 
         if(notificationListener != null){
             //there is a listener for notifications, send the just received notification to it
-            if(loggingEnabled) {
+            if(Countly.sharedInstance().isLoggingEnabled()) {
                 Log.i(Countly.TAG, "[CountlyReactNative] onNotification, listener exists");
             }
             notificationListener.callback(notificationString);
         }else{
             //there is no listener for notifications. Store this notification for when a listener is created
-            if(loggingEnabled) {
+            if(Countly.sharedInstance().isLoggingEnabled()) {
                 Log.i(Countly.TAG, "[CountlyReactNative] onNotification, listener does not exist");
             }
             lastStoredNotification = notificationString;
@@ -462,7 +462,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         notificationListener = new CCallback(){
             @Override
             public void callback(String result) {
-                if(loggingEnabled) {
+                if(Countly.sharedInstance().isLoggingEnabled()) {
                     Log.w(Countly.TAG, "[CountlyReactNative] registerForNotification callback result [" + result + "]");
                 }
                 ((ReactApplicationContext) context)
@@ -470,7 +470,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
                         .emit("onCountlyPushNotification", result);
             }
         };
-        if(loggingEnabled) {
+        if(Countly.sharedInstance().isLoggingEnabled()) {
             Log.i(Countly.TAG, "[CountlyReactNative] registerForNotification theCallback");
         }
         if(lastStoredNotification != null){
@@ -498,7 +498,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
                     @Override
                     public void onComplete(Task<InstanceIdResult> task) {
                         if (!task.isSuccessful()) {
-                            if(loggingEnabled) {
+                            if(Countly.sharedInstance().isLoggingEnabled()) {
                                 Log.w(Countly.TAG, "[CountlyReactNative] getInstanceId failed", task.getException());
                             }
                             return;
@@ -607,36 +607,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void giveConsent(ReadableArray featureNames){
-        List<String> features = new ArrayList<>();
-        for (int i = 0; i < featureNames.size(); i++) {
-            String featureName = featureNames.getString(i);
-            if (validConsentFeatureNames.contains(featureName)) {
-                features.add(featureName);
-            }
-            else {
-                if(loggingEnabled) {
-                    Log.d(Countly.TAG, "[CountlyReactNative] Not a valid consent feature to add: " + featureName);
-                }
-            }
-        }
-        Countly.sharedInstance().consent().giveConsent(features.toArray(new String[features.size()]));
+        Countly.sharedInstance().consent().giveConsent(getStringArray(featureNames));
     }
 
     @ReactMethod
     public void removeConsent(ReadableArray featureNames){
-        List<String> features = new ArrayList<>();
-        for (int i = 0; i < featureNames.size(); i++) {
-            String featureName = featureNames.getString(i);
-            if (validConsentFeatureNames.contains(featureName)) {
-                features.add(featureName);
-            }
-            else {
-                if(loggingEnabled) {
-                    Log.d(Countly.TAG, "[CountlyReactNative] Not a valid consent feature to remove: " + featureName);
-                }
-            }
-        }
-        Countly.sharedInstance().consent().removeConsent(features.toArray(new String[features.size()]));
+        Countly.sharedInstance().consent().removeConsent(getStringArray(featureNames));
     }
 
     @ReactMethod
@@ -802,7 +778,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
             try{
                 customMetric.put(args.getString(i), Integer.parseInt(args.getString(i + 1)));
             }catch(Exception exception){
-                if(loggingEnabled){
+                if(Countly.sharedInstance().isLoggingEnabled()){
                     Log.e(Countly.TAG, "[CountlyReactNative] endTrace, could not parse metrics, skipping it. ");
                 }
             }
@@ -821,7 +797,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
             int endTime = Integer.parseInt(args.getString(5));
             // Countly.sharedInstance().apm().endNetworkRequest(networkTraceKey, null, responseCode, requestPayloadSize, responsePayloadSize);
         }catch(Exception exception){
-            if(loggingEnabled){
+            if(Countly.sharedInstance().isLoggingEnabled()){
                 Log.e(Countly.TAG, "Exception occured at recordNetworkTrace method: " +exception.toString());
             }
         }
@@ -832,5 +808,15 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         this.config.setRecordAppStartTime(true);
     }
 
-
+    public static String[] getStringArray(JSONArray jsonArray) {
+        String[] stringArray = null;
+        if (jsonArray != null) {
+            int length = jsonArray.length();
+            stringArray = new String[length];
+            for (int i = 0; i < length; i++) {
+                stringArray[i] = jsonArray.optString(i);
+            }
+        }
+        return stringArray;
+    }
 }
