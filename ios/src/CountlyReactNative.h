@@ -15,7 +15,7 @@ typedef void (^Result)(id _Nullable result);
 - (void)setLocation:(NSArray*_Nullable)arguments;
 - (void)enableCrashReporting;
 - (void)addCrashLog:(NSArray*_Nullable)arguments;
-- (void)setCustomCrashSegments:(NSArray*_Nullable)arguments;
+- (void)setCustomCrashSegment:(NSArray*_Nullable)arguments;
 
 - (void)changeDeviceId:(NSArray*_Nullable)arguments;
 - (void)enableParameterTamperingProtection:(NSArray*_Nullable)arguments;

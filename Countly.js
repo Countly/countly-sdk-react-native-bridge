@@ -251,13 +251,13 @@ Countly.logException = function(exception, nonfatal, segments){
     }
     CountlyReactNative.logException(args);
 }
-Countly.setCustomCrashSegments = function(segments){
+Countly.setCustomCrashSegment = function(segments){
     var args = [];
     for(var key in segments){
         args.push(key.toString());
         args.push(segments[key].toString());
     }
-    CountlyReactNative.setCustomCrashSegments(args);
+    CountlyReactNative.setCustomCrashSegment(args);
 }
 Countly.startSession = function(){
     CountlyReactNative.startSession();

@@ -113,8 +113,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         this.config.setServerURL(serverUrl);
         this.config.setAppKey(appKey);
 
-          Countly.sharedInstance().COUNTLY_SDK_NAME = COUNTLY_RN_SDK_NAME;
-          Countly.sharedInstance().COUNTLY_SDK_VERSION_STRING = COUNTLY_RN_SDK_VERSION_STRING;
+        Countly.sharedInstance().COUNTLY_SDK_NAME = COUNTLY_RN_SDK_NAME;
+        Countly.sharedInstance().COUNTLY_SDK_VERSION_STRING = COUNTLY_RN_SDK_VERSION_STRING;
 
         this.config.setContext(_reactContext);
         if(deviceId == null || "".equals(deviceId)){
@@ -269,12 +269,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void setCustomCrashSegments(ReadableArray args){
+    public void setCustomCrashSegment(ReadableArray args){
         Map<String, Object> segments = new HashMap<String, Object>();
         for(int i=0,il=args.size();i<il;i+=2){
             segments.put(args.getString(i), args.getString(i+1));
         }
-        this.config.setCustomCrashSegments(segments);
+        this.config.setCustomCrashSegment(segments);
     }
 
     @ReactMethod
@@ -808,13 +808,13 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         this.config.setRecordAppStartTime(true);
     }
 
-    public static String[] getStringArray(JSONArray jsonArray) {
+    public static String[] getStringArray(ReadableArray jsonArray) {
         String[] stringArray = null;
         if (jsonArray != null) {
-            int length = jsonArray.length();
+            int length = jsonArray.size();
             stringArray = new String[length];
             for (int i = 0; i < length; i++) {
-                stringArray[i] = jsonArray.optString(i);
+                stringArray[i] = jsonArray.getString(i);
             }
         }
         return stringArray;

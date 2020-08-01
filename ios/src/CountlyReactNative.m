@@ -461,7 +461,7 @@ RCT_EXPORT_METHOD(addCrashLog:(NSArray*)arguments)
   });
 }
 
-RCT_EXPORT_METHOD(setCustomCrashSegments:(NSArray*)arguments)
+RCT_EXPORT_METHOD(setCustomCrashSegment:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];

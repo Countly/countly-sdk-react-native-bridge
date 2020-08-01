@@ -36,7 +36,7 @@ class Example extends Component {
         this.recordNetworkTraceFailure = this.recordNetworkTraceFailure.bind(this);
         this.enableApm = this.enableApm.bind(this);
         this.random = this.random.bind(this);
-        this.setCustomCrashSegments = this.setCustomCrashSegments.bind(this);
+        this.setCustomCrashSegment = this.setCustomCrashSegment.bind(this);
     };
 
     componentDidMount(){
@@ -403,9 +403,9 @@ class Example extends Component {
     Countly.enableApm();
   }
 
-  setCustomCrashSegments(){
+  setCustomCrashSegment(){
     var segment = {"Key": "Value"};
-    Countly.setCustomCrashSegments(segment);
+    Countly.setCustomCrashSegment(segment);
   }
     /*
     testCrash(){
@@ -518,7 +518,7 @@ class Example extends Component {
             < Button onPress = { this.showStarRating } title = "Show Star Rating Model" color = "#00b5ad"> </Button>
             < Button onPress = { this.showFeedbackPopup } title = "Show FeedBack Model" color = "#00b5ad"> </Button>
             < Button onPress = { this.eventSendThreshold } title = "Set Event Threshold" color = "#00b5ad"> </Button>
-            < Button onPress = { this.setCustomCrashSegments } title = "Set Custom Crash Segment" color = "#00b5ad"> </Button>
+            < Button onPress = { this.setCustomCrashSegment } title = "Set Custom Crash Segment" color = "#00b5ad"> </Button>
             <Text style={[{textAlign: 'center'}]}>Other Methods End</Text>
             <Text style={[{textAlign: 'center'}]}>.</Text>
 
