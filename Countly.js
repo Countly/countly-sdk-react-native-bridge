@@ -532,6 +532,10 @@ Countly.enableApm = function(){
     CountlyReactNative.enableApm(args);
 }
 
+Countly.enableAttribution = function() {
+    CountlyReactNative.enableAttribution();
+}
+
 /*
 Countly.initNative = function(){
     CountlyReactNative.initNative();
