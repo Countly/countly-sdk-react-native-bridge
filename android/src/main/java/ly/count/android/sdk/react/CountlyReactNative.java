@@ -832,5 +832,10 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         this.config.setRecordAppStartTime(true);
     }
 
+    @ReactMethod
+    public void enableAttribution(){
+        this.config.setEnableAttribution(true);
+    }
+
 
 }
