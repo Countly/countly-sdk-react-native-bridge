@@ -97,11 +97,14 @@ Countly.sendEvent = function(options){
     }
     CountlyReactNative.event(args);
 }
-/// Record custom view to Countly.
-///
-/// [recordView] - name of the view
-/// [segments] - allows to add optional segmentation,
-/// Supported data type for segments values are String, int, double and bool
+
+/**
+ * Record custom view to Countly.
+ * 
+ * @param {string} recordView - name of the view
+ * @param {Map} segments - allows to add optional segmentation,
+ * Supported data type for segments values are String, int, double and bool
+ */
 Countly.recordView = function(recordView, segments){
     var args = [];
     args.push(String(recordView) || "");
@@ -536,7 +539,7 @@ Countly.enableApm = function(){
     CountlyReactNative.enableApm(args);
 }
 
-/// Enable campaign attribution reporting to Countly.
+/** Enable campaign attribution reporting to Countly. */
 Countly.enableAttribution = function() {
     CountlyReactNative.enableAttribution();
 }
