@@ -42,9 +42,9 @@ Countly.init = async function(serverUrl, appKey, deviceId = ""){
     CountlyReactNative.init(args);
 }
 
-Countly.isInitialized = function(){
+Countly.isInitialized = async function(){
     // returns a promise
-    return CountlyReactNative.isInitialized();
+    return await CountlyReactNative.isInitialized();
 }
 
 Countly.hasBeenCalledOnStart = function(){
@@ -118,10 +118,20 @@ Countly.recordView = function(recordView, segments){
     CountlyReactNative.recordView(args);
 };
 
-Countly.setViewTracking = function(boolean){
-    CountlyReactNative.setViewTracking([boolean || "false"]);
+/**
+ * 
+ * Enable automatic view tracking
+ * Should be call before Countly init
+ */
+Countly.setViewTracking = function(boolean = false){
+    CountlyReactNative.setViewTracking([boolean]);
 }
 
+/**
+ * 
+ * Set Push notification messaging mode and callbacks for push notifications
+ * Should be call before Countly init
+ */
 Countly.pushTokenType = function(tokenType, channelName, channelDescription){
     var args = [];
     args.push(tokenType || "");
@@ -161,6 +171,14 @@ Countly.disableLogging = function(){
     CountlyReactNative.setLoggingEnabled([false]);
 }
 
+/**
+ * Set to true if you want to enable countly internal debugging logs
+ * Should be call before Countly init
+ */
+Countly.setLoggingEnabled = function(enabled = true){
+    CountlyReactNative.setLoggingEnabled([enabled]);
+}
+
 Countly.onSuccess = function(result){
     // alert(result);
 }
@@ -193,13 +211,23 @@ Countly.changeDeviceId = function(newDeviceID, onServer){
     newDeviceID = newDeviceID.toString() || "";
     CountlyReactNative.changeDeviceId([newDeviceID, onServer]);
 }
-Countly.setHttpPostForced = function(boolean){
+
+/**
+ * 
+ * Set to true if you want to enable HTTP POST is used in all cases.
+ * Should be call before Countly init
+ */
+Countly.setHttpPostForced = function(boolean = true){
     var args = [];
-    args.push(boolean?"1":"0");
+    args.push(boolean == true ?"1":"0");
     CountlyReactNative.setHttpPostForced(args);
 }
 
 Countly.isCrashReportingEnabled = false;
+/**
+ * Enable crash reporting to report crash/errors to Countly
+ * Should be call before Countly init
+ */
 Countly.enableCrashReporting = function(){
     if (ErrorUtils && !Countly.isCrashReportingEnabled) {
         console.log("Adding Countly JS error handler.");
@@ -272,9 +300,21 @@ Countly.startSession = function(){
 Countly.endSession = function(){
     CountlyReactNative.endSession();
 }
+
+/**
+ * 
+ * Set the optional salt to be used for calculating the checksum of requested data which will be sent with each request, using the &checksum field
+ * Should be call before Countly init
+ */
 Countly.enableParameterTamperingProtection = function(salt){
     CountlyReactNative.enableParameterTamperingProtection([salt.toString() || ""]);
 }
+
+/**
+ * 
+ * It will ensure that connection is made with one of the public keys specified
+ * Should be call before Countly init
+ */
 Countly.pinnedCertificates = function(certificateName){
     CountlyReactNative.pinnedCertificates([certificateName || ""]);
 }
@@ -377,7 +417,12 @@ Countly.userData.pullValue = function(keyName, keyValue){
     CountlyReactNative.userData_pullValue([keyName.toString() || "", keyValue.toString() || ""]);
 };
 
-// GDPR
+
+/**
+ * 
+ * Set consent should be required for GDPR.
+ * Should be call before Countly init
+ */
 Countly.setRequiresConsent = function(flag){
     CountlyReactNative.setRequiresConsent([flag]);
 }
@@ -489,6 +534,11 @@ Countly.showFeedbackPopup = function(widgetId, closeButtonText,){
     CountlyReactNative.showFeedbackPopup([widgetId.toString() || "", closeButtonText.toString() || "Done"]);
 }
 
+/**
+ * 
+ * Events get grouped together and are sent either every minute or after the unsent event count reaches a threshold. By default it is 10
+ * Should be call before Countly init
+ */
 Countly.setEventSendThreshold = function(size){
     CountlyReactNative.setEventSendThreshold([size.toString() || ""]);
 }
@@ -533,13 +583,21 @@ Countly.recordNetworkTrace = function(networkTraceKey, responseCode, requestPayl
     CountlyReactNative.recordNetworkTrace(args);
 }
 
-
+/**
+ * 
+ * Enable record app start time
+ * Should be call before Countly init
+ */
 Countly.enableApm = function(){
     var args = [];
     CountlyReactNative.enableApm(args);
 }
 
-/** Enable campaign attribution reporting to Countly. */
+/**
+ * 
+ * Enable campaign attribution reporting to Countly.
+ * Should be call before Countly init
+ */
 Countly.enableAttribution = function() {
     CountlyReactNative.enableAttribution();
 }

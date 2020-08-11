@@ -123,6 +123,9 @@ RCT_EXPORT_METHOD(setLoggingEnabled:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   BOOL boolean = [[arguments objectAtIndex:0] boolValue];
+  if (config == nil){
+    config = CountlyConfig.new;
+  }
   if(boolean){
     config.enableDebug = YES;
   }else{
