@@ -38,8 +38,7 @@ Countly.init = async function(serverUrl, appKey, deviceId = ""){
     args.push(serverUrl);
     args.push(appKey);
     args.push(deviceId);
-
-    var initResponse =  await CountlyReactNative.init(args);
+    await CountlyReactNative.init(args);
 }
 
 Countly.isInitialized = async function(){
@@ -166,7 +165,10 @@ Countly.stop = function(){
 /**
  * Enable countly internal debugging logs
  * Should be call before Countly init
+ * 
  * @deprecated in 20.04.6
+ * 
+ * @function Countly.setLoggingEnabled should be used to enable/disable countly internal debugging logs
  */
 
 Countly.enableLogging = function(){
@@ -175,7 +177,10 @@ Countly.enableLogging = function(){
 
 /**
  * Disable countly internal debugging logs
+ * 
  * @deprecated in 20.04.6
+ * 
+ * @function Countly.setLoggingEnabled should be used to enable/disable countly internal debugging logs
  */
 Countly.disableLogging = function(){
     CountlyReactNative.setLoggingEnabled([false]);
