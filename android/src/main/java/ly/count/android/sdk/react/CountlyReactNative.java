@@ -105,7 +105,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void init(ReadableArray args){
+    public void init(ReadableArray args, Promise promise){
         Log.d(Countly.TAG, "[CountlyReactNative] Initializing...");
         String serverUrl = args.getString(0);
         String appKey = args.getString(1);
@@ -126,6 +126,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
             }
         }
         Countly.sharedInstance().init(this.config);
+        promise.resolve("Success");
     }
 
     @ReactMethod
@@ -373,13 +374,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void setViewTracking(ReadableArray args){
-        String flag = args.getString(0);
-        if("true".equals(flag)){
-            this.config.setViewTracking(true);
-        }else{
-            this.config.setViewTracking(false);
-        }
+    public void setAutomaticViewTracking(ReadableArray args){
+        Boolean flag = args.getBoolean(0);
+        this.config.setViewTracking(flag);
     }
 
     @ReactMethod

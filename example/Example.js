@@ -26,31 +26,56 @@ class Example extends Component {
         this.userData_saveMin = this.userData_saveMin.bind(this);
         this.userData_setOnce = this.userData_setOnce.bind(this);
         this.changeDeviceId = this.changeDeviceId.bind(this);
-        this.enableParameterTamperingProtection = this.enableParameterTamperingProtection.bind(this);
-        this.pinnedCertificates = this.pinnedCertificates.bind(this);
         this.askForNotificationPermission = this.askForNotificationPermission.bind(this);
 
         this.startTrace = this.startTrace.bind(this);
         this.endTrace = this.endTrace.bind(this);
         this.recordNetworkTraceSuccess = this.recordNetworkTraceSuccess.bind(this);
         this.recordNetworkTraceFailure = this.recordNetworkTraceFailure.bind(this);
-        this.enableApm = this.enableApm.bind(this);
         this.random = this.random.bind(this);
         this.setCustomCrashSegments = this.setCustomCrashSegments.bind(this);
     };
 
     componentDidMount(){
-      Countly.registerForNotification(function(theNotification){
-        console.log("Just received this notification data: " + JSON.stringify(theNotification));
-        alert('theNotification: ' + JSON.stringify(theNotification));
-      });
     }
 
-    onInit(){
-      Countly.pushTokenType(Countly.messagingMode.DEVELOPMENT, "Channel Name", "Channel Description");
-      Countly.enableLogging();
-      Countly.init("https://trinisoft.count.ly", "f0b2ac6919f718a13821575db28c0e2971e05ec5");
+    onInit = async() => {
+      if(!await Countly.isInitialized()) {
+        /** Recommended settings for Countly initialisation */
+        Countly.setLoggingEnabled(true); // Enable countly internal debugging logs
+        Countly.enableCrashReporting(); // Enable crash reporting to report unhandled crashes to Countly
+        Countly.setRequiresConsent(true); // Set that consent should be required for features to work.
+        Countly.setViewTracking(true); // Enable automatic view tracking
+
+        /** Optional settings for Countly initialisation */
+        Countly.enableParameterTamperingProtection("salt"); // Set the optional salt to be used for calculating the checksum of requested data which will be sent with each request
+        // Countly.pinnedCertificates("count.ly.cer"); // It will ensure that connection is made with one of the public keys specified
+        // Countly.setHttpPostForced(false); // Set to "true" if you want HTTP POST to be used for all requests
+        Countly.enableApm(); // Enable APM features, which includes the recording of app start time.
+        Countly.enableAttribution(); // Enable to measure your marketing campaign performance by attributing installs from specific campaigns.
+
+        Countly.setEventSendThreshold("10"); // Set event threshold value, Events get grouped together and are sent either every minute or after the unsent event count reaches a threshold. By default it is 10
+
+        /** Push Notification Settings */
+        
+        await Countly.init("https://master.count.ly", "5b77e4c785410351f32d8aa286d2383195d13b93", "123456"); // Initialize the countly SDK.
+
+        /** 
+         * Push notifications settings 
+         * Should be call after init
+        */
+        Countly.pushTokenType(Countly.messagingMode.DEVELOPMENT, "Channel Name", "Channel Description"); // Set messaging mode for push notifications
+        Countly.registerForNotification(function(theNotification){
+          console.log("Just received this notification data: " + JSON.stringify(theNotification));
+          alert('theNotification: ' + JSON.stringify(theNotification));
+        }); // Set callback to receive push notifications
+        Countly.askForNotificationPermission(); // This method will ask for permission, enables push notification and send push token to countly server.
+
+        Countly.giveAllConsent(); // give consent for all features, should be call after init
+        // Countly.giveConsent(["events", "views"]); // give conset for some specific features, should be call after init.
+      }
     }
+
     onStart(){
       Countly.start();
     };
@@ -60,14 +85,14 @@ class Example extends Component {
     onSendUserData(){
       // example for setUserData
       var options = {};
-      options.name = "Trinisoft Technologies";
-      options.username = "trinisofttechnologies";
-      options.email = "trinisofttechnologies@gmail.com";
-      options.org = "Trinisoft Technologies Pvt. Ltd.";
-      options.phone = "+1 727 828 7040";
-      options.picture = "http://www.trinisofttechnologies.com/images/logo.png";
+      options.name = "Name of User";
+      options.username = "Username";
+      options.email = "User Email";
+      options.org = "User Organization";
+      options.phone = "User Contact number";
+      options.picture = "https://count.ly/images/logos/countly-logo.png";
       options.picturePath = "";
-      options.gender = "M";
+      options.gender = "User Gender";
       options.byear = 1989;
       Countly.setUserData(options);
     };
@@ -211,16 +236,6 @@ class Example extends Component {
       Countly.changeDeviceId('02d56d66-6a39-482d-aff0-d14e4d5e5fda');
     };
 
-    enableParameterTamperingProtection(){
-      Countly.enableParameterTamperingProtection("salt");
-    };
-    pinnedCertificates(){
-      Countly.pinnedCertificates("count.ly.cer");
-    }
-    setRequiresConsent(){
-      Countly.setRequiresConsent(true);
-    }
-
     giveConsent(name){
       Countly.giveConsent([name]);
     };
@@ -310,14 +325,6 @@ class Example extends Component {
       Countly.askForNotificationPermission();
     }
 
-    enableLogging(){
-      Countly.enableLogging();
-    };
-
-    disableLogging(){
-      Countly.disableLogging();
-    };
-
     setStarRatingDialogTexts(){
       Countly.setStarRatingDialogTexts();
     };
@@ -329,10 +336,6 @@ class Example extends Component {
     showFeedbackPopup(){
       Countly.showFeedbackPopup("5e4254507975d006a22535fc", "Submit");
     }
-
-    enableCrashReporting(){
-      Countly.enableCrashReporting();
-    };
 
     addCrashLog(){
       Countly.addCrashLog("My crash log in string.");
@@ -359,10 +362,6 @@ class Example extends Component {
 
     logException(){
       Countly.logException();
-    }
-
-    setEventSendThreshold(){
-      Countly.setEventSendThreshold("3");
     }
 
   // APM Examples
@@ -397,9 +396,6 @@ class Example extends Component {
     var endTime = startTime + 500;
     Countly.recordNetworkTrace(networkTraceKey, responseCode, requestPayloadSize, responsePayloadSize, startTime, endTime);
   }
-  enableApm(){
-    Countly.enableApm();
-  }
 
   setCustomCrashSegments(){
     var segment = {"Key": "Value"};
@@ -431,8 +427,6 @@ class Example extends Component {
       this.userData_saveMax();
       this.userData_saveMin();
       this.userData_setOnce();
-
-      this.enableParameterTamperingProtection();
 
       // Note: Crash test for setLocation method.
       // Countly.setLocation(null, city, latitude + "," + longitude, ipAddress);
@@ -507,16 +501,13 @@ class Example extends Component {
             < Button onPress = { function(){Countly.recordView("HomePage")} } title = "Record View: 'HomePage'" color = "#e0e0e0"> </Button>
             < Button onPress = { function(){Countly.recordView("Dashboard")} } title = "Record View: 'Dashboard'" color = "#e0e0e0"> </Button>
             < Button onPress = { function(){Countly.recordView("HomePage", {"version": "1.0", "_facebook_version": "0.0.1"})} } title = "Record View: 'HomePage' with Segment" color = "#e0e0e0"> </Button>
-            < Button onPress={this.enableLogging} title='Enable Logging' color='#00b5ad' />
-            < Button onPress={this.disableLogging} title='Disable Logging' color='#00b5ad' />
-            < Button onPress = { this.pinnedCertificates } title = "Pinned Certificates" color = "#00b5ad"> </Button>
-            < Button onPress = { this.enableParameterTamperingProtection } title = "Enable Parameter Tapmering Protection" color = "#00b5ad"> </Button>
             < Button onPress = { this.setLocation } title = "Set Location" color = "#00b5ad"> </Button>
             < Button onPress = { this.disableLocation } title = "Disable Location" color = "#00b5ad"> </Button>
             < Button onPress = { this.showStarRating } title = "Show Star Rating Model" color = "#00b5ad"> </Button>
             < Button onPress = { this.showFeedbackPopup } title = "Show FeedBack Model" color = "#00b5ad"> </Button>
             < Button onPress = { this.eventSendThreshold } title = "Set Event Threshold" color = "#00b5ad"> </Button>
-            < Button onPress = { this.setCustomCrashSegments } title = "Set Custom Crash Segment" color = "#00b5ad"> </Button>            <Text style={[{textAlign: 'center'}]}>Other Methods End</Text>
+            < Button onPress = { this.setCustomCrashSegments } title = "Set Custom Crash Segment" color = "#00b5ad"> </Button>
+            <Text style={[{textAlign: 'center'}]}>Other Methods End</Text>
             <Text style={[{textAlign: 'center'}]}>.</Text>
 
 
@@ -528,7 +519,6 @@ class Example extends Component {
 
 
             < Text style={[{ textAlign: 'center' }]}>Consent Start</Text>
-            < Button onPress = { this.setRequiresConsent } title = "Init Consent" color = "#00b5ad"> </Button>
             < Button onPress = { this.giveAllConsent } title = "Give all Consent" color = "#00b5ad"> </Button>
             < Button onPress = { this.removeAllConsent } title = "Remove all Consent" color = "#00b5ad"> </Button>
 
@@ -587,7 +577,6 @@ class Example extends Component {
             <Text style={[{textAlign: 'center'}]}>.</Text>
 
             <Text style={[{textAlign: 'center'}]}>Crash Event start</Text>
-            < Button onPress = { this.enableCrashReporting } title = "Enable Crash Reporting" color = "#00b5ad"> </Button>
             < Button onPress = { this.addCrashLog } title = "Add Crash Log" color = "#00b5ad"> </Button>
             <Text style={[{textAlign: 'center'}]}>Crash Event End</Text>
             <Text style={[{textAlign: 'center'}]}>.</Text>
@@ -597,7 +586,6 @@ class Example extends Component {
             <Button onPress={ this.endTrace } title="End Trace" color = "#1b1c1d"> </Button>
             <Button onPress={ this.recordNetworkTraceSuccess } title="End Network Request Success" color = "#1b1c1d"> </Button>
             <Button onPress={ this.recordNetworkTraceFailure } title="End Network Request Failure" color = "#1b1c1d"> </Button>
-            <Button onPress={ this.enableApm } title="Enable APM" color = "#1b1c1d"> </Button>
             <Text style={[{textAlign: 'center'}]}>APM Example Start</Text>
             <Text style={[{textAlign: 'center'}]}>.</Text>
 

@@ -18,6 +18,7 @@ CountlyConfig* config = nil;
 NSDictionary *lastStoredNotification = nil;
 Result notificationListener = nil;
 NSMutableArray *notificationIDs = nil;        // alloc here
+NSMutableArray<CLYFeature>* countlyFeatures = nil;
 
 @implementation CountlyReactNative
 
@@ -27,7 +28,10 @@ NSMutableArray *notificationIDs = nil;        // alloc here
 
 RCT_EXPORT_MODULE();
 
-RCT_EXPORT_METHOD(init:(NSArray*)arguments)
+RCT_REMAP_METHOD(init,
+                 params: (NSArray*)arguments
+                 initWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
 {
   NSString* serverurl = [arguments objectAtIndex:0];
   NSString* appkey = [arguments objectAtIndex:1];
@@ -36,6 +40,7 @@ RCT_EXPORT_METHOD(init:(NSArray*)arguments)
   if (config == nil){
     config = CountlyConfig.new;
   }
+  
   if(deviceID != nil && ![deviceID  isEqual: @""]){
     config.deviceID = deviceID;
   }
@@ -44,15 +49,16 @@ RCT_EXPORT_METHOD(init:(NSArray*)arguments)
 
   CountlyCommon.sharedInstance.SDKName = kCountlyReactNativeSDKName;
   CountlyCommon.sharedInstance.SDKVersion = kCountlyReactNativeSDKVersion;
-
-  config.features = @[CLYCrashReporting, CLYPushNotifications];
+  [self addCountlyFeature:CLYPushNotifications];
 
   if (serverurl != nil && [serverurl length] > 0) {
       dispatch_async(dispatch_get_main_queue(), ^
       {
           [[Countly sharedInstance] startWithConfig:config];
+          resolve(@"Success");
       });
   }
+
 }
 
 RCT_EXPORT_METHOD(event:(NSArray*)arguments)
@@ -114,15 +120,25 @@ RCT_EXPORT_METHOD(recordView:(NSArray*)arguments)
   });
 }
 
-RCT_EXPORT_METHOD(setViewTracking:(NSArray*)arguments)
+RCT_EXPORT_METHOD(setAutomaticViewTracking:(NSArray*)arguments)
 {
-
+    BOOL boolean = [[arguments objectAtIndex:0] boolValue];
+    if(boolean) {
+        [self addCountlyFeature:CLYAutoViewTracking];
+    }
+    else {
+        [self removeCountlyFeature:CLYAutoViewTracking];
+    }
+    [Countly.sharedInstance setIsAutoViewTrackingActive:boolean];
 }
 
 RCT_EXPORT_METHOD(setLoggingEnabled:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   BOOL boolean = [[arguments objectAtIndex:0] boolValue];
+  if (config == nil){
+    config = CountlyConfig.new;
+  }
   if(boolean){
     config.enableDebug = YES;
   }else{
@@ -449,7 +465,7 @@ RCT_EXPORT_METHOD(enableCrashReporting)
   if (config == nil){
     config = CountlyConfig.new;
   }
-  config.features = @[CLYCrashReporting];
+  [self addCountlyFeature:CLYCrashReporting];
   });
 }
 
@@ -868,5 +884,27 @@ RCT_EXPORT_METHOD(enableAttribution)
   }
   config.enableAttribution = YES;
   });
+}
+
+- (void)addCountlyFeature:(CLYFeature)feature
+{
+    if(countlyFeatures == nil) {
+        countlyFeatures = [[NSMutableArray alloc] init];
+    }
+    if(![countlyFeatures containsObject:feature]) {
+        [countlyFeatures addObject:feature];
+        config.features = countlyFeatures;
+    }
+}
+
+- (void)removeCountlyFeature:(CLYFeature)feature
+{
+    if(countlyFeatures == nil) {
+        return;
+    }
+    if(![countlyFeatures containsObject:feature]) {
+        [countlyFeatures removeObject:feature];
+        config.features = countlyFeatures;
+    }
 }
 @end
