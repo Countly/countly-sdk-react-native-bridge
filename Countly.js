@@ -130,9 +130,9 @@ Countly.setViewTracking = async function(enabled = true){
         return;
     }
     if(typeof enabled === 'string') {
-        enabled = (enabled === "true"); // Typecaset from string to boolean
+        enabled = (enabled === "true"); // Typecast from string to boolean
     }
-    CountlyReactNative.setViewTracking([enabled]);
+    CountlyReactNative.setAutomaticViewTracking([enabled]);
 }
 
 /**

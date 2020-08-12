@@ -374,7 +374,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void setViewTracking(ReadableArray args){
+    public void setAutomaticViewTracking(ReadableArray args){
         Boolean flag = args.getBoolean(0);
         this.config.setViewTracking(flag);
     }
