@@ -27,7 +27,10 @@ NSMutableArray *notificationIDs = nil;        // alloc here
 
 RCT_EXPORT_MODULE();
 
-RCT_EXPORT_METHOD(init:(NSArray*)arguments)
+RCT_REMAP_METHOD(init,
+                 params: (NSArray*)arguments
+                 initWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
 {
   NSString* serverurl = [arguments objectAtIndex:0];
   NSString* appkey = [arguments objectAtIndex:1];
@@ -51,8 +54,10 @@ RCT_EXPORT_METHOD(init:(NSArray*)arguments)
       dispatch_async(dispatch_get_main_queue(), ^
       {
           [[Countly sharedInstance] startWithConfig:config];
+          resolve(@"Success");
       });
   }
+
 }
 
 RCT_EXPORT_METHOD(event:(NSArray*)arguments)

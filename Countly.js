@@ -39,7 +39,7 @@ Countly.init = async function(serverUrl, appKey, deviceId = ""){
     args.push(appKey);
     args.push(deviceId);
 
-    CountlyReactNative.init(args);
+    var initResponse =  await CountlyReactNative.init(args);
 }
 
 Countly.isInitialized = async function(){
@@ -123,7 +123,7 @@ Countly.recordView = function(recordView, segments){
  * Enable automatic view tracking
  * Should be call before Countly init
  */
-Countly.setViewTracking = function(boolean = false){
+Countly.setViewTracking = function(boolean = true){
     CountlyReactNative.setViewTracking([boolean]);
 }
 
@@ -163,10 +163,20 @@ Countly.stop = function(){
     CountlyReactNative.stop();
 }
 
+/**
+ * Enable countly internal debugging logs
+ * Should be call before Countly init
+ * @deprecated in 20.04.6
+ */
+
 Countly.enableLogging = function(){
     CountlyReactNative.setLoggingEnabled([true]);
 }
 
+/**
+ * Disable countly internal debugging logs
+ * @deprecated in 20.04.6
+ */
 Countly.disableLogging = function(){
     CountlyReactNative.setLoggingEnabled([false]);
 }
@@ -214,7 +224,7 @@ Countly.changeDeviceId = function(newDeviceID, onServer){
 
 /**
  * 
- * Set to true if you want to enable HTTP POST is used in all cases.
+ * Set to "true" if you want HTTP POST to be used for all requests
  * Should be call before Countly init
  */
 Countly.setHttpPostForced = function(boolean = true){
@@ -420,7 +430,7 @@ Countly.userData.pullValue = function(keyName, keyValue){
 
 /**
  * 
- * Set consent should be required for GDPR.
+ * Set that consent should be required for features to work.
  * Should be call before Countly init
  */
 Countly.setRequiresConsent = function(flag){
@@ -585,7 +595,7 @@ Countly.recordNetworkTrace = function(networkTraceKey, responseCode, requestPayl
 
 /**
  * 
- * Enable record app start time
+ * Enable APM features, which includes the recording of app start time.
  * Should be call before Countly init
  */
 Countly.enableApm = function(){

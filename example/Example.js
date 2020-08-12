@@ -37,54 +37,37 @@ class Example extends Component {
     };
 
     componentDidMount(){
-      Countly.registerForNotification(function(theNotification){
-        console.log("Just received this notification data: " + JSON.stringify(theNotification));
-        alert('theNotification: ' + JSON.stringify(theNotification));
-      });
     }
 
     onInit = async() => {
       if(!await Countly.isInitialized()) {
-        /**
-         * Recommended settings for Countly initialisation
-         * 
-         * @function setLoggingEnabled enable countly internal debugging logs
-         * @function enableCrashReporting enable crash reporting to report crash to Countly
-         * @function setRequiresConsent set consent should be required
-         * @function setViewTracking enable automatic view tracking
-         * 
-         */
-        Countly.setLoggingEnabled(true);
-        Countly.enableCrashReporting();
-        Countly.setRequiresConsent(true);
-        Countly.setViewTracking(true);
+        /** Recommended settings for Countly initialisation */
+        Countly.setLoggingEnabled(true); // Enable countly internal debugging logs
+        Countly.enableCrashReporting(); // Enable crash reporting to report crash to Countly
+        Countly.setRequiresConsent(true); // Set that consent should be required for features to work.
+        Countly.setViewTracking(true); // Enable automatic view tracking
 
-        /**
-         * Optional settings for Counlty initialisation
-         * 
-         * @function enableParameterTamperingProtection set the optional salt to be used for calculating the checksum of requested data which will be sent with each request, using the &checksum field
-         * @function pinnedCertificates it will ensure that connection is made with one of the public keys specified
-         * @function setHttpPostForced Set HTTP POST is used in all cases
-         * @function enableApm  enable record app start time 
-         * @function enableAttribution enable to measure your marketing campaign performance by attributing installs from specific campaigns.
-         */
-        Countly.enableParameterTamperingProtection("salt");
-        // Countly.pinnedCertificates("count.ly.cer");
-        // Countly.setHttpPostForced(false);
-        Countly.enableApm();
-        Countly.enableAttribution();
+        /** Optional settings for Counlty initialisation */
+        Countly.enableParameterTamperingProtection("salt"); // Set the optional salt to be used for calculating the checksum of requested data which will be sent with each request, using the &checksum field
+        // Countly.pinnedCertificates("count.ly.cer"); // It will ensure that connection is made with one of the public keys specified
+        // Countly.setHttpPostForced(false); // Set to "true" if you want HTTP POST to be used for all requests
+        Countly.enableApm(); // Enable APM features, which includes the recording of app start time.
+        Countly.enableAttribution(); // Enable to measure your marketing campaign performance by attributing installs from specific campaigns.
 
-        /**
-         * @function setEventSendThreshold Set event threshold value, Events get grouped together and are sent either every minute or after the unsent event count reaches a threshold. By default it is 10
-         */
-        Countly.setEventSendThreshold("3");
+        Countly.setEventSendThreshold("3"); // Set event threshold value, Events get grouped together and are sent either every minute or after the unsent event count reaches a threshold. By default it is 10
 
-        /**
-         * @function pushTokenType set Push notification messaging mode and callbacks for push notifications
-         */
-        Countly.pushTokenType(Countly.messagingMode.DEVELOPMENT, "Channel Name", "Channel Description");
+        /** Push Notification Settings */
+        Countly.pushTokenType(Countly.messagingMode.DEVELOPMENT, "Channel Name", "Channel Description"); // Set Push notification messaging mode and callbacks for push notifications
+        Countly.askForNotificationPermission(); // This method will ask for permission, and send push token to countly server.
+        Countly.registerForNotification(function(theNotification){
+          console.log("Just received this notification data: " + JSON.stringify(theNotification));
+          alert('theNotification: ' + JSON.stringify(theNotification));
+        }); // Set callback to receive push notifications
 
-        Countly.init("https://try.count.ly", "COUNTLY_APP_KEY");
+        await Countly.init("https://master.count.ly", "5b77e4c785410351f32d8aa286d2383195d13b93", "123456"); // Initialize the countly SDK.
+
+        Countly.giveAllConsent(); // give consent for all features, should be call after init.
+        // Countly.giveConsent(["events", "views"]); // give conset for some specific features, should be call after init.
       }
     }
 
@@ -513,7 +496,7 @@ class Example extends Component {
             < Button onPress = { function(){Countly.recordView("HomePage")} } title = "Record View: 'HomePage'" color = "#e0e0e0"> </Button>
             < Button onPress = { function(){Countly.recordView("Dashboard")} } title = "Record View: 'Dashboard'" color = "#e0e0e0"> </Button>
             < Button onPress = { function(){Countly.recordView("HomePage", {"version": "1.0", "_facebook_version": "0.0.1"})} } title = "Record View: 'HomePage' with Segment" color = "#e0e0e0"> </Button>
-           < Button onPress = { this.setLocation } title = "Set Location" color = "#00b5ad"> </Button>
+            < Button onPress = { this.setLocation } title = "Set Location" color = "#00b5ad"> </Button>
             < Button onPress = { this.disableLocation } title = "Disable Location" color = "#00b5ad"> </Button>
             < Button onPress = { this.showStarRating } title = "Show Star Rating Model" color = "#00b5ad"> </Button>
             < Button onPress = { this.showFeedbackPopup } title = "Show FeedBack Model" color = "#00b5ad"> </Button>
