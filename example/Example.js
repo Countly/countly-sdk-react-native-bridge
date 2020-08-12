@@ -43,30 +43,35 @@ class Example extends Component {
       if(!await Countly.isInitialized()) {
         /** Recommended settings for Countly initialisation */
         Countly.setLoggingEnabled(true); // Enable countly internal debugging logs
-        Countly.enableCrashReporting(); // Enable crash reporting to report crash to Countly
+        Countly.enableCrashReporting(); // Enable crash reporting to report unhandled crashes to Countly
         Countly.setRequiresConsent(true); // Set that consent should be required for features to work.
         Countly.setViewTracking(true); // Enable automatic view tracking
 
-        /** Optional settings for Counlty initialisation */
-        Countly.enableParameterTamperingProtection("salt"); // Set the optional salt to be used for calculating the checksum of requested data which will be sent with each request, using the &checksum field
+        /** Optional settings for Countly initialisation */
+        Countly.enableParameterTamperingProtection("salt"); // Set the optional salt to be used for calculating the checksum of requested data which will be sent with each request
         // Countly.pinnedCertificates("count.ly.cer"); // It will ensure that connection is made with one of the public keys specified
         // Countly.setHttpPostForced(false); // Set to "true" if you want HTTP POST to be used for all requests
         Countly.enableApm(); // Enable APM features, which includes the recording of app start time.
         Countly.enableAttribution(); // Enable to measure your marketing campaign performance by attributing installs from specific campaigns.
 
-        Countly.setEventSendThreshold("3"); // Set event threshold value, Events get grouped together and are sent either every minute or after the unsent event count reaches a threshold. By default it is 10
+        Countly.setEventSendThreshold("10"); // Set event threshold value, Events get grouped together and are sent either every minute or after the unsent event count reaches a threshold. By default it is 10
 
         /** Push Notification Settings */
-        Countly.pushTokenType(Countly.messagingMode.DEVELOPMENT, "Channel Name", "Channel Description"); // Set Push notification messaging mode and callbacks for push notifications
-        Countly.askForNotificationPermission(); // This method will ask for permission, and send push token to countly server.
+        
+        await Countly.init("https://master.count.ly", "5b77e4c785410351f32d8aa286d2383195d13b93", "123456"); // Initialize the countly SDK.
+
+        /** 
+         * Push notifications settings 
+         * Shoudl be call after init
+        */
+        Countly.pushTokenType(Countly.messagingMode.DEVELOPMENT, "Channel Name", "Channel Description"); // Set messaging mode for push notifications
         Countly.registerForNotification(function(theNotification){
           console.log("Just received this notification data: " + JSON.stringify(theNotification));
           alert('theNotification: ' + JSON.stringify(theNotification));
         }); // Set callback to receive push notifications
+        Countly.askForNotificationPermission(); // This method will ask for permission, enables push notification and send push token to countly server.
 
-        await Countly.init("https://master.count.ly", "5b77e4c785410351f32d8aa286d2383195d13b93", "123456"); // Initialize the countly SDK.
-
-        Countly.giveAllConsent(); // give consent for all features, should be call after init.
+        Countly.giveAllConsent(); // give consent for all features, should be call after init
         // Countly.giveConsent(["events", "views"]); // give conset for some specific features, should be call after init.
       }
     }
@@ -85,8 +90,8 @@ class Example extends Component {
       options.email = "User Email";
       options.org = "User Organization";
       options.phone = "User Contact number";
-      options.picture = "User picture URL";
-      options.picturePath = "User picture local path";
+      options.picture = "https://count.ly/images/logos/countly-logo.png";
+      options.picturePath = "";
       options.gender = "User Gender";
       options.byear = 1989;
       Countly.setUserData(options);

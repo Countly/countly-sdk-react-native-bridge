@@ -249,7 +249,7 @@ Countly.setHttpPostForced = function(boolean = true){
 
 Countly.isCrashReportingEnabled = false;
 /**
- * Enable crash reporting to report crash/errors to Countly
+ * Enable crash reporting to report unhandled crashes to Countly
  * Should be call before Countly init
  */
 Countly.enableCrashReporting = function(){
