@@ -118,12 +118,21 @@ Countly.recordView = function(recordView, segments){
 };
 
 /**
- * 
  * Enable automatic view tracking
  * Should be call before Countly init
+ * @param enabled Expected value is boolean
  */
-Countly.setViewTracking = function(boolean = true){
-    CountlyReactNative.setViewTracking([boolean]);
+Countly.setViewTracking = async function(enabled = true){
+    if(typeof enabled !== 'boolean' && typeof enabled !== 'string') {
+        if(await CountlyReactNative.isLoggingEnabled()) {
+            console.warn("setViewTracking, unsupported data type [" + typeof enabled+ "]");
+        }
+        return;
+    }
+    if(typeof enabled === 'string') {
+        enabled = (enabled === "true"); // Typecaset from string to boolean
+    }
+    CountlyReactNative.setViewTracking([enabled]);
 }
 
 /**
