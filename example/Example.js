@@ -62,7 +62,7 @@ class Example extends Component {
 
         /** 
          * Push notifications settings 
-         * Shoudl be call after init
+         * Should be call after init
         */
         Countly.pushTokenType(Countly.messagingMode.DEVELOPMENT, "Channel Name", "Channel Description"); // Set messaging mode for push notifications
         Countly.registerForNotification(function(theNotification){
