@@ -31,13 +31,18 @@ RCT_EXPORT_METHOD(init:(NSArray*)arguments)
 {
   NSString* serverurl = [arguments objectAtIndex:0];
   NSString* appkey = [arguments objectAtIndex:1];
-  NSString* deviceID = [arguments objectAtIndex:2];
+  NSString* deviceID = @"";
 
   if (config == nil){
     config = CountlyConfig.new;
   }
-  if(deviceID != nil && ![deviceID  isEqual: @""]){
-    config.deviceID = deviceID;
+  if(arguments.count == 3){
+      deviceID = [arguments objectAtIndex:2];
+      if ([@"TemporaryDeviceID" isEqualToString:deviceID]) {
+          config.deviceID = CLYTemporaryDeviceID;
+      } else {
+          config.deviceID = deviceID;
+      }
   }
   config.appKey = appkey;
   config.host = serverurl;
@@ -264,10 +269,15 @@ RCT_EXPORT_METHOD(changeDeviceId:(NSArray*)arguments)
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* newDeviceID = [arguments objectAtIndex:0];
   NSString* onServerString = [arguments objectAtIndex:1];
-  if ([onServerString  isEqual: @"1"]) {
-    [Countly.sharedInstance setNewDeviceID:newDeviceID onServer: YES];
+
+  if ([newDeviceID  isEqual: @"TemporaryDeviceID"]) {
+      [Countly.sharedInstance setNewDeviceID:CLYTemporaryDeviceID onServer:NO];
   }else{
-    [Countly.sharedInstance setNewDeviceID:newDeviceID onServer: NO];
+      if ([onServerString  isEqual: @"1"]) {
+          [Countly.sharedInstance setNewDeviceID:newDeviceID onServer: YES];
+      }else{
+          [Countly.sharedInstance setNewDeviceID:newDeviceID onServer: NO];
+      }
   }
   });
 }
