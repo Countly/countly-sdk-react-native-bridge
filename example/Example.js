@@ -54,6 +54,7 @@ class Example extends Component {
       Countly.pushTokenType(Countly.messagingMode.DEVELOPMENT, "Channel Name", "Channel Description");
       Countly.setLoggingEnabled(true);
       Countly.init("https://trinisoft.count.ly", "f0b2ac6919f718a13821575db28c0e2971e05ec5");
+      // Countly.deviceIDType["TemporaryDeviceID"];
     }
     onStart(){
       Countly.start();

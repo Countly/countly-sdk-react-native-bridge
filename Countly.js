@@ -17,7 +17,9 @@ const eventEmitter = new NativeEventEmitter(CountlyReactNative);
 const Countly = {};
 Countly.serverUrl = "";
 Countly.appKey = "";
-
+Countly.deviceIDType = {
+    "TemporaryDeviceID": "TemporaryDeviceID"
+}
 Countly.messagingMode = {"DEVELOPMENT":"1","PRODUCTION":"0", "ADHOC": "2"};
 if (Platform.OS.match("android")) {
     Countly.messagingMode.DEVELOPMENT = "2";
