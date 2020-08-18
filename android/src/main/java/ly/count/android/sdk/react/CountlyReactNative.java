@@ -153,6 +153,36 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         Boolean result = Countly.sharedInstance().hasBeenCalledOnStart();
         promise.resolve(result);
     }
+    
+    @ReactMethod
+    public void getCurrentDeviceId(ReadableArray args, final Callback myCallback){
+        String deviceID = Countly.sharedInstance().getDeviceID();
+        if (deviceID == null) {
+            Log.d(Countly.TAG, "[CountlyReactNative] getCurrentDeviceId, deviceIdNotFound");
+            myCallback.invoke("deviceIdNotFound");
+        }
+        else {
+            Log.d(Countly.TAG, "[CountlyReactNative] getCurrentDeviceId: " + deviceID);
+            myCallback.invoke(deviceID);
+        }
+    }
+
+    @ReactMethod
+    public void getDeviceIdAuthor(ReadableArray args, final Callback myCallback){
+        DeviceId.Type deviceIDType = Countly.sharedInstance().getDeviceIDType();
+        if (deviceIDType == null) {
+            Log.d(Countly.TAG, "[CountlyReactNative] getDeviceIdAuthor, deviceIdAuthorNotFound");
+            myCallback.invoke("deviceIdAuthorNotFound");
+        }
+        else {
+            Log.d(Countly.TAG, "[CountlyReactNative] getDeviceIdAuthor: " + deviceIDType);
+            if(deviceIDType == DeviceId.Type.DEVELOPER_SUPPLIED){
+                myCallback.success("developerProvided");
+            }else{
+                myCallback.success("sdkGenerated");
+            }
+        }
+    }
 
     @ReactMethod
     public void changeDeviceId(ReadableArray args){

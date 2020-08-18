@@ -275,6 +275,28 @@ RCT_EXPORT_METHOD(stop)
   // [Countly.sharedInstance suspend];
 }
 
+RCT_EXPORT_METHOD(getCurrentDeviceId:(NSArray*)arguments callback:(RCTResponseSenderBlock)callback)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+  id value = [Countly.sharedInstance deviceID];
+  if(value){
+    callback(@[value]);
+  }
+  else{
+    NSString *value = @"deviceIdNotFound";
+    callback(@[value]);
+  }
+  });
+}
+
+RCT_EXPORT_METHOD(getDeviceIdAuthor:(NSArray*)arguments callback:(RCTResponseSenderBlock)callback)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+    NSString *value = @"Not implemented for iOS";
+    callback(@[value]);
+  });
+}
+
 RCT_EXPORT_METHOD(changeDeviceId:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
