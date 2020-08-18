@@ -104,9 +104,9 @@ class Example extends Component {
 
     // TIMED EVENTS
     startEvent(){
-      Countly.startEvent("timedEvent");
+      Countly.startEvent("Timed Event");
       setTimeout(function(){
-        Countly.endEvent("timedEvent");
+        Countly.endEvent("Timed Event");
       },1000);
     };
 
@@ -117,9 +117,9 @@ class Example extends Component {
      */
     timedEventWithSum(){
       // Event with sum
-      Countly.startEvent("timedEventWithSum");
+      Countly.startEvent("Timed Event With Sum");
       var event = {
-        "eventName": "timedEventWithSum",
+        "eventName": "Timed Event With Sum",
         "eventSum": "0.99"
       };
       setTimeout(function(){
@@ -129,9 +129,9 @@ class Example extends Component {
 
     timedEventWithSegment(){
       // Event with segment
-      Countly.startEvent("timedEventWithSegment");
+      Countly.startEvent("Timed Event With Segment");
       var event = {
-        "eventName": "timedEventWithSegment"
+        "eventName": "Timed Event With Segment"
       };
       event.segments = {
         "Country": "Germany",
@@ -144,9 +144,9 @@ class Example extends Component {
 
     timedEventWithSumAndSegment(){
       // Event with Segment, sum and count
-      Countly.startEvent("timedEventWithSumAndSegment");
+      Countly.startEvent("Timed Event With Segment, Sum and Count");
       var event = {
-        "eventName": "timedEventWithSumAndSegment",
+        "eventName": "Timed Event With Segment, Sum and Count",
         "eventCount": 1,
         "eventSum": "0.99"
       };
