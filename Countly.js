@@ -238,7 +238,7 @@ Countly.addCrashLog = function(crashLog){
     CountlyReactNative.addCrashLog([crashLog]);
 }
 
-Countly.logException = function(exception, nonfatal, segments){
+Countly.logException = function(exception, nonfatal){
     var exceptionArray = exception.split('\n');
     var exceptionString = "";
     for(var i=0,il=exceptionArray.length;i<il;i++){
@@ -246,11 +246,7 @@ Countly.logException = function(exception, nonfatal, segments){
     }
     var args = [];
     args.push(exceptionString || "");
-    args.push(nonfatal || false);
-    for(var key in segments){
-        args.push(key);
-        args.push(segments[key].toString());
-    }
+    args.push(nonfatal ? "true": "false");
     CountlyReactNative.logException(args);
 }
 Countly.setCustomCrashSegment = function(segments){

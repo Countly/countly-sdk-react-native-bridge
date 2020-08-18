@@ -258,9 +258,13 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void logException(ReadableArray args){
         String exceptionString = args.getString(0);
+        String isFatal = args.getString(1);
         Exception exception = new Exception(exceptionString);
-
-        Countly.sharedInstance().crashes().recordHandledException(exception);
+        if(isFatal.equals("true")){
+            Countly.sharedInstance().crashes().recordUnhandledException(exception);
+        }else{
+            Countly.sharedInstance().crashes().recordHandledException(exception);
+        }
     }
     @ReactMethod
     public void logJSException(String err, String message, String stack){

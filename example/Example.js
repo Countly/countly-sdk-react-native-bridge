@@ -37,6 +37,7 @@ class Example extends Component {
         this.enableApm = this.enableApm.bind(this);
         this.random = this.random.bind(this);
         this.setCustomCrashSegment = this.setCustomCrashSegment.bind(this);
+        this.addLogException = this.addLogException.bind(this);
     };
 
     componentDidMount(){
@@ -351,15 +352,11 @@ class Example extends Component {
         } catch (error) {
           setTimeout(function(){
             var stack = error.stack.toString();
-            Countly.logException(stack, true, {"_facebook_version": "0.0.1"});
+            Countly.logException(stack, true);
           },1000);
         }
       },1000);
     };
-
-    logException(){
-      Countly.logException();
-    }
 
     setEventSendThreshold(){
       Countly.setEventSendThreshold("3");
@@ -592,6 +589,8 @@ class Example extends Component {
             <Text style={[{textAlign: 'center'}]}>Crash Event start</Text>
             < Button onPress = { this.enableCrashReporting } title = "Enable Crash Reporting" color = "#00b5ad"> </Button>
             < Button onPress = { this.addCrashLog } title = "Add Crash Log" color = "#00b5ad"> </Button>
+            < Button onPress = { this.addLogException } title = "Create Crash" color = "#00b5ad"> </Button>
+
             <Text style={[{textAlign: 'center'}]}>Crash Event End</Text>
             <Text style={[{textAlign: 'center'}]}>.</Text>
 

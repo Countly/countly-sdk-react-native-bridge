@@ -478,19 +478,18 @@ RCT_EXPORT_METHOD(setCustomCrashSegment:(NSArray*)arguments)
 RCT_EXPORT_METHOD(logException:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
-  NSString* execption = [arguments objectAtIndex:0];
-  NSString* nonfatal = [arguments objectAtIndex:1];
+  NSString* execption = [command objectAtIndex:0];
+  NSString* isFatal = [command objectAtIndex:1];
   NSArray *nsException = [execption componentsSeparatedByString:@"\n"];
 
   NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
-
-  for(int i=2,il=(int)arguments.count;i<il;i+=2){
-      dict[[arguments objectAtIndex:i]] = [arguments objectAtIndex:i+1];
+  if([@"true" isEqualToString: isFatal]){
+      [dict setObject:true forKey:@"fatal"];
+  }else{
+      [dict setObject:true forKey:@"nonfatal"];
   }
-  [dict setObject:nonfatal forKey:@"nonfatal"];
 
   NSException* myException = [NSException exceptionWithName:@"Exception" reason:execption userInfo:dict];
-
   [Countly.sharedInstance recordHandledException:myException withStackTrace: nsException];
   });
 }
@@ -614,12 +613,6 @@ RCT_EXPORT_METHOD(userData_pullValue:(NSArray*)arguments)
   });
 }
 
-
-
-RCT_EXPORT_METHOD(demo:(NSArray*)arguments)
-{
-
-}
 
 RCT_EXPORT_METHOD(setRequiresConsent:(NSArray*)arguments)
 {

@@ -16,6 +16,7 @@ typedef void (^Result)(id _Nullable result);
 - (void)enableCrashReporting;
 - (void)addCrashLog:(NSArray*_Nullable)arguments;
 - (void)setCustomCrashSegment:(NSArray*_Nullable)arguments;
+- (void)logException:(NSArray*_Nullable)arguments;
 
 - (void)changeDeviceId:(NSArray*_Nullable)arguments;
 - (void)enableParameterTamperingProtection:(NSArray*_Nullable)arguments;
@@ -29,7 +30,7 @@ typedef void (^Result)(id _Nullable result);
 - (void)userData_multiply:(NSArray*_Nullable)arguments;
 - (void)userData_saveMax:(NSArray*_Nullable)arguments;
 - (void)userData_saveMin:(NSArray*_Nullable)arguments;
-- (void)demo:(NSArray*_Nullable)arguments;
+
 - (void)setRequiresConsent:(NSArray*_Nullable)arguments;
 - (void)giveConsent:(NSArray*_Nullable)arguments;
 - (void)removeConsent:(NSArray*_Nullable)arguments;
@@ -39,6 +40,7 @@ typedef void (^Result)(id _Nullable result);
 - (void)updateRemoteConfigForKeysOnly:(NSArray*_Nullable)arguments callback:(RCTResponseSenderBlock _Nullable)callback;
 - (void)updateRemoteConfigExceptKeys:(NSArray*_Nullable)arguments callback:(RCTResponseSenderBlock _Nullable)callback;
 - (void)getRemoteConfigValueForKey:(NSArray*_Nullable)arguments callback:(RCTResponseSenderBlock _Nullable)callback;
+
 - (void)showStarRating:(NSArray*_Nullable)arguments callback:(RCTResponseSenderBlock _Nullable)callback;
 - (void)showFeedbackPopup:(NSArray*_Nullable)arguments;
 - (void)setEventSendThreshold:(NSArray*_Nullable)arguments;
