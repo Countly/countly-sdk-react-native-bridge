@@ -22,6 +22,7 @@ typedef void (^Result)(id _Nullable result);
 - (void)enableParameterTamperingProtection:(NSArray*_Nullable)arguments;
 - (void)pinnedCertificates:(NSArray*_Nullable)arguments;
 - (void)startEvent:(NSArray*_Nullable)arguments;
+- (void)cancelEvent:(NSArray*_Nullable)arguments;
 - (void)endEvent:(NSArray*_Nullable)arguments;
 
 - (void)userData_setProperty:(NSArray*_Nullable)arguments;

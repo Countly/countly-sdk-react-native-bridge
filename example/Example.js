@@ -38,6 +38,9 @@ class Example extends Component {
         this.random = this.random.bind(this);
         this.setCustomCrashSegment = this.setCustomCrashSegment.bind(this);
         this.addLogException = this.addLogException.bind(this);
+
+        this.startEventX = this.startEventX.bind(this);
+        this.cancelEventX = this.cancelEventX.bind(this);
     };
 
     componentDidMount(){
@@ -158,6 +161,12 @@ class Example extends Component {
         Countly.endEvent(event);
       },1000);
     };
+    startEventX(){
+      Countly.startEvent("Event X");
+    }
+    cancelEventX(){
+      Countly.cancelEvent("Event X");
+    }
     // TIMED EVENTS
 
 
@@ -477,7 +486,8 @@ class Example extends Component {
             < Button onPress = { this.timedEventWithSum } title = "Timed events with Sum" color = "#e0e0e0"> </Button>
             < Button onPress = { this.timedEventWithSegment } title = "Timed events with Segment" color = "#e0e0e0"> </Button>
             < Button onPress = { this.timedEventWithSumAndSegment } title = "Timed events with Sum and Segment" color = "#e0e0e0"> </Button>
-
+            < Button onPress = { this.startEventX } title = "Start Event X" color = "#e0e0e0"> </Button>
+            < Button onPress = { this.cancelEventX } title = "Cancel Event X" color = "#e0e0e0"> </Button>
 
 
             <Text style={[{textAlign: 'center'}]}>Events End</Text>
