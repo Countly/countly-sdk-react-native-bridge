@@ -48,7 +48,7 @@ class Example extends Component {
 
     onInit(){
       Countly.pushTokenType(Countly.messagingMode.DEVELOPMENT, "Channel Name", "Channel Description");
-      Countly.enableLogging();
+      Countly.setLoggingEnabled(true);
       Countly.init("https://trinisoft.count.ly", "f0b2ac6919f718a13821575db28c0e2971e05ec5");
     }
     onStart(){
@@ -311,11 +311,11 @@ class Example extends Component {
     }
 
     enableLogging(){
-      Countly.enableLogging();
+      Countly.setLoggingEnabled(true);
     };
 
     disableLogging(){
-      Countly.disableLogging();
+      Countly.setLoggingEnabled(false);
     };
 
     setStarRatingDialogTexts(){

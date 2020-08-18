@@ -149,7 +149,9 @@ Countly.stop = function(){
 Countly.enableLogging = function(){
     CountlyReactNative.setLoggingEnabled([true]);
 }
-
+Countly.setLoggingEnabled = function(isEnable){
+    CountlyReactNative.setLoggingEnabled([isEnable]);
+}
 Countly.disableLogging = function(){
     CountlyReactNative.setLoggingEnabled([false]);
 }
