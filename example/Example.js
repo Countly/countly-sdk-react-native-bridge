@@ -208,7 +208,7 @@ class Example extends Component {
 
 
     changeDeviceId(){
-      Countly.changeDeviceId('02d56d66-6a39-482d-aff0-d14e4d5e5fda');
+      Countly.changeDeviceId('02d56d66-6a39-482d-aff0-d14e4d5e5fda', true);
     };
 
     enableParameterTamperingProtection(){
