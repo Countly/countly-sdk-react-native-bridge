@@ -251,27 +251,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void setLocationInit(ReadableArray args){
-        String countryCode = args.getString(0);
-        String city = args.getString(1);
-        String location = args.getString(2);
-        String ipAddress = args.getString(3);
-        if("null".equals(countryCode)){
-            countryCode = null;
-        }
-        if("null".equals(city)){
-            city = null;
-        }
-        if("null".equals(location)){
-            location = null;
-        }
-        if("null".equals(ipAddress)){
-            ipAddress = null;
-        }
-        this.config.setLocation(countryCode, city, location, ipAddress);
-    }
-
-    @ReactMethod
     public void setLocation(ReadableArray args){
         String countryCode = args.getString(0);
         String city = args.getString(1);
