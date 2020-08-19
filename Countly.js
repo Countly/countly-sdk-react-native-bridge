@@ -242,7 +242,7 @@ Countly.disableLocation = function(){
  * Get currently used device Id.
  * Should be call after Countly init
  * */
-  static Future<String> getCurrentDeviceId() async {
+Countly.getCurrentDeviceId = async function(){
     if(!await Countly.isInitialized()) {
         console.warn('getCurrentDeviceId, init must be called before getCurrentDeviceId');
         return "init must be called before getCurrentDeviceId";

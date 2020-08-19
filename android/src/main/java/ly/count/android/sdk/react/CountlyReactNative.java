@@ -177,9 +177,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         else {
             Log.d(Countly.TAG, "[CountlyReactNative] getDeviceIdAuthor: " + deviceIDType);
             if(deviceIDType == DeviceId.Type.DEVELOPER_SUPPLIED){
-                myCallback.success("developerProvided");
+                myCallback.invoke("developerProvided");
             }else{
-                myCallback.success("sdkGenerated");
+                myCallback.invoke("sdkGenerated");
             }
         }
     }
