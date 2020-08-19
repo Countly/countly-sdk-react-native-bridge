@@ -138,7 +138,7 @@ Countly.setViewTracking = async function(enabled = true){
 /**
  * 
  * Set Push notification messaging mode and callbacks for push notifications
- * Should be call before Countly init
+ * Should be call after Countly init
  */
 Countly.pushTokenType = function(tokenType, channelName, channelDescription){
     var args = [];
@@ -153,9 +153,20 @@ Countly.sendPushToken = function(options){
     args.push((options.messagingMode || "").toString());
     CountlyReactNative.sendPushToken(args);
 }
+
+/**
+ * This method will ask for permission, enables push notification and send push token to countly server.
+ * Should be call after Countly init
+ */
 Countly.askForNotificationPermission = function(){
     CountlyReactNative.askForNotificationPermission([]);
 }
+
+/**
+ * 
+ * Set callback to receive push notifications
+ * @param { callback listner } theListener 
+ */
 Countly.registerForNotification = function(theListener){
     var event = eventEmitter.addListener('onCountlyPushNotification', theListener);
     CountlyReactNative.registerForNotification([]);
@@ -226,6 +237,20 @@ Countly.setLocation = function(countryCode, city, location, ipAddress){
 Countly.disableLocation = function(){
     CountlyReactNative.disableLocation();
 }
+/** 
+ * 
+ * Get currently used device Id.
+ * Should be call after Countly init
+ * */
+  static Future<String> getCurrentDeviceId() async {
+    if(!await Countly.isInitialized()) {
+        console.warn('getCurrentDeviceId, init must be called before getCurrentDeviceId');
+        return "init must be called before getCurrentDeviceId";
+      }
+      const result = await CountlyReactNative.getCurrentDeviceId();
+      return result;
+  }
+
 Countly.changeDeviceId = function(newDeviceID, onServer){
     if(onServer === false){
         onServer = "0";
@@ -473,6 +498,11 @@ Countly.removeConsent = function(args){
     CountlyReactNative.removeConsent(features);
 }
 
+/**
+ * 
+ * Give consent for all features
+ * Should be call after Countly init
+ */
 Countly.giveAllConsent = function(){
     CountlyReactNative.giveAllConsent();
 }
