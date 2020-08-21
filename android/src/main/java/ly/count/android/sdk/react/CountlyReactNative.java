@@ -323,6 +323,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         String startEvent = args.getString(0);
         Countly.sharedInstance().events().startEvent(startEvent);
     }
+     public void recordPastEvent(ReadableArray args){
+        Countly.sharedInstance().events().recordPastEvent(key, segmentation, count, sum, dur, timestamp)
+    }
 
     @ReactMethod
     public void cancelEvent(ReadableArray args){
@@ -383,6 +386,22 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
             this.config.setViewTracking(true);
         }else{
             this.config.setViewTracking(false);
+        }
+    }
+    public void setAutoTrackingUseShortName(ReadableArray args){
+        String flag = args.getString(0);
+        if("true".equals(flag)){
+            this.config.setAutoTrackingUseShortName(true);
+        }else{
+            this.config.setAutoTrackingUseShortName(false);
+        }
+    }
+     public void setTrackOrientationChanges(ReadableArray args){
+        String flag = args.getString(0);
+        if("true".equals(flag)){
+            this.config.setTrackOrientationChanges(true);
+        }else{
+            this.config.setTrackOrientationChanges(false);
         }
     }
 
@@ -517,6 +536,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     public void start(){
         Countly.sharedInstance().onStart(getCurrentActivity());
     }
+    public void onConfigurationChanged(ReadableArray args){
+        Countly.sharedInstance().onConfigurationChanged(newConfig)
+    }
 
     @ReactMethod
     public void stop(){
@@ -621,15 +643,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void giveAllConsent(){
-        Countly.sharedInstance().consent().giveConsent(validConsentFeatureNames.toArray(new String[validConsentFeatureNames.size()]));
-    }
+        Countly.sharedInstance().consent().giveConsentAll();    }
 
     @ReactMethod
     public void removeAllConsent(){
-        Countly.sharedInstance().consent().removeConsent(validConsentFeatureNames.toArray(new String[validConsentFeatureNames.size()]));
+         Countly.sharedInstance().consent().removeConsentAll();
     }
-
-
     @ReactMethod
     public void remoteConfigUpdate(ReadableArray args, final Callback myCallback){
         Countly.sharedInstance().remoteConfig().update(new RemoteConfigCallback() {

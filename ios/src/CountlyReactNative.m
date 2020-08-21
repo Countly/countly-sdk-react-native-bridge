@@ -120,10 +120,21 @@ RCT_EXPORT_METHOD(recordView:(NSArray*)arguments)
 }
 
 RCT_EXPORT_METHOD(setViewTracking:(NSArray*)arguments)
-{
-
+{   dispatch_async(dispatch_get_main_queue(), ^ {
+        config.features = @[CLYAutoViewTracking];
+        result(@"setViewTracking!");
+    });
 }
-
+RCT_EXPORT_METHOD(setAutoTrackingUseShortName:(NSArray*)arguments)
+{   dispatch_async(dispatch_get_main_queue(), ^ {
+        result(@"setAutoTrackingUseShortName!");
+    });
+}
+RCT_EXPORT_METHOD(setTrackOrientationChanges:(NSArray*)arguments)
+{   dispatch_async(dispatch_get_main_queue(), ^ {
+        result(@"setTrackOrientationChanges!");
+    });
+}
 RCT_EXPORT_METHOD(setLoggingEnabled:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
@@ -258,6 +269,10 @@ RCT_EXPORT_METHOD(start)
 {
   // [Countly.sharedInstance resume];
 }
+RCT_EXPORT_METHOD(onConfigurationChanged : (NSArray*)arguments;)
+{
+
+}
 
 RCT_EXPORT_METHOD(stop)
 {
@@ -339,6 +354,10 @@ RCT_EXPORT_METHOD(startEvent:(NSArray*)arguments)
   NSString* startEvent = [arguments objectAtIndex:0];
   [Countly.sharedInstance startEvent:startEvent];
   });
+}
+RCT_EXPORT_METHOD(recordPastEvent:(NSArray*)arguments)
+{
+ 
 }
 
 RCT_EXPORT_METHOD(cancelEvent:(NSArray*)arguments)

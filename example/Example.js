@@ -12,6 +12,7 @@ class Example extends Component {
 
         this.onInit = this.onInit.bind(this);
         this.onStart = this.onStart.bind(this);
+        this.onConfigurationChanged =this.onConfigurationChanged.bind(this);
         this.basicEvent = this.basicEvent.bind(this);
         this.eventWithSum = this.eventWithSum.bind(this);
         this.eventWithSegment = this.eventWithSegment.bind(this);
@@ -53,11 +54,15 @@ class Example extends Component {
     onInit(){
       Countly.pushTokenType(Countly.messagingMode.DEVELOPMENT, "Channel Name", "Channel Description");
       Countly.setLoggingEnabled(true);
+      Countly.setAutoTrackingUseShortName(true);
       Countly.init("https://trinisoft.count.ly", "f0b2ac6919f718a13821575db28c0e2971e05ec5");
       // Countly.deviceIDType["TemporaryDeviceID"];
     }
     onStart(){
       Countly.start();
+    };
+    onConfigurationChanged(){
+      Countly.onConfigurationChanged(newConfig);
     };
     onStop(){
       Countly.stop();
@@ -162,6 +167,19 @@ class Example extends Component {
         Countly.endEvent(event);
       },1000);
     };
+    recordPastEvent(){
+      Countly.recordPastEvent(key, segmentation, count, sum, dur, timestamp);
+    }
+    setViewTracking(){
+      Countly.setViewTracking(true);
+    }
+    setAutoTrackingUseShortName(){
+      Countly.setAutoTrackingUseShortName(true);
+    }
+    setTrackOrientationChanges(){
+      Countly.setTrackOrientationChanges(true);
+    }
+    
     startEventX(){
       Countly.startEvent("Event X");
     }
@@ -321,11 +339,11 @@ class Example extends Component {
       Countly.askForNotificationPermission();
     }
 
-    enableLogging(){
+    setLoggingEnabled(){
       Countly.setLoggingEnabled(true);
     };
 
-    disableLogging(){
+    setLoggingDisabled(){
       Countly.setLoggingEnabled(false);
     };
 
@@ -423,6 +441,7 @@ class Example extends Component {
     test(){
       this.onInit();
       this.onStart();
+      this.onConfigurationChanged();
 
 
       this.basicEvent();
@@ -475,6 +494,8 @@ class Example extends Component {
             < Button onPress = { this.onInit } title = "Init"> </Button>
             < Button onPress = { this.onStart } title = "Start" color = "#5bbd72"> </Button>
             < Button onPress = { this.onStop } title = "Stop" color = "#d95c5c"> </Button>
+            < Button onPress = { this.onConfigurationChanged} title = "On Configuration Changed" color = "#5bbd72"> </Button>
+
 
             <Text style={[{textAlign: 'center'}]}>.</Text>
             <Text style={[{textAlign: 'center'}]}>Events Start</Text>
@@ -487,6 +508,8 @@ class Example extends Component {
             < Button onPress = { this.timedEventWithSum } title = "Timed events with Sum" color = "#e0e0e0"> </Button>
             < Button onPress = { this.timedEventWithSegment } title = "Timed events with Segment" color = "#e0e0e0"> </Button>
             < Button onPress = { this.timedEventWithSumAndSegment } title = "Timed events with Sum and Segment" color = "#e0e0e0"> </Button>
+            < Button onPress = { this.recordPastEvent } title = "Record Past Event" color = "#e0e0e0"> </Button>
+
             < Button onPress = { this.startEventX } title = "Start Event X" color = "#e0e0e0"> </Button>
             < Button onPress = { this.cancelEventX } title = "Cancel Event X" color = "#e0e0e0"> </Button>
 
@@ -517,8 +540,12 @@ class Example extends Component {
             < Button onPress = { function(){Countly.recordView("HomePage")} } title = "Record View: 'HomePage'" color = "#e0e0e0"> </Button>
             < Button onPress = { function(){Countly.recordView("Dashboard")} } title = "Record View: 'Dashboard'" color = "#e0e0e0"> </Button>
             < Button onPress = { function(){Countly.recordView("HomePage", {"version": "1.0", "_facebook_version": "0.0.1"})} } title = "Record View: 'HomePage' with Segment" color = "#e0e0e0"> </Button>
-            < Button onPress={this.enableLogging} title='Enable Logging' color='#00b5ad' />
-            < Button onPress={this.disableLogging} title='Disable Logging' color='#00b5ad' />
+            < Button onPress = { this.setViewTracking } title = "Set View Tracking" color = "#e0e0e0"> </Button>
+            < Button onPress = { this.setAutoTrackingUseShortName } title = "Set AutoTracking Use ShortName" color = "#e0e0e0"> </Button>
+            < Button onPress = { this.setTrackOrientationChanges } title = "Set Track Orientation Changes" color = "#e0e0e0"> </Button>
+
+            < Button onPress={this.setLoggingEnabled} title='Enable Logging' color='#00b5ad' />
+            < Button onPress={this.setLoggingDisabled} title='Disable Logging' color='#00b5ad' />
             < Button onPress = { this.pinnedCertificates } title = "Pinned Certificates" color = "#00b5ad"> </Button>
             < Button onPress = { this.enableParameterTamperingProtection } title = "Enable Parameter Tapmering Protection" color = "#00b5ad"> </Button>
             < Button onPress = { this.setLocation } title = "Set Location" color = "#00b5ad"> </Button>

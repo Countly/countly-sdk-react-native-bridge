@@ -116,6 +116,13 @@ Countly.recordView = function(recordView, segments){
 Countly.setViewTracking = function(boolean){
     CountlyReactNative.setViewTracking([boolean || "false"]);
 }
+Countly.setAutoTrackingUseShortName = function(boolean){
+    CountlyReactNative.setAutoTrackingUseShortName([boolean || "false"]);
+}
+Countly.setTrackOrientationChanges = function(boolean){
+    CountlyReactNative.setTrackOrientationChanges([boolean || "false"]);
+}
+
 
 Countly.pushTokenType = function(tokenType, channelName, channelDescription){
     var args = [];
@@ -141,6 +148,9 @@ Countly.registerForNotification = function(theListener){
 // countly start for android
 Countly.start = function(){
     CountlyReactNative.start();
+}
+Countly.onConfigurationChanged = function(newConfig){
+    CountlyReactNative.onConfigurationChanged();
 }
 
 // countly stop for android
@@ -273,6 +283,9 @@ Countly.pinnedCertificates = function(certificateName){
 }
 Countly.startEvent = function(eventName){
     CountlyReactNative.startEvent([eventName.toString() || ""]);
+}
+Countly.recordPastEvent = function(key, segmentation, count, sum, dur, timestamp){
+    CountlyReactNative.recordPastEvent(key, segmentation, count, sum, dur, timestamp);
 }
 Countly.cancelEvent = function(eventName){
     CountlyReactNative.cancelEvent([eventName.toString() || ""]);

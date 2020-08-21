@@ -9,10 +9,20 @@ typedef void (^Result)(id _Nullable result);
 - (void)setUserData:(NSArray*_Nullable)arguments;
 - (void)start;
 - (void)stop;
+- (void)onConfigurationChanged: (NSArray*_Nullable)arguments;;
+
 - (void)recordView:(NSArray*_Nullable)arguments;
+- (void)setViewTracking:(NSArray*_Nullable)arguments;
+- (void)setAutoTrackingUseShortName:(NSArray*_Nullable)arguments;
+- (void)setTrackOrientationChanges:(NSArray*_Nullable)arguments;
+
+
+
 
 - (void)setHttpPostForced:(NSArray*_Nullable)arguments;
 - (void)setLocation:(NSArray*_Nullable)arguments;
+- (void)disableLocation:(NSArray*_Nullable)arguments;
+
 - (void)enableCrashReporting;
 - (void)addCrashLog:(NSArray*_Nullable)arguments;
 - (void)setCustomCrashSegment:(NSArray*_Nullable)arguments;
@@ -22,6 +32,8 @@ typedef void (^Result)(id _Nullable result);
 - (void)enableParameterTamperingProtection:(NSArray*_Nullable)arguments;
 - (void)pinnedCertificates:(NSArray*_Nullable)arguments;
 - (void)startEvent:(NSArray*_Nullable)arguments;
+- (void)recordPastEvent:(NSArray*_Nullable)arguments;
+
 - (void)cancelEvent:(NSArray*_Nullable)arguments;
 - (void)endEvent:(NSArray*_Nullable)arguments;
 
