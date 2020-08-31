@@ -120,18 +120,6 @@ RCT_EXPORT_METHOD(recordView:(NSArray*)arguments)
   });
 }
 
-RCT_EXPORT_METHOD(setAutomaticViewTracking:(NSArray*)arguments)
-{
-    BOOL boolean = [[arguments objectAtIndex:0] boolValue];
-    if(boolean) {
-        [self addCountlyFeature:CLYAutoViewTracking];
-    }
-    else {
-        [self removeCountlyFeature:CLYAutoViewTracking];
-    }
-    [Countly.sharedInstance setIsAutoViewTrackingActive:boolean];
-}
-
 RCT_EXPORT_METHOD(setLoggingEnabled:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
@@ -179,7 +167,10 @@ RCT_EXPORT_METHOD(sendPushToken:(NSArray*)arguments)
   dispatch_async(dispatch_get_main_queue(), ^ {
 
     NSString* token = [arguments objectAtIndex:0];
-    NSString* messagingMode = [arguments objectAtIndex:1];
+    NSString* messagingMode = @"1";
+    if(config.pushTestMode == nil || [config.pushTestMode  isEqual: @""] || [config.pushTestMode isEqualToString:@"CLYPushTestModeTestFlightOrAdHoc"]) {
+        messagingMode = @"0";
+    }
     NSString *urlString = [ @"" stringByAppendingFormat:@"%@?device_id=%@&app_key=%@&token_session=1&test_mode=%@&ios_token=%@", config.host, [Countly.sharedInstance deviceID], config.appKey, messagingMode, token];
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
     [request setHTTPMethod:@"GET"];
@@ -430,6 +421,43 @@ RCT_EXPORT_METHOD(endEvent:(NSArray*)arguments)
   }
   else{
   }
+  });
+}
+
+RCT_EXPORT_METHOD(setLocationInit:(NSArray*)arguments)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+      if (config == nil){
+        config = CountlyConfig.new;
+      }
+      NSString* countryCode = [arguments objectAtIndex:0];
+      NSString* city = [arguments objectAtIndex:1];
+      NSString* locationString = [arguments objectAtIndex:2];
+      NSString* ipAddress = [arguments objectAtIndex:3];
+
+      if(locationString != nil && ![locationString isEqualToString:@"null"] && [locationString containsString:@","]){
+          @try{
+              NSArray *locationArray = [locationString componentsSeparatedByString:@","];
+              NSString* latitudeString = [locationArray objectAtIndex:0];
+              NSString* longitudeString = [locationArray objectAtIndex:1];
+
+              double latitudeDouble = [latitudeString doubleValue];
+              double longitudeDouble = [longitudeString doubleValue];
+              config.location = (CLLocationCoordinate2D){latitudeDouble,longitudeDouble};
+          }
+          @catch(NSException *exception){
+              NSLog(@"[Countly] Invalid location: %@", locationString);
+          }
+      }
+      if(city != nil && ![city isEqualToString:@"null"]) {
+          config.city = city;
+      }
+      if(countryCode != nil && ![countryCode isEqualToString:@"null"]) {
+          config.ISOCountryCode = countryCode;
+      }
+      if(ipAddress != nil && ![ipAddress isEqualToString:@"null"]) {
+          config.IP = ipAddress;
+      }
   });
 }
 
@@ -886,8 +914,8 @@ RCT_EXPORT_METHOD(recordNetworkTrace:(NSArray*)arguments) {
         int responseCode = [[arguments objectAtIndex:1] intValue];
         int requestPayloadSize = [[arguments objectAtIndex:2] intValue];
         int responsePayloadSize = [[arguments objectAtIndex:3] intValue];
-        int startTime = [[arguments objectAtIndex:4] intValue];
-        int endTime = [[arguments objectAtIndex:5] intValue];
+        long long  startTime = [[arguments objectAtIndex:4] longLongValue];
+        long long  endTime = [[arguments objectAtIndex:5] longLongValue];
         [Countly.sharedInstance recordNetworkTrace: networkTraceKey requestPayloadSize: requestPayloadSize responsePayloadSize: responsePayloadSize responseStatusCode: responseCode startTime: startTime endTime: endTime];
 
     });

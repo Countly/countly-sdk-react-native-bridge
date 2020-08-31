@@ -117,6 +117,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
           Countly.sharedInstance().COUNTLY_SDK_VERSION_STRING = COUNTLY_RN_SDK_VERSION_STRING;
 
         this.config.setContext(_reactContext);
+        Activity activity = getCurrentActivity();
+        this.config.setApplication(activity.getApplication());
         if(deviceId == null || "".equals(deviceId)){
         }else{
             if(deviceId.equals("TemporaryDeviceID")){
@@ -248,6 +250,27 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         }
         Log.i(Countly.TAG, "[CountlyReactNative] Certificate failed.");
         return new String[]{};
+    }
+
+    @ReactMethod
+    public void setLocationInit(ReadableArray args){
+        String countryCode = args.getString(0);
+        String city = args.getString(1);
+        String location = args.getString(2);
+        String ipAddress = args.getString(3);
+        if("null".equals(countryCode)){
+            countryCode = null;
+        }
+        if("null".equals(city)){
+            city = null;
+        }
+        if("null".equals(location)){
+            location = null;
+        }
+        if("null".equals(ipAddress)){
+            ipAddress = null;
+        }
+        this.config.setLocation(countryCode, city, location, ipAddress);
     }
 
     @ReactMethod
@@ -404,12 +427,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void setAutomaticViewTracking(ReadableArray args){
-        Boolean flag = args.getBoolean(0);
-        this.config.setViewTracking(flag);
-    }
-
-    @ReactMethod
     public void setUserData(ReadableArray args){
         Map<String, String> bundle = new HashMap<String, String>();
         bundle.put("name", args.getString(0));
@@ -428,16 +445,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void sendPushToken(ReadableArray args){
         String pushToken = args.getString(0);
-        int messagingMode = Integer.parseInt(args.getString(1));
-
-        Countly.CountlyMessagingMode mode = null;
-        if(messagingMode == 0){
-            mode = Countly.CountlyMessagingMode.PRODUCTION;
-        }
-        else{
-            mode = Countly.CountlyMessagingMode.TEST;
-        }
-        Countly.sharedInstance().onRegistrationId(pushToken, mode);
+        CountlyPush.onTokenRefresh(pushToken);
     }
 
     @ReactMethod
@@ -668,12 +676,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void giveAllConsent(){
-        Countly.sharedInstance().consent().giveConsent(validConsentFeatureNames.toArray(new String[validConsentFeatureNames.size()]));
+        Countly.sharedInstance().consent().giveConsentAll();
     }
 
     @ReactMethod
     public void removeAllConsent(){
-        Countly.sharedInstance().consent().removeConsent(validConsentFeatureNames.toArray(new String[validConsentFeatureNames.size()]));
+        Countly.sharedInstance().consent().removeConsentAll();
     }
 
 

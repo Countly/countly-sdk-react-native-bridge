@@ -45,7 +45,7 @@ class Example extends Component {
         Countly.setLoggingEnabled(true); // Enable countly internal debugging logs
         Countly.enableCrashReporting(); // Enable crash reporting to report unhandled crashes to Countly
         Countly.setRequiresConsent(true); // Set that consent should be required for features to work.
-        Countly.setViewTracking(true); // Enable automatic view tracking
+        Countly.setLocationInit("TR", "Istanbul", "41.0082,28.9784"); // Set user initial location.
 
         /** Optional settings for Countly initialisation */
         Countly.enableParameterTamperingProtection("salt"); // Set the optional salt to be used for calculating the checksum of requested data which will be sent with each request
