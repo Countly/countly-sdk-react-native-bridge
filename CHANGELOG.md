@@ -1,14 +1,13 @@
 ## 20.4.6
 * Adding APM calls
-* Added "setLoggingEnabled" call
-* Added "getCurrentDeviceId" call
-* Added "setLocationInit" call to fix issues related to location tracking
-* Updated "init" call to async
-* Deprecated "enableLogging" and "disableLogging" calls
-* Example updated with recommended and optional settings during initialization
-* RN iOS config features issues fixed.
 * Adding functionality to enable attribution
-* Improved internal logging and code documentation
+* Added call to retrieve the currently used device ID
+* Updated "init" call to async
+* Added "setLoggingEnabled" call
+* Added call to set location during init time
+* Fixed issues related to location tracking
+* Fixed issue where ios crash handling was enabled without enabling it
+* Deprecated "enableLogging" and "disableLogging" calls
 * Updated underlying android SDK to 20.04.5
 * Updated underlying ios SDK to 20.04.3
 
