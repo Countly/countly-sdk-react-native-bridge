@@ -12,6 +12,7 @@ typedef void (^Result)(id _Nullable result);
 - (void)recordView:(NSArray*_Nullable)arguments;
 
 - (void)setHttpPostForced:(NSArray*_Nullable)arguments;
+- (void)setLocationInit:(NSArray*_Nullable)arguments;
 - (void)setLocation:(NSArray*_Nullable)arguments;
 - (void)enableCrashReporting;
 - (void)addCrashLog:(NSArray*_Nullable)arguments;

@@ -118,24 +118,6 @@ Countly.recordView = function(recordView, segments){
 };
 
 /**
- * Enable automatic view tracking
- * Should be call before Countly init
- * @param enabled Expected value is boolean
- */
-Countly.setViewTracking = async function(enabled = true){
-    if(typeof enabled !== 'boolean' && typeof enabled !== 'string') {
-        if(await CountlyReactNative.isLoggingEnabled()) {
-            console.warn("setViewTracking, unsupported data type [" + typeof enabled+ "]");
-        }
-        return;
-    }
-    if(typeof enabled === 'string') {
-        enabled = (enabled === "true"); // Typecast from string to boolean
-    }
-    CountlyReactNative.setAutomaticViewTracking([enabled]);
-}
-
-/**
  * 
  * Set Push notification messaging mode and callbacks for push notifications
  * Should be call after Countly init
@@ -150,7 +132,6 @@ Countly.pushTokenType = function(tokenType, channelName, channelDescription){
 Countly.sendPushToken = function(options){
     var args = [];
     args.push(options.token || "");
-    args.push((options.messagingMode || "").toString());
     CountlyReactNative.sendPushToken(args);
 }
 
@@ -224,6 +205,24 @@ Countly.onError = function(error){
 }
 Countly.demo = function(){
 
+}
+
+/**
+ * Set user initial location
+ * Should be call before init
+ * @param {ISO Country code for the user's country} countryCode 
+ * @param {Name of the user's city} city 
+ * @param {comma separate lat and lng values. For example, "56.42345,123.45325"} location 
+ * @param {IP address of user's} ipAddress 
+ * */
+
+Countly.setLocationInit = function(countryCode, city, location, ipAddress){
+    var args = [];
+    args.push(countryCode || "null");
+    args.push(city || "null");
+    args.push(location || "null");
+    args.push(ipAddress || "null");
+    CountlyReactNative.setLocationInit(args);
 }
 
 Countly.setLocation = function(countryCode, city, location, ipAddress){
