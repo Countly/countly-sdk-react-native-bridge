@@ -11,7 +11,7 @@
 #import "CountlyRemoteConfig.h"
 #import "CountlyCommon.h"
 
-NSString* const kCountlyReactNativeSDKVersion = @"20.04.5";
+NSString* const kCountlyReactNativeSDKVersion = @"20.04.6";
 NSString* const kCountlyReactNativeSDKName = @"js-rnb-ios";
 
 CountlyConfig* config = nil;

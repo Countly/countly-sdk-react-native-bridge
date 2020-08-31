@@ -65,7 +65,7 @@ class CountlyReactException extends Exception {
 }
 
 public class CountlyReactNative extends ReactContextBaseJavaModule {
-    private String COUNTLY_RN_SDK_VERSION_STRING = "20.04.5";
+    private String COUNTLY_RN_SDK_VERSION_STRING = "20.04.6";
     private String COUNTLY_RN_SDK_NAME = "js-rnb-android";
 
     private static CountlyConfig config = new CountlyConfig();
