@@ -19,6 +19,7 @@ NSDictionary *lastStoredNotification = nil;
 Result notificationListener = nil;
 NSMutableArray *notificationIDs = nil;        // alloc here
 NSMutableArray<CLYFeature>* countlyFeatures = nil;
+NSArray *consents = nil;
 
 @implementation CountlyReactNative
 
@@ -55,6 +56,9 @@ RCT_REMAP_METHOD(init,
       dispatch_async(dispatch_get_main_queue(), ^
       {
           [[Countly sharedInstance] startWithConfig:config];
+          if(consents != nil) {
+            [Countly.sharedInstance giveConsentForFeatures:consents];
+          }
           resolve(@"Success");
       });
   }
@@ -698,6 +702,13 @@ RCT_EXPORT_METHOD(setRequiresConsent:(NSArray*)arguments)
   });
 }
 
+RCT_EXPORT_METHOD(giveConsentInit:(NSArray*)arguments)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+    consents = arguments;
+  });
+}
+
 RCT_EXPORT_METHOD(giveConsent:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
@@ -715,6 +726,7 @@ RCT_EXPORT_METHOD(removeConsent:(NSArray*)arguments)
 RCT_EXPORT_METHOD(giveAllConsent)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
+  [Countly.sharedInstance giveConsentForFeature:CLYConsentLocation];
   [Countly.sharedInstance giveConsentForAllFeatures];
   });
 }

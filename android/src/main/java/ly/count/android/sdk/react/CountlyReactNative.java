@@ -641,6 +641,23 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void giveConsentInit(ReadableArray featureNames){
+        List<String> features = new ArrayList<>();
+        for (int i = 0; i < featureNames.size(); i++) {
+            String featureName = featureNames.getString(i);
+            if (validConsentFeatureNames.contains(featureName)) {
+                features.add(featureName);
+            }
+            else {
+                if(loggingEnabled) {
+                    Log.d(Countly.TAG, "[CountlyReactNative] Not a valid consent feature to add: " + featureName);
+                }
+            }
+        }
+        this.config.setConsentEnabled(features.toArray(new String[features.size()]));
+    }
+
+    @ReactMethod
     public void giveConsent(ReadableArray featureNames){
         List<String> features = new ArrayList<>();
         for (int i = 0; i < featureNames.size(); i++) {

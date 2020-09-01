@@ -486,6 +486,22 @@ Countly.giveConsent = function(args){
     CountlyReactNative.giveConsent(features);
 }
 
+/**
+ * 
+ * Give consent for specific features before init.
+ * Should be call after Countly init
+ */
+Countly.giveConsentInit = function(args){
+    var features = [];
+    if (typeof args == "string") {
+        features.push(args);
+    }
+    else {
+        features = args;
+    }
+    CountlyReactNative.giveConsentInit(features);
+}
+
 Countly.removeConsent = function(args){
     var features = [];
     if (typeof args == "string") {
