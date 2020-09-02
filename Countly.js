@@ -243,7 +243,9 @@ Countly.disableLocation = function(){
  * */
 Countly.getCurrentDeviceId = async function(){
     if(!await Countly.isInitialized()) {
-        console.warn('getCurrentDeviceId, init must be called before getCurrentDeviceId');
+        if(await CountlyReactNative.isLoggingEnabled()) {
+            console.warn('[CountlyReactNative] getCurrentDeviceId, init must be called before getCurrentDeviceId');
+        }
         return "init must be called before getCurrentDeviceId";
       }
       const result = await CountlyReactNative.getCurrentDeviceId();
@@ -278,7 +280,9 @@ Countly.isCrashReportingEnabled = false;
  */
 Countly.enableCrashReporting = function(){
     if (ErrorUtils && !Countly.isCrashReportingEnabled) {
-        console.log("Adding Countly JS error handler.");
+        if(await CountlyReactNative.isLoggingEnabled()) {
+            console.log("[CountlyReactNative] Adding Countly JS error handler.");
+        }
         var previousHandler = ErrorUtils.getGlobalHandler();
         ErrorUtils.setGlobalHandler(function (error, isFatal) {
             var jsStackTrace = parseErrorStackLib(error);
@@ -500,7 +504,9 @@ Countly.giveConsentInit = function(args){
         features = args;
     }
     else {
-       console.warn("[CountlyReactNative] giveConsentInit, unsupported data type '" + (typeof args) + "'");
+        if(await CountlyReactNative.isLoggingEnabled()) {
+            console.warn("[CountlyReactNative] giveConsentInit, unsupported data type '" + (typeof args) + "'");
+        }
     }
     CountlyReactNative.giveConsentInit(features);
 }
