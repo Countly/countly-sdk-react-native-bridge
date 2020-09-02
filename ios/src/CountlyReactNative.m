@@ -17,7 +17,7 @@
 #define COUNTLY_RN_LOG(...)
 #endif
 
-NSString* const kCountlyReactNativeSDKVersion = @"20.04.6";
+NSString* const kCountlyReactNativeSDKVersion = @"20.04.7";
 NSString* const kCountlyReactNativeSDKName = @"js-rnb-ios";
 
 CountlyConfig* config = nil;
