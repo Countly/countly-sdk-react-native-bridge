@@ -278,7 +278,7 @@ Countly.isCrashReportingEnabled = false;
  * Enable crash reporting to report unhandled crashes to Countly
  * Should be call before Countly init
  */
-Countly.enableCrashReporting = function(){
+Countly.enableCrashReporting = async function(){
     if (ErrorUtils && !Countly.isCrashReportingEnabled) {
         if(await CountlyReactNative.isLoggingEnabled()) {
             console.log("[CountlyReactNative] Adding Countly JS error handler.");
@@ -495,7 +495,7 @@ Countly.giveConsent = function(args){
  * Give consent for specific features before init.
  * Should be call after Countly init
  */
-Countly.giveConsentInit = function(args){
+Countly.giveConsentInit = async function(args){
     var features = [];
     if (typeof args == "string") {
         features.push(args);
