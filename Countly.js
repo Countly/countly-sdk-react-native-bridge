@@ -496,8 +496,11 @@ Countly.giveConsentInit = function(args){
     if (typeof args == "string") {
         features.push(args);
     }
-    else {
+    else if(Array.isArray(args)) {
         features = args;
+    }
+    else {
+       console.warn("[CountlyReactNative] giveConsentInit, unsupported data type '" + (typeof args) + "'");
     }
     CountlyReactNative.giveConsentInit(features);
 }
