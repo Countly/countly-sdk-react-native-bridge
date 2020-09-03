@@ -870,25 +870,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         log(message, LogLevel.INFO);
     }
     static void log(String message, LogLevel logLevel)  {
-        if(loggingEnabled) {
-            switch (logLevel) {
-                case INFO:
-                    Log.i(TAG, message);
-                    break;
-                case DEBUG:
-                    Log.d(TAG, message);
-                    break;
-                case WARNING:
-                    Log.w(TAG, message);
-                    break;
-                case ERROR:
-                    Log.e(TAG, message);
-                    break;
-                case VERBOSE:
-                    Log.v(TAG, message);
-                    break;
-            }
-        }
+        log(message, null, logLevel);
     }
 
     static void log(String message, Throwable tr, LogLevel logLevel)  {
