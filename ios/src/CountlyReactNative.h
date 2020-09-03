@@ -33,6 +33,7 @@ typedef void (^Result)(id _Nullable result);
 - (void)userData_saveMin:(NSArray*_Nullable)arguments;
 - (void)demo:(NSArray*_Nullable)arguments;
 - (void)setRequiresConsent:(NSArray*_Nullable)arguments;
+- (void)giveConsentInit:(NSArray*_Nullable)arguments;
 - (void)giveConsent:(NSArray*_Nullable)arguments;
 - (void)removeConsent:(NSArray*_Nullable)arguments;
 - (void)giveAllConsent;

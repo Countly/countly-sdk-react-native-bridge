@@ -11,7 +11,13 @@
 #import "CountlyRemoteConfig.h"
 #import "CountlyCommon.h"
 
-NSString* const kCountlyReactNativeSDKVersion = @"20.04.6";
+#if DEBUG
+#define COUNTLY_RN_LOG(fmt, ...) CountlyRNInternalLog(fmt, ##__VA_ARGS__)
+#else
+#define COUNTLY_RN_LOG(...)
+#endif
+
+NSString* const kCountlyReactNativeSDKVersion = @"20.04.7";
 NSString* const kCountlyReactNativeSDKName = @"js-rnb-ios";
 
 CountlyConfig* config = nil;
@@ -19,6 +25,7 @@ NSDictionary *lastStoredNotification = nil;
 Result notificationListener = nil;
 NSMutableArray *notificationIDs = nil;        // alloc here
 NSMutableArray<CLYFeature>* countlyFeatures = nil;
+NSArray *consents = nil;
 
 @implementation CountlyReactNative
 
@@ -55,6 +62,9 @@ RCT_REMAP_METHOD(init,
       dispatch_async(dispatch_get_main_queue(), ^
       {
           [[Countly sharedInstance] startWithConfig:config];
+          if(consents != nil) {
+            [Countly.sharedInstance giveConsentForFeatures:consents];
+          }
           resolve(@"Success");
       });
   }
@@ -218,8 +228,8 @@ RCT_EXPORT_METHOD(registerForNotification:(NSArray*)arguments)
 
 + (void)onNotification:(NSDictionary *)notificationMessage
 {
-    NSLog(@"Notification received");
-    NSLog(@"The notification %@", [CountlyReactNative toJSON:notificationMessage]);
+    COUNTLY_RN_LOG(@"Notification received");
+    COUNTLY_RN_LOG(@"The notification %@", [CountlyReactNative toJSON:notificationMessage]);
     if(notificationMessage && notificationListener != nil){
       lastStoredNotification = notificationMessage;
       notificationListener(@[[CountlyReactNative toJSON:notificationMessage]]);
@@ -244,7 +254,7 @@ RCT_EXPORT_METHOD(registerForNotification:(NSArray*)arguments)
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:json options:NSJSONWritingPrettyPrinted error:&error];
 
     if (! jsonData) {
-        NSLog(@"Got an error: %@", error);
+        COUNTLY_RN_LOG(@"Got an error: %@", error);
         return [NSString stringWithFormat:@"{'error': '%@'}", error];
     } else {
         NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
@@ -253,7 +263,7 @@ RCT_EXPORT_METHOD(registerForNotification:(NSArray*)arguments)
 }
 + (void) log: (NSString *) theMessage{
     if(config.enableDebug == YES){
-        NSLog(@"[CountlyReactNative] %@", theMessage);
+        COUNTLY_RN_LOG(theMessage);
     }
 }
 RCT_EXPORT_METHOD(start)
@@ -301,19 +311,6 @@ RCT_EXPORT_METHOD(changeDeviceId:(NSArray*)arguments)
   });
 }
 
-RCT_EXPORT_METHOD(userLoggedIn:(NSArray*)arguments)
-{
-  dispatch_async(dispatch_get_main_queue(), ^ {
-  NSString* deviceID = [arguments objectAtIndex:0];
-  [Countly.sharedInstance userLoggedIn:deviceID];
-  });
-}
-RCT_EXPORT_METHOD(userLoggedOut:(NSArray*)arguments)
-{
-  dispatch_async(dispatch_get_main_queue(), ^ {
-  [Countly.sharedInstance userLoggedOut];
-  });
-}
 RCT_EXPORT_METHOD(setHttpPostForced:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
@@ -446,7 +443,7 @@ RCT_EXPORT_METHOD(setLocationInit:(NSArray*)arguments)
               config.location = (CLLocationCoordinate2D){latitudeDouble,longitudeDouble};
           }
           @catch(NSException *exception){
-              NSLog(@"[Countly] Invalid location: %@", locationString);
+              COUNTLY_RN_LOG(@"Invalid location: %@", locationString);
           }
       }
       if(city != nil && ![city isEqualToString:@"null"]) {
@@ -493,7 +490,7 @@ RCT_EXPORT_METHOD(setLocation:(NSArray*)arguments)
           [Countly.sharedInstance recordLocation:(CLLocationCoordinate2D){latitudeDouble,longitudeDouble}];
       }
       @catch(NSException *exception){
-          NSLog(@"[Countly] Invalid location: %@", locationString);
+          COUNTLY_RN_LOG(@"Invalid location: %@", locationString);
       }
   }
 
@@ -698,6 +695,13 @@ RCT_EXPORT_METHOD(setRequiresConsent:(NSArray*)arguments)
   });
 }
 
+RCT_EXPORT_METHOD(giveConsentInit:(NSArray*)arguments)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+    consents = arguments;
+  });
+}
+
 RCT_EXPORT_METHOD(giveConsent:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
@@ -715,6 +719,7 @@ RCT_EXPORT_METHOD(removeConsent:(NSArray*)arguments)
 RCT_EXPORT_METHOD(giveAllConsent)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
+  [Countly.sharedInstance giveConsentForFeature:CLYConsentLocation];
   [Countly.sharedInstance giveConsentForAllFeatures];
   });
 }
@@ -956,5 +961,24 @@ RCT_EXPORT_METHOD(enableAttribution)
         [countlyFeatures removeObject:feature];
         config.features = countlyFeatures;
     }
+}
+
+void CountlyRNInternalLog(NSString *format, ...)
+{
+    if (!config.enableDebug)
+        return;
+
+    va_list args;
+    va_start(args, format);
+
+    NSString* logString = [NSString.alloc initWithFormat:format arguments:args];
+    CountlyRNPrint(logString);
+
+    va_end(args);
+}
+
+void CountlyRNPrint(NSString *stringToPrint)
+{
+    NSLog(@"[CountlyReactNative] %@", stringToPrint);
 }
 @end

@@ -243,7 +243,9 @@ Countly.disableLocation = function(){
  * */
 Countly.getCurrentDeviceId = async function(){
     if(!await Countly.isInitialized()) {
-        console.warn('getCurrentDeviceId, init must be called before getCurrentDeviceId');
+        if(await CountlyReactNative.isLoggingEnabled()) {
+            console.warn('[CountlyReactNative] getCurrentDeviceId, init must be called before getCurrentDeviceId');
+        }
         return "init must be called before getCurrentDeviceId";
       }
       const result = await CountlyReactNative.getCurrentDeviceId();
@@ -276,9 +278,11 @@ Countly.isCrashReportingEnabled = false;
  * Enable crash reporting to report unhandled crashes to Countly
  * Should be call before Countly init
  */
-Countly.enableCrashReporting = function(){
+Countly.enableCrashReporting = async function(){
     if (ErrorUtils && !Countly.isCrashReportingEnabled) {
-        console.log("Adding Countly JS error handler.");
+        if(await CountlyReactNative.isLoggingEnabled()) {
+            console.log("[CountlyReactNative] Adding Countly JS error handler.");
+        }
         var previousHandler = ErrorUtils.getGlobalHandler();
         ErrorUtils.setGlobalHandler(function (error, isFatal) {
             var jsStackTrace = parseErrorStackLib(error);
@@ -484,6 +488,27 @@ Countly.giveConsent = function(args){
         features = args;
     }
     CountlyReactNative.giveConsent(features);
+}
+
+/**
+ * 
+ * Give consent for specific features before init.
+ * Should be call after Countly init
+ */
+Countly.giveConsentInit = async function(args){
+    var features = [];
+    if (typeof args == "string") {
+        features.push(args);
+    }
+    else if(Array.isArray(args)) {
+        features = args;
+    }
+    else {
+        if(await CountlyReactNative.isLoggingEnabled()) {
+            console.warn("[CountlyReactNative] giveConsentInit, unsupported data type '" + (typeof args) + "'");
+        }
+    }
+    CountlyReactNative.giveConsentInit(features);
 }
 
 Countly.removeConsent = function(args){
