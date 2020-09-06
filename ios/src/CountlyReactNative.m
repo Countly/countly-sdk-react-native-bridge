@@ -972,13 +972,8 @@ void CountlyRNInternalLog(NSString *format, ...)
     va_start(args, format);
 
     NSString* logString = [NSString.alloc initWithFormat:format arguments:args];
-    CountlyRNPrint(logString);
+    NSLog(@"[CountlyReactNative] %@", logString);
 
     va_end(args);
-}
-
-void CountlyRNPrint(NSString *stringToPrint)
-{
-    NSLog(@"[CountlyReactNative] %@", stringToPrint);
 }
 @end

@@ -250,7 +250,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
                 }
             }
         }
-        log("Certificate failed.");
+        log("Certificate failed.", LogLevel.INFO);
         return new String[]{};
     }
 
@@ -455,7 +455,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         int messagingMode = Integer.parseInt(args.getString(0));
         this.channelName = args.getString(1);
         this.channelDescription = args.getString(2);
-        log("pushTokenType [" + messagingMode + "][" + this.channelName + "][" + this.channelDescription + "]");
+        log("pushTokenType [" + messagingMode + "][" + this.channelName + "][" + this.channelDescription + "]", LogLevel.INFO);
         
         if (messagingMode == 0) {
             this.messagingMode = Countly.CountlyMessagingMode.PRODUCTION;
@@ -468,15 +468,15 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     public static void onNotification(Map<String, String> notification){
         JSONObject json = new JSONObject(notification);
         String notificationString = json.toString();
-        log("onNotification [" + notificationString + "]");
+        log("onNotification [" + notificationString + "]", LogLevel.INFO);
         
         if(notificationListener != null){
             //there is a listener for notifications, send the just received notification to it
-            log("onNotification, listener exists");
+            log("onNotification, listener exists", LogLevel.INFO);
             notificationListener.callback(notificationString);
         }else{
             //there is no listener for notifications. Store this notification for when a listener is created
-            log("onNotification, listener does not exist");
+            log("onNotification, listener does not exist", LogLevel.INFO);
             lastStoredNotification = notificationString;
         }
     }
@@ -495,7 +495,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
                         .emit("onCountlyPushNotification", result);
             }
         };
-        log("registerForNotification theCallback");
+        log("registerForNotification theCallback", LogLevel.INFO);
         if(lastStoredNotification != null){
             notificationListener.callback(lastStoredNotification);
             lastStoredNotification = null;
@@ -866,50 +866,30 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
     
     enum LogLevel {INFO, DEBUG, VERBOSE, WARNING, ERROR}
-    static void log(String message)  {
-        log(message, LogLevel.INFO);
-    }
     static void log(String message, LogLevel logLevel)  {
-        if(loggingEnabled) {
-            switch (logLevel) {
-                case INFO:
-                    Log.i(TAG, message);
-                    break;
-                case DEBUG:
-                    Log.d(TAG, message);
-                    break;
-                case WARNING:
-                    Log.w(TAG, message);
-                    break;
-                case ERROR:
-                    Log.e(TAG, message);
-                    break;
-                case VERBOSE:
-                    Log.v(TAG, message);
-                    break;
-            }
-        }
+        log(message, null, logLevel);
     }
 
     static void log(String message, Throwable tr, LogLevel logLevel)  {
-        if(loggingEnabled) {
-            switch (logLevel) {
-                case INFO:
-                    Log.i(TAG, message, tr);
-                    break;
-                case DEBUG:
-                    Log.d(TAG, message, tr);
-                    break;
-                case WARNING:
-                    Log.w(TAG, message, tr);
-                    break;
-                case ERROR:
-                    Log.e(TAG, message, tr);
-                    break;
-                case VERBOSE:
-                    Log.v(TAG, message, tr);
-                    break;
-            }
+        if(!loggingEnabled) {
+            return;
+        }
+        switch (logLevel) {
+            case INFO:
+                Log.i(TAG, message, tr);
+                break;
+            case DEBUG:
+                Log.d(TAG, message, tr);
+                break;
+            case WARNING:
+                Log.w(TAG, message, tr);
+                break;
+            case ERROR:
+                Log.e(TAG, message, tr);
+                break;
+            case VERBOSE:
+                Log.v(TAG, message, tr);
+                break;
         }
     }
 
