@@ -66,7 +66,7 @@ class CountlyReactException extends Exception {
 
 public class CountlyReactNative extends ReactContextBaseJavaModule {
 
-    public static final String TAG = "CountlyReactNative";
+    public static final String TAG = "CountlyReactNativePlugin";
     private String COUNTLY_RN_SDK_VERSION_STRING = "20.04.7";
     private String COUNTLY_RN_SDK_NAME = "js-rnb-android";
 
