@@ -1,3 +1,6 @@
+## 20.4.7
+* Adding call to set consent during init
+
 ## 20.4.6
 * Adding APM calls
 * Adding functionality to enable attribution
