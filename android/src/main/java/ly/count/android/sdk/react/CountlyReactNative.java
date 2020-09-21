@@ -119,8 +119,10 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
           Countly.sharedInstance().COUNTLY_SDK_VERSION_STRING = COUNTLY_RN_SDK_VERSION_STRING;
 
         this.config.setContext(_reactContext);
-        Activity activity = getCurrentActivity();
-        this.config.setApplication(activity.getApplication());
+        Activity activity = getActivity();
+        if (activity != null) {
+            this.config.setApplication(activity.getApplication());
+        }
         if(deviceId == null || "".equals(deviceId)){
         }else{
             if(deviceId.equals("TemporaryDeviceID")){
@@ -504,7 +506,10 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void askForNotificationPermission(ReadableArray args){
-        Activity activity = this._reactContext.getCurrentActivity();
+        Activity activity = this.getActivity();
+        if (activity == null) {
+            return;
+        }
         Context context = this._reactContext;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationManager notificationManager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
@@ -532,7 +537,11 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void start(){
-        Countly.sharedInstance().onStart(getCurrentActivity());
+        Activity activity = this.getActivity();
+        if (activity == null) {
+            return;
+        }
+        Countly.sharedInstance().onStart(activity);
     }
 
     @ReactMethod
@@ -778,7 +787,10 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void showStarRating(ReadableArray args, final Callback callback){
-        Activity activity = getCurrentActivity();
+        Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
         Countly.sharedInstance().ratings().showStarRating(activity, new StarRatingCallback(){
 
             @Override
@@ -796,9 +808,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void showFeedbackPopup(ReadableArray args){
+        Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
         String widgetId = args.getString(0);
         String closeFeedBackButton = args.getString(1);
-        Activity activity = getCurrentActivity();
         Countly.sharedInstance().ratings().showFeedbackPopup( widgetId, closeFeedBackButton, activity, null);
     }
 
@@ -891,6 +906,15 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
                 Log.v(TAG, message, tr);
                 break;
         }
+    }
+
+    Activity getActivity() {
+        Activity activity = getCurrentActivity();
+        if(activity == null && _reactContext != null)
+        {
+            activity = _reactContext.getCurrentActivity();
+        }
+        return activity;
     }
 
 }
