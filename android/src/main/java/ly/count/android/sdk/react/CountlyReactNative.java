@@ -123,6 +123,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         if (activity != null) {
             this.config.setApplication(activity.getApplication());
         }
+        else {
+            log("init, Activity is null, some features will not work", LogLevel.WARNING);
+        }
         if(deviceId == null || "".equals(deviceId)){
         }else{
             if(deviceId.equals("TemporaryDeviceID")){
@@ -508,6 +511,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     public void askForNotificationPermission(ReadableArray args){
         Activity activity = this.getActivity();
         if (activity == null) {
+            log("askForNotificationPermission failed, Activity is null", LogLevel.ERROR);
             return;
         }
         Context context = this._reactContext;
@@ -539,6 +543,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     public void start(){
         Activity activity = this.getActivity();
         if (activity == null) {
+            log("start failed, Activity is null", LogLevel.ERROR);
             return;
         }
         Countly.sharedInstance().onStart(activity);
@@ -789,6 +794,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     public void showStarRating(ReadableArray args, final Callback callback){
         Activity activity = getActivity();
         if (activity == null) {
+            log("showStarRating failed, Activity is null", LogLevel.ERROR);
             return;
         }
         Countly.sharedInstance().ratings().showStarRating(activity, new StarRatingCallback(){
@@ -810,6 +816,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     public void showFeedbackPopup(ReadableArray args){
         Activity activity = getActivity();
         if (activity == null) {
+            log("showFeedbackPopup failed, Activity is null", LogLevel.ERROR);
             return;
         }
         String widgetId = args.getString(0);
