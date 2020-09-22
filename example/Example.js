@@ -54,6 +54,7 @@ class Example extends Component {
         // Countly.setHttpPostForced(false); // Set to "true" if you want HTTP POST to be used for all requests
         Countly.enableApm(); // Enable APM features, which includes the recording of app start time.
         Countly.enableAttribution(); // Enable to measure your marketing campaign performance by attributing installs from specific campaigns.
+        Countly.pushTokenType(Countly.messagingMode.DEVELOPMENT, "Channel Name", "Channel Description"); // Set messaging mode for push notifications
         
         await Countly.init("https://master.count.ly", "5b77e4c785410351f32d8aa286d2383195d13b93", "123456"); // Initialize the countly SDK.
 
@@ -61,7 +62,6 @@ class Example extends Component {
          * Push notifications settings 
          * Should be call after init
         */
-        Countly.pushTokenType(Countly.messagingMode.DEVELOPMENT, "Channel Name", "Channel Description"); // Set messaging mode for push notifications
         Countly.registerForNotification(function(theNotification){
           console.log("Just received this notification data: " + JSON.stringify(theNotification));
           alert('theNotification: ' + JSON.stringify(theNotification));
