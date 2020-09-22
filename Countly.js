@@ -119,8 +119,8 @@ Countly.recordView = function(recordView, segments){
 
 /**
  * 
- * Set Push notification messaging mode and callbacks for push notifications
- * Should be call after Countly init
+ * Set messaging mode for push notifications
+ * Should be call before Countly init
  */
 Countly.pushTokenType = function(tokenType, channelName, channelDescription){
     var args = [];
