@@ -941,6 +941,13 @@ RCT_EXPORT_METHOD(enableAttribution)
   });
 }
 
+RCT_EXPORT_METHOD(recordAttributionID:(NSArray*)arguments) {
+    dispatch_async(dispatch_get_main_queue(), ^ {
+        NSString* attributionID = [arguments objectAtIndex:0];
+        [Countly.sharedInstance recordAttributionID: attributionID];
+    });
+}
+
 - (void)addCountlyFeature:(CLYFeature)feature
 {
     if(countlyFeatures == nil) {

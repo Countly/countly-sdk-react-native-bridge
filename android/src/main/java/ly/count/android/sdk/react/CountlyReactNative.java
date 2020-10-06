@@ -886,6 +886,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     public void enableAttribution(){
         this.config.setEnableAttribution(true);
     }
+
+    @ReactMethod
+    public void recordAttributionID(ReadableArray args){
+        String attributionID = args.getString(0);
+        log("recordAttributionID: Not implemented for Android");
+    }
     
     enum LogLevel {INFO, DEBUG, VERBOSE, WARNING, ERROR}
     static void log(String message, LogLevel logLevel)  {

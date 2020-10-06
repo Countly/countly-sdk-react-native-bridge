@@ -680,6 +680,17 @@ Countly.enableAttribution = function() {
     CountlyReactNative.enableAttribution();
 }
 
+/**
+ * 
+ * set attribution Id for campaign attribution reporting.
+ */
+
+Countly.recordAttributionID = function(attributionID){
+    var args = [];
+    args.push(attributionID);
+    CountlyReactNative.recordAttributionID(args);
+}
+
 /*
 Countly.initNative = function(){
     CountlyReactNative.initNative();
