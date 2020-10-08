@@ -941,6 +941,21 @@ RCT_EXPORT_METHOD(enableAttribution)
   });
 }
 
+RCT_EXPORT_METHOD(recordAttributionID:(NSArray*)arguments) {
+    dispatch_async(dispatch_get_main_queue(), ^ {
+        NSString* attributionID = [arguments objectAtIndex:0];
+        if(CountlyCommon.sharedInstance.hasStarted) {
+          [Countly.sharedInstance recordAttributionID: attributionID];
+        }
+        else {
+          if (config == nil){
+            config = CountlyConfig.new;
+          }
+          config.attributionID = attributionID;
+        }
+    });
+}
+
 - (void)addCountlyFeature:(CLYFeature)feature
 {
     if(countlyFeatures == nil) {
@@ -972,7 +987,7 @@ void CountlyRNInternalLog(NSString *format, ...)
     va_start(args, format);
 
     NSString* logString = [NSString.alloc initWithFormat:format arguments:args];
-    NSLog(@"[CountlyReactNative] %@", logString);
+    NSLog(@"[CountlyReactNativePlugin] %@", logString);
 
     va_end(args);
 }

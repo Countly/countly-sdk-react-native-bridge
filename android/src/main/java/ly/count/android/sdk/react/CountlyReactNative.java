@@ -66,7 +66,7 @@ class CountlyReactException extends Exception {
 
 public class CountlyReactNative extends ReactContextBaseJavaModule {
 
-    public static final String TAG = "CountlyReactNative";
+    public static final String TAG = "CountlyReactNativePlugin";
     private String COUNTLY_RN_SDK_VERSION_STRING = "20.04.7";
     private String COUNTLY_RN_SDK_NAME = "js-rnb-android";
 
@@ -119,8 +119,13 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
           Countly.sharedInstance().COUNTLY_SDK_VERSION_STRING = COUNTLY_RN_SDK_VERSION_STRING;
 
         this.config.setContext(_reactContext);
-        Activity activity = getCurrentActivity();
-        this.config.setApplication(activity.getApplication());
+        Activity activity = getActivity();
+        if (activity != null) {
+            this.config.setApplication(activity.getApplication());
+        }
+        else {
+            log("init, Activity is null, some features will not work", LogLevel.WARNING);
+        }
         if(deviceId == null || "".equals(deviceId)){
         }else{
             if(deviceId.equals("TemporaryDeviceID")){
@@ -504,7 +509,11 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void askForNotificationPermission(ReadableArray args){
-        Activity activity = this._reactContext.getCurrentActivity();
+        Activity activity = this.getActivity();
+        if (activity == null) {
+            log("askForNotificationPermission failed, Activity is null", LogLevel.ERROR);
+            return;
+        }
         Context context = this._reactContext;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationManager notificationManager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
@@ -532,7 +541,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void start(){
-        Countly.sharedInstance().onStart(getCurrentActivity());
+        Activity activity = this.getActivity();
+        if (activity == null) {
+            log("start failed, Activity is null", LogLevel.ERROR);
+            return;
+        }
+        Countly.sharedInstance().onStart(activity);
     }
 
     @ReactMethod
@@ -778,7 +792,11 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void showStarRating(ReadableArray args, final Callback callback){
-        Activity activity = getCurrentActivity();
+        Activity activity = getActivity();
+        if (activity == null) {
+            log("showStarRating failed, Activity is null", LogLevel.ERROR);
+            return;
+        }
         Countly.sharedInstance().ratings().showStarRating(activity, new StarRatingCallback(){
 
             @Override
@@ -796,9 +814,13 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void showFeedbackPopup(ReadableArray args){
+        Activity activity = getActivity();
+        if (activity == null) {
+            log("showFeedbackPopup failed, Activity is null", LogLevel.ERROR);
+            return;
+        }
         String widgetId = args.getString(0);
         String closeFeedBackButton = args.getString(1);
-        Activity activity = getCurrentActivity();
         Countly.sharedInstance().ratings().showFeedbackPopup( widgetId, closeFeedBackButton, activity, null);
     }
 
@@ -864,6 +886,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     public void enableAttribution(){
         this.config.setEnableAttribution(true);
     }
+
+    @ReactMethod
+    public void recordAttributionID(ReadableArray args){
+        String attributionID = args.getString(0);
+        log("recordAttributionID: Not implemented for Android");
+    }
     
     enum LogLevel {INFO, DEBUG, VERBOSE, WARNING, ERROR}
     static void log(String message, LogLevel logLevel)  {
@@ -891,6 +919,15 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
                 Log.v(TAG, message, tr);
                 break;
         }
+    }
+
+    Activity getActivity() {
+        Activity activity = getCurrentActivity();
+        if(activity == null && _reactContext != null)
+        {
+            activity = _reactContext.getCurrentActivity();
+        }
+        return activity;
     }
 
 }
