@@ -69,7 +69,7 @@ class Example extends Component {
           Countly.enableAttribution(); // Enable to measure your marketing campaign performance by attributing installs from specific campaigns.
         }
         /*
-        For iOS 14 changes regarding app tracking you need to ask the user for permission to track information.
+        For iOS 14+ apple changes regarding app tracking you need to ask the user for permission to track information.
         For permission you can use this plugin
         https://www.npmjs.com/package/react-native-permissions
 
