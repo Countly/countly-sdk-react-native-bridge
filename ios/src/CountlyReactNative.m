@@ -944,7 +944,15 @@ RCT_EXPORT_METHOD(enableAttribution)
 RCT_EXPORT_METHOD(recordAttributionID:(NSArray*)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^ {
         NSString* attributionID = [arguments objectAtIndex:0];
-        [Countly.sharedInstance recordAttributionID: attributionID];
+        if(CountlyCommon.sharedInstance.hasStarted) {
+          [Countly.sharedInstance recordAttributionID: attributionID];
+        }
+        else {
+          if (config == nil){
+            config = CountlyConfig.new;
+          }
+          config.attributionID = attributionID;
+        }
     });
 }
 
