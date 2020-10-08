@@ -674,18 +674,33 @@ Countly.enableApm = function(){
 /**
  * 
  * Enable campaign attribution reporting to Countly.
+ * For iOS use "recordAttributionID" instead of "enableAttribution"
  * Should be call before Countly init
  */
-Countly.enableAttribution = function() {
-    CountlyReactNative.enableAttribution();
+Countly.enableAttribution = async function(attributionID = "") {
+    if (Platform.OS.match("ios")) {
+        if(attributionID == "") {
+            if(await CountlyReactNative.isLoggingEnabled()) {
+                console.error("[CountlyReactNative] enableAttribution, attribution Id for iOS can't be empty string");
+            }
+            return "attribution Id for iOS can't be empty string";
+        }
+        Countly.recordAttributionID(attributionID);
+    }
+    else {
+        CountlyReactNative.enableAttribution();
+    }
 }
 
 /**
  * 
  * set attribution Id for campaign attribution reporting.
+ * Currently implemented for iOS only
+ * For Android just call the enableAttribution to enable campaign attribution.
  */
 
 Countly.recordAttributionID = function(attributionID){
+    if (!Platform.OS.match("ios")) return "recordAttributionID : To be implemented";
     var args = [];
     args.push(attributionID);
     CountlyReactNative.recordAttributionID(args);

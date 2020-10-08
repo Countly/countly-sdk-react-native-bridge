@@ -1,6 +1,17 @@
 import React, { Component } from 'react';
 import { Text, Button, ScrollView, Image, View, Alert } from 'react-native';
 import Countly from 'countly-sdk-react-native-bridge';
+/*
+First add "react-native-permissions" and "react-native-idfa" plugins to implement the attribution feature for iOS.
+Here is the link of both plugins:
+https://www.npmjs.com/package/react-native-permissions
+https://www.npmjs.com/package/react-native-idfa
+
+Here is the required import from above mentioned plugins
+
+import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
+import { IDFA } from 'react-native-idfa';
+*/
 
 var successCodes = [100, 101, 200, 201, 202, 205, 300, 301, 303, 305];
 var failureCodes = [400, 402, 405, 408, 500, 501, 502, 505];
@@ -53,8 +64,54 @@ class Example extends Component {
         // Countly.pinnedCertificates("count.ly.cer"); // It will ensure that connection is made with one of the public keys specified
         // Countly.setHttpPostForced(false); // Set to "true" if you want HTTP POST to be used for all requests
         Countly.enableApm(); // Enable APM features, which includes the recording of app start time.
-        Countly.enableAttribution(); // Enable to measure your marketing campaign performance by attributing installs from specific campaigns.
         Countly.pushTokenType(Countly.messagingMode.DEVELOPMENT, "Channel Name", "Channel Description"); // Set messaging mode for push notifications
+        if (!Platform.OS.match("ios")){
+          Countly.enableAttribution(); // Enable to measure your marketing campaign performance by attributing installs from specific campaigns.
+        }
+        /*
+        For iOS 14 changes regarding app tracking you need to ask the user for permission to track information.
+        For permission you can use this plugin
+        https://www.npmjs.com/package/react-native-permissions
+
+        For IDFA you can use this plugin
+        https://www.npmjs.com/package/react-native-idfa
+        
+        Below is the example app that how you can use both these plugins Countly SDK iOS attibution feature.
+
+        if (Platform.OS.match("ios")) {
+        request(PERMISSIONS.IOS.APP_TRACKING_TRANSPARENCY)
+          .then((result) => {
+            switch (result) {
+              case RESULTS.UNAVAILABLE:
+                console.log(
+                  'This feature is not available (on this device / in this context)',
+                );
+                break;
+              case RESULTS.DENIED:
+                console.log(
+                  'The permission has not been requested / is denied but requestable',
+                );
+                break;
+              case RESULTS.GRANTED:
+                console.log('The permission is granted');
+                IDFA.getIDFA().then((idfa) => {
+                  console.log('idfa : ' + idfa);
+                  Countly.recordAttributionID(idfa);
+                })
+                .catch((e) => {
+                  console.error(e);
+                });
+                break;
+              case RESULTS.BLOCKED:
+                console.log('The permission is denied and not requestable anymore');
+                break;
+            }
+          })
+          .catch((error) => {
+            // …
+          });
+        }
+        */
         
         await Countly.init("https://master.count.ly", "5b77e4c785410351f32d8aa286d2383195d13b93", "123456"); // Initialize the countly SDK.
 
