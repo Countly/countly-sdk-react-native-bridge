@@ -67,7 +67,7 @@ class CountlyReactException extends Exception {
 public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     public static final String TAG = "CountlyReactNativePlugin";
-    private String COUNTLY_RN_SDK_VERSION_STRING = "20.04.7";
+    private String COUNTLY_RN_SDK_VERSION_STRING = "20.04.9";
     private String COUNTLY_RN_SDK_NAME = "js-rnb-android";
 
     private static CountlyConfig config = new CountlyConfig();
@@ -873,7 +873,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
             int endTime = Integer.parseInt(args.getString(5));
             // Countly.sharedInstance().apm().endNetworkRequest(networkTraceKey, null, responseCode, requestPayloadSize, responsePayloadSize);
         }catch(Exception exception){
-            log("Exception occured at recordNetworkTrace method: " +exception.toString(), LogLevel.ERROR);
+            log("Exception occured at recordNetworkTrace method: " + exception.toString(), LogLevel.ERROR);
         }
     }
 
@@ -890,7 +890,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void recordAttributionID(ReadableArray args){
         String attributionID = args.getString(0);
-        log("recordAttributionID: Not implemented for Android");
+        log("recordAttributionID: Not implemented for Android", LogLevel.DEBUG);
     }
     
     enum LogLevel {INFO, DEBUG, VERBOSE, WARNING, ERROR}
