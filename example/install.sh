@@ -12,6 +12,7 @@ curl https://raw.githubusercontent.com/Countly/countly-sdk-react-native-bridge/m
 curl https://raw.githubusercontent.com/Countly/countly-sdk-react-native-bridge/master/example/Example.js --output Example.js
 
 yarn add countly-sdk-react-native-bridge@20.4.8
+npm install --save https://github.com/ijunaid/react-native-advertising-id.git
 
 cd ./ios
 pod install
