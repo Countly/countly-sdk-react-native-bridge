@@ -11,7 +11,7 @@ rm App.js
 curl https://raw.githubusercontent.com/Countly/countly-sdk-react-native-bridge/master/example/App.js --output App.js
 curl https://raw.githubusercontent.com/Countly/countly-sdk-react-native-bridge/master/example/Example.js --output Example.js
 
-yarn add countly-sdk-react-native-bridge@20.4.8
+yarn add countly-sdk-react-native-bridge@20.4.9
 npm install --save https://github.com/ijunaid/react-native-advertising-id.git
 
 cd ./ios

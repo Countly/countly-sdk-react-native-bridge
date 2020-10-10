@@ -1,5 +1,9 @@
+## 20.4.9
+* Hotfix for compilation issue
+
 ## 20.4.8
 * Added "recordAttributionID" call to support changes in iOS 14 related to App Tracking Permission.
+
 ## 20.4.7
 * Adding call to set consent during init
 
