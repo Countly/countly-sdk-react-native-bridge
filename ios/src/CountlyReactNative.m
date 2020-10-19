@@ -48,7 +48,7 @@ RCT_REMAP_METHOD(init,
     config = CountlyConfig.new;
   }
   
-  if(deviceID != nil && ![deviceID  isEqual: @""]){
+  if(deviceID != nil && deviceID != (NSString *)[NSNull null] && ![deviceID  isEqual: @""]){
     config.deviceID = deviceID;
   }
   config.appKey = appkey;
