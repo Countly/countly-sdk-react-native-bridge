@@ -5,7 +5,7 @@ matrix:
     jdk: oraclejdk8
     os:
     - linux
-    dist: xenial
+      dist: trusty
     before_cache:
     - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
     - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
@@ -19,6 +19,8 @@ matrix:
       - tools
       - platform-tools
       - tools
+      - build-tools-28.0.3
+      - android-28
       - build-tools-29.0.2
       - android-29
       - extra-google-google_play_services
@@ -33,7 +35,8 @@ matrix:
     - yarn
     script:
     - cd android
-    - "./gradlew clean build"
+    - "./gradlew clean"
+    - "./gradlew assembleRelease && react-native run-android --variant=release"
   - language: objective-c
     os: osx
     osx_image: xcode11.2
