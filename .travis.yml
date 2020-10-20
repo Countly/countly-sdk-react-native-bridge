@@ -55,7 +55,7 @@ matrix:
     script:
     - xcodebuild -workspace AwesomeProject.xcworkspace -configuration Debug
       -scheme AwesomeProject -destination "platform=iOS Simulator,OS=12.2,name=iPhone
-      X" -derivedDataPath build/AwesomeProject
+      X" -derivedDataPath build/AwesomeProject | xcpretty
 email:
     recipients:
       - junaid.akram@count.ly
