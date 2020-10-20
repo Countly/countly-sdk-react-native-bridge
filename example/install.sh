@@ -4,7 +4,7 @@
 # Created At: 24-June-2020
 
 rm -rf ./AwesomeProject
-react-native init AwesomeProject
+npx react-native init AwesomeProject
 cd AwesomeProject
 
 rm App.js
