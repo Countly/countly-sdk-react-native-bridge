@@ -20,6 +20,6 @@ cd ..
 
 open ./ios/AwesomeProject.xcworkspace/
 
-cd ./AwesomeProject
+# cd ./AwesomeProject
 
-npm start
+# npm start
