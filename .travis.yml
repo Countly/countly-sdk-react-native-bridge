@@ -50,6 +50,7 @@ matrix:
     - cd AwesomeProject
     - yarn
     - cd ios
+    - pod install
     script:
     - xcodebuild -workspace AwesomeProject.xcworkspace -configuration Debug
       -scheme AwesomeProject -destination "platform=iOS Simulator,OS=12.2,name=iPhone
