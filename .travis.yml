@@ -17,7 +17,6 @@ matrix:
       components:
       - tools
       - platform-tools
-      - tools
       - build-tools-28.0.3
       - android-28
       - build-tools-29.0.2
@@ -34,11 +33,10 @@ matrix:
     - yarn
     script:
     - cd android
-    - "./gradlew clean"
-    - "./gradlew assembleRelease && react-native run-android --variant=release"
+    - "./gradlew clean build"
   - language: objective-c
     os: osx
-    osx_image: xcode11.2
+    osx_image: xcode12
     node_js: 8
     cache:
       directories:
@@ -56,7 +54,7 @@ matrix:
     - pod install
     script:
     - xcodebuild -workspace AwesomeProject.xcworkspace -configuration Debug
-      -scheme AwesomeProject -destination "platform=iOS Simulator,OS=12.2,name=iPhone
+      -scheme AwesomeProject -destination "platform=iOS Simulator,OS=14.0,name=iPhone
       X" -derivedDataPath build/AwesomeProject | xcpretty
 email:
     recipients:
