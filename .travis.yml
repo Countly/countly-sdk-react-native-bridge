@@ -56,8 +56,7 @@ matrix:
     - pod install
     script:
     - xcodebuild -workspace AwesomeProject.xcworkspace -configuration Debug
-      -scheme AwesomeProject -destination "platform=iOS Simulator,OS=14.0,name=iPhone
-      X" -derivedDataPath build/AwesomeProject | xcpretty
+      -scheme AwesomeProject -destination "platform=iOS Simulator,name=iPhone 11 Pro Max,OS=latest" -derivedDataPath build/AwesomeProject | xcpretty
 email:
     recipients:
       - junaid.akram@count.ly
