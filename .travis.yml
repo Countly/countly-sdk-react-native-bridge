@@ -3,9 +3,8 @@ matrix:
   - language: android
     sudo: false
     jdk: oraclejdk8
-    os:
-    - linux
-      dist: trusty
+    os: linux
+    dist: trusty
     before_cache:
     - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
     - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
