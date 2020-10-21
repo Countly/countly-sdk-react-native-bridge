@@ -1,7 +1,4 @@
 
-nvm install 10
-curl -o- -L https://yarnpkg.com/install.sh | bash
-export PATH="$HOME/.yarn/bin:$PATH" 
 rm -rf ./AwesomeProject
 npx react-native init AwesomeProject
 cd AwesomeProject
