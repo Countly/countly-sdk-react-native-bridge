@@ -35,10 +35,12 @@ matrix:
     - cd android
     - sed -i 's/minSdkVersion = 16/minSdkVersion = 17/g' build.gradle
     - cd ..
+    - sed -ie "s/23/28/g" node_modules/react-native-advertising-id/android/build.gradle
     - yarn
     script:
     - cd android
-    - "./gradlew clean build"
+    - "./gradlew clean"
+    - "./gradlew app:assembleRelease"
   - language: objective-c
     os: osx
     osx_image: xcode12
