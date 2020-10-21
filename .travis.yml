@@ -25,13 +25,14 @@ matrix:
       - android-29
       - extra-google-google_play_services
     install:
+    - cd example/
+    - chmod +x travis_common.sh
+    - ./travis_common.sh
     - cd android
     - sed -i 's/minSdkVersion = 16/minSdkVersion = 17/g' build.gradle
     - cd ..
     - sed -ie "s/23/28/g" node_modules/react-native-advertising-id/android/build.gradle
-    - yarn
     script:
-    - cd android
     - "./gradlew clean"
     - "./gradlew app:assembleRelease"
   - language: objective-c
@@ -42,20 +43,14 @@ matrix:
       directories:
       - "$HOME/.yarn-cache"
     before_install:
-    - yarn
+    - cd example/
+    - chmod +x travis_common.sh
+    - ./travis_common.sh
     - cd ios
     - pod install
     script:
     - xcodebuild -workspace AwesomeProject.xcworkspace -configuration Debug
       -scheme AwesomeProject -destination "platform=iOS Simulator,name=iPhone 11 Pro Max,OS=latest" -derivedDataPath build/AwesomeProject | xcpretty
-before_script:
-  - nvm install 10
-  - curl -o- -L https://yarnpkg.com/install.sh | bash
-  - export PATH="$HOME/.yarn/bin:$PATH" 
-  - cd example/
-  - chmod +x install.sh
-  - ./install.sh
-  - cd AwesomeProject
 email:
     recipients:
       - junaid.akram@count.ly
