@@ -33,7 +33,7 @@ matrix:
     - ./install.sh
     - cd AwesomeProject
     - cd android
-    - sed 's/minSdkVersion = 16/minSdkVersion = 17/g' build.gradle
+    - sed -i 's/minSdkVersion = 16/minSdkVersion = 17/g' build.gradle
     - cd ..
     - yarn
     script:
