@@ -30,7 +30,7 @@ matrix:
     - export PATH="$HOME/.yarn/bin:$PATH" 
     - cd example/
     - chmod +x travis_common.sh
-    - ./travis_common.sh branch
+    - ./travis_common.sh $TRAVIS_BRANCH
     - cd AwesomeProject
     - sed -i 's/minSdkVersion = 16/minSdkVersion = 17/g' android/build.gradle
     - sed -ie "s/23/28/g" node_modules/react-native-advertising-id/android/build.gradle
@@ -51,7 +51,7 @@ matrix:
     - export PATH="$HOME/.yarn/bin:$PATH" 
     - cd example/
     - chmod +x travis_common.sh
-    - ./travis_common.sh branch
+    - ./travis_common.sh $TRAVIS_BRANCH
     - cd AwesomeProject
     - cd ios
     - pod install
