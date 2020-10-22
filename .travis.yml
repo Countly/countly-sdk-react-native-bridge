@@ -31,6 +31,7 @@ matrix:
     - cd example/
     - chmod +x travis_common.sh
     - ./travis_common.sh
+    - cd AwesomeProject
     - sed -i 's/minSdkVersion = 16/minSdkVersion = 17/g' android/build.gradle
     - sed -ie "s/23/28/g" node_modules/react-native-advertising-id/android/build.gradle
     script:
@@ -51,6 +52,7 @@ matrix:
     - cd example/
     - chmod +x travis_common.sh
     - ./travis_common.sh
+    - cd AwesomeProject
     - cd ios
     - pod install
     script:
