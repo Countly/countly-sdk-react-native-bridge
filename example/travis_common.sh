@@ -12,7 +12,7 @@ curl https://raw.githubusercontent.com/Countly/countly-sdk-react-native-bridge/m
 countlyGitURL="https://github.com/Countly/countly-sdk-react-native-bridge.git#${branchName}"
 echo $countlyGitURL
 
-yarn add countlyGitURL
+yarn add $countlyGitURL
 npm install --save https://github.com/ijunaid/react-native-advertising-id.git
 
 npm install
