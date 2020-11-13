@@ -95,7 +95,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
             Countly.CountlyFeatureNames.push,
             Countly.CountlyFeatureNames.starRating,
             Countly.CountlyFeatureNames.apm,
-            Countly.CountlyFeatureNames.feedback
+            Countly.CountlyFeatureNames.feedback,
+            Countly.CountlyFeatureNames.remoteConfig
     ));
 
     public CountlyReactNative(ReactApplicationContext reactContext) {

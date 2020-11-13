@@ -29,7 +29,6 @@ NSDictionary *lastStoredNotification = nil;
 Result notificationListener = nil;
 NSMutableArray *notificationIDs = nil;        // alloc here
 NSMutableArray<CLYFeature>* countlyFeatures = nil;
-NSArray *consents = nil;
 
 @implementation CountlyReactNative
 
@@ -66,9 +65,7 @@ RCT_REMAP_METHOD(init,
       dispatch_async(dispatch_get_main_queue(), ^
       {
           [[Countly sharedInstance] startWithConfig:config];
-          if(consents != nil) {
-            [Countly.sharedInstance giveConsentForFeatures:consents];
-          }
+          
           resolve(@"Success");
       });
   }
@@ -297,8 +294,14 @@ RCT_EXPORT_METHOD(getCurrentDeviceId:(NSArray*)arguments callback:(RCTResponseSe
 RCT_EXPORT_METHOD(getDeviceIdAuthor:(NSArray*)arguments callback:(RCTResponseSenderBlock)callback)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
-    NSString *value = @"Not implemented for iOS";
-    callback(@[value]);
+      id value = [Countly.sharedInstance deviceIDType];
+      if(value){
+        callback(@[value]);
+      }
+      else{
+        NSString *value = @"deviceIdNotFound";
+        callback(@[value]);
+      }
   });
 }
 
@@ -702,7 +705,10 @@ RCT_EXPORT_METHOD(setRequiresConsent:(NSArray*)arguments)
 RCT_EXPORT_METHOD(giveConsentInit:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
-    consents = arguments;
+  if (config == nil){
+    config = CountlyConfig.new;
+  }
+  config.consents = arguments;
   });
 }
 

@@ -1,11 +1,11 @@
 ## 20.11.0
+* !! Consent change !! To use remote config, you now need to give "remote-config" consent
+* !! Push breaking changes !! Google play vulnerability issue fixed due to broadcast receiver for android push notification
 * Added Surveys and NPS feedback widgets
 * Added replaceAllAppKeysInQueueWithCurrentAppKey method to replace all app keys in queue with the current app key
 * Added removeDifferentAppKeysFromQueue method to remove all different app keys from the queue
 * Added setStarRatingDialogTexts method to set text's for different fields of star rating dialog
 * Added setViewTracking deprecated method back.
-* Google play vulnerability issue fixed due to broadcast receiver for android push notification
-* Travis CI added.
 * Example app updated with single plugin for both IDFA and App tracking permission for iOS.
 * Device id NSNull check added for iOS to fix the length on null crash.
 * Updated underlying android SDK to 20.11.0
