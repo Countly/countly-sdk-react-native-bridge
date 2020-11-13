@@ -40,8 +40,12 @@ import android.app.NotificationChannel;
 import ly.count.android.sdk.StarRatingCallback;
 import ly.count.android.sdk.messaging.CountlyPush;
 
+
 import org.json.JSONObject;
 
+import ly.count.android.sdk.ModuleFeedback.*;
+import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
@@ -67,7 +71,7 @@ class CountlyReactException extends Exception {
 public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     public static final String TAG = "CountlyRNPlugin";
-    private String COUNTLY_RN_SDK_VERSION_STRING = "20.04.9";
+    private String COUNTLY_RN_SDK_VERSION_STRING = "20.11.0";
     private String COUNTLY_RN_SDK_NAME = "js-rnb-android";
 
     private static CountlyConfig config = new CountlyConfig();
@@ -90,7 +94,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
             Countly.CountlyFeatureNames.users,
             Countly.CountlyFeatureNames.push,
             Countly.CountlyFeatureNames.starRating,
-            Countly.CountlyFeatureNames.apm
+            Countly.CountlyFeatureNames.apm,
+            Countly.CountlyFeatureNames.feedback
     ));
 
     public CountlyReactNative(ReactApplicationContext reactContext) {
@@ -789,7 +794,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         Countly.sharedInstance().remoteConfig().clearStoredValues();
         promise.resolve("Remote Config Cleared.");
     }
-
+    @ReactMethod
+    public void setStarRatingDialogTexts(ReadableArray args) {
+        this.config.setStarRatingTextTitle(args.getString(0));
+        this.config.setStarRatingTextMessage(args.getString(1));
+        this.config.setStarRatingTextDismiss(args.getString(2));
+    }
     @ReactMethod
     public void showStarRating(ReadableArray args, final Callback callback){
         Activity activity = getActivity();
@@ -823,6 +833,63 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         String closeFeedBackButton = args.getString(1);
         Countly.sharedInstance().ratings().showFeedbackPopup( widgetId, closeFeedBackButton, activity, null);
     }
+
+    @ReactMethod
+    public void getAvailableFeedbackWidgets(final Promise promise)
+     {
+        Countly.sharedInstance().feedback().getAvailableFeedbackWidgets(new RetrieveFeedbackWidgets() {
+            @Override
+            public void onFinished(List<CountlyFeedbackWidget> retrievedWidgets, String error) {
+                if(error != null) {
+                    promise.reject("getAvailableFeedbackWidgets", error);
+                    return;
+                }
+                WritableMap retrievedWidgetsMap = new WritableNativeMap();
+                for (CountlyFeedbackWidget presentableFeedback : retrievedWidgets) {
+                    retrievedWidgetsMap.putString(presentableFeedback.type.name(), presentableFeedback.widgetId);
+                }
+                promise.resolve(retrievedWidgetsMap);
+            }
+        });
+    } 
+
+    @ReactMethod
+    public void presentFeedbackWidget(ReadableArray args, final Promise promise) {
+        Activity activity = getActivity();
+        if (activity == null) {
+            log("presentFeedbackWidget failed : Activity is null", LogLevel.ERROR);
+            promise.reject("presentFeedbackWidget Failed", "Activity is null");
+            return;
+        }
+        String widgetId = args.getString(0);
+        String type = args.getString(1);
+        String closeBtnText = args.getString(2);
+
+        CountlyFeedbackWidget presentableFeedback = new CountlyFeedbackWidget();
+        presentableFeedback.widgetId = widgetId;
+        presentableFeedback.type = FeedbackWidgetType.valueOf(type);
+        Countly.sharedInstance().feedback().presentFeedbackWidget(presentableFeedback, activity, closeBtnText, new FeedbackCallback() {
+            @Override
+            public void onFinished(String error) {
+                if(error != null) {
+                    promise.reject("presentFeedbackWidget", error);
+                }
+                else {
+                    promise.resolve("presentFeedbackWidget success");
+                }
+            }
+        });
+    } 
+
+    @ReactMethod
+    public void replaceAllAppKeysInQueueWithCurrentAppKey() {
+        Countly.sharedInstance().requestQueueOverwriteAppKeys();
+    } 
+    
+    @ReactMethod
+    public void removeDifferentAppKeysFromQueue() {
+        Countly.sharedInstance().requestQueueEraseAppKeysRequests();
+    } 
 
     @ReactMethod
     public void setEventSendThreshold(ReadableArray args){

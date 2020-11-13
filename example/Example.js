@@ -9,6 +9,7 @@ var failureCodes = [400, 402, 405, 408, 500, 501, 502, 505];
 class Example extends Component {
     constructor(props) {
         super(props);
+        
         this.config = {};
 
         this.onInit = this.onInit.bind(this);
@@ -66,7 +67,8 @@ class Example extends Component {
         else {
           Countly.enableAttribution(); // Enable to measure your marketing campaign performance by attributing installs from specific campaigns.
         }
-        await Countly.init("https://try.count.ly", "YOUR_APP_KEY"; // Initialize the countly SDK.
+        Countly.setStarRatingDialogTexts("Title", "Message", "Dismiss");
+        await Countly.init("https://prikshit.count.ly", "c711b3631e2caf4dd3c1ce591d5e13a569690904"); // Initialize the countly SDK.
 
         /** 
          * Push notifications settings 
@@ -341,6 +343,26 @@ class Example extends Component {
       Countly.showFeedbackPopup("5e4254507975d006a22535fc", "Submit");
     }
 
+    showSurvey = function(){
+      Countly.getAvailableFeedbackWidgets().then((retrivedWidgets) => {
+          if("survey" in retrivedWidgets) {
+              Countly.presentFeedbackWidget("survey", retrivedWidgets.survey, "Close")
+          }
+      },(err) => {
+          console.error("[CountlyCordova] getAvailableFeedbackWidgets error : " +err);
+      });
+  }
+
+  showNPS = function(){
+      Countly.getAvailableFeedbackWidgets().then((retrivedWidgets) => {
+          if("nps" in retrivedWidgets) {
+              Countly.presentFeedbackWidget("nps", retrivedWidgets.survey, "Cancel")
+          }
+      },(err) => {
+          console.error("[CountlyCordova] getAvailableFeedbackWidgets error : " +err);
+      });
+  }
+
     addCrashLog(){
       Countly.addCrashLog("My crash log in string.");
     };
@@ -509,6 +531,8 @@ class Example extends Component {
             < Button onPress = { this.disableLocation } title = "Disable Location" color = "#00b5ad"> </Button>
             < Button onPress = { this.showStarRating } title = "Show Star Rating Model" color = "#00b5ad"> </Button>
             < Button onPress = { this.showFeedbackPopup } title = "Show FeedBack Model" color = "#00b5ad"> </Button>
+            < Button onPress = { this.showSurvey } title = "Show Survey" color = "#00b5ad"> </Button>
+            < Button onPress = { this.showNPS } title = "Show NPS" color = "#00b5ad"> </Button>
             < Button onPress = { this.eventSendThreshold } title = "Set Event Threshold" color = "#00b5ad"> </Button>
             < Button onPress = { this.setCustomCrashSegments } title = "Set Custom Crash Segment" color = "#00b5ad"> </Button>
             <Text style={[{textAlign: 'center'}]}>Other Methods End</Text>

@@ -17,7 +17,11 @@
 #define COUNTLY_RN_LOG(...)
 #endif
 
-NSString* const kCountlyReactNativeSDKVersion = @"20.04.9";
+@interface CountlyFeedbackWidget ()
++ (CountlyFeedbackWidget *)createWithDictionary:(NSDictionary *)dictionary;
+@end
+
+NSString* const kCountlyReactNativeSDKVersion = @"20.11.0";
 NSString* const kCountlyReactNativeSDKName = @"js-rnb-ios";
 
 CountlyConfig* config = nil;
@@ -815,6 +819,14 @@ RCT_EXPORT_METHOD(getRemoteConfigValueForKey:(NSArray*)arguments callback:(RCTRe
   });
 }
 
+RCT_EXPORT_METHOD(setStarRatingDialogTexts:(NSArray*)arguments)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+            NSString* starRatingTextMessage = [arguments objectAtIndex:1];
+            config.starRatingMessage = starRatingTextMessage;
+      });
+}
+
 RCT_EXPORT_METHOD(showStarRating:(NSArray*)arguments callback:(RCTResponseSenderBlock)callback)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
@@ -833,6 +845,50 @@ RCT_EXPORT_METHOD(showFeedbackPopup:(NSArray*)arguments)
 
   }];
   });
+}
+
+RCT_REMAP_METHOD(getAvailableFeedbackWidgets,
+                 getAvailableFeedbackWidgetsWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+    [Countly.sharedInstance getFeedbackWidgets:^(NSArray<CountlyFeedbackWidget *> * _Nonnull feedbackWidgets, NSError * _Nonnull error) {
+      NSMutableDictionary* feedbackWidgetsDict = [NSMutableDictionary dictionaryWithCapacity:feedbackWidgets.count];
+      for (CountlyFeedbackWidget* feedbackWidget in feedbackWidgets) {
+        feedbackWidgetsDict[feedbackWidget.type] = feedbackWidget.ID;
+      }
+      resolve(feedbackWidgetsDict);
+    }];
+  });
+}
+
+RCT_EXPORT_METHOD(presentFeedbackWidget:(NSArray*)arguments)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+        NSString* widgetId = [arguments objectAtIndex:0];
+        NSString* widgetType = [arguments objectAtIndex:1];
+            NSMutableDictionary* feedbackWidgetsDict = [NSMutableDictionary dictionaryWithCapacity:3];
+            
+            feedbackWidgetsDict[@"_id"] = widgetId;
+            feedbackWidgetsDict[@"type"] = widgetType;
+            feedbackWidgetsDict[@"name"] = widgetType;
+            CountlyFeedbackWidget *feedback = [CountlyFeedbackWidget createWithDictionary:feedbackWidgetsDict];
+            [feedback present];
+        });
+}
+
+RCT_EXPORT_METHOD(replaceAllAppKeysInQueueWithCurrentAppKey)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+            [Countly.sharedInstance replaceAllAppKeysInQueueWithCurrentAppKey];
+        });
+}
+
+RCT_EXPORT_METHOD(removeDifferentAppKeysFromQueue)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+            [Countly.sharedInstance removeDifferentAppKeysFromQueue];
+        });
 }
 
 RCT_EXPORT_METHOD(setEventSendThreshold:(NSArray*)arguments)

@@ -98,6 +98,18 @@ Countly.sendEvent = function(options){
 }
 
 /**
+ * Enable or disable automatic view tracking
+ * 
+ * @deprecated in 20.04.6
+ * 
+ */
+Countly.setViewTracking = async function(boolean) {
+    if(await CountlyReactNative.isLoggingEnabled()) {
+        console.log("[CountlyReactNative] setViewTracking is deprecated.");
+    }
+}
+
+/**
  * Record custom view to Countly.
  * 
  * @param {string} recordView - name of the view
@@ -602,6 +614,20 @@ Countly.remoteConfigClearValues = async function(){
     const result = await CountlyReactNative.remoteConfigClearValues();
     return result;
 }
+/**
+ * Set's the text's for the different fields in the star rating dialog. Set value null if for some field you want to keep the old value
+ * 
+ * @param {String} starRatingTextTitle - dialog's title text (Only for Android)
+ * @param {String} starRatingTextMessage - dialog's message text 
+ * @param {String} starRatingTextDismiss - dialog's dismiss buttons text (Only for Android)
+ */
+Countly.setStarRatingDialogTexts = function(starRatingTextTitle, starRatingTextMessage, starRatingTextDismiss){
+    var args = [];
+    args.push(starRatingTextTitle);
+    args.push(starRatingTextMessage);
+    args.push(starRatingTextDismiss);
+    CountlyReactNative.setStarRatingDialogTexts(args);
+}
 
 Countly.showStarRating = function(callback){
     if(!callback){callback = function(){}};
@@ -610,6 +636,24 @@ Countly.showStarRating = function(callback){
 
 Countly.showFeedbackPopup = function(widgetId, closeButtonText,){
     CountlyReactNative.showFeedbackPopup([widgetId.toString() || "", closeButtonText.toString() || "Done"]);
+}
+/**
+ * Get a list of available feedback widgets for this device ID
+ */
+Countly.getAvailableFeedbackWidgets = async function(){
+     const result = await CountlyReactNative.getAvailableFeedbackWidgets();
+      return result;
+  }
+
+/**
+ * Present a chosen feedback widget
+ * 
+ * @param {String} widgetType - type of widget : "nps" or "survey"
+ * @param {String} widgetId - id of widget to present
+ * @param {String} closeButtonText - text for cancel/close button
+ */  
+Countly.presentFeedbackWidget = function(widgetType, widgetId, closeButtonText,){
+    CountlyReactNative.presentFeedbackWidget([widgetId.toString() || "",widgetType.toString() || "", closeButtonText.toString()]);
 }
 
 /**
@@ -704,6 +748,22 @@ Countly.recordAttributionID = function(attributionID){
     var args = [];
     args.push(attributionID);
     CountlyReactNative.recordAttributionID(args);
+}
+/**
+ * Replaces all requests with a different app key with the current app key.
+ * In request queue, if there are any request whose app key is different than the current app key,
+ * these requests' app key will be replaced with the current app key.
+ */
+Countly.replaceAllAppKeysInQueueWithCurrentAppKey = function(){
+    CountlyReactNative.replaceAllAppKeysInQueueWithCurrentAppKey();
+}
+/**
+ * Removes all requests with a different app key in request queue.
+ * In request queue, if there are any request whose app key is different than the current app key,
+ * these requests will be removed from request queue.
+ */
+Countly.removeDifferentAppKeysFromQueue = function(){
+  CountlyReactNative.removeDifferentAppKeysFromQueue()
 }
 
 /*
