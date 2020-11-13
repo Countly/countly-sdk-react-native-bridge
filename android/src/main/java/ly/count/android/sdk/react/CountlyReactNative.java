@@ -440,6 +440,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void setUserData(ReadableArray args){
+        Countly.sharedInstance();
         Map<String, String> bundle = new HashMap<String, String>();
         bundle.put("name", args.getString(0));
         bundle.put("username", args.getString(1));
@@ -561,6 +562,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void userData_setProperty(ReadableArray args){
+        Countly.sharedInstance();
         String keyName = args.getString(0);
         String keyValue = args.getString(1);
         Countly.userData.setProperty(keyName, keyValue);
@@ -569,6 +571,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void userData_increment(ReadableArray args){
+        Countly.sharedInstance();
         String keyName = args.getString(0);
         Countly.userData.increment(keyName);
         Countly.userData.save();
@@ -576,6 +579,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void userData_incrementBy(ReadableArray args){
+        Countly.sharedInstance();
         String keyName = args.getString(0);
         int keyIncrement = Integer.parseInt(args.getString(1));
         Countly.userData.incrementBy(keyName, keyIncrement);
@@ -584,6 +588,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void userData_multiply(ReadableArray args){
+        Countly.sharedInstance();
         String keyName = args.getString(0);
         int multiplyValue = Integer.parseInt(args.getString(1));
         Countly.userData.multiply(keyName, multiplyValue);
@@ -592,6 +597,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void userData_saveMax(ReadableArray args){
+        Countly.sharedInstance();
         String keyName = args.getString(0);
         int maxScore = Integer.parseInt(args.getString(1));
         Countly.userData.saveMax(keyName, maxScore);
@@ -600,6 +606,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void userData_saveMin(ReadableArray args){
+        Countly.sharedInstance();
         String keyName = args.getString(0);
         int minScore = Integer.parseInt(args.getString(1));
         Countly.userData.saveMin(keyName, minScore);
@@ -608,6 +615,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void userData_setOnce(ReadableArray args){
+        Countly.sharedInstance();
         String keyName = args.getString(0);
         String minScore = args.getString(1);
         Countly.userData.setOnce(keyName, minScore);
@@ -616,6 +624,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void userData_pushUniqueValue(ReadableArray args){
+        Countly.sharedInstance();
         String keyName = args.getString(0);
         String keyValue = args.getString(1);
         Countly.userData.pushUniqueValue(keyName, keyValue);
@@ -624,6 +633,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void userData_pushValue(ReadableArray args){
+        Countly.sharedInstance();
         String keyName = args.getString(0);
         String keyValue = args.getString(1);
         Countly.userData.pushValue(keyName, keyValue);
@@ -632,6 +642,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void userData_pullValue(ReadableArray args){
+        Countly.sharedInstance();
         String keyName = args.getString(0);
         String keyValue = args.getString(1);
         Countly.userData.pullValue(keyName, keyValue);
