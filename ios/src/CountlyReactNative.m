@@ -299,7 +299,7 @@ RCT_EXPORT_METHOD(getDeviceIdAuthor:(NSArray*)arguments callback:(RCTResponseSen
         callback(@[value]);
       }
       else{
-        NSString *value = @"deviceIdNotFound";
+        NSString *value = @"deviceIDAuthorNotFound";
         callback(@[value]);
       }
   });
