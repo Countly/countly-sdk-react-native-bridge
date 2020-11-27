@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import { Text, Button, ScrollView, Image, View, Alert } from 'react-native';
 import Countly from 'countly-sdk-react-native-bridge';
-import RNAdvertisingId from 'react-native-advertising-id';
 
 var successCodes = [100, 101, 200, 201, 202, 205, 300, 301, 303, 305];
 var failureCodes = [400, 402, 405, 408, 500, 501, 502, 505];
@@ -39,6 +38,7 @@ class Example extends Component {
     };
 
     componentDidMount(){
+      this.onInit();
     }
 
     onInit = async() => {
@@ -47,7 +47,7 @@ class Example extends Component {
         Countly.setLoggingEnabled(true); // Enable countly internal debugging logs
         Countly.enableCrashReporting(); // Enable crash reporting to report unhandled crashes to Countly
         Countly.setRequiresConsent(true); // Set that consent should be required for features to work.
-        Countly.giveConsentInit(["location", "sessions", "attribution", "push", "events", "views", "crashes", "users", "push", "star-rating", "apm"]); // give conset for specific features before init.
+        Countly.giveConsentInit(["location", "sessions", "attribution", "push", "events", "views", "crashes", "users", "push", "star-rating", "apm", "feedback", "remote-config"]); // give conset for specific features before init.
         Countly.setLocationInit("TR", "Istanbul", "41.0082,28.9784", "10.2.33.12"); // Set user initial location.
 
         /** Optional settings for Countly initialisation */
@@ -58,18 +58,14 @@ class Example extends Component {
         Countly.pushTokenType(Countly.messagingMode.DEVELOPMENT, "Channel Name", "Channel Description"); // Set messaging mode for push notifications
         
         if (Platform.OS.match("ios")) {
-          RNAdvertisingId.getAdvertisingId()
-                  .then(response => {
-                    Countly.recordAttributionID(response.advertisingId);
-                  })
-                  .catch(error => console.error(error));
+          Countly.recordAttributionID("ADVERTISING_ID");
         }
         else {
           Countly.enableAttribution(); // Enable to measure your marketing campaign performance by attributing installs from specific campaigns.
         }
         Countly.setStarRatingDialogTexts("Title", "Message", "Dismiss");
-        await Countly.init("https://prikshit.count.ly", "c711b3631e2caf4dd3c1ce591d5e13a569690904"); // Initialize the countly SDK.
-
+        await Countly.init("https://try.count.ly", "YOUR_APP_KEY"); // Initialize the countly SDK.
+        Countly.appLoadingFinished();
         /** 
          * Push notifications settings 
          * Should be call after init
@@ -79,6 +75,7 @@ class Example extends Component {
           alert('theNotification: ' + JSON.stringify(theNotification));
         }); // Set callback to receive push notifications
         Countly.askForNotificationPermission(); // This method will ask for permission, enables push notification and send push token to countly server.
+
       }
     }
 
@@ -340,7 +337,7 @@ class Example extends Component {
     };
 
     showFeedbackPopup(){
-      Countly.showFeedbackPopup("5e4254507975d006a22535fc", "Submit");
+      Countly.showFeedbackPopup("5f8c837a5294f7aae370067c", "Submit");
     }
 
     showSurvey = function(){

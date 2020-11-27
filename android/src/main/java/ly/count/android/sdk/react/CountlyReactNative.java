@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.util.Log;
 
 import com.facebook.react.bridge.Callback;
+import com.facebook.react.bridge.LifecycleEventListener;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
@@ -68,7 +69,7 @@ class CountlyReactException extends Exception {
     }
 }
 
-public class CountlyReactNative extends ReactContextBaseJavaModule {
+public class CountlyReactNative extends ReactContextBaseJavaModule implements LifecycleEventListener {
 
     public static final String TAG = "CountlyRNPlugin";
     private String COUNTLY_RN_SDK_VERSION_STRING = "20.11.0";
@@ -81,6 +82,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     private static CCallback notificationListener = null;
     private static String lastStoredNotification = null;
     protected static boolean loggingEnabled = false;
+
+    private boolean isOnResumeBeforeInit = false;
 
     private ReactApplicationContext _reactContext;
 
@@ -102,6 +105,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     public CountlyReactNative(ReactApplicationContext reactContext) {
         super(reactContext);
         _reactContext = reactContext;
+        this.config.enableManualAppLoadedTrigger();
+        this.config.enableManualForegroundBackgroundTriggerAPM();
+        reactContext.addLifecycleEventListener(this);
     }
     @Override
     public String getName() {
@@ -141,6 +147,10 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
             }
         }
         Countly.sharedInstance().init(this.config);
+        if(isOnResumeBeforeInit) {
+            isOnResumeBeforeInit = false;
+            Countly.sharedInstance().apm().triggerForeground();
+        }
         promise.resolve("Success");
     }
 
@@ -492,6 +502,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
             lastStoredNotification = notificationString;
         }
     }
+
     public interface CCallback {
         void callback(String result);
     }
@@ -919,12 +930,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void cancelTrace(ReadableArray args){
         String traceKey = args.getString(0);
-        // Countly.sharedInstance().apm().cancelTrace(traceKey);
+        Countly.sharedInstance().apm().cancelTrace(traceKey);
     }
 
     @ReactMethod
     public void clearAllTraces(ReadableArray args){
-        // Countly.sharedInstance().apm().clearAllTrace();
+        Countly.sharedInstance().apm().cancelAllTraces();
     }
 
     @ReactMethod
@@ -948,9 +959,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
             int responseCode = Integer.parseInt(args.getString(1));
             int requestPayloadSize = Integer.parseInt(args.getString(2));
             int responsePayloadSize = Integer.parseInt(args.getString(3));
-            int startTime = Integer.parseInt(args.getString(4));
-            int endTime = Integer.parseInt(args.getString(5));
-            // Countly.sharedInstance().apm().endNetworkRequest(networkTraceKey, null, responseCode, requestPayloadSize, responsePayloadSize);
+            long startTime = Long.parseLong(args.getString(4));
+            long endTime = Long.parseLong(args.getString(5));
+            Countly.sharedInstance().apm().recordNetworkTrace(networkTraceKey, responseCode, requestPayloadSize, responsePayloadSize, startTime, endTime);
         }catch(Exception exception){
             log("Exception occured at recordNetworkTrace method: " + exception.toString(), LogLevel.ERROR);
         }
@@ -970,6 +981,11 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     public void recordAttributionID(ReadableArray args){
         String attributionID = args.getString(0);
         log("recordAttributionID: Not implemented for Android", LogLevel.DEBUG);
+    }
+
+    @ReactMethod
+    public void appLoadingFinished(){
+        Countly.sharedInstance().apm().setAppIsLoaded();
     }
     
     enum LogLevel {INFO, DEBUG, VERBOSE, WARNING, ERROR}
@@ -1007,6 +1023,28 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
             activity = _reactContext.getCurrentActivity();
         }
         return activity;
+    }
+
+    @Override
+    public void onHostResume() {
+        if(Countly.sharedInstance().isInitialized()) {
+            Countly.sharedInstance().apm().triggerForeground();
+        }
+        else {
+            isOnResumeBeforeInit = true;
+        }
+    }
+
+    @Override
+    public void onHostPause() {
+        if(Countly.sharedInstance().isInitialized()) {
+            Countly.sharedInstance().apm().triggerBackground();
+        }
+    }
+
+    @Override
+    public void onHostDestroy() {
+
     }
 
 }

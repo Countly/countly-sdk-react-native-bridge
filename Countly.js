@@ -24,7 +24,7 @@ if (Platform.OS.match("android")) {
 }
 
 // countly initialization
-Countly.init = async function(serverUrl, appKey, deviceId = ""){
+Countly.init = async function(serverUrl, appKey, deviceId){
 
     if(deviceId == "") {
         deviceId = null;
@@ -742,7 +742,6 @@ Countly.enableAttribution = async function(attributionID = "") {
  * Currently implemented for iOS only
  * For Android just call the enableAttribution to enable campaign attribution.
  */
-
 Countly.recordAttributionID = function(attributionID){
     if (!Platform.OS.match("ios")) return "recordAttributionID : To be implemented";
     var args = [];
@@ -765,6 +764,21 @@ Countly.replaceAllAppKeysInQueueWithCurrentAppKey = function(){
 Countly.removeDifferentAppKeysFromQueue = function(){
   CountlyReactNative.removeDifferentAppKeysFromQueue()
 }
+
+
+/**
+ * Call this function when app is loaded, so that the app launch duration can be recorded.
+ * Should be call after init.
+ */
+Countly.appLoadingFinished = async function(){
+    if(!await Countly.isInitialized()) {
+        if(await CountlyReactNative.isLoggingEnabled()) {
+            console.warn('[CountlyReactNative] appLoadingFinished, init must be called before appLoadingFinished');
+        }
+        return "init must be called before appLoadingFinished";
+      }
+    CountlyReactNative.appLoadingFinished()
+  }
 
 /*
 Countly.initNative = function(){

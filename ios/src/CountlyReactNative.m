@@ -1018,6 +1018,13 @@ RCT_EXPORT_METHOD(recordAttributionID:(NSArray*)arguments) {
     });
 }
 
+RCT_EXPORT_METHOD(appLoadingFinished)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+    [Countly.sharedInstance appLoadingFinished];
+  });
+}
+
 - (void)addCountlyFeature:(CLYFeature)feature
 {
     if(countlyFeatures == nil) {
