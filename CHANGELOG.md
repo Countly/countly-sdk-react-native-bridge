@@ -1,4 +1,5 @@
 ## 20.11.0
+* !! Due to cocoapods issue with Xcode 12, we have created a new temporary Pod with a fix for Countly iOS SDK and named it "CounltyPod". Due to that change if you have already add the reference of files "CountlyNotificationService.h/m" then you need to update these files references by adding the files from "CountlyPod" and remove the old reference files.
 * !! Consent change !! To use remote config, you now need to give "remote-config" consent
 * !! Push breaking changes !! Google play vulnerability issue fixed due to broadcast receiver for android push notification
 * Added Surveys and NPS feedback widgets
@@ -10,7 +11,6 @@
 * Device id NSNull check added for iOS to fix the length on null crash.
 * Updated underlying android SDK to 20.11.0
 * Updated underlying ios SDK to 20.11.0
-* !! Due to cocoapods issue with Xcode 12, we have created a new temporary Pod with a fix for Countly iOS SDK and named it "CounltyPod". Due to that change if you have already add the reference of files "CountlyNotificationService.h/m" then you need to update these files references by adding the files from "CountlyPod" and remove the old reference files.
 
 ## 20.4.9
 * Hotfix for compilation issue
