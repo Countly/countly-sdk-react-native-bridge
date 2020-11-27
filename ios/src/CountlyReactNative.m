@@ -17,7 +17,11 @@
 #define COUNTLY_RN_LOG(...)
 #endif
 
-NSString* const kCountlyReactNativeSDKVersion = @"20.04.9";
+@interface CountlyFeedbackWidget ()
++ (CountlyFeedbackWidget *)createWithDictionary:(NSDictionary *)dictionary;
+@end
+
+NSString* const kCountlyReactNativeSDKVersion = @"20.11.0";
 NSString* const kCountlyReactNativeSDKName = @"js-rnb-ios";
 
 CountlyConfig* config = nil;
@@ -25,7 +29,6 @@ NSDictionary *lastStoredNotification = nil;
 Result notificationListener = nil;
 NSMutableArray *notificationIDs = nil;        // alloc here
 NSMutableArray<CLYFeature>* countlyFeatures = nil;
-NSArray *consents = nil;
 
 @implementation CountlyReactNative
 
@@ -48,7 +51,7 @@ RCT_REMAP_METHOD(init,
     config = CountlyConfig.new;
   }
   
-  if(deviceID != nil && ![deviceID  isEqual: @""]){
+  if(deviceID != nil && deviceID != (NSString *)[NSNull null] && ![deviceID  isEqual: @""]){
     config.deviceID = deviceID;
   }
   config.appKey = appkey;
@@ -62,9 +65,7 @@ RCT_REMAP_METHOD(init,
       dispatch_async(dispatch_get_main_queue(), ^
       {
           [[Countly sharedInstance] startWithConfig:config];
-          if(consents != nil) {
-            [Countly.sharedInstance giveConsentForFeatures:consents];
-          }
+          
           resolve(@"Success");
       });
   }
@@ -293,8 +294,14 @@ RCT_EXPORT_METHOD(getCurrentDeviceId:(NSArray*)arguments callback:(RCTResponseSe
 RCT_EXPORT_METHOD(getDeviceIdAuthor:(NSArray*)arguments callback:(RCTResponseSenderBlock)callback)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
-    NSString *value = @"Not implemented for iOS";
-    callback(@[value]);
+      id value = [Countly.sharedInstance deviceIDType];
+      if(value){
+        callback(@[value]);
+      }
+      else{
+        NSString *value = @"deviceIDAuthorNotFound";
+        callback(@[value]);
+      }
   });
 }
 
@@ -698,7 +705,10 @@ RCT_EXPORT_METHOD(setRequiresConsent:(NSArray*)arguments)
 RCT_EXPORT_METHOD(giveConsentInit:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
-    consents = arguments;
+  if (config == nil){
+    config = CountlyConfig.new;
+  }
+  config.consents = arguments;
   });
 }
 
@@ -815,6 +825,14 @@ RCT_EXPORT_METHOD(getRemoteConfigValueForKey:(NSArray*)arguments callback:(RCTRe
   });
 }
 
+RCT_EXPORT_METHOD(setStarRatingDialogTexts:(NSArray*)arguments)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+            NSString* starRatingTextMessage = [arguments objectAtIndex:1];
+            config.starRatingMessage = starRatingTextMessage;
+      });
+}
+
 RCT_EXPORT_METHOD(showStarRating:(NSArray*)arguments callback:(RCTResponseSenderBlock)callback)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
@@ -833,6 +851,50 @@ RCT_EXPORT_METHOD(showFeedbackPopup:(NSArray*)arguments)
 
   }];
   });
+}
+
+RCT_REMAP_METHOD(getAvailableFeedbackWidgets,
+                 getAvailableFeedbackWidgetsWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+    [Countly.sharedInstance getFeedbackWidgets:^(NSArray<CountlyFeedbackWidget *> * _Nonnull feedbackWidgets, NSError * _Nonnull error) {
+      NSMutableDictionary* feedbackWidgetsDict = [NSMutableDictionary dictionaryWithCapacity:feedbackWidgets.count];
+      for (CountlyFeedbackWidget* feedbackWidget in feedbackWidgets) {
+        feedbackWidgetsDict[feedbackWidget.type] = feedbackWidget.ID;
+      }
+      resolve(feedbackWidgetsDict);
+    }];
+  });
+}
+
+RCT_EXPORT_METHOD(presentFeedbackWidget:(NSArray*)arguments)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+        NSString* widgetId = [arguments objectAtIndex:0];
+        NSString* widgetType = [arguments objectAtIndex:1];
+            NSMutableDictionary* feedbackWidgetsDict = [NSMutableDictionary dictionaryWithCapacity:3];
+            
+            feedbackWidgetsDict[@"_id"] = widgetId;
+            feedbackWidgetsDict[@"type"] = widgetType;
+            feedbackWidgetsDict[@"name"] = widgetType;
+            CountlyFeedbackWidget *feedback = [CountlyFeedbackWidget createWithDictionary:feedbackWidgetsDict];
+            [feedback present];
+        });
+}
+
+RCT_EXPORT_METHOD(replaceAllAppKeysInQueueWithCurrentAppKey)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+            [Countly.sharedInstance replaceAllAppKeysInQueueWithCurrentAppKey];
+        });
+}
+
+RCT_EXPORT_METHOD(removeDifferentAppKeysFromQueue)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+            [Countly.sharedInstance removeDifferentAppKeysFromQueue];
+        });
 }
 
 RCT_EXPORT_METHOD(setEventSendThreshold:(NSArray*)arguments)
@@ -954,6 +1016,13 @@ RCT_EXPORT_METHOD(recordAttributionID:(NSArray*)arguments) {
           config.attributionID = attributionID;
         }
     });
+}
+
+RCT_EXPORT_METHOD(appLoadingFinished)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+    [Countly.sharedInstance appLoadingFinished];
+  });
 }
 
 - (void)addCountlyFeature:(CLYFeature)feature

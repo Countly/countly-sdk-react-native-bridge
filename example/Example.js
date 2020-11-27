@@ -1,17 +1,6 @@
 import React, { Component } from 'react';
 import { Text, Button, ScrollView, Image, View, Alert } from 'react-native';
 import Countly from 'countly-sdk-react-native-bridge';
-/*
-First add "react-native-permissions" and "react-native-idfa" plugins to implement the attribution feature for iOS.
-Here is the link of both plugins:
-https://www.npmjs.com/package/react-native-permissions
-https://www.npmjs.com/package/react-native-idfa
-
-Here is the required import from above mentioned plugins
-
-import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
-import { IDFA } from 'react-native-idfa';
-*/
 
 var successCodes = [100, 101, 200, 201, 202, 205, 300, 301, 303, 305];
 var failureCodes = [400, 402, 405, 408, 500, 501, 502, 505];
@@ -19,6 +8,7 @@ var failureCodes = [400, 402, 405, 408, 500, 501, 502, 505];
 class Example extends Component {
     constructor(props) {
         super(props);
+        
         this.config = {};
 
         this.onInit = this.onInit.bind(this);
@@ -48,6 +38,7 @@ class Example extends Component {
     };
 
     componentDidMount(){
+      this.onInit();
     }
 
     onInit = async() => {
@@ -56,7 +47,7 @@ class Example extends Component {
         Countly.setLoggingEnabled(true); // Enable countly internal debugging logs
         Countly.enableCrashReporting(); // Enable crash reporting to report unhandled crashes to Countly
         Countly.setRequiresConsent(true); // Set that consent should be required for features to work.
-        Countly.giveConsentInit(["location", "sessions", "attribution", "push", "events", "views", "crashes", "users", "push", "star-rating", "apm"]); // give conset for specific features before init.
+        Countly.giveConsentInit(["location", "sessions", "attribution", "push", "events", "views", "crashes", "users", "push", "star-rating", "apm", "feedback", "remote-config"]); // give conset for specific features before init.
         Countly.setLocationInit("TR", "Istanbul", "41.0082,28.9784", "10.2.33.12"); // Set user initial location.
 
         /** Optional settings for Countly initialisation */
@@ -65,56 +56,16 @@ class Example extends Component {
         // Countly.setHttpPostForced(false); // Set to "true" if you want HTTP POST to be used for all requests
         Countly.enableApm(); // Enable APM features, which includes the recording of app start time.
         Countly.pushTokenType(Countly.messagingMode.DEVELOPMENT, "Channel Name", "Channel Description"); // Set messaging mode for push notifications
-        if (!Platform.OS.match("ios")){
+        
+        if (Platform.OS.match("ios")) {
+          Countly.recordAttributionID("ADVERTISING_ID");
+        }
+        else {
           Countly.enableAttribution(); // Enable to measure your marketing campaign performance by attributing installs from specific campaigns.
         }
-        /*
-        For iOS 14+ apple changes regarding app tracking you need to ask the user for permission to track app.
-        For permission you can use this plugin
-        https://www.npmjs.com/package/react-native-permissions
-
-        For IDFA you can use this plugin
-        https://www.npmjs.com/package/react-native-idfa
-        
-        Below is the example app that how you can use both these plugins Countly SDK iOS attibution feature.
-
-        if (Platform.OS.match("ios")) {
-        request(PERMISSIONS.IOS.APP_TRACKING_TRANSPARENCY)
-          .then((result) => {
-            switch (result) {
-              case RESULTS.UNAVAILABLE:
-                console.log(
-                  'This feature is not available (on this device / in this context)',
-                );
-                break;
-              case RESULTS.DENIED:
-                console.log(
-                  'The permission has not been requested / is denied but requestable',
-                );
-                break;
-              case RESULTS.GRANTED:
-                console.log('The permission is granted');
-                IDFA.getIDFA().then((idfa) => {
-                  console.log('idfa : ' + idfa);
-                  Countly.recordAttributionID(idfa);
-                })
-                .catch((e) => {
-                  console.error(e);
-                });
-                break;
-              case RESULTS.BLOCKED:
-                console.log('The permission is denied and not requestable anymore');
-                break;
-            }
-          })
-          .catch((error) => {
-            // …
-          });
-        }
-        */
-        
-        await Countly.init("https://master.count.ly", "5b77e4c785410351f32d8aa286d2383195d13b93", "123456"); // Initialize the countly SDK.
-
+        Countly.setStarRatingDialogTexts("Title", "Message", "Dismiss");
+        await Countly.init("https://try.count.ly", "YOUR_APP_KEY"); // Initialize the countly SDK.
+        Countly.appLoadingFinished();
         /** 
          * Push notifications settings 
          * Should be call after init
@@ -124,6 +75,7 @@ class Example extends Component {
           alert('theNotification: ' + JSON.stringify(theNotification));
         }); // Set callback to receive push notifications
         Countly.askForNotificationPermission(); // This method will ask for permission, enables push notification and send push token to countly server.
+
       }
     }
 
@@ -385,8 +337,28 @@ class Example extends Component {
     };
 
     showFeedbackPopup(){
-      Countly.showFeedbackPopup("5e4254507975d006a22535fc", "Submit");
+      Countly.showFeedbackPopup("5f8c837a5294f7aae370067c", "Submit");
     }
+
+    showSurvey = function(){
+      Countly.getAvailableFeedbackWidgets().then((retrivedWidgets) => {
+          if("survey" in retrivedWidgets) {
+              Countly.presentFeedbackWidget("survey", retrivedWidgets.survey, "Close")
+          }
+      },(err) => {
+          console.error("[CountlyCordova] getAvailableFeedbackWidgets error : " +err);
+      });
+  }
+
+  showNPS = function(){
+      Countly.getAvailableFeedbackWidgets().then((retrivedWidgets) => {
+          if("nps" in retrivedWidgets) {
+              Countly.presentFeedbackWidget("nps", retrivedWidgets.survey, "Cancel")
+          }
+      },(err) => {
+          console.error("[CountlyCordova] getAvailableFeedbackWidgets error : " +err);
+      });
+  }
 
     addCrashLog(){
       Countly.addCrashLog("My crash log in string.");
@@ -556,6 +528,8 @@ class Example extends Component {
             < Button onPress = { this.disableLocation } title = "Disable Location" color = "#00b5ad"> </Button>
             < Button onPress = { this.showStarRating } title = "Show Star Rating Model" color = "#00b5ad"> </Button>
             < Button onPress = { this.showFeedbackPopup } title = "Show FeedBack Model" color = "#00b5ad"> </Button>
+            < Button onPress = { this.showSurvey } title = "Show Survey" color = "#00b5ad"> </Button>
+            < Button onPress = { this.showNPS } title = "Show NPS" color = "#00b5ad"> </Button>
             < Button onPress = { this.eventSendThreshold } title = "Set Event Threshold" color = "#00b5ad"> </Button>
             < Button onPress = { this.setCustomCrashSegments } title = "Set Custom Crash Segment" color = "#00b5ad"> </Button>
             <Text style={[{textAlign: 'center'}]}>Other Methods End</Text>

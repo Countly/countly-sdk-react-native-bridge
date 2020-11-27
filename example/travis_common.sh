@@ -1,8 +1,6 @@
-#!/bin/sh
 
-# This is a shell script to create sample app for Countly React Native.
-# Created At: 24-June-2020
-
+branchName=$1
+echo $branchName
 rm -rf ./AwesomeProject
 npx react-native init AwesomeProject
 cd AwesomeProject
@@ -11,15 +9,11 @@ rm App.js
 curl https://raw.githubusercontent.com/Countly/countly-sdk-react-native-bridge/master/example/App.js --output App.js
 curl https://raw.githubusercontent.com/Countly/countly-sdk-react-native-bridge/master/example/Example.js --output Example.js
 
-yarn add countly-sdk-react-native-bridge@20.11.0
+countlyGitURL="https://github.com/Countly/countly-sdk-react-native-bridge.git#${branchName}"
+echo $countlyGitURL
+
+yarn add $countlyGitURL
 npm install --save https://github.com/ijunaid/react-native-advertising-id.git
 
-cd ./ios
-pod install
-cd ..
-
-open ./ios/AwesomeProject.xcworkspace/
-
-cd ./AwesomeProject
-
-npm start
+npm install
+yarn

@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name = 'CountlyReactNative'
-  s.version = '20.04'
+  s.version = '20.11.0'
   s.license = {
     :type => 'COMMUNITY',
     :text => <<-LICENSE
@@ -40,11 +40,12 @@ Pod::Spec.new do |s|
   s.osx.deployment_target = '8.0'
   s.watchos.deployment_target = '2.0'
   s.tvos.deployment_target = '9.0'
+  s.static_framework = true
 
   s.subspec 'NotificationService' do |ns|
     ns.source_files = 'ios/src/CountlyNotificationService.{m,h}'
   end
 
   s.dependency "React"
-  s.dependency "Countly", '20.04.3'
+  s.dependency "CountlyPod", '20.11.0'
 end

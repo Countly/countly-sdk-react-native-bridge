@@ -1,3 +1,17 @@
+## 20.11.0
+* !! Due to cocoapods issue with Xcode 12, we have created a new temporary Pod with a fix for Countly iOS SDK and named it "CounltyPod". Due to that change if you have already add the reference of files "CountlyNotificationService.h/m" then you need to update these files references by adding the files from "CountlyPod" and remove the old reference files.
+* !! Consent change !! To use remote config, you now need to give "remote-config" consent
+* !! Push breaking changes !! Google play vulnerability issue fixed due to broadcast receiver for android push notification
+* Added Surveys and NPS feedback widgets
+* Added replaceAllAppKeysInQueueWithCurrentAppKey method to replace all app keys in queue with the current app key
+* Added removeDifferentAppKeysFromQueue method to remove all different app keys from the queue
+* Added setStarRatingDialogTexts method to set text's for different fields of star rating dialog
+* Added setViewTracking deprecated method back.
+* Example app updated with single plugin for both IDFA and App tracking permission for iOS.
+* Device id NSNull check added for iOS to fix the length on null crash.
+* Updated underlying android SDK to 20.11.0
+* Updated underlying ios SDK to 20.11.0
+
 ## 20.4.9
 * Hotfix for compilation issue
 
@@ -29,4 +43,4 @@
 * Tweaked android push notifications to show up only in the notification bar
 * Fixed SDK version and SDK name metrics to show not the bridged SDK values but the ones from the react native SDK
 
-* Please refer to this documentation for released work https://support.count.ly/hc/en-us/articles/360037813231-React-Native-Bridge-
+* Please refer to this documentation for released work https://support.count.ly/hc/en*us/articles/360037813231*React*Native*Bridge*
