@@ -3,6 +3,7 @@
 * Added getFeedbackWidgets method to get a list of available feedback widgets.
 * Added presentFeedbackWidgetObject to show/present a feedback widget.
 * Deprecated getAvailableFeedbackWidgets method.
+* Deprecated presentFeedbackWidget method.
 * Updated underlying android SDK to 20.11.2
 * Updated underlying ios SDK to 20.11.1
 
