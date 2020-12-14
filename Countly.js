@@ -637,23 +637,61 @@ Countly.showStarRating = function(callback){
 Countly.showFeedbackPopup = function(widgetId, closeButtonText,){
     CountlyReactNative.showFeedbackPopup([widgetId.toString() || "", closeButtonText.toString() || "Done"]);
 }
+
 /**
- * Get a list of available feedback widgets for this device ID
+ * Get a list of feedback widgets for this device ID
  */
-Countly.getAvailableFeedbackWidgets = async function(){
-     const result = await CountlyReactNative.getAvailableFeedbackWidgets();
+Countly.getFeedbackWidgets = async function(){
+     const result = await CountlyReactNative.getFeedbackWidgets();
       return result;
   }
 
 /**
+ * Get a list of available feedback widgets for this device ID
+ * * @deprecated in 20.11.1 : use 'getFeedbackWidgets' intead of 'getAvailableFeedbackWidgets'.
+ */
+Countly.getAvailableFeedbackWidgets = async function(){
+    const result = await CountlyReactNative.getAvailableFeedbackWidgets();
+     return result;
+ }
+
+/**
  * Present a chosen feedback widget
  * 
- * @param {String} widgetType - type of widget : "nps" or "survey"
- * @param {String} widgetId - id of widget to present
+ * @param {Object} feedbackWidget - feeback Widget with id, type and name
  * @param {String} closeButtonText - text for cancel/close button
  */  
+Countly.presentFeedbackWidgetObject = async function(feedbackWidget, closeButtonText,){
+    if(!feedbackWidget.id) {
+        if(await CountlyReactNative.isLoggingEnabled()) {
+            console.error("[CountlyCordova] presentFeedbackWidget, feedbackWidget id should not be null or empty");
+        }
+        return "FeedbackWidget id should not be null or empty";
+    }
+    if(!feedbackWidget.type) {
+        if(await CountlyReactNative.isLoggingEnabled()) {
+            console.error("[CountlyCordova] presentFeedbackWidget, feedbackWidget type should not be null or empty");
+        }
+        return "FeedbackWidget type should not be null or empty";
+    }
+    CountlyReactNative.presentFeedbackWidget([feedbackWidget.id, feedbackWidget.type, feedbackWidget.name || "", closeButtonText || closeButtonText.toString() || ""]);
+}
+
+/**
+* Present a chosen feedback widget
+* 
+* @param {String} widgetType - type of widget : "nps" or "survey"
+* @param {String} widgetId - id of widget to present
+* @param {String} closeButtonText - text for cancel/close button
+
+* @deprecated in 20.11.1 : use 'presentFeedbackWidgetObject' intead of 'presentFeedbackWidget'.
+*/  
 Countly.presentFeedbackWidget = function(widgetType, widgetId, closeButtonText,){
-    CountlyReactNative.presentFeedbackWidget([widgetId.toString() || "",widgetType.toString() || "", closeButtonText.toString()]);
+    var feedbackWidget = {
+        "id": widgetId,
+        "type": widgetType
+      };
+    Countly.presentFeedbackWidgetObject(feedbackWidget, closeButtonText)
 }
 
 /**

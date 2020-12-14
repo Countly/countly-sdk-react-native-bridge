@@ -341,23 +341,25 @@ class Example extends Component {
     }
 
     showSurvey = function(){
-      Countly.getAvailableFeedbackWidgets().then((retrivedWidgets) => {
-          if("survey" in retrivedWidgets) {
-              Countly.presentFeedbackWidget("survey", retrivedWidgets.survey, "Close")
+      Countly.getFeedbackWidgets().then((retrivedWidgets) => {
+          var surveyWidget =  retrivedWidgets.find(x => x.type === 'survey')
+          if(surveyWidget) {
+              Countly.presentFeedbackWidgetObject(surveyWidget, "Close")
           }
       },(err) => {
-          console.error("[CountlyCordova] getAvailableFeedbackWidgets error : " +err);
+          console.error("[CountlyCordova] getFeedbackWidgets error : " +err);
       });
   }
 
   showNPS = function(){
-      Countly.getAvailableFeedbackWidgets().then((retrivedWidgets) => {
-          if("nps" in retrivedWidgets) {
-              Countly.presentFeedbackWidget("nps", retrivedWidgets.survey, "Cancel")
-          }
-      },(err) => {
-          console.error("[CountlyCordova] getAvailableFeedbackWidgets error : " +err);
-      });
+    Countly.getFeedbackWidgets().then((retrivedWidgets) => {
+      var npsWidget =  retrivedWidgets.find(x => x.type === 'nps')
+      if(npsWidget) {
+          Countly.presentFeedbackWidgetObject(npsWidget, "Close")
+      }
+  },(err) => {
+      console.error("[CountlyCordova] getFeedbackWidgets error : " +err);
+  });
   }
 
     addCrashLog(){

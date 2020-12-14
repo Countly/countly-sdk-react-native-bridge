@@ -21,7 +21,7 @@
 + (CountlyFeedbackWidget *)createWithDictionary:(NSDictionary *)dictionary;
 @end
 
-NSString* const kCountlyReactNativeSDKVersion = @"20.11.0";
+NSString* const kCountlyReactNativeSDKVersion = @"20.11.1";
 NSString* const kCountlyReactNativeSDKName = @"js-rnb-ios";
 
 CountlyConfig* config = nil;
@@ -853,6 +853,25 @@ RCT_EXPORT_METHOD(showFeedbackPopup:(NSArray*)arguments)
   });
 }
 
+RCT_REMAP_METHOD(getFeedbackWidgets,
+                 getFeedbackWidgetsWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+    [Countly.sharedInstance getFeedbackWidgets:^(NSArray<CountlyFeedbackWidget *> * _Nonnull feedbackWidgets, NSError * _Nonnull error) {
+      NSMutableArray* feedbackWidgetsArray = [NSMutableArray arrayWithCapacity:feedbackWidgets.count];
+      for (CountlyFeedbackWidget* retrievedWidget in feedbackWidgets) {
+          NSMutableDictionary* feedbackWidget = [NSMutableDictionary dictionaryWithCapacity:3];
+          feedbackWidget[@"id"] = retrievedWidget.ID;
+          feedbackWidget[@"type"] = retrievedWidget.type;
+          feedbackWidget[@"name"] = retrievedWidget.name;
+          [feedbackWidgetsArray addObject:feedbackWidget];
+      }
+      resolve(feedbackWidgetsArray);
+    }];
+  });
+}
+
 RCT_REMAP_METHOD(getAvailableFeedbackWidgets,
                  getAvailableFeedbackWidgetsWithResolver:(RCTPromiseResolveBlock)resolve
                  rejecter:(RCTPromiseRejectBlock)reject)
@@ -873,11 +892,12 @@ RCT_EXPORT_METHOD(presentFeedbackWidget:(NSArray*)arguments)
   dispatch_async(dispatch_get_main_queue(), ^ {
         NSString* widgetId = [arguments objectAtIndex:0];
         NSString* widgetType = [arguments objectAtIndex:1];
+        NSString* widgetName = [arguments objectAtIndex:2];
             NSMutableDictionary* feedbackWidgetsDict = [NSMutableDictionary dictionaryWithCapacity:3];
             
             feedbackWidgetsDict[@"_id"] = widgetId;
             feedbackWidgetsDict[@"type"] = widgetType;
-            feedbackWidgetsDict[@"name"] = widgetType;
+            feedbackWidgetsDict[@"name"] = widgetName;
             CountlyFeedbackWidget *feedback = [CountlyFeedbackWidget createWithDictionary:feedbackWidgetsDict];
             [feedback present];
         });
