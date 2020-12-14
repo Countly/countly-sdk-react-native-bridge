@@ -634,7 +634,7 @@ Countly.showStarRating = function(callback){
     CountlyReactNative.showStarRating([], callback);
 }
 
-Countly.showFeedbackPopup = function(widgetId, closeButtonText,){
+Countly.showFeedbackPopup = function(widgetId, closeButtonText){
     CountlyReactNative.showFeedbackPopup([widgetId.toString() || "", closeButtonText.toString() || "Done"]);
 }
 
@@ -661,20 +661,34 @@ Countly.getAvailableFeedbackWidgets = async function(){
  * @param {Object} feedbackWidget - feeback Widget with id, type and name
  * @param {String} closeButtonText - text for cancel/close button
  */  
-Countly.presentFeedbackWidgetObject = async function(feedbackWidget, closeButtonText,){
+Countly.presentFeedbackWidgetObject = async function(feedbackWidget, closeButtonText){
+    if(!feedbackWidget) {
+        if(await CountlyReactNative.isLoggingEnabled()) {
+            console.error("[CountlyCordova] presentFeedbackWidgetObject, feedbackWidget should not be null or undefined");
+        }
+        return "feedbackWidget should not be null or undefined";
+    }
     if(!feedbackWidget.id) {
         if(await CountlyReactNative.isLoggingEnabled()) {
-            console.error("[CountlyCordova] presentFeedbackWidget, feedbackWidget id should not be null or empty");
+            console.error("[CountlyCordova] presentFeedbackWidgetObject, feedbackWidget id should not be null or empty");
         }
         return "FeedbackWidget id should not be null or empty";
     }
     if(!feedbackWidget.type) {
         if(await CountlyReactNative.isLoggingEnabled()) {
-            console.error("[CountlyCordova] presentFeedbackWidget, feedbackWidget type should not be null or empty");
+            console.error("[CountlyCordova] presentFeedbackWidgetObject, feedbackWidget type should not be null or empty");
         }
         return "FeedbackWidget type should not be null or empty";
     }
-    CountlyReactNative.presentFeedbackWidget([feedbackWidget.id, feedbackWidget.type, feedbackWidget.name || "", closeButtonText || closeButtonText.toString() || ""]);
+    if (typeof closeButtonText != "string") { 
+            closeButtonText = "";
+            if(await CountlyReactNative.isLoggingEnabled()) {
+            console.warn("[CountlyReactNative] presentFeedbackWidgetObject, unsupported data type of closeButtonText : '" + (typeof args) + "'");
+        }
+    }
+    feedbackWidget.name = feedbackWidget.name || "";
+    closeButtonText = closeButtonText || "";
+    CountlyReactNative.presentFeedbackWidget([feedbackWidget.id, feedbackWidget.type, feedbackWidget.name, closeButtonText]);
 }
 
 /**
@@ -686,7 +700,7 @@ Countly.presentFeedbackWidgetObject = async function(feedbackWidget, closeButton
 
 * @deprecated in 20.11.1 : use 'presentFeedbackWidgetObject' intead of 'presentFeedbackWidget'.
 */  
-Countly.presentFeedbackWidget = function(widgetType, widgetId, closeButtonText,){
+Countly.presentFeedbackWidget = function(widgetType, widgetId, closeButtonText){
     var feedbackWidget = {
         "id": widgetId,
         "type": widgetType
