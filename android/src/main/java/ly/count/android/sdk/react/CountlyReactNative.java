@@ -45,7 +45,9 @@ import ly.count.android.sdk.messaging.CountlyPush;
 import org.json.JSONObject;
 
 import ly.count.android.sdk.ModuleFeedback.*;
+import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.bridge.WritableNativeArray;
 import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.google.firebase.iid.FirebaseInstanceId;
@@ -72,7 +74,7 @@ class CountlyReactException extends Exception {
 public class CountlyReactNative extends ReactContextBaseJavaModule implements LifecycleEventListener {
 
     public static final String TAG = "CountlyRNPlugin";
-    private String COUNTLY_RN_SDK_VERSION_STRING = "20.11.0";
+    private String COUNTLY_RN_SDK_VERSION_STRING = "20.11.1";
     private String COUNTLY_RN_SDK_NAME = "js-rnb-android";
 
     private static CountlyConfig config = new CountlyConfig();
@@ -858,6 +860,29 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     }
 
     @ReactMethod
+    public void getFeedbackWidgets(final Promise promise)
+     {
+        Countly.sharedInstance().feedback().getAvailableFeedbackWidgets(new RetrieveFeedbackWidgets() {
+            @Override
+            public void onFinished(List<CountlyFeedbackWidget> retrievedWidgets, String error) {
+                if(error != null) {
+                    promise.reject("getFeedbackWidgets", error);
+                    return;
+                }
+                WritableArray retrievedWidgetsArray = new WritableNativeArray();
+                for (CountlyFeedbackWidget presentableFeedback : retrievedWidgets) {
+                    WritableMap feedbackWidget = new WritableNativeMap();
+                    feedbackWidget.putString("id", presentableFeedback.widgetId);
+                    feedbackWidget.putString("type", presentableFeedback.type.name());
+                    feedbackWidget.putString("name", presentableFeedback.name);
+                    retrievedWidgetsArray.pushMap(feedbackWidget);
+                }
+                promise.resolve(retrievedWidgetsArray);
+            }
+        });
+    } 
+
+    @ReactMethod
     public void getAvailableFeedbackWidgets(final Promise promise)
      {
         Countly.sharedInstance().feedback().getAvailableFeedbackWidgets(new RetrieveFeedbackWidgets() {
@@ -886,11 +911,13 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         }
         String widgetId = args.getString(0);
         String type = args.getString(1);
-        String closeBtnText = args.getString(2);
+        String name = args.getString(2);
+        String closeBtnText = args.getString(3);
 
         CountlyFeedbackWidget presentableFeedback = new CountlyFeedbackWidget();
         presentableFeedback.widgetId = widgetId;
         presentableFeedback.type = FeedbackWidgetType.valueOf(type);
+        presentableFeedback.name = name;
         Countly.sharedInstance().feedback().presentFeedbackWidget(presentableFeedback, activity, closeBtnText, new FeedbackCallback() {
             @Override
             public void onFinished(String error) {
@@ -903,6 +930,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             }
         });
     } 
+    
 
     @ReactMethod
     public void replaceAllAppKeysInQueueWithCurrentAppKey() {

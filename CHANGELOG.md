@@ -1,3 +1,12 @@
+## 20.11.1
+* Issue fixed if same type of multiple surveys/nps widgets available.
+* Added getFeedbackWidgets method to get a list of available feedback widgets as array of object to handle multiple widgets of same type.
+* Added presentFeedbackWidgetObject to show/present a feedback widget.
+* Deprecated getAvailableFeedbackWidgets method.
+* Deprecated presentFeedbackWidget method.
+* Updated underlying android SDK to 20.11.2
+* Updated underlying ios SDK to 20.11.1
+
 ## 20.11.0
 * !! Due to cocoapods issue with Xcode 12, we have created a new temporary Pod with a fix for Countly iOS SDK and named it "CounltyPod". Due to that change if you have already add the reference of files "CountlyNotificationService.h/m" then you need to update these files references by adding the files from "CountlyPod" and remove the old reference files.
 * !! Consent change !! To use remote config, you now need to give "remote-config" consent

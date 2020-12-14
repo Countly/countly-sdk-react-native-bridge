@@ -2,5 +2,5 @@ platform :ios, '8.0'
 
 target 'countly-sdk-react-native-bridge' do
   use_frameworks!
-  pod 'CountlyPod', "20.11.0"
+  pod 'CountlyPod', "20.11.1"
 end
