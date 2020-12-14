@@ -1,6 +1,6 @@
 ## 20.11.1
 * Issue fixed if same type of multiple surveys/nps widgets available.
-* Added getFeedbackWidgets method to get a list of available feedback widgets.
+* Added getFeedbackWidgets method to get a list of available feedback widgets as array of object to handle multiple widgets of same type.
 * Added presentFeedbackWidgetObject to show/present a feedback widget.
 * Deprecated getAvailableFeedbackWidgets method.
 * Deprecated presentFeedbackWidget method.

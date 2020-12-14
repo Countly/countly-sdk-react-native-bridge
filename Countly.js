@@ -639,7 +639,7 @@ Countly.showFeedbackPopup = function(widgetId, closeButtonText){
 }
 
 /**
- * Get a list of feedback widgets for this device ID
+ * Get a list of available feedback widgets as array of object to handle multiple widgets of same type.
  */
 Countly.getFeedbackWidgets = async function(){
      const result = await CountlyReactNative.getFeedbackWidgets();
@@ -648,7 +648,10 @@ Countly.getFeedbackWidgets = async function(){
 
 /**
  * Get a list of available feedback widgets for this device ID
- * * @deprecated in 20.11.1 : use 'getFeedbackWidgets' intead of 'getAvailableFeedbackWidgets'.
+ * @deprecated in 20.11.1 : use 'getFeedbackWidgets' intead of 'getAvailableFeedbackWidgets'.
+ * Using the old function it will not be possible to see all the available feedback widgets. 
+ * In case there are multiple ones for the same type, only the last one will be returned due to their id being overwritten in the type field.
+ * The newer function allow also to see the widgets 'name' field which can be further used to filter and identify specific widgets.
  */
 Countly.getAvailableFeedbackWidgets = async function(){
     const result = await CountlyReactNative.getAvailableFeedbackWidgets();
@@ -697,7 +700,6 @@ Countly.presentFeedbackWidgetObject = async function(feedbackWidget, closeButton
 * @param {String} widgetType - type of widget : "nps" or "survey"
 * @param {String} widgetId - id of widget to present
 * @param {String} closeButtonText - text for cancel/close button
-
 * @deprecated in 20.11.1 : use 'presentFeedbackWidgetObject' intead of 'presentFeedbackWidget'.
 */  
 Countly.presentFeedbackWidget = function(widgetType, widgetId, closeButtonText){
