@@ -1,8 +1,8 @@
 ## 20.11.1
-* Added getFeedbackWidgets method to get a list of available feedback widgets as array of object to handle multiple widgets of same type.
-* Added presentFeedbackWidgetObject to show/present a feedback widget.
-* Deprecated getAvailableFeedbackWidgets method. It will not be possible to see all the available feedback widgets. In case there are multiple ones for the same type, only the last one will be returned due to their id being overwritten in the type field.
-* Deprecated presentFeedbackWidget method.
+* Added "getFeedbackWidgets" method to get a list of available feedback widgets as array of object to handle multiple widgets of same type.
+* Added "presentFeedbackWidgetObject" to show/present a feedback widget with the combined widget object.
+* Deprecated "getAvailableFeedbackWidgets" method. Usinag this function it is not possible to see all the available feedback widgets. In case there are multiple ones for the same type, only the last one will be returned due to their id being overwritten in the type field.
+* Deprecated "presentFeedbackWidget" method.
 * Updated underlying android SDK to 20.11.2
 * Updated underlying ios SDK to 20.11.1
 
@@ -11,10 +11,10 @@
 * !! Consent change !! To use remote config, you now need to give "remote-config" consent
 * !! Push breaking changes !! Google play vulnerability issue fixed due to broadcast receiver for android push notification
 * Added Surveys and NPS feedback widgets
-* Added replaceAllAppKeysInQueueWithCurrentAppKey method to replace all app keys in queue with the current app key
-* Added removeDifferentAppKeysFromQueue method to remove all different app keys from the queue
-* Added setStarRatingDialogTexts method to set text's for different fields of star rating dialog
-* Added setViewTracking deprecated method back.
+* Added "replaceAllAppKeysInQueueWithCurrentAppKey" method to replace all app keys in queue with the current app key
+* Added "removeDifferentAppKeysFromQueue" method to remove all different app keys from the queue
+* Added "setStarRatingDialogTexts" method to set text's for different fields of star rating dialog
+* Added "setViewTracking" deprecated method back.
 * Example app updated with single plugin for both IDFA and App tracking permission for iOS.
 * Device id NSNull check added for iOS to fix the length on null crash.
 * Updated underlying android SDK to 20.11.0
