@@ -347,7 +347,7 @@ class Example extends Component {
               Countly.presentFeedbackWidgetObject(surveyWidget, "Close")
           }
       },(err) => {
-          console.error("[CountlyCordova] getFeedbackWidgets error : " +err);
+          console.error("showSurvey getFeedbackWidgets error : " +err);
       });
   }
 
@@ -358,7 +358,7 @@ class Example extends Component {
           Countly.presentFeedbackWidgetObject(npsWidget, "Close")
       }
   },(err) => {
-      console.error("[CountlyCordova] getFeedbackWidgets error : " +err);
+      console.error("showNPS getFeedbackWidgets error : " +err);
   });
   }
 
