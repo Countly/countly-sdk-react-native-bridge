@@ -667,19 +667,19 @@ Countly.getAvailableFeedbackWidgets = async function(){
 Countly.presentFeedbackWidgetObject = async function(feedbackWidget, closeButtonText){
     if(!feedbackWidget) {
         if(await CountlyReactNative.isLoggingEnabled()) {
-            console.error("[CountlyCordova] presentFeedbackWidgetObject, feedbackWidget should not be null or undefined");
+            console.error("[CountlyReactNative] presentFeedbackWidgetObject, feedbackWidget should not be null or undefined");
         }
         return "feedbackWidget should not be null or undefined";
     }
     if(!feedbackWidget.id) {
         if(await CountlyReactNative.isLoggingEnabled()) {
-            console.error("[CountlyCordova] presentFeedbackWidgetObject, feedbackWidget id should not be null or empty");
+            console.error("[CountlyReactNative] presentFeedbackWidgetObject, feedbackWidget id should not be null or empty");
         }
         return "FeedbackWidget id should not be null or empty";
     }
     if(!feedbackWidget.type) {
         if(await CountlyReactNative.isLoggingEnabled()) {
-            console.error("[CountlyCordova] presentFeedbackWidgetObject, feedbackWidget type should not be null or empty");
+            console.error("[CountlyReactNative] presentFeedbackWidgetObject, feedbackWidget type should not be null or empty");
         }
         return "FeedbackWidget type should not be null or empty";
     }
