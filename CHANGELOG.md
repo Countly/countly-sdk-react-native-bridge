@@ -1,3 +1,6 @@
+## 20.11.2
+* !! Due to cocoapods issue with Xcode 12, we have added the iOS SDK as source code instead of Pod. Due to that change if you have already add the reference of files "CountlyNotificationService.h/m" then you need to update these files references by adding the files from "Pods/Development Pods/CountlyReactNative" and remove the old reference files.
+
 ## 20.11.1
 * Added "getFeedbackWidgets" method to get a list of available feedback widgets as array of object to handle multiple widgets of same type.
 * Added "presentFeedbackWidgetObject" to show/present a feedback widget with the combined widget object.
