@@ -59,7 +59,10 @@ RCT_REMAP_METHOD(init,
 
   CountlyCommon.sharedInstance.SDKName = kCountlyReactNativeSDKName;
   CountlyCommon.sharedInstance.SDKVersion = kCountlyReactNativeSDKVersion;
+
+#ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
   [self addCountlyFeature:CLYPushNotifications];
+#endif
 
   if (serverurl != nil && [serverurl length] > 0) {
       dispatch_async(dispatch_get_main_queue(), ^
@@ -208,9 +211,11 @@ RCT_EXPORT_METHOD(pushTokenType:(NSArray*)arguments)
 
 RCT_EXPORT_METHOD(askForNotificationPermission:(NSArray*)arguments)
 {
+#ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
   dispatch_async(dispatch_get_main_queue(), ^ {
   [Countly.sharedInstance askForNotificationPermission];
   });
+#endif
 }
 - (void) saveListener:(Result) result{
     notificationListener = result;
