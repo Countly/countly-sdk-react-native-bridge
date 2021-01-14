@@ -68,4 +68,5 @@ typedef void (^Result)(id _Nullable result);
 - (void)enableAttribution;
 - (void)recordAttributionID:(NSArray*_Nullable)arguments;
 - (void)appLoadingFinished;
+- (void)disablePushNotifications;
 @end
