@@ -142,7 +142,7 @@ Countly.disablePushNotifications = function(){
 /**
  * 
  * Set messaging mode for push notifications
- * Should be call before Countly init
+ * Should be called before Countly init
  */
 Countly.pushTokenType = function(tokenType, channelName, channelDescription){
     var args = [];
@@ -187,7 +187,7 @@ Countly.stop = function(){
 
 /**
  * Enable countly internal debugging logs
- * Should be call before Countly init
+ * Should be called before Countly init
  * 
  * @deprecated in 20.04.6
  * 
@@ -211,7 +211,7 @@ Countly.disableLogging = function(){
 
 /**
  * Set to true if you want to enable countly internal debugging logs
- * Should be call before Countly init
+ * Should be called before Countly init
  */
 Countly.setLoggingEnabled = function(enabled = true){
     CountlyReactNative.setLoggingEnabled([enabled]);
@@ -287,7 +287,7 @@ Countly.changeDeviceId = function(newDeviceID, onServer){
 /**
  * 
  * Set to "true" if you want HTTP POST to be used for all requests
- * Should be call before Countly init
+ * Should be called before Countly init
  */
 Countly.setHttpPostForced = function(boolean = true){
     var args = [];
@@ -298,7 +298,7 @@ Countly.setHttpPostForced = function(boolean = true){
 Countly.isCrashReportingEnabled = false;
 /**
  * Enable crash reporting to report unhandled crashes to Countly
- * Should be call before Countly init
+ * Should be called before Countly init
  */
 Countly.enableCrashReporting = async function(){
     if (ErrorUtils && !Countly.isCrashReportingEnabled) {
@@ -378,7 +378,7 @@ Countly.endSession = function(){
 /**
  * 
  * Set the optional salt to be used for calculating the checksum of requested data which will be sent with each request, using the &checksum field
- * Should be call before Countly init
+ * Should be called before Countly init
  */
 Countly.enableParameterTamperingProtection = function(salt){
     CountlyReactNative.enableParameterTamperingProtection([salt.toString() || ""]);
@@ -387,7 +387,7 @@ Countly.enableParameterTamperingProtection = function(salt){
 /**
  * 
  * It will ensure that connection is made with one of the public keys specified
- * Should be call before Countly init
+ * Should be called before Countly init
  */
 Countly.pinnedCertificates = function(certificateName){
     CountlyReactNative.pinnedCertificates([certificateName || ""]);
@@ -495,7 +495,7 @@ Countly.userData.pullValue = function(keyName, keyValue){
 /**
  * 
  * Set that consent should be required for features to work.
- * Should be call before Countly init
+ * Should be called before Countly init
  */
 Countly.setRequiresConsent = function(flag){
     CountlyReactNative.setRequiresConsent([flag]);
@@ -723,7 +723,7 @@ Countly.presentFeedbackWidget = function(widgetType, widgetId, closeButtonText){
 /**
  * 
  * Events get grouped together and are sent either every minute or after the unsent event count reaches a threshold. By default it is 10
- * Should be call before Countly init
+ * Should be called before Countly init
  */
 Countly.setEventSendThreshold = function(size){
     CountlyReactNative.setEventSendThreshold([size.toString() || ""]);
@@ -772,7 +772,7 @@ Countly.recordNetworkTrace = function(networkTraceKey, responseCode, requestPayl
 /**
  * 
  * Enable APM features, which includes the recording of app start time.
- * Should be call before Countly init
+ * Should be called before Countly init
  */
 Countly.enableApm = function(){
     var args = [];
@@ -783,7 +783,7 @@ Countly.enableApm = function(){
  * 
  * Enable campaign attribution reporting to Countly.
  * For iOS use "recordAttributionID" instead of "enableAttribution"
- * Should be call before Countly init
+ * Should be called before Countly init
  */
 Countly.enableAttribution = async function(attributionID = "") {
     if (Platform.OS.match("ios")) {
