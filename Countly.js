@@ -132,7 +132,7 @@ Countly.recordView = function(recordView, segments){
 /**
  * Disable push notifications feature, by default it is enabled.
  * Currently implemented for iOS only
- * Should be call before Countly init
+ * Should be called before Countly init
  */
 Countly.disablePushNotifications = function(){
     if (!Platform.OS.match("ios")) return "disablePushNotifications : To be implemented";
