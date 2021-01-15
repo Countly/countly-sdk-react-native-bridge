@@ -159,7 +159,7 @@ Countly.sendPushToken = function(options){
 
 /**
  * This method will ask for permission, enables push notification and send push token to countly server.
- * Should be call after Countly init
+ * Should be called after Countly init
  */
 Countly.askForNotificationPermission = function(){
     CountlyReactNative.askForNotificationPermission([]);
@@ -231,7 +231,7 @@ Countly.demo = function(){
 
 /**
  * Set user initial location
- * Should be call before init
+ * Should be called before init
  * @param {ISO Country code for the user's country} countryCode 
  * @param {Name of the user's city} city 
  * @param {comma separate lat and lng values. For example, "56.42345,123.45325"} location 
@@ -261,7 +261,7 @@ Countly.disableLocation = function(){
 /** 
  * 
  * Get currently used device Id.
- * Should be call after Countly init
+ * Should be called after Countly init
  * */
 Countly.getCurrentDeviceId = async function(){
     if(!await Countly.isInitialized()) {
@@ -515,7 +515,7 @@ Countly.giveConsent = function(args){
 /**
  * 
  * Give consent for specific features before init.
- * Should be call after Countly init
+ * Should be called after Countly init
  */
 Countly.giveConsentInit = async function(args){
     var features = [];
@@ -547,7 +547,7 @@ Countly.removeConsent = function(args){
 /**
  * 
  * Give consent for all features
- * Should be call after Countly init
+ * Should be called after Countly init
  */
 Countly.giveAllConsent = function(){
     CountlyReactNative.giveAllConsent();
@@ -832,7 +832,7 @@ Countly.removeDifferentAppKeysFromQueue = function(){
 
 /**
  * Call this function when app is loaded, so that the app launch duration can be recorded.
- * Should be call after init.
+ * Should be called after init.
  */
 Countly.appLoadingFinished = async function(){
     if(!await Countly.isInitialized()) {
