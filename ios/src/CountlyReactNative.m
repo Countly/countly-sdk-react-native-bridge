@@ -21,7 +21,7 @@
 + (CountlyFeedbackWidget *)createWithDictionary:(NSDictionary *)dictionary;
 @end
 
-NSString* const kCountlyReactNativeSDKVersion = @"20.11.2";
+NSString* const kCountlyReactNativeSDKVersion = @"20.11.3";
 NSString* const kCountlyReactNativeSDKName = @"js-rnb-ios";
 
 CountlyConfig* config = nil;
@@ -29,6 +29,7 @@ NSDictionary *lastStoredNotification = nil;
 Result notificationListener = nil;
 NSMutableArray *notificationIDs = nil;        // alloc here
 NSMutableArray<CLYFeature>* countlyFeatures = nil;
+BOOL enablePushNotifications = true;
 
 @implementation CountlyReactNative
 
@@ -59,7 +60,9 @@ RCT_REMAP_METHOD(init,
 
   CountlyCommon.sharedInstance.SDKName = kCountlyReactNativeSDKName;
   CountlyCommon.sharedInstance.SDKVersion = kCountlyReactNativeSDKVersion;
-  [self addCountlyFeature:CLYPushNotifications];
+  if(enablePushNotifications) {
+    [self addCountlyFeature:CLYPushNotifications];
+  }
 
   if (serverurl != nil && [serverurl length] > 0) {
       dispatch_async(dispatch_get_main_queue(), ^
@@ -172,6 +175,12 @@ RCT_EXPORT_METHOD(setUserData:(NSArray*)arguments)
   });
 }
 
+RCT_EXPORT_METHOD(disablePushNotifications)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+    enablePushNotifications = false;
+  });
+}
 
 RCT_EXPORT_METHOD(sendPushToken:(NSArray*)arguments)
 {
