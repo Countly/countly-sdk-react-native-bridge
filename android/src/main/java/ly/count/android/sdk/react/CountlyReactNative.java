@@ -543,6 +543,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 notificationManager.createNotificationChannel(channel);
             }
         }
+        CountlyPush.useAdditionalIntentRedirectionChecks = true;
         CountlyPush.init(activity.getApplication(), messagingMode);
         FirebaseApp.initializeApp(context);
         FirebaseInstanceId.getInstance().getInstanceId()
