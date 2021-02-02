@@ -1,3 +1,8 @@
+## 20.11.4-RC2
+* Additional checks added in android for Google vulnerability issue.
+* INSTALL_REFERRER intent removed from SDK manifest file, for attribution analytics and install campaigns we recommend adding INSTALL_REFERRER intent in your application manifest file. Check documentation for more information.
+* Updated underlying android SDK to 20.11.5-RC
+
 ## 20.11.3
 * Added "disablePushNotifications" method to disable push notifications for iOS.
 * Updated underlying android SDK to 20.11.3
