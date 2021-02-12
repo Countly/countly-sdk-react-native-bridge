@@ -74,7 +74,7 @@ class CountlyReactException extends Exception {
 public class CountlyReactNative extends ReactContextBaseJavaModule implements LifecycleEventListener {
 
     public static final String TAG = "CountlyRNPlugin";
-    private String COUNTLY_RN_SDK_VERSION_STRING = "20.11.4-RC2";
+    private String COUNTLY_RN_SDK_VERSION_STRING = "20.11.4";
     private String COUNTLY_RN_SDK_NAME = "js-rnb-android";
 
     private static CountlyConfig config = new CountlyConfig();
@@ -564,8 +564,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     public void start(){
         Activity activity = this.getActivity();
         if (activity == null) {
-            log("start failed, Activity is null", LogLevel.ERROR);
-            return;
+            log("While calling 'start', Activity is null", LogLevel.WARNING);
         }
         Countly.sharedInstance().onStart(activity);
     }
