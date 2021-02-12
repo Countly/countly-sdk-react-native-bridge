@@ -562,9 +562,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
     @ReactMethod
     public void start(){
-        Activity activity = null;// this.getActivity();
+        Activity activity = this.getActivity();
         if (activity == null) {
-            log("start failed, Activity is null", LogLevel.WARNING);
+            log("While calling 'start', Activity is null", LogLevel.WARNING);
         }
         Countly.sharedInstance().onStart(activity);
     }
