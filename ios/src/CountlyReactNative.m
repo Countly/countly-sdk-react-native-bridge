@@ -21,7 +21,7 @@
 + (CountlyFeedbackWidget *)createWithDictionary:(NSDictionary *)dictionary;
 @end
 
-NSString* const kCountlyReactNativeSDKVersion = @"20.11.4";
+NSString* const kCountlyReactNativeSDKVersion = @"20.11.5";
 NSString* const kCountlyReactNativeSDKName = @"js-rnb-ios";
 
 CountlyConfig* config = nil;
@@ -44,35 +44,32 @@ RCT_REMAP_METHOD(init,
                  initWithResolver:(RCTPromiseResolveBlock)resolve
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
-  NSString* serverurl = [arguments objectAtIndex:0];
-  NSString* appkey = [arguments objectAtIndex:1];
-  NSString* deviceID = [arguments objectAtIndex:2];
+  dispatch_async(dispatch_get_main_queue(), ^ {
+    NSString* serverurl = [arguments objectAtIndex:0];
+    NSString* appkey = [arguments objectAtIndex:1];
+    NSString* deviceID = [arguments objectAtIndex:2];
 
-  if (config == nil){
-    config = CountlyConfig.new;
-  }
-  
-  if(deviceID != nil && deviceID != (NSString *)[NSNull null] && ![deviceID  isEqual: @""]){
-    config.deviceID = deviceID;
-  }
-  config.appKey = appkey;
-  config.host = serverurl;
+    if (config == nil){
+      config = CountlyConfig.new;
+    }
+    
+    if(deviceID != nil && deviceID != (NSString *)[NSNull null] && ![deviceID  isEqual: @""]){
+      config.deviceID = deviceID;
+    }
+    config.appKey = appkey;
+    config.host = serverurl;
 
-  CountlyCommon.sharedInstance.SDKName = kCountlyReactNativeSDKName;
-  CountlyCommon.sharedInstance.SDKVersion = kCountlyReactNativeSDKVersion;
-  if(enablePushNotifications) {
-    [self addCountlyFeature:CLYPushNotifications];
-  }
+    CountlyCommon.sharedInstance.SDKName = kCountlyReactNativeSDKName;
+    CountlyCommon.sharedInstance.SDKVersion = kCountlyReactNativeSDKVersion;
+    if(enablePushNotifications) {
+      [self addCountlyFeature:CLYPushNotifications];
+    }
 
-  if (serverurl != nil && [serverurl length] > 0) {
-      dispatch_async(dispatch_get_main_queue(), ^
-      {
-          [[Countly sharedInstance] startWithConfig:config];
-          
-          resolve(@"Success");
-      });
-  }
-
+    if (serverurl != nil && [serverurl length] > 0) {
+      [[Countly sharedInstance] startWithConfig:config];
+      resolve(@"Success");
+    }
+  });
 }
 
 RCT_EXPORT_METHOD(event:(NSArray*)arguments)
@@ -226,6 +223,7 @@ RCT_EXPORT_METHOD(askForNotificationPermission:(NSArray*)arguments)
 }
 RCT_EXPORT_METHOD(registerForNotification:(NSArray*)arguments)
 {
+  dispatch_async(dispatch_get_main_queue(), ^ {
     [self saveListener: ^(id  _Nullable result) {
          [self sendEventWithName:@"onCountlyPushNotification" body: [CountlyReactNative toJSON:lastStoredNotification]];
          lastStoredNotification = nil;
@@ -234,6 +232,8 @@ RCT_EXPORT_METHOD(registerForNotification:(NSArray*)arguments)
         [self sendEventWithName:@"onCountlyPushNotification" body: [CountlyReactNative toJSON:lastStoredNotification]];
         lastStoredNotification = nil;
     }
+  });
+    
 };
 
 + (void)onNotification:(NSDictionary *)notificationMessage

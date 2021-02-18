@@ -1,3 +1,6 @@
+## 20.11.5
+* iOS thread safety added to make all function calls on main thread.
+
 ## 20.11.4
 * Android session start issue fixed.
 * Updated underlying android SDK to 20.11.5
