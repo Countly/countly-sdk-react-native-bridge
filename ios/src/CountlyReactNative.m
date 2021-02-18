@@ -66,12 +66,8 @@ RCT_REMAP_METHOD(init,
     }
 
     if (serverurl != nil && [serverurl length] > 0) {
-        dispatch_async(dispatch_get_main_queue(), ^
-        {
-            [[Countly sharedInstance] startWithConfig:config];
-            
-            resolve(@"Success");
-        });
+      [[Countly sharedInstance] startWithConfig:config];
+      resolve(@"Success");
     }
   });
 }
