@@ -182,15 +182,15 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     }
     
     @ReactMethod
-    public void getCurrentDeviceId(ReadableArray args, final Callback myCallback){
+    public void getCurrentDeviceId(Promise promise){
         String deviceID = Countly.sharedInstance().getDeviceID();
         if (deviceID == null) {
             log("getCurrentDeviceId, deviceIdNotFound", LogLevel.DEBUG);
-            myCallback.invoke("deviceIdNotFound");
+            promise.resolve("deviceIdNotFound");
         }
         else {
             log("getCurrentDeviceId: " + deviceID, LogLevel.DEBUG);
-            myCallback.invoke(deviceID);
+            promise.resolve(deviceID);
         }
     }
 
