@@ -286,16 +286,18 @@ RCT_EXPORT_METHOD(stop)
   // [Countly.sharedInstance suspend];
 }
 
-RCT_EXPORT_METHOD(getCurrentDeviceId:(NSArray*)arguments callback:(RCTResponseSenderBlock)callback)
+RCT_REMAP_METHOD(getCurrentDeviceId,
+                 getCurrentDeviceIdWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   id value = [Countly.sharedInstance deviceID];
   if(value){
-    callback(@[value]);
+    resolve(value);
   }
   else{
     NSString *value = @"deviceIdNotFound";
-    callback(@[value]);
+    resolve(value);
   }
   });
 }
