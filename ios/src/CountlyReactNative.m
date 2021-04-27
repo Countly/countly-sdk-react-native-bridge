@@ -31,7 +31,11 @@ NSMutableArray *notificationIDs = nil;        // alloc here
 NSMutableArray<CLYFeature>* countlyFeatures = nil;
 BOOL enablePushNotifications = true;
 
+NSDictionary* notificationCacheDictionary = nil;
+NSInteger notificationCacheButtonIndex = 0;
+
 @implementation CountlyReactNative
+NSString* const kCountlyNotificationPersistencyKey = @"kCountlyNotificationPersistencyKey";
 
 - (NSArray<NSString *> *)supportedEvents {
     return @[@"onCountlyPushNotification"];
@@ -66,8 +70,27 @@ RCT_REMAP_METHOD(init,
     }
 
     if (serverurl != nil && [serverurl length] > 0) {
-      [[Countly sharedInstance] startWithConfig:config];
-      resolve(@"Success");
+        dispatch_async(dispatch_get_main_queue(), ^
+        {
+            [[Countly sharedInstance] startWithConfig:config];
+            
+            resolve(@"Success");
+            // NSData* readData = [NSData dataWithContentsOfURL:[CountlyReactNative storageFileURL]];
+
+            if (notificationCacheDictionary != nil)
+            {
+                // NSDictionary* readDict = [NSKeyedUnarchiver unarchiveObjectWithData:readData];
+                NSDictionary* notificationDictionary = notificationCacheDictionary;// [readDict[kCountlyNotificationPersistencyKey] mutableCopy];
+                NSInteger buttonIndex = notificationCacheButtonIndex;
+                if([notificationDictionary count] > 0) {
+                    [Countly.sharedInstance recordActionForNotification:notificationDictionary clickedButtonIndex:buttonIndex];
+                    notificationCacheDictionary = nil;
+                    notificationCacheButtonIndex = 0;
+                    // [CountlyReactNative saveToFile:NSMutableDictionary.new buttonIndex:0];
+                }
+                
+            }
+        });
     }
   });
 }
@@ -236,29 +259,6 @@ RCT_EXPORT_METHOD(registerForNotification:(NSArray*)arguments)
     
 };
 
-+ (void)onNotification:(NSDictionary *)notificationMessage
-{
-    COUNTLY_RN_LOG(@"Notification received");
-    COUNTLY_RN_LOG(@"The notification %@", [CountlyReactNative toJSON:notificationMessage]);
-    if(notificationMessage && notificationListener != nil){
-      lastStoredNotification = notificationMessage;
-      notificationListener(@[[CountlyReactNative toJSON:notificationMessage]]);
-    }else{
-      lastStoredNotification = notificationMessage;
-    }
-    if(notificationMessage){
-      if(notificationIDs == nil){
-        notificationIDs = [[NSMutableArray alloc] init];
-      }
-      if ([[notificationMessage allKeys] containsObject:@"c"]) {
-        NSDictionary* countlyPayload = notificationMessage[@"c"];
-        if ([[countlyPayload allKeys] containsObject:@"c"]) {
-          NSString *notificationID = countlyPayload[@"i"];
-          [notificationIDs insertObject:notificationID atIndex:[notificationIDs count]];
-        }
-      }
-    }
-}
 + (NSString *) toJSON: (NSDictionary  *) json{
     NSError *error;
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:json options:NSJSONWritingPrettyPrinted error:&error];
@@ -1090,5 +1090,114 @@ void CountlyRNInternalLog(NSString *format, ...)
     NSLog(@"[CountlyReactNativePlugin] %@", logString);
 
     va_end(args);
+}
+
++ (void)onNotification:(NSDictionary *)notificationMessage
+{
+    [CountlyReactNative onNotification:notificationMessage buttonIndex:0];
+}
+
++ (void)onNotification:(NSDictionary *)notificationMessage buttonIndex:(NSInteger)btnIndex
+{
+    COUNTLY_RN_LOG(@"Notification received");
+    COUNTLY_RN_LOG(@"The notification %@", [CountlyReactNative toJSON:notificationMessage]);
+    if(notificationMessage && notificationListener != nil){
+      lastStoredNotification = notificationMessage;
+      notificationListener(@[[CountlyReactNative toJSON:notificationMessage]]);
+    }else{
+      lastStoredNotification = notificationMessage;
+    }
+    if(notificationMessage){
+      if(notificationIDs == nil){
+        notificationIDs = [[NSMutableArray alloc] init];
+      }
+      if ([[notificationMessage allKeys] containsObject:@"c"]) {
+        NSDictionary* countlyPayload = notificationMessage[@"c"];
+        if ([[countlyPayload allKeys] containsObject:@"c"]) {
+          NSString *notificationID = countlyPayload[@"i"];
+          [notificationIDs insertObject:notificationID atIndex:[notificationIDs count]];
+        }
+      }
+    }
+}
+
++(void)onNotificationResponse:(UNNotificationResponse *)response
+API_AVAILABLE(ios(10.0)){
+    NSDictionary* notificationDictionary = response.notification.request.content.userInfo;
+    NSInteger buttonIndex = 0;
+    if ([response.actionIdentifier hasPrefix:kCountlyActionIdentifier])
+    {
+        buttonIndex = [[response.actionIdentifier stringByReplacingOccurrencesOfString:kCountlyActionIdentifier withString:@""] integerValue];
+    }
+    if(!CountlyCommon.sharedInstance.hasStarted) {
+      notificationCacheDictionary = notificationDictionary;
+      notificationCacheButtonIndex = buttonIndex;
+        // [CountlyReactNative saveToFile:notificationDictionary buttonIndex:buttonIndex];
+    }
+    [CountlyReactNative onNotification:notificationDictionary buttonIndex:buttonIndex];
+    
+}
++ (NSURL *)storageDirectoryURL
+{
+    static NSURL* URL = nil;
+
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^
+    {
+#if (TARGET_OS_TV)
+        NSSearchPathDirectory directory = NSCachesDirectory;
+#else
+        NSSearchPathDirectory directory = NSApplicationSupportDirectory;
+#endif
+        URL = [[NSFileManager.defaultManager URLsForDirectory:directory inDomains:NSUserDomainMask] lastObject];
+
+#if (TARGET_OS_OSX)
+        URL = [URL URLByAppendingPathComponent:NSBundle.mainBundle.bundleIdentifier];
+#endif
+        NSError *error = nil;
+
+        if (![NSFileManager.defaultManager fileExistsAtPath:URL.path])
+        {
+            [NSFileManager.defaultManager createDirectoryAtURL:URL withIntermediateDirectories:YES attributes:nil error:&error];
+            if (error)
+            {
+                COUNTLY_LOG(@"Application Support directory can not be created: \n%@", error);
+            }
+        }
+    });
+
+    return URL;
+}
+
++ (NSURL *)storageFileURL
+{
+    NSString* const kCountlyPersistencyFileName = @"CountlyBridge.dat";
+
+    static NSURL* URL = nil;
+
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^
+    {
+        URL = [[CountlyReactNative storageDirectoryURL] URLByAppendingPathComponent:kCountlyPersistencyFileName];
+    });
+
+    return URL;
+}
+
++ (void)saveToFile:(NSDictionary *)notificationMessage buttonIndex:(NSInteger)btnIndex
+{
+    NSData* saveData;
+
+    @synchronized (self)
+    {
+        saveData = [NSKeyedArchiver archivedDataWithRootObject:@{kCountlyNotificationPersistencyKey: notificationMessage}];
+        
+    }
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-variable"
+
+    BOOL writeResult = [saveData writeToFile:[CountlyReactNative storageFileURL].path atomically:YES];
+    COUNTLY_LOG(@"Result of writing data to file: %d", writeResult);
 }
 @end
