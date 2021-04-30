@@ -34,7 +34,7 @@ Pod::Spec.new do |s|
   s.author = {'Countly' => 'hello@count.ly'}
   s.source = { :git => 'https://github.com/Countly/countly-sdk-ios.git', :tag => s.version.to_s }
   s.source_files = 'ios/src/*.{h,m}'
-  s.public_header_files = 'ios/src/Countly.h', 'ios/src/CountlyUserDetails.h', 'ios/src/CountlyConfig.h'
+  s.public_header_files = 'ios/src/CountlyReactNative.h'
   s.requires_arc = true
   s.ios.deployment_target = '8.0'
   s.osx.deployment_target = '8.0'
