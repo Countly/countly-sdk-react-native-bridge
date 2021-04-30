@@ -52,6 +52,7 @@ typedef void (^Result)(id _Nullable result);
 - (void)askForNotificationPermission:(NSArray*_Nullable)arguments;
 - (void)registerForNotification:(NSArray*_Nullable)arguments;
 + (void)onNotification:(NSDictionary *_Nullable)notification;
++ (void)onNotificationResponse:(UNNotificationResponse* _Nullable)response;
 - (void)handleRemoteNotificationReceived:(NSDictionary *_Nullable)notification;
 - (void)remoteConfigClearValues:(RCTPromiseResolveBlock _Nullable )resolve rejecter:(RCTPromiseRejectBlock _Nullable )reject;
 + (NSString *_Nullable) toJSON: (NSDictionary  * _Nullable) json;
