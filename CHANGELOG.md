@@ -2,8 +2,7 @@
 * !! To handle the push notification you need to add the notifcation callback "didReceiveNotificationResponse" in your "AppDelegate.m" file and send the reponse to Countly SDK using this function "onNotificationResponse", for more detials please check the below mentioned link of "Handling push callbacks" section in Countly SDK documentation.
 https://support.count.ly/hc/en-us/articles/360037813231-React-Native-Bridge-#handling-push-callbacks
 * Push notification action issue fixed when app is closed and user tap on notification.
-* Android SDK prints logs related to network traffic usages.
-* Updated underlying android SDK to 20.11.9
+* Updated underlying android SDK to 20.11.8
 * Underlying iOS SDK version is 20.11.1
 
 ## 20.11.5
