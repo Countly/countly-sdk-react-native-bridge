@@ -22,20 +22,16 @@ Add header file
 
 Before `@end` add these method
 
--(void)userNotificationCenter:(UNUserNotificationCenter *)center didReceiveNotificationResponse:(UNNotificationResponse *)response withCompletionHandler:(void (^)(void))completionHandler{
-  NSLog(@"didReceiveNotificationResponse");
-  NSDictionary *notification = response.notification.request.content.userInfo;
-  [CountlyReactNative onNotification: notification];
+// When app is killed.
+- (void)userNotificationCenter:(UNUserNotificationCenter *)center didReceiveNotificationResponse:(UNNotificationResponse *)response withCompletionHandler:(void (^)(void))completionHandler{
+  [CountlyReactNative onNotificationResponse: response];
   completionHandler();
 }
 
-//Called when a notification is delivered to a foreground app.
--(void)userNotificationCenter:(UNUserNotificationCenter *)center willPresentNotification:(UNNotification *)notification withCompletionHandler:(void (^)(UNNotificationPresentationOptions options))completionHandler
-{
-  NSLog(@"didReceiveNotificationResponse");
-  NSDictionary *userInfo = notification.request.content.userInfo;
-  [CountlyReactNative onNotification: userInfo];
-  completionHandler(UNAuthorizationOptionSound | UNAuthorizationOptionAlert | UNAuthorizationOptionBadge);
+// When app is running.
+- (void)userNotificationCenter:(UNUserNotificationCenter *)center willPresentNotification:(UNNotification *)notification withCompletionHandler:(void (^)(UNNotificationPresentationOptions options))completionHandler{
+  [CountlyReactNative onNotification: notification.request.content.userInfo];
+  completionHandler(0);
 }
 
 
