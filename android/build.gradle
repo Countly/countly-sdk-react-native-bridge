@@ -1,5 +1,6 @@
 buildscript {
     repositories {
+        mavenCentral()
         google()
         jcenter()
     }
@@ -31,6 +32,7 @@ android {
 }
 
 repositories {
+    mavenCentral()
     google()
     maven {
         // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
@@ -44,7 +46,7 @@ repositories {
 
 dependencies {
     implementation "com.facebook.react:react-native:${safeExtGet('reactNativeVersion', '+')}"
-    implementation 'ly.count.android:sdk:20.11.5'
+    implementation 'ly.count.android:sdk:20.11.8'
 
     //if any version higher than 18.0.0 is used then it forces AndroidX
     implementation 'com.google.firebase:firebase-messaging:18.0.0'
