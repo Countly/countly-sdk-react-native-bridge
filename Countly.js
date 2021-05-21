@@ -860,6 +860,7 @@ Countly.appLoadingFinished = async function(){
 
   /**
    * Set the metrics you want to override or additional custom metrics you want to provide
+   * Should be called before Countly init
    */
   Countly.setCustomMetrics = function(customMetric){
     var args = [];

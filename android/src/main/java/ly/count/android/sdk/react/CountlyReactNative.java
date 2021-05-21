@@ -74,7 +74,7 @@ class CountlyReactException extends Exception {
 public class CountlyReactNative extends ReactContextBaseJavaModule implements LifecycleEventListener {
 
     public static final String TAG = "CountlyRNPlugin";
-    private String COUNTLY_RN_SDK_VERSION_STRING = "20.11.6";
+    private String COUNTLY_RN_SDK_VERSION_STRING = "20.11.7";
     private String COUNTLY_RN_SDK_NAME = "js-rnb-android";
 
     private static CountlyConfig config = new CountlyConfig();
@@ -1021,7 +1021,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         Map<String, String> customMetric = new HashMap<>();
         for (int i = 1, il = args.size(); i < il; i += 2) {
             try{
-                customMetric.put(args.getString(i), Integer.parseInt(args.getString(i + 1)));
+                customMetric.put(args.getString(i), args.getString(i + 1));
             }catch(Exception exception){
                 log("setCustomMetrics, could not parse metrics, skipping it. ", LogLevel.ERROR);
             }
