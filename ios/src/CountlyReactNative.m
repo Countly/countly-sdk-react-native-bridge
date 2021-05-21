@@ -1060,7 +1060,9 @@ RCT_EXPORT_METHOD(setCustomMetrics:(NSArray*)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^ {
         NSMutableDictionary *metrics = [[NSMutableDictionary alloc] init];
         for(int i=0,il=(int)arguments.count;i<il;i+=2){
+          if(i+1 < il){
             metrics[[arguments objectAtIndex:i]] = [arguments objectAtIndex:i+1];
+          }
         }
         config.customMetrics = metrics;
     });

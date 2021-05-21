@@ -1,5 +1,5 @@
 ## 20.11.7
-* Added "setCustomMetrics" method to set the metrics you want to override or additional custom metrics you want to provide
+* Added "setCustomMetrics" method to set the metrics you want to override
 
 ## 20.11.6
 * !! To handle the push notification you need to add the notifcation callback "didReceiveNotificationResponse" in your "AppDelegate.m" file and send the reponse to Countly SDK using this function "onNotificationResponse", for more detials please check the below mentioned link of "Handling push callbacks" section in Countly SDK documentation.

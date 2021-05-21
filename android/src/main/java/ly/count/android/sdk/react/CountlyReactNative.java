@@ -1021,7 +1021,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         Map<String, String> customMetric = new HashMap<>();
         for (int i = 0, il = args.size(); i < il; i += 2) {
             try{
-                customMetric.put(args.getString(i), args.getString(i + 1));
+                if(i+1 < il) {
+                    customMetric.put(args.getString(i), args.getString(i + 1));
+                }
             }catch(Exception exception){
                 log("setCustomMetrics, could not parse metrics, skipping it. ", LogLevel.ERROR);
             }
