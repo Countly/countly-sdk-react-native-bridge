@@ -433,8 +433,7 @@ class Example extends Component {
     */
   setCustomMetrics(){
     var customMetric = {
-      "_carrier": "Custom Carrier",
-      "Custom Key": "Custom Value"
+      "_carrier": "Custom Carrier"
     };
     Countly.setCustomMetrics(customMetric);
   }
