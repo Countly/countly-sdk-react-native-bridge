@@ -1015,6 +1015,19 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     public void appLoadingFinished(){
         Countly.sharedInstance().apm().setAppIsLoaded();
     }
+
+    @ReactMethod
+    public void setCustomMetrics(ReadableArray args){
+        Map<String, String> customMetric = new HashMap<>();
+        for (int i = 1, il = args.size(); i < il; i += 2) {
+            try{
+                customMetric.put(args.getString(i), Integer.parseInt(args.getString(i + 1)));
+            }catch(Exception exception){
+                log("setCustomMetrics, could not parse metrics, skipping it. ", LogLevel.ERROR);
+            }
+        }
+        this.config.setMetricOverride(customMetric);
+    }
     
     enum LogLevel {INFO, DEBUG, VERBOSE, WARNING, ERROR}
     static void log(String message, LogLevel logLevel)  {

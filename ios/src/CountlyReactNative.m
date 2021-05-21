@@ -1056,6 +1056,16 @@ RCT_EXPORT_METHOD(appLoadingFinished)
   });
 }
 
+RCT_EXPORT_METHOD(setCustomMetrics:(NSArray*)arguments) {
+    dispatch_async(dispatch_get_main_queue(), ^ {
+        NSMutableDictionary *metrics = [[NSMutableDictionary alloc] init];
+        for(int i=0,il=(int)arguments.count;i<il;i+=2){
+            metrics[[arguments objectAtIndex:i]] = [arguments objectAtIndex:i+1];
+        }
+        config.customMetrics = metrics;
+    });
+}
+
 - (void)addCountlyFeature:(CLYFeature)feature
 {
     if(countlyFeatures == nil) {

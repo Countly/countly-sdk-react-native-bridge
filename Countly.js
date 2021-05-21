@@ -23,6 +23,20 @@ if (Platform.OS.match("android")) {
     Countly.messagingMode.DEVELOPMENT = "2";
 }
 
+Countly.CLYMetricKey = {
+ "Device"           : "_device",
+ "DeviceType"       : "_device_type",
+ "OS"               : "_os",
+ "OSVersion"        : "_os_version",
+ "AppVersion"       : "_app_version",
+ "Carrier"          : "_carrier",
+ "Resolution"       : "_resolution",
+ "Density"          : "_density",
+ "Locale"           : "_locale",
+ "HasWatch"         : "_has_watch",
+ "InstalledWatchApp": "_installed_watch_app",
+};
+
 // countly initialization
 Countly.init = async function(serverUrl, appKey, deviceId){
 
@@ -843,6 +857,19 @@ Countly.appLoadingFinished = async function(){
       }
     CountlyReactNative.appLoadingFinished()
   }
+
+  /**
+   * Set the metrics you want to override or additional custom metrics you want to provide
+   */
+  Countly.setCustomMetrics = function(customMetric){
+    var args = [];
+    customMetric = customMetric || {};
+    for(var key in customMetric){
+        args.push(key.toString());
+        args.push(customMetric[key].toString());
+    }
+    CountlyReactNative.setCustomMetrics(args);
+}
 
 /*
 Countly.initNative = function(){
