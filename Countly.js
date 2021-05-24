@@ -845,7 +845,7 @@ Countly.appLoadingFinished = async function(){
   }
 
   /**
-   * Set the metrics you want to override or additional custom metrics you want to provide
+   * Set the metrics you want to override
    * Should be called before Countly init
    * @param {Object} customMetric - metric with key/value pair
    * Supported data type for customMetric values is String
