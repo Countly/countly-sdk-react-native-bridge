@@ -847,15 +847,38 @@ Countly.appLoadingFinished = async function(){
   /**
    * Set the metrics you want to override or additional custom metrics you want to provide
    * Should be called before Countly init
+   * @param {Object} customMetric - metric with key/value pair
+   * Supported data type for customMetric values is String
    */
   Countly.setCustomMetrics = function(customMetric){
-    var args = [];
-    customMetric = customMetric || {};
-    for(var key in customMetric){
-        args.push(key.toString());
-        args.push(customMetric[key].toString());
+    if(!customMetric) {
+        if(await CountlyReactNative.isLoggingEnabled()) {
+            console.error("[CountlyReactNative] setCustomMetrics, customMetric should not be null or undefined");
+        }
     }
-    CountlyReactNative.setCustomMetrics(args);
+    if(typeof customMetric !== 'object'){
+        if(await CountlyReactNative.isLoggingEnabled()) {
+            console.warn("[CountlyReactNative] setCustomMetrics, unsupported data type of customMetric '" + (typeof customMetric) + "'");
+        }
+    }
+    else {
+        var args = [];
+        customMetric = customMetric || {};
+        for(var key in customMetric){
+            
+            if (typeof customMetric[key] == "string") {
+                args.push(key.toString());
+                args.push(customMetric[key].toString());
+            }
+            else {
+                if(await CountlyReactNative.isLoggingEnabled()) {
+                    console.warn("[CountlyReactNative] setCustomMetrics, unsupported data type of value '" + (typeof customMetric[key]) + " for key " + key.toString() + "'");
+                }
+            }
+
+        }
+        CountlyReactNative.setCustomMetrics(args);
+    }
 }
 
 /*
