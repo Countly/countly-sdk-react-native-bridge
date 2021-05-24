@@ -856,7 +856,7 @@ Countly.appLoadingFinished = async function(){
             console.error("[CountlyReactNative] setCustomMetrics, customMetric should not be null or undefined");
         }
     }
-    if(typeof customMetric !== 'object'){
+    else if(typeof customMetric !== 'object'){
         if(await CountlyReactNative.isLoggingEnabled()) {
             console.warn("[CountlyReactNative] setCustomMetrics, unsupported data type of customMetric '" + (typeof customMetric) + "'");
         }
@@ -865,19 +865,19 @@ Countly.appLoadingFinished = async function(){
         var args = [];
         customMetric = customMetric || {};
         for(var key in customMetric){
-            
             if (typeof customMetric[key] == "string") {
                 args.push(key.toString());
                 args.push(customMetric[key].toString());
             }
             else {
                 if(await CountlyReactNative.isLoggingEnabled()) {
-                    console.warn("[CountlyReactNative] setCustomMetrics, unsupported data type of value '" + (typeof customMetric[key]) + " for key " + key.toString() + "'");
+                    console.warn("[CountlyReactNative] setCustomMetrics, skipping value for key '" + key.toString() + "', due to unsupported data type '" + (typeof customMetric[key]) + "'");
                 }
             }
-
         }
-        CountlyReactNative.setCustomMetrics(args);
+        if(args.length != 0) {
+            CountlyReactNative.setCustomMetrics(args);
+        }
     }
 }
 
