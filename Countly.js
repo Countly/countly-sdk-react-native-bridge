@@ -850,7 +850,7 @@ Countly.appLoadingFinished = async function(){
    * @param {Object} customMetric - metric with key/value pair
    * Supported data type for customMetric values is String
    */
-  Countly.setCustomMetrics = function(customMetric){
+  Countly.setCustomMetrics = async function(customMetric){
     if(!customMetric) {
         if(await CountlyReactNative.isLoggingEnabled()) {
             console.error("[CountlyReactNative] setCustomMetrics, customMetric should not be null or undefined");
