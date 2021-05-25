@@ -855,29 +855,29 @@ Countly.appLoadingFinished = async function(){
         if(await CountlyReactNative.isLoggingEnabled()) {
             console.error("[CountlyReactNative] setCustomMetrics, customMetric should not be null or undefined");
         }
+        return "customMetric should not be null or undefined";
     }
-    else if(typeof customMetric !== 'object'){
+    if(typeof customMetric !== 'object'){
         if(await CountlyReactNative.isLoggingEnabled()) {
             console.warn("[CountlyReactNative] setCustomMetrics, unsupported data type of customMetric '" + (typeof customMetric) + "'");
         }
+        return "Unsupported data type of customMetric '" + (typeof customMetric) + "'";
     }
-    else {
-        var args = [];
-        customMetric = customMetric || {};
-        for(var key in customMetric){
-            if (typeof customMetric[key] == "string") {
-                args.push(key.toString());
-                args.push(customMetric[key].toString());
-            }
-            else {
-                if(await CountlyReactNative.isLoggingEnabled()) {
-                    console.warn("[CountlyReactNative] setCustomMetrics, skipping value for key '" + key.toString() + "', due to unsupported data type '" + (typeof customMetric[key]) + "'");
-                }
+    var args = [];
+    customMetric = customMetric || {};
+    for(var key in customMetric){
+        if (typeof customMetric[key] == "string") {
+            args.push(key.toString());
+            args.push(customMetric[key].toString());
+        }
+        else {
+            if(await CountlyReactNative.isLoggingEnabled()) {
+                console.warn("[CountlyReactNative] setCustomMetrics, skipping value for key '" + key.toString() + "', due to unsupported data type '" + (typeof customMetric[key]) + "'");
             }
         }
-        if(args.length != 0) {
-            CountlyReactNative.setCustomMetrics(args);
-        }
+    }
+    if(args.length != 0) {
+        CountlyReactNative.setCustomMetrics(args);
     }
 }
 
