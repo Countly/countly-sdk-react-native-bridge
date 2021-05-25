@@ -431,6 +431,13 @@ class Example extends Component {
         Countly.testCrash();
     }
     */
+  setCustomMetrics(){
+    var customMetric = {
+      "_carrier": "Custom Carrier"
+    };
+    Countly.setCustomMetrics(customMetric);
+  }
+  
 
     test(){
       this.onInit();
@@ -534,6 +541,7 @@ class Example extends Component {
             < Button onPress = { this.showNPS } title = "Show NPS" color = "#00b5ad"> </Button>
             < Button onPress = { this.eventSendThreshold } title = "Set Event Threshold" color = "#00b5ad"> </Button>
             < Button onPress = { this.setCustomCrashSegments } title = "Set Custom Crash Segment" color = "#00b5ad"> </Button>
+            < Button onPress = { this.setCustomMetrics } title = "Set Custom Metrics" color = "#00b5ad"> </Button>
             <Text style={[{textAlign: 'center'}]}>Other Methods End</Text>
             <Text style={[{textAlign: 'center'}]}>.</Text>
 

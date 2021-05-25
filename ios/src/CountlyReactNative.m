@@ -21,7 +21,7 @@
 + (CountlyFeedbackWidget *)createWithDictionary:(NSDictionary *)dictionary;
 @end
 
-NSString* const kCountlyReactNativeSDKVersion = @"20.11.6";
+NSString* const kCountlyReactNativeSDKVersion = @"20.11.7";
 NSString* const kCountlyReactNativeSDKName = @"js-rnb-ios";
 
 CountlyConfig* config = nil;
@@ -1054,6 +1054,18 @@ RCT_EXPORT_METHOD(appLoadingFinished)
   dispatch_async(dispatch_get_main_queue(), ^ {
     [Countly.sharedInstance appLoadingFinished];
   });
+}
+
+RCT_EXPORT_METHOD(setCustomMetrics:(NSArray*)arguments) {
+    dispatch_async(dispatch_get_main_queue(), ^ {
+        NSMutableDictionary *metrics = [[NSMutableDictionary alloc] init];
+        for(int i=0,il=(int)arguments.count;i<il;i+=2){
+          if(i+1 < il){
+            metrics[[arguments objectAtIndex:i]] = [arguments objectAtIndex:i+1];
+          }
+        }
+        config.customMetrics = metrics;
+    });
 }
 
 - (void)addCountlyFeature:(CLYFeature)feature

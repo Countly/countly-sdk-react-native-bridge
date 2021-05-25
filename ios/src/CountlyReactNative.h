@@ -64,6 +64,7 @@ typedef void (^Result)(id _Nullable result);
 - (void)endTrace:(NSArray*_Nullable)arguments;
 - (void)recordNetworkTrace:(NSArray*_Nullable)arguments;
 - (void)enableApm:(NSArray*_Nullable)arguments;
+- (void)setCustomMetrics:(NSArray*_Nullable)arguments;
 
 - (void)enableAttribution;
 - (void)recordAttributionID:(NSArray*_Nullable)arguments;
