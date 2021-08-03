@@ -1,4 +1,5 @@
 ## 20.11.8
+* Moving a push related broadcast receiver decleration to the manifest to comply with 'PendingIntent' checks
 * Updated underlying android SDK to 20.11.9
 * Underlying iOS SDK version is 20.11.1
 
