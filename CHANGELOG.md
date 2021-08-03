@@ -1,3 +1,8 @@
+## 20.11.8
+* For android devices, moving a push related broadcast receiver decleration to the manifest to comply with 'PendingIntent' checks from the Play store
+* Updated underlying android SDK to 20.11.9
+* Underlying iOS SDK version is 20.11.1
+
 ## 20.11.7
 * Added "setCustomMetrics" method to set the metrics you want to override
 
