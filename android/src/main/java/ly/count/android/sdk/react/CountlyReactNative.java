@@ -74,7 +74,7 @@ class CountlyReactException extends Exception {
 public class CountlyReactNative extends ReactContextBaseJavaModule implements LifecycleEventListener {
 
     public static final String TAG = "CountlyRNPlugin";
-    private String COUNTLY_RN_SDK_VERSION_STRING = "20.11.8";
+    private String COUNTLY_RN_SDK_VERSION_STRING = "20.11.9";
     private String COUNTLY_RN_SDK_NAME = "js-rnb-android";
 
     private static CountlyConfig config = new CountlyConfig();
@@ -86,6 +86,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     protected static boolean loggingEnabled = false;
 
     private boolean isOnResumeBeforeInit = false;
+    private Boolean isSessionStarted_ = false;
 
     private ReactApplicationContext _reactContext;
 
@@ -562,16 +563,26 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
     @ReactMethod
     public void start(){
+        if (isSessionStarted_) {
+            log("session already started", LogLevel.INFO);
+            return;
+        }
         Activity activity = this.getActivity();
         if (activity == null) {
             log("While calling 'start', Activity is null", LogLevel.WARNING);
         }
         Countly.sharedInstance().onStart(activity);
+        isSessionStarted_ = true;
     }
 
     @ReactMethod
     public void stop(){
+        if (!isSessionStarted_) {
+            log("must call Start before Stop", LogLevel.INFO);
+            return;
+        }
         Countly.sharedInstance().onStop();
+        isSessionStarted_ = false;
     }
 
     @ReactMethod
@@ -1071,6 +1082,10 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     @Override
     public void onHostResume() {
         if(Countly.sharedInstance().isInitialized()) {
+            if (isSessionStarted_) {
+                Activity activity = getActivity();
+                Countly.sharedInstance().onStart(activity);
+            }
             Countly.sharedInstance().apm().triggerForeground();
         }
         else {
@@ -1081,6 +1096,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     @Override
     public void onHostPause() {
         if(Countly.sharedInstance().isInitialized()) {
+            if (isSessionStarted_) {
+                Countly.sharedInstance().onStop();
+            }
             Countly.sharedInstance().apm().triggerBackground();
         }
     }
