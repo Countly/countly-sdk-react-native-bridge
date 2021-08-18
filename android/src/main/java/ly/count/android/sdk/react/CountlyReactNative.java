@@ -1083,6 +1083,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     public void onHostResume() {
         if(Countly.sharedInstance().isInitialized()) {
             if (isSessionStarted_) {
+                Activity activity = getActivity();
                 Countly.sharedInstance().onStart(activity);
             }
             Countly.sharedInstance().apm().triggerForeground();
