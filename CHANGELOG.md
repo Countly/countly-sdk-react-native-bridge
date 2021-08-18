@@ -1,3 +1,9 @@
+## 20.11.9
+* Automatic crash reporting issue fixed.
+* Android background session logging issue fixed.
+* Updated underlying android SDK to 20.11.10
+* Underlying iOS SDK version is 20.11.1
+
 ## 20.11.8
 * For android devices, moving a push related broadcast receiver decleration to the manifest to comply with 'PendingIntent' checks from the Play store
 * Updated underlying android SDK to 20.11.9
