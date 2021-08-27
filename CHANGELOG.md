@@ -1,6 +1,6 @@
 ## 20.11.10
 * Error/crash stack parsing issue fixed for React-Native version >= 0.64
-* Underlying android SDK to 20.11.10
+* Underlying android SDK is 20.11.10
 * Underlying iOS SDK version is 20.11.1
 
 ## 20.11.9
