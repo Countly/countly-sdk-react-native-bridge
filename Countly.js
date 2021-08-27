@@ -4,7 +4,7 @@
  * @Countly
  */
 
-import {
+ import {
     Platform,
     NativeModules,
     NativeEventEmitter
@@ -308,31 +308,34 @@ Countly.enableCrashReporting = async function(){
         }
         var previousHandler = ErrorUtils.getGlobalHandler();
         ErrorUtils.setGlobalHandler(function (error, isFatal) {
-            var jsStackTrace = parseErrorStackLib(error);
-            var fname = jsStackTrace[0].file;
-            if (fname.startsWith("http")) {
-                var chunks = fname.split("/");
-                fname = chunks[chunks.length-1].split("?")[0];
+            let jsStackTrace = Countly.getStackTrace(error);
+            let errorTitle;
+            let stackArr;
+            if(jsStackTrace == null) {
+                errorTitle = error.name;
+                stackArr = error.stack;
             }
-            var errorTitle = `${error.name} (${jsStackTrace[0].methodName}@${fname})`;
-            const regExp = "(.*)(@?)http(s?).*/(.*)\\?(.*):(.*):(.*)";
-            const stackArr = error.stack.split("\n").map(row => {
-                row = row.trim();
-                if (!row.includes("http")) return row;
-                else {
-                    const matches = row.match(regExp);
-                    return matches && matches.length == 8 ? `${matches[1]}${matches[2]}${matches[4]}(${matches[6]}:${matches[7]})` : row;
+            else {
+                var fname = jsStackTrace[0].file;
+                if (fname.startsWith("http")) {
+                    var chunks = fname.split("/");
+                    fname = chunks[chunks.length-1].split("?")[0];
                 }
-            })
-            const stack = stackArr.join("\n");
-            if (Platform.OS.match("android")) {
-                CountlyReactNative.logJSException(errorTitle, error.message.trim(), stack);
+                errorTitle = `${error.name} (${jsStackTrace[0].methodName}@${fname})`;
+                const regExp = "(.*)(@?)http(s?).*/(.*)\\?(.*):(.*):(.*)";
+                stackArr = error.stack.split("\n").map(row => {
+                    row = row.trim();
+                    if (!row.includes("http")) return row;
+                    else {
+                        const matches = row.match(regExp);
+                        return matches && matches.length == 8 ? `${matches[1]}${matches[2]}${matches[4]}(${matches[6]}:${matches[7]})` : row;
+                    }
+                })
+                stackArr = stackArr.join("\n");
             }
-            else if (Platform.OS.match("ios")) {
-                const errMessage = `[React] ${errorTitle}: ${error.message}`;
-                const errStack = error.message + "\n" + stack;
-                CountlyReactNative.logJSException(errorTitle, errMessage, errStack);
-            }
+            
+            CountlyReactNative.logJSException(errorTitle, error.message.trim(), stackArr);
+            
             if (previousHandler) {
                 previousHandler(error, isFatal);
             }
@@ -340,6 +343,26 @@ Countly.enableCrashReporting = async function(){
     }
     Countly.isCrashReportingEnabled = true;
 }
+
+Countly.getStackTrace = (e) => {
+    let jsStackTrace = null;
+    try {
+        if (Platform.hasOwnProperty("constants")) {
+            // RN version >= 0.63
+            if (Platform.constants.reactNativeVersion.minor >= 64)
+              // RN version >= 0.64
+              jsStackTrace = parseErrorStackLib(e.stack);
+            // RN version == 0.63
+            else jsStackTrace = parseErrorStackLib(e);
+          }
+          // RN version < 0.63
+          else jsStackTrace = parseErrorStackLib(e);
+    }
+    catch (e) {
+       // console.log(e.message);
+     }
+    return jsStackTrace;
+  };
 
 Countly.addCrashLog = function(crashLog){
     CountlyReactNative.addCrashLog([crashLog]);

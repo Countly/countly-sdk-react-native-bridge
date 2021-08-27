@@ -1,3 +1,8 @@
+## 20.11.10
+* Error/crash stack parsing issue fixed for React-Native version >= 0.64
+* Updated underlying android SDK to 20.11.10
+* Underlying iOS SDK version is 20.11.1
+
 ## 20.11.9
 * Automatic crash reporting issue fixed.
 * Android background session logging issue fixed.
