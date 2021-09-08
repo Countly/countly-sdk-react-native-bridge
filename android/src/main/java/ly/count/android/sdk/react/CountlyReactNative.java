@@ -88,6 +88,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     private boolean isOnResumeBeforeInit = false;
     private Boolean isSessionStarted_ = false;
 
+    List<CountlyFeedbackWidget> retrievedWidgetList = null;
+
     private ReactApplicationContext _reactContext;
 
     private final Set<String> validConsentFeatureNames = new HashSet<String>(Arrays.asList(
@@ -880,6 +882,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                     promise.reject("getFeedbackWidgets", error);
                     return;
                 }
+                retrievedWidgetList = new ArrayList(retrievedWidgets);
                 WritableArray retrievedWidgetsArray = new WritableNativeArray();
                 for (CountlyFeedbackWidget presentableFeedback : retrievedWidgets) {
                     WritableMap feedbackWidget = new WritableNativeMap();
@@ -903,6 +906,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                     promise.reject("getAvailableFeedbackWidgets", error);
                     return;
                 }
+                retrievedWidgetList = new ArrayList(retrievedWidgets);
                 WritableMap retrievedWidgetsMap = new WritableNativeMap();
                 for (CountlyFeedbackWidget presentableFeedback : retrievedWidgets) {
                     retrievedWidgetsMap.putString(presentableFeedback.type.name(), presentableFeedback.widgetId);
@@ -921,15 +925,18 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             return;
         }
         String widgetId = args.getString(0);
-        String type = args.getString(1);
-        String name = args.getString(2);
         String closeBtnText = args.getString(3);
 
-        CountlyFeedbackWidget presentableFeedback = new CountlyFeedbackWidget();
-        presentableFeedback.widgetId = widgetId;
-        presentableFeedback.type = FeedbackWidgetType.valueOf(type);
-        presentableFeedback.name = name;
-        Countly.sharedInstance().feedback().presentFeedbackWidget(presentableFeedback, activity, closeBtnText, new FeedbackCallback() {
+        CountlyFeedbackWidget feedbackWidget = getFeedbackWidget(widgetId);
+
+        if(feedbackWidget == null) {
+            log("For WidgetId : '" + widgetId + "' no feedbackWidget is found, always call 'getFeedbackWidgets' to get updated list of feedback widget.");
+            String widgetType = args.getString(1);
+            String widgetName = args.getString(2);
+            feedbackWidget = createFeedbackWidget(widgetId, widgetType, widgetName);
+        }
+
+        Countly.sharedInstance().feedback().presentFeedbackWidget(feedbackWidget, activity, closeBtnText, new FeedbackCallback() {
             @Override
             public void onFinished(String error) {
                 if(error != null) {
@@ -941,6 +948,26 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             }
         });
     } 
+
+    CountlyFeedbackWidget getFeedbackWidget(String widgetId) {
+        if(retrievedWidgetList == null) {
+            return null;
+        }
+        for (CountlyFeedbackWidget feedbackWidget : retrievedWidgetList) {
+            if(feedbackWidget.widgetId == widgetId) {
+                return feedbackWidget;
+            }
+        }
+        return null;
+    }
+
+    CountlyFeedbackWidget createFeedbackWidget(String widgetId, String widgetType, String widgetName) {
+        CountlyFeedbackWidget feedbackWidget = new CountlyFeedbackWidget();
+        feedbackWidget.widgetId = widgetId;
+        feedbackWidget.type = FeedbackWidgetType.valueOf(widgetType);
+        feedbackWidget.name = widgetName;
+        return feedbackWidget;
+    }
     
 
     @ReactMethod
