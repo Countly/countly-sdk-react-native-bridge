@@ -930,7 +930,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         CountlyFeedbackWidget feedbackWidget = getFeedbackWidget(widgetId);
 
         if(feedbackWidget == null) {
-            log("For WidgetId : '" + widgetId + "' no feedbackWidget is found, always call 'getFeedbackWidgets' to get updated list of feedback widget.");
+            log("No feedbackWidget is found against widget id : '" + widgetId + "' , always call 'getFeedbackWidgets' to get updated list of feedback widgets.", LogLevel.WARNING);
             String widgetType = args.getString(1);
             String widgetName = args.getString(2);
             feedbackWidget = createFeedbackWidget(widgetId, widgetType, widgetName);

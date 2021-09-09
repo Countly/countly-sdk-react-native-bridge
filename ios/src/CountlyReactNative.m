@@ -906,32 +906,32 @@ RCT_EXPORT_METHOD(presentFeedbackWidget:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
         NSString* widgetId = [arguments objectAtIndex:0];
-        CountlyFeedbackWidget *feedbackWidget = [self getFeedbackWidget:widgetId];
+        CountlyFeedbackWidget* feedbackWidget = [self getFeedbackWidget:widgetId];
 
-        if(feedbackWidget == null) {
-          COUNTLY_RN_LOG(@"For WidgetId : '%@' no feedbackWidget is found, always call 'getFeedbackWidgets' to get updated list of feedback widget.", widgetId);
+        if(feedbackWidget == nil) {
+          COUNTLY_RN_LOG(@"No feedbackWidget is found against widget Id : '%@', always call 'getFeedbackWidgets' to get updated list of feedback widgets.", widgetId);
           NSString* widgetType = [arguments objectAtIndex:1];
           NSString* widgetName = [arguments objectAtIndex:2];
-          feedbackWidget = [self createFeedbackWidget:widgetId widgetType:widgetType widgetName:widgetName]
+          feedbackWidget = [self createFeedbackWidget:widgetId widgetType:widgetType widgetName:widgetName];
         }
         [feedbackWidget present];
         });
 }
 
-- (CountlyFeedbackWidget)getFeedbackWidget:(NSString*)widgetId
+- (CountlyFeedbackWidget*)getFeedbackWidget:(NSString*)widgetId
 {
   if(feedbackWidgetList == nil) {
-    return null;
+    return nil;
   }
   for (CountlyFeedbackWidget* feedbackWidget in feedbackWidgetList) {
-    if(feedbackWidget.ID = widgetId) {
+    if([feedbackWidget.ID isEqual:widgetId]) {
       return feedbackWidget;
     }
   }
-  return null;  
+  return nil;
 }
 
-- (CountlyFeedbackWidget)createFeedbackWidget:(NSString*)widgetId widgetType:(NSString *)widgetType widgetName:(NSString *)widgetName
+- (CountlyFeedbackWidget*)createFeedbackWidget:(NSString*)widgetId widgetType:(NSString *)widgetType widgetName:(NSString *)widgetName
 {
   NSMutableDictionary* feedbackWidgetsDict = [NSMutableDictionary dictionaryWithCapacity:3];
   feedbackWidgetsDict[@"_id"] = widgetId;
@@ -1200,7 +1200,7 @@ API_AVAILABLE(ios(10.0)){
             [NSFileManager.defaultManager createDirectoryAtURL:URL withIntermediateDirectories:YES attributes:nil error:&error];
             if (error)
             {
-                COUNTLY_LOG(@"Application Support directory can not be created: \n%@", error);
+                COUNTLY_RN_LOG(@"Application Support directory can not be created: \n%@", error);
             }
         }
     });
@@ -1237,6 +1237,6 @@ API_AVAILABLE(ios(10.0)){
 #pragma clang diagnostic ignored "-Wunused-variable"
 
     BOOL writeResult = [saveData writeToFile:[CountlyReactNative storageFileURL].path atomically:YES];
-    COUNTLY_LOG(@"Result of writing data to file: %d", writeResult);
+    COUNTLY_RN_LOG(@"Result of writing data to file: %d", writeResult);
 }
 @end
