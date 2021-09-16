@@ -954,7 +954,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             return null;
         }
         for (CountlyFeedbackWidget feedbackWidget : retrievedWidgetList) {
-            if(feedbackWidget.widgetId == widgetId) {
+            if(feedbackWidget.widgetId.equals(widgetId)) {
                 return feedbackWidget;
             }
         }
