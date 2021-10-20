@@ -744,6 +744,40 @@ Countly.presentFeedbackWidget = function(widgetType, widgetId, closeButtonText){
 }
 
 /**
+ * Downloads widget info and returns
+ * @param {Object} widgetInfo - feeback Widget with id, type and name
+ */
+Countly.getFeedbackWidgetData = async function(widgetInfo){
+    var args = [];
+    args.push(widgetInfo.id);
+    args.push(widgetInfo.type);
+    args.push(widgetInfo.name);
+    const result = await CountlyReactNative.getFeedbackWidgetData(args);
+    return result;
+}
+
+/**
+* Report widget info and do data validation
+* 
+* @param {Object} widgetInfo - identifies the specific widget for which the feedback is filled out
+* @param {Object} widgetData - widget data for this specific widget
+* @param {Object} widgetResult - segmentation of the filled out feedback. If this segmentation is null, it will be assumed that the survey was closed before completion and mark it appropriately
+*/  
+Countly.reportFeedbackWidgetManually = function(widgetInfo, widgetData, widgetResult){
+    var widgetInfoList = [];
+    widgetInfoList.push(widgetInfo.id);
+    widgetInfoList.push(widgetInfo.type);
+    widgetInfoList.push(widgetInfo.name);
+
+    var args = [];
+    args.push(widgetInfoList);
+    args.push(widgetData);
+    args.push(widgetResult);
+    
+    CountlyReactNative.reportFeedbackWidgetManually(args)
+}
+
+/**
  * 
  * Events get grouped together and are sent either every minute or after the unsent event count reaches a threshold. By default it is 10
  * Should be called before Countly init

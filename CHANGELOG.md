@@ -1,3 +1,8 @@
+## 21.10.0
+* Added a way to retrieve feedback widget data and manually report them
+* Underlying android SDK is 20.11.10
+* Updated underlying iOS SDK to 20.11.3
+
 ## 20.11.10
 * Error/crash stack parsing issue fixed for React-Native version >= 0.64
 * Underlying android SDK is 20.11.10

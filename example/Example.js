@@ -362,6 +362,40 @@ class Example extends Component {
   });
   }
 
+  reportNPSManually = function() {
+
+    Countly.getFeedbackWidgets().then((retrivedWidgets) => {
+      var npsWidget =  retrivedWidgets.find(x => x.type === 'nps')
+      if(npsWidget) {
+        Countly.getFeedbackWidgetData().then((retrievedWidgetData) => {
+          var segments = {
+            "rating": 3,
+            "comment": "Filled out comment"
+          };
+          Countly.reportFeedbackWidgetManually(
+            npsWidget, retrievedWidgetData, segments);
+          },(err) => {
+              console.error("reportNPSManually getFeedbackWidgetData error : " +err);
+          });
+      }
+      },(err) => {
+          console.error("reportNPSManually getFeedbackWidgets error : " +err);
+      });
+  }
+
+  reportNPS = function(chosenWidget) {
+    Countly.getFeedbackWidgetData().then((retrievedWidgetData) => {
+      var segments = {
+        "rating": 3,
+        "comment": "Filled out comment"
+      };
+      Countly.reportFeedbackWidgetManually(
+          chosenWidget, retrievedWidgetData, segments);
+      },(err) => {
+          console.error("reportNPSManually getFeedbackWidgetData error : " +err);
+      });
+  }
+
     addCrashLog(){
       Countly.addCrashLog("My crash log in string.");
     };
@@ -539,6 +573,8 @@ class Example extends Component {
             < Button onPress = { this.showFeedbackPopup } title = "Show FeedBack Model" color = "#00b5ad"> </Button>
             < Button onPress = { this.showSurvey } title = "Show Survey" color = "#00b5ad"> </Button>
             < Button onPress = { this.showNPS } title = "Show NPS" color = "#00b5ad"> </Button>
+            < Button onPress = { this.reportNPSManually } title = "Report NPS Manually" color = "#00b5ad"> </Button>
+            
             < Button onPress = { this.eventSendThreshold } title = "Set Event Threshold" color = "#00b5ad"> </Button>
             < Button onPress = { this.setCustomCrashSegments } title = "Set Custom Crash Segment" color = "#00b5ad"> </Button>
             < Button onPress = { this.setCustomMetrics } title = "Set Custom Metrics" color = "#00b5ad"> </Button>

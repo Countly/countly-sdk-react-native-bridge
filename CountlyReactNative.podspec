@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name = 'CountlyReactNative'
-  s.version = '20.11.10'
+  s.version = '21.10.0'
   s.license = {
     :type => 'COMMUNITY',
     :text => <<-LICENSE
@@ -36,7 +36,7 @@ Pod::Spec.new do |s|
   s.source_files = 'ios/src/*.{h,m}'
   s.public_header_files = 'ios/src/CountlyReactNative.h'
   s.requires_arc = true
-  s.ios.deployment_target = '8.0'
+  s.ios.deployment_target = '10.0'
   s.osx.deployment_target = '8.0'
   s.watchos.deployment_target = '2.0'
   s.tvos.deployment_target = '9.0'

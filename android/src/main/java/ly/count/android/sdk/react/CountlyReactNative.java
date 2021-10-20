@@ -42,7 +42,13 @@ import ly.count.android.sdk.StarRatingCallback;
 import ly.count.android.sdk.messaging.CountlyPush;
 
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
+
+import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.ReadableType;
+import java.util.Iterator;
 
 import ly.count.android.sdk.ModuleFeedback.*;
 import com.facebook.react.bridge.WritableArray;
@@ -74,7 +80,7 @@ class CountlyReactException extends Exception {
 public class CountlyReactNative extends ReactContextBaseJavaModule implements LifecycleEventListener {
 
     public static final String TAG = "CountlyRNPlugin";
-    private String COUNTLY_RN_SDK_VERSION_STRING = "20.11.10";
+    private String COUNTLY_RN_SDK_VERSION_STRING = "21.10.0";
     private String COUNTLY_RN_SDK_NAME = "js-rnb-android";
 
     private static CountlyConfig config = new CountlyConfig();
@@ -921,15 +927,15 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             return;
         }
         String widgetId = args.getString(0);
-        String type = args.getString(1);
-        String name = args.getString(2);
+        String widgetType = args.getString(1);
+        String widgetName = args.getString(2);
+            
         String closeBtnText = args.getString(3);
 
-        CountlyFeedbackWidget presentableFeedback = new CountlyFeedbackWidget();
-        presentableFeedback.widgetId = widgetId;
-        presentableFeedback.type = FeedbackWidgetType.valueOf(type);
-        presentableFeedback.name = name;
-        Countly.sharedInstance().feedback().presentFeedbackWidget(presentableFeedback, activity, closeBtnText, new FeedbackCallback() {
+        CountlyFeedbackWidget feedbackWidget = getFeedbackWidget(widgetId, widgetType, widgetName);
+
+
+        Countly.sharedInstance().feedback().presentFeedbackWidget(feedbackWidget, activity, closeBtnText, new FeedbackCallback() {
             @Override
             public void onFinished(String error) {
                 if(error != null) {
@@ -940,7 +946,88 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 }
             }
         });
-    } 
+    }
+
+    @ReactMethod
+    public void getFeedbackWidgetData(ReadableArray args, final Promise promise) {
+        String widgetId = args.getString(0);
+        String widgetType = args.getString(1);
+        String widgetName = args.getString(2);
+            
+        CountlyFeedbackWidget feedbackWidget = getFeedbackWidget(widgetId, widgetType, widgetName);
+
+        Countly.sharedInstance().feedback().getFeedbackWidgetData(feedbackWidget, new RetrieveFeedbackWidgetData() {
+            @Override
+            public void onFinished(JSONObject retrievedWidgetData, String error) {
+                if (error != null) {
+                    promise.reject("getFeedbackWidgetData", error);
+                } else {
+                    try {
+                        promise.resolve(toWriteableMap(retrievedWidgetData));
+                    } catch (JSONException e) {
+                        promise.reject("getFeedbackWidgetData", e.getMessage());
+                    }
+                }
+            }
+        });
+    }
+
+    @ReactMethod
+    public void reportFeedbackWidgetManually(ReadableArray args, final Promise promise) {
+        try {
+            
+            ReadableArray widgetInfo = args.getArray(0);
+            ReadableMap widgetDataReadableMap = args.getMap(1);
+            JSONObject widgetData = toJSONObject(widgetDataReadableMap);
+            ReadableMap widgetResult = args.getMap(2);
+            Map<String, Object> widgetResultMap = null;
+            if (widgetResult != null) {
+                widgetResultMap = toMap(widgetResult);
+            }
+
+            String widgetId = widgetInfo.getString(0);
+            String widgetType = widgetInfo.getString(1);
+            String widgetName = widgetInfo.getString(2);
+
+            CountlyFeedbackWidget feedbackWidget = getFeedbackWidget(widgetId, widgetType, widgetName);
+
+            Countly.sharedInstance().feedback().reportFeedbackWidgetManually(feedbackWidget, widgetData, widgetResultMap);
+            promise.resolve("reportFeedbackWidgetManually success");
+        } catch (JSONException e) {
+            promise.reject("getFeedbackWidgetData", e.getMessage());
+        }
+
+        
+    }
+
+    CountlyFeedbackWidget getFeedbackWidget(String widgetId, String widgetType, String widgetName) {
+        CountlyFeedbackWidget feedbackWidget = getFeedbackWidget(widgetId);
+        if(feedbackWidget == null) {
+            log("No feedbackWidget is found against widget id : '" + widgetId + "' , always call 'getFeedbackWidgets' to get updated list of feedback widgets.", LogLevel.WARNING);
+            feedbackWidget = createFeedbackWidget(widgetId, widgetType, widgetName);
+        }
+        return  feedbackWidget;
+    }
+
+    CountlyFeedbackWidget getFeedbackWidget(String widgetId) {
+        if(retrievedWidgetList == null) {
+            return null;
+        }
+        for (CountlyFeedbackWidget feedbackWidget : retrievedWidgetList) {
+            if(feedbackWidget.widgetId.equals(widgetId)) {
+                return feedbackWidget;
+            }
+        }
+        return null;
+    }
+
+    CountlyFeedbackWidget createFeedbackWidget(String widgetId, String widgetType, String widgetName) {
+        CountlyFeedbackWidget feedbackWidget = new CountlyFeedbackWidget();
+        feedbackWidget.widgetId = widgetId;
+        feedbackWidget.type = FeedbackWidgetType.valueOf(widgetType);
+        feedbackWidget.name = widgetName;
+        return feedbackWidget;
+    }
     
 
     @ReactMethod
@@ -1107,5 +1194,161 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     public void onHostDestroy() {
 
     }
+
+    private static WritableMap toWriteableMap(JSONObject jsonObject) throws JSONException {
+        WritableMap map = new WritableNativeMap();
+    
+        Iterator<String> iterator = jsonObject.keys();
+        while (iterator.hasNext()) {
+            String key = iterator.next();
+            Object value = jsonObject.get(key);
+            if (value instanceof JSONObject) {
+                map.putMap(key, toWriteableMap((JSONObject) value));
+            } else if (value instanceof  JSONArray) {
+                map.putArray(key, toWriteableArray((JSONArray) value));
+            } else if (value instanceof  Boolean) {
+                map.putBoolean(key, (Boolean) value);
+            } else if (value instanceof  Integer) {
+                map.putInt(key, (Integer) value);
+            } else if (value instanceof  Double) {
+                map.putDouble(key, (Double) value);
+            } else if (value instanceof String)  {
+                map.putString(key, (String) value);
+            } else {
+                map.putString(key, value.toString());
+            }
+        }
+        return map;
+    }
+    
+    private static WritableArray toWriteableArray(JSONArray jsonArray) throws JSONException {
+        WritableArray array = new WritableNativeArray();
+    
+        for (int i = 0; i < jsonArray.length(); i++) {
+            Object value = jsonArray.get(i);
+            if (value instanceof JSONObject) {
+                array.pushMap(toWriteableMap((JSONObject) value));
+            } else if (value instanceof  JSONArray) {
+                array.pushArray(toWriteableArray((JSONArray) value));
+            } else if (value instanceof  Boolean) {
+                array.pushBoolean((Boolean) value);
+            } else if (value instanceof  Integer) {
+                array.pushInt((Integer) value);
+            } else if (value instanceof  Double) {
+                array.pushDouble((Double) value);
+            } else if (value instanceof String)  {
+                array.pushString((String) value);
+            } else {
+                array.pushString(value.toString());
+            }
+        }
+        return array;
+    }
+
+    public static Map<String, Object> toMap(JSONObject jsonobj) throws JSONException {
+        Map<String, Object> map = new HashMap<String, Object>();
+        Iterator<String> keys = jsonobj.keys();
+        while (keys.hasNext()) {
+            String key = keys.next();
+            Object value = jsonobj.get(key);
+            if (value instanceof JSONArray) {
+                value = toList((JSONArray) value);
+            } else if (value instanceof JSONObject) {
+                value = toMap((JSONObject) value);
+            }
+            map.put(key, value);
+        }
+        return map;
+    }
+
+    public static List<Object> toList(JSONArray array) throws JSONException {
+        List<Object> list = new ArrayList<Object>();
+        for (int i = 0; i < array.length(); i++) {
+            Object value = array.get(i);
+            if (value instanceof JSONArray) {
+                value = toList((JSONArray) value);
+            } else if (value instanceof JSONObject) {
+                value = toMap((JSONObject) value);
+            }
+            list.add(value);
+        }
+        return list;
+    }
+
+    public static Map<String, Object> toMap(ReadableMap readableMap) throws JSONException {
+        JSONObject widgetResultJsonObject = toJSONObject(readableMap);
+        return toMap(widgetResultJsonObject);
+    }
+
+    public static JSONArray toJSONArray(ReadableArray readableArray) throws JSONException {
+        JSONArray jsonArray = new JSONArray();
+    
+        for (int i = 0; i < readableArray.size(); i++) {
+          ReadableType type = readableArray.getType(i);
+    
+          switch (type) {
+            case Null:
+              jsonArray.put(i, null);
+              break;
+            case Boolean:
+              jsonArray.put(i, readableArray.getBoolean(i));
+              break;
+            case Number:
+              jsonArray.put(i, readableArray.getDouble(i));
+              break;
+            case String:
+              jsonArray.put(i, readableArray.getString(i));
+              break;
+            case Map:
+              jsonArray.put(i, toJSONObject(readableArray.getMap(i)));
+              break;
+            case Array:
+              jsonArray.put(i, toJSONArray(readableArray.getArray(i)));
+              break;
+          }
+        }
+    
+        return jsonArray;
+      }
+
+      public static JSONObject toJSONObject(ReadableMap readableMap) throws JSONException {
+        JSONObject jsonObject = new JSONObject();
+    
+        ReadableMapKeySetIterator iterator = readableMap.keySetIterator();
+    
+        while (iterator.hasNextKey()) {
+          String key = iterator.nextKey();
+          ReadableType type = readableMap.getType(key);
+    
+          switch (type) {
+            case Null:
+              jsonObject.put(key, null);
+              break;
+            case Boolean:
+              jsonObject.put(key, readableMap.getBoolean(key));
+              break;
+            case Number:
+            Double doubleValue = readableMap.getDouble(key);
+            if(doubleValue % 1 == 0) {
+                jsonObject.put(key, doubleValue.intValue());
+            }
+            else {
+                jsonObject.put(key, doubleValue);
+            }
+              break;
+            case String:
+              jsonObject.put(key, readableMap.getString(key));
+              break;
+            case Map:
+              jsonObject.put(key, toJSONObject(readableMap.getMap(key)));
+              break;
+            case Array:
+              jsonObject.put(key, toJSONArray(readableMap.getArray(key)));
+              break;
+          }
+        }
+    
+        return jsonObject;
+      }
 
 }

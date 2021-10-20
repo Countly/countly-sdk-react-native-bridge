@@ -21,7 +21,7 @@
 + (CountlyFeedbackWidget *)createWithDictionary:(NSDictionary *)dictionary;
 @end
 
-NSString* const kCountlyReactNativeSDKVersion = @"20.11.10";
+NSString* const kCountlyReactNativeSDKVersion = @"21.10.0";
 NSString* const kCountlyReactNativeSDKName = @"js-rnb-ios";
 
 CountlyConfig* config = nil;
@@ -912,6 +912,78 @@ RCT_EXPORT_METHOD(presentFeedbackWidget:(NSArray*)arguments)
             CountlyFeedbackWidget *feedback = [CountlyFeedbackWidget createWithDictionary:feedbackWidgetsDict];
             [feedback present];
         });
+}
+
+RCT_REMAP_METHOD(getFeedbackWidgetData,
+                 params: (NSArray*)arguments
+                 getFeedbackWidgetDataWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
+{
+    dispatch_async(dispatch_get_main_queue(), ^ {
+    NSString* widgetId = [arguments objectAtIndex:0];
+    NSString* widgetType = [arguments objectAtIndex:1];
+    NSString* widgetName = [arguments objectAtIndex:2];
+    CountlyFeedbackWidget* feedbackWidget = [self getFeedbackWidget:widgetId widgetType:widgetType widgetName:widgetName];
+
+        [feedbackWidget getWidgetData:^(NSDictionary * _Nullable widgetData, NSError * _Nullable error) {
+            if (error){
+                reject(@"getFeedbackWidgetData", @"getFeedbackWidgetData failed", error);
+            }
+            else{
+                resolve(widgetData);
+            }
+        }];
+    });
+}
+RCT_EXPORT_METHOD(reportFeedbackWidgetManually:(NSArray*)arguments)
+{
+    dispatch_async(dispatch_get_main_queue(), ^ {
+    NSArray* widgetInfo = [arguments objectAtIndex:0];
+//        NSDictionary* widgetData = [arguments objectAtIndex:1];
+    NSDictionary* widgetResult = [arguments objectAtIndex:2];
+        
+    NSString* widgetId = [widgetInfo objectAtIndex:0];
+    NSString* widgetType = [widgetInfo objectAtIndex:1];
+    NSString* widgetName = [widgetInfo objectAtIndex:2];
+        
+    CountlyFeedbackWidget* feedbackWidget = [self getFeedbackWidget:widgetId widgetType:widgetType widgetName:widgetName];
+
+    [feedbackWidget recordResult:widgetResult];
+    });
+}
+
+- (CountlyFeedbackWidget*)getFeedbackWidget:(NSString*)widgetId widgetType:(NSString *)widgetType widgetName:(NSString *)widgetName
+{
+    CountlyFeedbackWidget* feedbackWidget = [self getFeedbackWidget:widgetId];
+
+    if(feedbackWidget == nil) {
+        COUNTLY_RN_LOG(@"No feedbackWidget is found against widget Id : '%@', always call 'getFeedbackWidgets' to get updated list of feedback widgets.", widgetId);
+      feedbackWidget = [self createFeedbackWidget:widgetId widgetType:widgetType widgetName:widgetName];
+    }
+    return feedbackWidget;
+}
+
+- (CountlyFeedbackWidget*)getFeedbackWidget:(NSString*)widgetId
+{
+  if(feedbackWidgetList == nil) {
+    return nil;
+  }
+  for (CountlyFeedbackWidget* feedbackWidget in feedbackWidgetList) {
+    if([feedbackWidget.ID isEqual:widgetId]) {
+      return feedbackWidget;
+    }
+  }
+  return nil;
+}
+
+- (CountlyFeedbackWidget*)createFeedbackWidget:(NSString*)widgetId widgetType:(NSString *)widgetType widgetName:(NSString *)widgetName
+{
+  NSMutableDictionary* feedbackWidgetsDict = [NSMutableDictionary dictionaryWithCapacity:3];
+  feedbackWidgetsDict[@"_id"] = widgetId;
+  feedbackWidgetsDict[@"type"] = widgetType;
+  feedbackWidgetsDict[@"name"] = widgetName;
+  CountlyFeedbackWidget *feedbackWidget = [CountlyFeedbackWidget createWithDictionary:feedbackWidgetsDict];
+  return feedbackWidget;  
 }
 
 RCT_EXPORT_METHOD(replaceAllAppKeysInQueueWithCurrentAppKey)
