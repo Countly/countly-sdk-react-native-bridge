@@ -300,7 +300,7 @@ Countly.isCrashReportingEnabled = false;
  * Enable crash reporting to report unhandled crashes to Countly
  * Should be called before Countly init
  */
-Countly.enableCrashReporting = async function(){
+ Countly.enableCrashReporting = async function(){
     CountlyReactNative.enableCrashReporting();
     if (ErrorUtils && !Countly.isCrashReportingEnabled) {
         if(await CountlyReactNative.isLoggingEnabled()) {
@@ -309,31 +309,27 @@ Countly.enableCrashReporting = async function(){
         var previousHandler = ErrorUtils.getGlobalHandler();
         ErrorUtils.setGlobalHandler(function (error, isFatal) {
             let jsStackTrace = Countly.getStackTrace(error);
-            let errorTitle;
+            let errorTitle = error.name;
             let stackArr;
-            if(jsStackTrace == null) {
-                errorTitle = error.name;
-                stackArr = error.stack;
-            }
-            else {
+            if(jsStackTrace != null) {
                 var fname = jsStackTrace[0].file;
                 if (fname.startsWith("http")) {
                     var chunks = fname.split("/");
                     fname = chunks[chunks.length-1].split("?")[0];
                 }
                 errorTitle = `${error.name} (${jsStackTrace[0].methodName}@${fname})`;
-                const regExp = "(.*)(@?)http(s?).*/(.*)\\?(.*):(.*):(.*)";
-                stackArr = error.stack.split("\n").map(row => {
-                    row = row.trim();
-                    if (!row.includes("http")) return row;
-                    else {
-                        const matches = row.match(regExp);
-                        return matches && matches.length == 8 ? `${matches[1]}${matches[2]}${matches[4]}(${matches[6]}:${matches[7]})` : row;
-                    }
-                })
-                stackArr = stackArr.join("\n");
-            }
-            
+            } 
+            const regExp = "(.*)(@?)http(s?).*/(.*)\\?(.*):(.*):(.*)";
+            stackArr = error.stack.split("\n").map(row => {
+                row = row.trim();
+                if (!row.includes("http")) return row;
+                else {
+                    const matches = row.match(regExp);
+                    return matches && matches.length == 8 ? `${matches[1]}${matches[2]}${matches[4]}(${matches[6]}:${matches[7]})` : row;
+                }
+            })
+            stackArr = stackArr.join("\n");
+
             CountlyReactNative.logJSException(errorTitle, error.message.trim(), stackArr);
             
             if (previousHandler) {
@@ -696,8 +692,24 @@ Countly.getAvailableFeedbackWidgets = async function(){
  * 
  * @param {Object} feedbackWidget - feeback Widget with id, type and name
  * @param {String} closeButtonText - text for cancel/close button
+ * @param { callback listner } appearCallback
+ * @param { callback listner } dismissCallback
  */  
-Countly.presentFeedbackWidgetObject = async function(feedbackWidget, closeButtonText){
+Countly.presentFeedbackWidgetObject = async function(feedbackWidget, closeButtonText, appearCallback, dismissCallback){
+
+    eventEmitter.addListener('appearCallback', appearCallback);
+    eventEmitter.addListener('dismissCallback', dismissCallback);
+    // eventEmitter.addListener('appearCallback', (event) => {
+    //     console.log("appearCallback");
+    //     eventEmitter.emit("appearWidgetCallback", {});
+    //  }
+    //  );
+
+    //  eventEmitter.addListener('dismissCallback', (event) => {{
+    //     console.log("dismissCallback");
+    //     eventEmitter.emit("dismissWidgetCallback", {});
+    //  }
+    //  );
     if(!feedbackWidget) {
         if(await CountlyReactNative.isLoggingEnabled()) {
             console.error("[CountlyReactNative] presentFeedbackWidgetObject, feedbackWidget should not be null or undefined");

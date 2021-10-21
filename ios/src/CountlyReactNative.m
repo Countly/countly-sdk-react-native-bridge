@@ -34,11 +34,13 @@ BOOL enablePushNotifications = true;
 NSDictionary* notificationCacheDictionary = nil;
 NSInteger notificationCacheButtonIndex = 0;
 
+NSArray<CountlyFeedbackWidget*>* feedbackWidgetList = nil;
+
 @implementation CountlyReactNative
 NSString* const kCountlyNotificationPersistencyKey = @"kCountlyNotificationPersistencyKey";
 
 - (NSArray<NSString *> *)supportedEvents {
-    return @[@"onCountlyPushNotification"];
+    return @[@"onCountlyPushNotification", @"appearCallback", @"dismissCallback"];
 }
 
 RCT_EXPORT_MODULE();
@@ -870,6 +872,7 @@ RCT_REMAP_METHOD(getFeedbackWidgets,
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
     [Countly.sharedInstance getFeedbackWidgets:^(NSArray<CountlyFeedbackWidget *> * _Nonnull feedbackWidgets, NSError * _Nonnull error) {
+      feedbackWidgetList = [NSArray arrayWithArray:feedbackWidgets];
       NSMutableArray* feedbackWidgetsArray = [NSMutableArray arrayWithCapacity:feedbackWidgets.count];
       for (CountlyFeedbackWidget* retrievedWidget in feedbackWidgets) {
           NSMutableDictionary* feedbackWidget = [NSMutableDictionary dictionaryWithCapacity:3];
@@ -889,6 +892,7 @@ RCT_REMAP_METHOD(getAvailableFeedbackWidgets,
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
     [Countly.sharedInstance getFeedbackWidgets:^(NSArray<CountlyFeedbackWidget *> * _Nonnull feedbackWidgets, NSError * _Nonnull error) {
+      feedbackWidgetList = [NSArray arrayWithArray:feedbackWidgets];
       NSMutableDictionary* feedbackWidgetsDict = [NSMutableDictionary dictionaryWithCapacity:feedbackWidgets.count];
       for (CountlyFeedbackWidget* feedbackWidget in feedbackWidgets) {
         feedbackWidgetsDict[feedbackWidget.type] = feedbackWidget.ID;
@@ -904,13 +908,12 @@ RCT_EXPORT_METHOD(presentFeedbackWidget:(NSArray*)arguments)
         NSString* widgetId = [arguments objectAtIndex:0];
         NSString* widgetType = [arguments objectAtIndex:1];
         NSString* widgetName = [arguments objectAtIndex:2];
-            NSMutableDictionary* feedbackWidgetsDict = [NSMutableDictionary dictionaryWithCapacity:3];
-            
-            feedbackWidgetsDict[@"_id"] = widgetId;
-            feedbackWidgetsDict[@"type"] = widgetType;
-            feedbackWidgetsDict[@"name"] = widgetName;
-            CountlyFeedbackWidget *feedback = [CountlyFeedbackWidget createWithDictionary:feedbackWidgetsDict];
-            [feedback present];
+        CountlyFeedbackWidget* feedbackWidget = [self getFeedbackWidget:widgetId widgetType:widgetType widgetName:widgetName];
+        [feedbackWidget presentWithAppearBlock:^{
+            [self sendEventWithName:@"appearCallback" body: NULL];
+        } andDismissBlock:^{
+            [self sendEventWithName:@"dismissCallback" body: NULL];
+        }];
         });
 }
 
@@ -1245,7 +1248,7 @@ API_AVAILABLE(ios(10.0)){
             [NSFileManager.defaultManager createDirectoryAtURL:URL withIntermediateDirectories:YES attributes:nil error:&error];
             if (error)
             {
-                COUNTLY_LOG(@"Application Support directory can not be created: \n%@", error);
+                COUNTLY_RN_LOG(@"Application Support directory can not be created: \n%@", error);
             }
         }
     });
@@ -1282,6 +1285,6 @@ API_AVAILABLE(ios(10.0)){
 #pragma clang diagnostic ignored "-Wunused-variable"
 
     BOOL writeResult = [saveData writeToFile:[CountlyReactNative storageFileURL].path atomically:YES];
-    COUNTLY_LOG(@"Result of writing data to file: %d", writeResult);
+    COUNTLY_RN_LOG(@"Result of writing data to file: %d", writeResult);
 }
 @end

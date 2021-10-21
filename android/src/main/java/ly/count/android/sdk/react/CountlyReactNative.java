@@ -94,6 +94,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     private boolean isOnResumeBeforeInit = false;
     private Boolean isSessionStarted_ = false;
 
+    List<CountlyFeedbackWidget> retrievedWidgetList = null;
+
     private ReactApplicationContext _reactContext;
 
     private final Set<String> validConsentFeatureNames = new HashSet<String>(Arrays.asList(
@@ -886,6 +888,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                     promise.reject("getFeedbackWidgets", error);
                     return;
                 }
+                retrievedWidgetList = new ArrayList(retrievedWidgets);
                 WritableArray retrievedWidgetsArray = new WritableNativeArray();
                 for (CountlyFeedbackWidget presentableFeedback : retrievedWidgets) {
                     WritableMap feedbackWidget = new WritableNativeMap();
@@ -909,6 +912,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                     promise.reject("getAvailableFeedbackWidgets", error);
                     return;
                 }
+                retrievedWidgetList = new ArrayList(retrievedWidgets);
                 WritableMap retrievedWidgetsMap = new WritableNativeMap();
                 for (CountlyFeedbackWidget presentableFeedback : retrievedWidgets) {
                     retrievedWidgetsMap.putString(presentableFeedback.type.name(), presentableFeedback.widgetId);
@@ -934,7 +938,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
         CountlyFeedbackWidget feedbackWidget = getFeedbackWidget(widgetId, widgetType, widgetName);
 
-
+        final Context context = this._reactContext;
+        
         Countly.sharedInstance().feedback().presentFeedbackWidget(feedbackWidget, activity, closeBtnText, new FeedbackCallback() {
             @Override
             public void onFinished(String error) {
@@ -942,6 +947,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                     promise.reject("presentFeedbackWidget", error);
                 }
                 else {
+                    ((ReactApplicationContext) context)
+                        .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                        .emit("appearCallback", "");
                     promise.resolve("presentFeedbackWidget success");
                 }
             }
