@@ -35,6 +35,8 @@ class Example extends Component {
         this.recordNetworkTraceFailure = this.recordNetworkTraceFailure.bind(this);
         this.random = this.random.bind(this);
         this.setCustomCrashSegments = this.setCustomCrashSegments.bind(this);
+
+        this.reportSurveyManually = this.reportSurveyManually.bind(this);
     };
 
     componentDidMount(){
@@ -344,7 +346,13 @@ class Example extends Component {
       Countly.getFeedbackWidgets().then((retrivedWidgets) => {
           var surveyWidget =  retrivedWidgets.find(x => x.type === 'survey')
           if(surveyWidget) {
-              Countly.presentFeedbackWidgetObject(surveyWidget, "Close")
+              Countly.presentFeedbackWidgetObject(surveyWidget, "Close", function(event){
+              console.log("appearWidgetCallback");
+              },
+              function(event){
+                console.log("dismissWidgetCallback");
+                },
+              )
           }
       },(err) => {
           console.error("showSurvey getFeedbackWidgets error : " +err);
@@ -363,38 +371,88 @@ class Example extends Component {
   }
 
   reportNPSManually = function() {
-
     Countly.getFeedbackWidgets().then((retrivedWidgets) => {
       var npsWidget =  retrivedWidgets.find(x => x.type === 'nps')
       if(npsWidget) {
-        Countly.getFeedbackWidgetData().then((retrievedWidgetData) => {
-          var segments = {
-            "rating": 3,
-            "comment": "Filled out comment"
-          };
-          Countly.reportFeedbackWidgetManually(
-            npsWidget, retrievedWidgetData, segments);
-          },(err) => {
-              console.error("reportNPSManually getFeedbackWidgetData error : " +err);
-          });
+          Countly.getFeedbackWidgetData(npsWidget).then((retrievedWidgetData) => {
+                var segments = {
+                  "rating": 3,
+                  "comment": "Filled out comment"
+                };
+                Countly.reportFeedbackWidgetManually(
+                    npsWidget, retrievedWidgetData, segments);
+                },(err) => {
+                    console.error("reportNPSManually getFeedbackWidgetData error : " +err);
+                });
       }
       },(err) => {
           console.error("reportNPSManually getFeedbackWidgets error : " +err);
       });
   }
 
-  reportNPS = function(chosenWidget) {
-    Countly.getFeedbackWidgetData().then((retrievedWidgetData) => {
-      var segments = {
-        "rating": 3,
-        "comment": "Filled out comment"
-      };
-      Countly.reportFeedbackWidgetManually(
-          chosenWidget, retrievedWidgetData, segments);
+  reportSurveyManually = function() {
+
+    Countly.getFeedbackWidgets().then((retrivedWidgets) => {
+      var surveyWidget =  retrivedWidgets.find(x => x.type === 'survey')
+      if(surveyWidget) {
+        Countly.getFeedbackWidgetData(surveyWidget).then((retrievedWidgetData) => {
+      var segments = {};
+      if (retrievedWidgetData != null) {
+        var questions = retrievedWidgetData.questions;
+
+        if (questions != null) {
+          //iterate over all questions and set random answers
+          for (var a = 0; a < questions.length; a++) {
+            var question = questions[a];
+            var wType = question.type;
+            var questionId = question.id;
+            var answerKey = 'answ-' + questionId;
+            switch (wType) {
+            //multiple answer question
+              case 'multi':
+                var choices = question.choices;
+                var str = '';
+                for (var b = 0; b < choices.length; b++) {
+                  if (b % 2 == 0) {
+                    if (b != 0) {
+                      str += ',';
+                    }
+                    str += choices[b].key;
+                  }
+                }
+                segments[answerKey] = str;
+                break;
+              case 'radio':
+              //dropdown value selector
+              case 'dropdown':
+                var choices = question.choices;
+                var pick = this.random(choices.length);
+                segments[answerKey] =
+                choices[pick].key; //pick the key of random choice
+                break;
+            //text input field
+              case 'text':
+                segments[answerKey] = 'Some random text';
+                break;
+            //rating picker
+              case 'rating':
+                segments[answerKey] = this.random(11);
+                break;
+            }
+          }
+        }
+      }
+          Countly.reportFeedbackWidgetManually(
+            surveyWidget, retrievedWidgetData, segments);
+          },(err) => {
+              console.error("reportSurveyManually getFeedbackWidgetData error : " +err);
+          });
+      }
       },(err) => {
-          console.error("reportNPSManually getFeedbackWidgetData error : " +err);
+          console.error("reportSurveyManually getFeedbackWidgets error : " +err);
       });
   }
+
 
     addCrashLog(){
       Countly.addCrashLog("My crash log in string.");
@@ -574,6 +632,7 @@ class Example extends Component {
             < Button onPress = { this.showSurvey } title = "Show Survey" color = "#00b5ad"> </Button>
             < Button onPress = { this.showNPS } title = "Show NPS" color = "#00b5ad"> </Button>
             < Button onPress = { this.reportNPSManually } title = "Report NPS Manually" color = "#00b5ad"> </Button>
+            < Button onPress = { this.reportSurveyManually } title = "Report Survey Manually" color = "#00b5ad"> </Button>
             
             < Button onPress = { this.eventSendThreshold } title = "Set Event Threshold" color = "#00b5ad"> </Button>
             < Button onPress = { this.setCustomCrashSegments } title = "Set Custom Crash Segment" color = "#00b5ad"> </Button>

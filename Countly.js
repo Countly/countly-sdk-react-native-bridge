@@ -760,6 +760,30 @@ Countly.presentFeedbackWidget = function(widgetType, widgetId, closeButtonText){
  * @param {Object} widgetInfo - feeback Widget with id, type and name
  */
 Countly.getFeedbackWidgetData = async function(widgetInfo){
+    if(!widgetInfo) {
+        if(await CountlyReactNative.isLoggingEnabled()) {
+            console.error("[CountlyReactNative] getFeedbackWidgetData, widgetInfo should not be null or undefined");
+        }
+        return "widgetInfo should not be null or undefined";
+    }
+    if(!widgetInfo.id) {
+        if(await CountlyReactNative.isLoggingEnabled()) {
+            console.error("[CountlyReactNative] getFeedbackWidgetData, widgetInfo id should not be null or empty");
+        }
+        return "widgetInfo id should not be null or empty";
+    }
+    if(!widgetInfo.type) {
+        if(await CountlyReactNative.isLoggingEnabled()) {
+            console.error("[CountlyReactNative] getFeedbackWidgetData, widgetInfo type should not be null or empty");
+        }
+        return "widgetInfo type should not be null or empty";
+    }
+    if(!widgetInfo.name) {
+        if(await CountlyReactNative.isLoggingEnabled()) {
+            console.error("[CountlyReactNative] getFeedbackWidgetData, widgetInfo type should not be null or empty");
+        }
+        return "widgetInfo name should not be null or empty";
+    }
     var args = [];
     args.push(widgetInfo.id);
     args.push(widgetInfo.type);
@@ -776,6 +800,30 @@ Countly.getFeedbackWidgetData = async function(widgetInfo){
 * @param {Object} widgetResult - segmentation of the filled out feedback. If this segmentation is null, it will be assumed that the survey was closed before completion and mark it appropriately
 */  
 Countly.reportFeedbackWidgetManually = function(widgetInfo, widgetData, widgetResult){
+    if(!widgetInfo) {
+        if(await CountlyReactNative.isLoggingEnabled()) {
+            console.error("[CountlyReactNative] reportFeedbackWidgetManually, widgetInfo should not be null or undefined");
+        }
+        return "widgetInfo should not be null or undefined";
+    }
+    if(!widgetInfo.id) {
+        if(await CountlyReactNative.isLoggingEnabled()) {
+            console.error("[CountlyReactNative] reportFeedbackWidgetManually, widgetInfo id should not be null or empty");
+        }
+        return "widgetInfo id should not be null or empty";
+    }
+    if(!widgetInfo.type) {
+        if(await CountlyReactNative.isLoggingEnabled()) {
+            console.error("[CountlyReactNative] reportFeedbackWidgetManually, widgetInfo type should not be null or empty");
+        }
+        return "widgetInfo type should not be null or empty";
+    }
+    if(!widgetInfo.name) {
+        if(await CountlyReactNative.isLoggingEnabled()) {
+            console.error("[CountlyReactNative] reportFeedbackWidgetManually, widgetInfo name should not be null or empty");
+        }
+        return "widgetInfo name should not be null or empty";
+    }
     var widgetInfoList = [];
     widgetInfoList.push(widgetInfo.id);
     widgetInfoList.push(widgetInfo.type);
