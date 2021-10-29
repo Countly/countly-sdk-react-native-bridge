@@ -1,4 +1,4 @@
-## 21.10.0
+## 21.11.0
 * Added a way to retrieve feedback widget data and manually report them
 * Appear and dismiss callback implemented for nps/survey widgets
 * Underlying android SDK is 20.11.10
