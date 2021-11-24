@@ -21,7 +21,7 @@
 + (CountlyFeedbackWidget *)createWithDictionary:(NSDictionary *)dictionary;
 @end
 
-NSString* const kCountlyReactNativeSDKVersion = @"21.11.0";
+NSString* const kCountlyReactNativeSDKVersion = @"21.10.0";
 NSString* const kCountlyReactNativeSDKName = @"js-rnb-ios";
 
 CountlyConfig* config = nil;
@@ -485,6 +485,7 @@ RCT_EXPORT_METHOD(setLocation:(NSArray*)arguments)
   NSString* city = [arguments objectAtIndex:1];
   NSString* locationString = [arguments objectAtIndex:2];
   NSString* ipAddress = [arguments objectAtIndex:3];
+  CLLocationCoordinate2D location;
 
   if([@"null" isEqualToString:city]){
       city = nil;
@@ -507,15 +508,15 @@ RCT_EXPORT_METHOD(setLocation:(NSArray*)arguments)
 
           double latitudeDouble = [latitudeString doubleValue];
           double longitudeDouble = [longitudeString doubleValue];
-          [Countly.sharedInstance recordLocation:(CLLocationCoordinate2D){latitudeDouble,longitudeDouble}];
+          location = (CLLocationCoordinate2D){latitudeDouble,longitudeDouble};
       }
       @catch(NSException *exception){
           COUNTLY_RN_LOG(@"Invalid location: %@", locationString);
       }
   }
 
-  [Countly.sharedInstance recordCity:city andISOCountryCode:countryCode];
-  [Countly.sharedInstance recordIP:ipAddress];
+  [Countly.sharedInstance recordLocation:location city:city ISOCountryCode:countryCode IP:ipAddress];
+      
   });
 }
 
@@ -1096,16 +1097,6 @@ RCT_EXPORT_METHOD(recordNetworkTrace:(NSArray*)arguments) {
 RCT_EXPORT_METHOD(enableApm:(NSArray*)arguments) {
   dispatch_async(dispatch_get_main_queue(), ^ {
     config.enablePerformanceMonitoring = YES;
-  });
-}
-
-RCT_EXPORT_METHOD(enableAttribution)
-{
-  dispatch_async(dispatch_get_main_queue(), ^ {
-  if (config == nil){
-    config = CountlyConfig.new;
-  }
-  config.enableAttribution = YES;
   });
 }
 

@@ -66,7 +66,6 @@ typedef void (^Result)(id _Nullable result);
 - (void)enableApm:(NSArray*_Nullable)arguments;
 - (void)setCustomMetrics:(NSArray*_Nullable)arguments;
 
-- (void)enableAttribution;
 - (void)recordAttributionID:(NSArray*_Nullable)arguments;
 - (void)appLoadingFinished;
 - (void)disablePushNotifications;
