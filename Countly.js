@@ -470,15 +470,33 @@ Countly.endEvent = function(options){
 // countly sending user data
 Countly.setUserData = function(options){
     var args = [];
-    args.push(options.name || "");
-    args.push(options.username || "");
-    args.push(options.email || "");
-    args.push(options.org || "");
-    args.push(options.phone || "");
-    args.push(options.picture || "");
-    args.push(options.picturePath || "");
-    args.push(options.gender || "");
-    args.push(options.byear || 0);
+    if(options.name) {
+        args.push(options.name);
+    }
+    if(options.username) {
+        args.push(options.username);
+    }
+    if(options.email) {
+        args.push(options.email);
+    }
+    if(options.org) {
+        args.push(options.org);
+    }
+    if(options.phone) {
+        args.push(options.phone);
+    }
+    if(options.picture) {
+        args.push(options.picture);
+    }
+    if(options.picturePath) {
+        args.push(options.picturePath);
+    }
+    if(options.gender) {
+        args.push(options.gender);
+    }
+    if(options.byear) {
+        args.push(options.byear);
+    }
     CountlyReactNative.setUserData(args);
 }
 
