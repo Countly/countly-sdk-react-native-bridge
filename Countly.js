@@ -468,7 +468,7 @@ Countly.endEvent = function(options){
 };
 
 // countly sending user data
-Countly.setUserData = function(userData){
+Countly.setUserData = async function(userData){
     if(!userData) {
         if(await CountlyReactNative.isLoggingEnabled()) {
             console.error("[CountlyReactNative] setUserData, user profile data should not be null or undefined");
