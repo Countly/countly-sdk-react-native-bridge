@@ -468,17 +468,46 @@ Countly.endEvent = function(options){
 };
 
 // countly sending user data
-Countly.setUserData = function(options){
+Countly.setUserData = function(userData){
+    if(!userData) {
+        if(await CountlyReactNative.isLoggingEnabled()) {
+            console.error("[CountlyReactNative] setUserData, user profile data should not be null or undefined");
+        }
+        return "User profile data should not be null or undefined";
+    }
+    if(typeof userData !== 'object'){
+        if(await CountlyReactNative.isLoggingEnabled()) {
+            console.warn("[CountlyReactNative] setUserData, unsupported data type of user data '" + (typeof userData) + "'");
+        }
+        return "Unsupported data type of user profile'" + (typeof userData) + "'";
+    }
+    if (userData.byear && typeof userData.byear != "number") {
+    {
+        if(await CountlyReactNative.isLoggingEnabled()) {
+            console.warn("[CountlyReactNative] setUserData, skipping value for key 'byear', due to unsupported data type '" + (typeof userData.byear) + "', its data type should be integer");
+        }
+    }
     var args = [];
-    args.push(options.name || "");
-    args.push(options.username || "");
-    args.push(options.email || "");
-    args.push(options.org || "");
-    args.push(options.phone || "");
-    args.push(options.picture || "");
-    args.push(options.picturePath || "");
-    args.push(options.gender || "");
-    args.push(options.byear || "");
+    userData = userData || {};
+    for(var key in userData){
+        if (typeof userData[key] != "string" && key.toString() != "byear") {
+        {
+            if(await CountlyReactNative.isLoggingEnabled()) {
+                console.warn("[CountlyReactNative] setUserData, skipping value for key '" + key.toString() + "', due to unsupported data type '" + (typeof userData[key]) + "', its data type should be 'string'");
+            }
+        }
+    }
+
+    userData.byear = userData.byear || "";
+    args.push(userData.name || "");
+    args.push(userData.username || "");
+    args.push(userData.email || "");
+    args.push(userData.org || "");
+    args.push(userData.phone || "");
+    args.push(userData.picture || "");
+    args.push(userData.picturePath || "");
+    args.push(userData.gender || "");
+    args.push(userData.byear.toString());
 
     CountlyReactNative.setUserData(args);
 }
