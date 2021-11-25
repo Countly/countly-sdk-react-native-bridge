@@ -1173,7 +1173,7 @@ API_AVAILABLE(ios(10.0)){
             [NSFileManager.defaultManager createDirectoryAtURL:URL withIntermediateDirectories:YES attributes:nil error:&error];
             if (error)
             {
-                COUNTLY_LOG(@"Application Support directory can not be created: \n%@", error);
+                COUNTLY_RN_LOG(@"Application Support directory can not be created: \n%@", error);
             }
         }
     });
@@ -1210,6 +1210,6 @@ API_AVAILABLE(ios(10.0)){
 #pragma clang diagnostic ignored "-Wunused-variable"
 
     BOOL writeResult = [saveData writeToFile:[CountlyReactNative storageFileURL].path atomically:YES];
-    COUNTLY_LOG(@"Result of writing data to file: %d", writeResult);
+    COUNTLY_RN_LOG(@"Result of writing data to file: %d", writeResult);
 }
 @end
