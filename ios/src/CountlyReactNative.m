@@ -182,31 +182,31 @@ RCT_EXPORT_METHOD(setUserData:(NSArray*)arguments)
   NSString* gender = [arguments objectAtIndex:7];
   NSString* byear = [arguments objectAtIndex:8];
       
-  if(isNotEmpty(name)) {
+  if([CountlyReactNative isNotEmpty:name]) {
       Countly.user.name = name;
   }
-  if(isNotEmpty(username)) {
+  if([CountlyReactNative isNotEmpty:username]) {
       Countly.user.username = username;
   }
-  if(isNotEmpty(email)) {
+  if([CountlyReactNative isNotEmpty:email]) {
       Countly.user.email = email;
   }
-  if(isNotEmpty(org)) {
+  if([CountlyReactNative isNotEmpty:org]) {
       Countly.user.organization = org;
   }
-  if(isNotEmpty(phone)) {
+  if([CountlyReactNative isNotEmpty:phone]) {
       Countly.user.phone = phone;
   }
-  if(isNotEmpty(picture)) {
+  if([CountlyReactNative isNotEmpty:picture]) {
       Countly.user.pictureURL = picture;
   }
-  if(isNotEmpty(pictureLocalPath)) {
+  if([CountlyReactNative isNotEmpty:pictureLocalPath]) {
       Countly.user.pictureLocalPath = pictureLocalPath;
   }
-  if(isNotEmpty(gender)) {
+  if([CountlyReactNative isNotEmpty:gender]) {
       Countly.user.gender = gender;
   }
-  if(isNotEmpty(byear)) {
+  if([CountlyReactNative isNotEmpty:byear]) {
       Countly.user.birthYear = @([byear integerValue]);
   }
   [Countly.user save];
