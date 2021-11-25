@@ -481,7 +481,7 @@ Countly.setUserData = async function(userData){
         }
         return "Unsupported data type of user profile'" + (typeof userData) + "'";
     }
-    if (userData.byear && typeof userData.byear != "number") {
+    if (userData.byear && typeof userData.byear != "number" && userData.byear % 1 != 0) 
     {
         if(await CountlyReactNative.isLoggingEnabled()) {
             console.warn("[CountlyReactNative] setUserData, skipping value for key 'byear', due to unsupported data type '" + (typeof userData.byear) + "', its data type should be integer");
@@ -490,13 +490,15 @@ Countly.setUserData = async function(userData){
     var args = [];
     userData = userData || {};
     for(var key in userData){
-        if (typeof userData[key] != "string" && key.toString() != "byear") {
+        if (typeof userData[key] != "string" && key.toString() != "byear") 
         {
             if(await CountlyReactNative.isLoggingEnabled()) {
                 console.warn("[CountlyReactNative] setUserData, skipping value for key '" + key.toString() + "', due to unsupported data type '" + (typeof userData[key]) + "', its data type should be 'string'");
             }
         }
+        
     }
+    
 
     userData.byear = userData.byear || "";
     args.push(userData.name || "");
@@ -510,7 +512,7 @@ Countly.setUserData = async function(userData){
     args.push(userData.byear.toString());
 
     CountlyReactNative.setUserData(args);
-}
+};
 
 Countly.userData = {};
 Countly.userData.setProperty = function(keyName, keyValue){
