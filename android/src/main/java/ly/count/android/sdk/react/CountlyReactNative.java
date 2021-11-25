@@ -456,15 +456,44 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     public void setUserData(ReadableArray args){
         Countly.sharedInstance();
         Map<String, String> bundle = new HashMap<String, String>();
-        bundle.put("name", args.getString(0));
-        bundle.put("username", args.getString(1));
-        bundle.put("email", args.getString(2));
-        bundle.put("organization", args.getString(3));
-        bundle.put("phone", args.getString(4));
-        bundle.put("picture", args.getString(5));
-        bundle.put("picturePath", args.getString(6));
-        bundle.put("gender", args.getString(7));
-        bundle.put("byear", String.valueOf(args.getInt(8)));
+        String name = args.getString(0);
+        String username = args.getString(1);
+        String email = args.getString(2);
+        String organization = args.getString(3);
+        String phone = args.getString(4);
+        String picture = args.getString(5);
+        String picturePath = args.getString(6);
+        String gender = args.getString(7);
+        String byear = String.valueOf(args.getInt(8));
+
+        if(isNotEmpty(name)) {
+            bundle.put("name", name);
+        }
+        if(isNotEmpty(username)) {
+            bundle.put("username", username);
+        }
+        if(isNotEmpty(email)) {
+            bundle.put("email", email);
+        }
+        if(isNotEmpty(organization)) {
+            bundle.put("organization", organization);
+        }
+        if(isNotEmpty(phone)) {
+            bundle.put("phone", phone);
+        }
+        if(isNotEmpty(picture)) {
+            bundle.put("picture", picture);
+        }
+        if(isNotEmpty(picturePath)) {
+            bundle.put("picturePath", picturePath);
+        }
+        if(isNotEmpty(gender)) {
+            bundle.put("gender", gender);
+        }
+        if(isNotEmpty(byear)) {
+            bundle.put("byear", byear);
+        }
+
         Countly.userData.setUserData(bundle);
         Countly.userData.save();
     }
@@ -1068,6 +1097,10 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 Log.v(TAG, message, tr);
                 break;
         }
+    }
+
+    static boolean isNotEmpty(String str)  {
+        return str != null && !str.trim().isEmpty();
     }
 
     Activity getActivity() {

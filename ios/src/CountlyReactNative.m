@@ -181,16 +181,34 @@ RCT_EXPORT_METHOD(setUserData:(NSArray*)arguments)
   NSString* pictureLocalPath = [arguments objectAtIndex:6];
   NSString* gender = [arguments objectAtIndex:7];
   NSString* byear = [arguments objectAtIndex:8];
-
-  Countly.user.name = name;
-  Countly.user.username = username;
-  Countly.user.email = email;
-  Countly.user.organization = org;
-  Countly.user.phone = phone;
-  Countly.user.pictureURL = picture;
-  Countly.user.pictureLocalPath = pictureLocalPath;
-  Countly.user.gender = gender;
-  Countly.user.birthYear = @([byear integerValue]);
+      
+  if(isNotEmpty(name)) {
+      Countly.user.name = name;
+  }
+  if(isNotEmpty(username)) {
+      Countly.user.username = username;
+  }
+  if(isNotEmpty(email)) {
+      Countly.user.email = email;
+  }
+  if(isNotEmpty(org)) {
+      Countly.user.organization = org;
+  }
+  if(isNotEmpty(phone)) {
+      Countly.user.phone = phone;
+  }
+  if(isNotEmpty(picture)) {
+      Countly.user.pictureURL = picture;
+  }
+  if(isNotEmpty(pictureLocalPath)) {
+      Countly.user.pictureLocalPath = pictureLocalPath;
+  }
+  if(isNotEmpty(gender)) {
+      Countly.user.gender = gender;
+  }
+  if(isNotEmpty(byear)) {
+      Countly.user.birthYear = @([byear integerValue]);
+  }
   [Countly.user save];
   });
 }
@@ -1211,5 +1229,9 @@ API_AVAILABLE(ios(10.0)){
 
     BOOL writeResult = [saveData writeToFile:[CountlyReactNative storageFileURL].path atomically:YES];
     COUNTLY_RN_LOG(@"Result of writing data to file: %d", writeResult);
+}
+
++ (BOOL) isNotEmpty: (NSString *) str{
+    return str.length;
 }
 @end
