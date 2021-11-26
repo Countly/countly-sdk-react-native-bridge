@@ -172,41 +172,43 @@ RCT_EXPORT_METHOD(setLoggingEnabled:(NSArray*)arguments)
 RCT_EXPORT_METHOD(setUserData:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
-  NSString* name = [arguments objectAtIndex:0];
-  NSString* username = [arguments objectAtIndex:1];
-  NSString* email = [arguments objectAtIndex:2];
-  NSString* org = [arguments objectAtIndex:3];
-  NSString* phone = [arguments objectAtIndex:4];
-  NSString* picture = [arguments objectAtIndex:5];
-  NSString* pictureLocalPath = [arguments objectAtIndex:6];
-  NSString* gender = [arguments objectAtIndex:7];
-  NSString* byear = [arguments objectAtIndex:8];
       
-  if([CountlyReactNative isNotEmpty:name]) {
+  NSDictionary* userData = [arguments objectAtIndex:0];
+  NSString* name = [userData objectForKey:@"name"];
+  NSString* username = [userData objectForKey:@"username"];
+  NSString* email = [userData objectForKey:@"email"];
+  NSString* organization = [userData objectForKey:@"organization"];
+  NSString* phone = [userData objectForKey:@"phone"];
+  NSString* picture = [userData objectForKey:@"picture"];
+  NSString* pictureLocalPath = [userData objectForKey:@"pictureLocalPath"];
+  NSString* gender = [userData objectForKey:@"gender"];
+  NSString* byear = [userData objectForKey:@"byear"];
+      
+  if(name) {
       Countly.user.name = name;
   }
-  if([CountlyReactNative isNotEmpty:username]) {
+  if(username) {
       Countly.user.username = username;
   }
-  if([CountlyReactNative isNotEmpty:email]) {
+  if(email) {
       Countly.user.email = email;
   }
-  if([CountlyReactNative isNotEmpty:org]) {
-      Countly.user.organization = org;
+  if(organization) {
+      Countly.user.organization = organization;
   }
-  if([CountlyReactNative isNotEmpty:phone]) {
+  if(phone) {
       Countly.user.phone = phone;
   }
-  if([CountlyReactNative isNotEmpty:picture]) {
+  if(picture) {
       Countly.user.pictureURL = picture;
   }
-  if([CountlyReactNative isNotEmpty:pictureLocalPath]) {
+  if(pictureLocalPath) {
       Countly.user.pictureLocalPath = pictureLocalPath;
   }
-  if([CountlyReactNative isNotEmpty:gender]) {
+  if(gender) {
       Countly.user.gender = gender;
   }
-  if([CountlyReactNative isNotEmpty:byear]) {
+  if(byear) {
       Countly.user.birthYear = @([byear integerValue]);
   }
   [Countly.user save];
@@ -1229,9 +1231,5 @@ API_AVAILABLE(ios(10.0)){
 
     BOOL writeResult = [saveData writeToFile:[CountlyReactNative storageFileURL].path atomically:YES];
     COUNTLY_RN_LOG(@"Result of writing data to file: %d", writeResult);
-}
-
-+ (BOOL) isNotEmpty: (NSString *) str{
-    return str.length;
 }
 @end

@@ -498,18 +498,14 @@ Countly.setUserData = async function(userData){
         }
         
     }
-    
 
-    userData.byear = userData.byear || "";
-    args.push(userData.name || "");
-    args.push(userData.username || "");
-    args.push(userData.email || "");
-    args.push(userData.org || "");
-    args.push(userData.phone || "");
-    args.push(userData.picture || "");
-    args.push(userData.picturePath || "");
-    args.push(userData.gender || "");
-    args.push(userData.byear.toString());
+    if(userData.org && !userData.organization) {
+        userData.organization = userData.org;
+        delete userData.org;
+    }
+
+    userData.byear = userData.byear.toString() || "";
+    args.push(userData);
 
     CountlyReactNative.setUserData(args);
 };
