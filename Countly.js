@@ -504,7 +504,9 @@ Countly.setUserData = async function(userData){
         delete userData.org;
     }
 
-    userData.byear = userData.byear.toString() || "";
+    if(userData.byear) {
+        userData.byear = userData.byear.toString();
+    }
     args.push(userData);
 
     CountlyReactNative.setUserData(args);
