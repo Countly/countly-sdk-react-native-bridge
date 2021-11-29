@@ -117,8 +117,12 @@ Countly.setViewTracking = async function(boolean) {
  * Supported data type for segments values are String, int, double and bool
  */
 Countly.recordView = function(recordView, segments){
+    var message = this.checkEmptyAndStringWithLogPrint(recordView, "view name", "recordView");
+    if(message)
+        return message;
+
     var args = [];
-    args.push(String(recordView) || "");
+    args.push(String(recordView));
     if(!segments){
         segments = {};
     }
@@ -145,8 +149,12 @@ Countly.disablePushNotifications = function(){
  * Should be called before Countly init
  */
 Countly.pushTokenType = function(tokenType, channelName, channelDescription){
+    var message = this.checkEmptyAndStringWithLogPrint(tokenType, "tokenType", "pushTokenType");
+    if(message)
+        return message;
+
     var args = [];
-    args.push(tokenType || "");
+    args.push(tokenType);
     args.push(channelName || "");
     args.push(channelDescription || "");
     CountlyReactNative.pushTokenType(args);
@@ -275,12 +283,16 @@ Countly.getCurrentDeviceId = async function(){
   }
 
 Countly.changeDeviceId = function(newDeviceID, onServer){
+    var message = this.checkEmptyAndStringWithLogPrint(newDeviceID, "newDeviceID", "changeDeviceId");
+    if(message)
+        return message;
+
     if(onServer === false){
         onServer = "0";
     }else{
         onServer = "1";
     }
-    newDeviceID = newDeviceID.toString() || "";
+    newDeviceID = newDeviceID.toString();
     CountlyReactNative.changeDeviceId([newDeviceID, onServer]);
 }
 
@@ -404,7 +416,11 @@ Countly.endSession = function(){
  * Should be called before Countly init
  */
 Countly.enableParameterTamperingProtection = function(salt){
-    CountlyReactNative.enableParameterTamperingProtection([salt.toString() || ""]);
+    var message = this.checkEmptyAndStringWithLogPrint(salt, "salt", "enableParameterTamperingProtection");
+    if(message)
+        return message;
+
+    CountlyReactNative.enableParameterTamperingProtection([salt.toString()]);
 }
 
 /**
@@ -413,13 +429,25 @@ Countly.enableParameterTamperingProtection = function(salt){
  * Should be called before Countly init
  */
 Countly.pinnedCertificates = function(certificateName){
-    CountlyReactNative.pinnedCertificates([certificateName || ""]);
+    var message = this.checkEmptyAndStringWithLogPrint(certificateName, "certificateName", "pinnedCertificates");
+    if(message)
+        return message;
+        
+    CountlyReactNative.pinnedCertificates([certificateName]);
 }
 Countly.startEvent = function(eventName){
-    CountlyReactNative.startEvent([eventName.toString() || ""]);
+    var message = this.checkEmptyAndStringWithLogPrint(eventName, "eventName", "startEvent");
+    if(message)
+        return message;
+
+    CountlyReactNative.startEvent([eventName.toString()]);
 }
 Countly.cancelEvent = function(eventName){
-    CountlyReactNative.cancelEvent([eventName.toString() || ""]);
+    var message = this.checkEmptyAndStringWithLogPrint(eventName, "eventName", "cancelEvent");
+    if(message)
+        return message;
+
+    CountlyReactNative.cancelEvent([eventName.toString()]);
 }
 Countly.endEvent = function(options){
     if(typeof options === "string") {
@@ -933,6 +961,69 @@ Countly.appLoadingFinished = async function(){
         CountlyReactNative.setCustomMetrics(args);
     }
 }
+
+Countly.checkUserDataValueWithLogPrint = (stringValue, stringName, functionName) => {
+    var message = this.checkValidUserDataWithLogPrint(stringValue, stringName, functionName);
+    if(message)
+        return message;
+    
+    message = this.checkUserDataTypeWithLogPrint(stringValue, stringName, functionName);
+    return message;
+}
+
+Countly.checkUserDataTypeWithLogPrint = (stringValue, stringName, functionName) => {
+    if ((typeof stringValue == "number") || typeof stringValue == "string")
+    return null;
+
+    var message = "skipping value for '" + stringName.toString() + "', due to unsupported data type '" + (typeof stringValue) + "', its data type should be 'integer'";
+    if(await CountlyReactNative.isLoggingEnabled()) {
+        console.warn("[CountlyReactNative] " + functionName + ", " + message);
+    }
+    return message
+};
+
+Countly.checkValidUserDataWithLogPrint = (stringValue, stringName, functionName) => {
+    if (stringValue && stringValue != "")
+    return null;
+
+    var message = stringName +" should not be null or undefined";
+    if(await CountlyReactNative.isLoggingEnabled()) {
+        console.error("[CountlyReactNative] " + functionName + ", "+ message);
+    }
+    return message;
+};
+
+Countly.checkEmptyAndStringWithLogPrint = (stringValue, stringName, functionName) => {
+    var message = this.checkEmptyWithLogPrint(stringValue, stringName, functionName);
+    if(message)
+        return message;
+    
+    message = this.checkStringWithLogPrint(stringValue, stringName, functionName);
+    return message;
+}
+
+Countly.checkEmptyWithLogPrint = (stringValue, stringName, functionName) => {
+    if (stringValue)
+    return null;
+
+    var message = stringName +" should not be null, undefined or empty";
+    if(await CountlyReactNative.isLoggingEnabled()) {
+        console.error("[CountlyReactNative] " + functionName + ", "+ message);
+    }
+    return message;
+};
+
+Countly.checkStringWithLogPrint = (stringValue, stringName, functionName) => {
+    if (typeof stringValue == "string")
+    return null;
+
+    var message = "skipping value for '" + stringName.toString() + "', due to unsupported data type '" + (typeof stringValue) + "', its data type should be 'string'";
+    if(await CountlyReactNative.isLoggingEnabled()) {
+        console.warn("[CountlyReactNative] " + functionName + ", " + message);
+    }
+    return message
+};
+
 
 /*
 Countly.initNative = function(){
