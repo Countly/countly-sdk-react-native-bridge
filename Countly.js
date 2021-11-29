@@ -1074,7 +1074,7 @@ Countly.checkUserDataValueWithLogPrint = (stringValue, stringName, functionName)
     return message;
 }
 
-Countly.checkUserDataTypeWithLogPrint = (stringValue, stringName, functionName) => {
+Countly.checkUserDataTypeWithLogPrint = async (stringValue, stringName, functionName) => {
     if (typeof stringValue == "number") {
         return null;
     }
@@ -1092,7 +1092,7 @@ Countly.checkUserDataTypeWithLogPrint = (stringValue, stringName, functionName) 
     return message
 };
 
-Countly.checkValidUserDataWithLogPrint = (stringValue, stringName, functionName) => {
+Countly.checkValidUserDataWithLogPrint = async (stringValue, stringName, functionName) => {
     if (stringValue || stringValue == "") {
         return null;
     }
@@ -1104,7 +1104,7 @@ Countly.checkValidUserDataWithLogPrint = (stringValue, stringName, functionName)
     return message;
 };
 
-Countly.checkParseIntWithLogPrint = (stringValue, stringName, functionName) => {
+Countly.checkParseIntWithLogPrint = async (stringValue, stringName, functionName) => {
     var intValue = parseInt(stringValue);
     if (intValue != NaN) {
         return null;
@@ -1127,7 +1127,7 @@ Countly.checkEmptyAndStringWithLogPrint = (stringValue, stringName, functionName
     return message;
 }
 
-Countly.checkEmptyWithLogPrint = (stringValue, stringName, functionName) => {
+Countly.checkEmptyWithLogPrint = async (stringValue, stringName, functionName) => {
     if (stringValue)
     return null;
 
@@ -1138,7 +1138,7 @@ Countly.checkEmptyWithLogPrint = (stringValue, stringName, functionName) => {
     return message;
 };
 
-Countly.checkStringWithLogPrint = (stringValue, stringName, functionName) => {
+Countly.checkStringWithLogPrint = async (stringValue, stringName, functionName) => {
     if (typeof stringValue == "string")
     return null;
 
