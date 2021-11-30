@@ -1106,7 +1106,7 @@ Countly.checkValidUserDataWithLogPrint = async (stringValue, stringName, functio
 
 Countly.checkParseIntWithLogPrint = async (stringValue, stringName, functionName) => {
     var intValue = parseInt(stringValue);
-    if (intValue != NaN) {
+    if (isNaN(intValue)) {
         return null;
     }
 
