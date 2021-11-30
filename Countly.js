@@ -117,7 +117,7 @@ Countly.setViewTracking = async function(boolean) {
  * Supported data type for segments values are String, int, double and bool
  */
 Countly.recordView = function(recordView, segments){
-    var message = this.checkEmptyAndStringWithLogPrint(recordView, "view name", "recordView");
+    var message = Countly.checkEmptyAndStringWithLogPrint(recordView, "view name", "recordView");
     if(message)
         return message;
 
@@ -149,7 +149,7 @@ Countly.disablePushNotifications = function(){
  * Should be called before Countly init
  */
 Countly.pushTokenType = function(tokenType, channelName, channelDescription){
-    var message = this.checkEmptyAndStringWithLogPrint(tokenType, "tokenType", "pushTokenType");
+    var message = Countly.checkEmptyAndStringWithLogPrint(tokenType, "tokenType", "pushTokenType");
     if(message)
         return message;
 
@@ -283,7 +283,7 @@ Countly.getCurrentDeviceId = async function(){
   }
 
 Countly.changeDeviceId = function(newDeviceID, onServer){
-    var message = this.checkEmptyAndStringWithLogPrint(newDeviceID, "newDeviceID", "changeDeviceId");
+    var message = Countly.checkEmptyAndStringWithLogPrint(newDeviceID, "newDeviceID", "changeDeviceId");
     if(message)
         return message;
 
@@ -416,7 +416,7 @@ Countly.endSession = function(){
  * Should be called before Countly init
  */
 Countly.enableParameterTamperingProtection = function(salt){
-    var message = this.checkEmptyAndStringWithLogPrint(salt, "salt", "enableParameterTamperingProtection");
+    var message = Countly.checkEmptyAndStringWithLogPrint(salt, "salt", "enableParameterTamperingProtection");
     if(message)
         return message;
 
@@ -429,21 +429,21 @@ Countly.enableParameterTamperingProtection = function(salt){
  * Should be called before Countly init
  */
 Countly.pinnedCertificates = function(certificateName){
-    var message = this.checkEmptyAndStringWithLogPrint(certificateName, "certificateName", "pinnedCertificates");
+    var message = Countly.checkEmptyAndStringWithLogPrint(certificateName, "certificateName", "pinnedCertificates");
     if(message)
         return message;
         
     CountlyReactNative.pinnedCertificates([certificateName]);
 }
 Countly.startEvent = function(eventName){
-    var message = this.checkEmptyAndStringWithLogPrint(eventName, "eventName", "startEvent");
+    var message = Countly.checkEmptyAndStringWithLogPrint(eventName, "eventName", "startEvent");
     if(message)
         return message;
 
     CountlyReactNative.startEvent([eventName.toString()]);
 }
 Countly.cancelEvent = function(eventName){
-    var message = this.checkEmptyAndStringWithLogPrint(eventName, "eventName", "cancelEvent");
+    var message = Countly.checkEmptyAndStringWithLogPrint(eventName, "eventName", "cancelEvent");
     if(message)
         return message;
 
@@ -541,11 +541,11 @@ Countly.setUserData = async function(userData){
 
 Countly.userData = {};
 Countly.userData.setProperty = function(keyName, keyValue){
-    var message = this.checkEmptyAndStringWithLogPrint(keyName, "key", "setProperty");
+    var message = Countly.checkEmptyAndStringWithLogPrint(keyName, "key", "setProperty");
     if(message) {
         return message;
     }
-    message = this.checkValidUserDataWithLogPrint(keyValue, "value", "setProperty");
+    message = Countly.checkValidUserDataWithLogPrint(keyValue, "value", "setProperty");
     if(message) {
         return message;
     }
@@ -556,7 +556,7 @@ Countly.userData.setProperty = function(keyName, keyValue){
     }
 };
 Countly.userData.increment = function(keyName){
-    var message = this.checkEmptyAndStringWithLogPrint(keyName, "key", "setProperty");
+    var message = Countly.checkEmptyAndStringWithLogPrint(keyName, "key", "setProperty");
     if(message) {
         return message;
     }
@@ -566,11 +566,11 @@ Countly.userData.increment = function(keyName){
     }
 };
 Countly.userData.incrementBy = function(keyName, keyValue){
-    var message = this.checkEmptyAndStringWithLogPrint(keyName, "key", "incrementBy");
+    var message = Countly.checkEmptyAndStringWithLogPrint(keyName, "key", "incrementBy");
     if(message) {
         return message;
     }
-    message = this.checkUserDataValueWithLogPrint(keyValue, "value", "incrementBy");
+    message = Countly.checkUserDataValueWithLogPrint(keyValue, "value", "incrementBy");
     if(message) {
         return message;
     }
@@ -578,11 +578,11 @@ Countly.userData.incrementBy = function(keyName, keyValue){
     CountlyReactNative.userData_incrementBy([keyName, intValue]);
 };
 Countly.userData.multiply = function(keyName, keyValue){
-    var message = this.checkEmptyAndStringWithLogPrint(keyName, "key", "multiply");
+    var message = Countly.checkEmptyAndStringWithLogPrint(keyName, "key", "multiply");
     if(message) {
         return message;
     }
-    message = this.checkUserDataValueWithLogPrint(keyValue, "value", "multiply");
+    message = Countly.checkUserDataValueWithLogPrint(keyValue, "value", "multiply");
     if(message) {
         return message;
     }
@@ -590,11 +590,11 @@ Countly.userData.multiply = function(keyName, keyValue){
     CountlyReactNative.userData_multiply([keyName, intValue]);
 };
 Countly.userData.saveMax = function(keyName, keyValue){
-    var message = this.checkEmptyAndStringWithLogPrint(keyName, "key", "saveMax");
+    var message = Countly.checkEmptyAndStringWithLogPrint(keyName, "key", "saveMax");
     if(message) {
         return message;
     }
-    message = this.checkUserDataValueWithLogPrint(keyValue, "value", "saveMax");
+    message = Countly.checkUserDataValueWithLogPrint(keyValue, "value", "saveMax");
     if(message) {
         return message;
     }
@@ -602,11 +602,11 @@ Countly.userData.saveMax = function(keyName, keyValue){
     CountlyReactNative.userData_saveMax([keyName, intValue]);
 };
 Countly.userData.saveMin = function(keyName, keyValue){
-    var message = this.checkEmptyAndStringWithLogPrint(keyName, "key", "saveMin");
+    var message = Countly.checkEmptyAndStringWithLogPrint(keyName, "key", "saveMin");
     if(message) {
         return message;
     }
-    message = this.checkUserDataValueWithLogPrint(keyValue, "value", "saveMin");
+    message = Countly.checkUserDataValueWithLogPrint(keyValue, "value", "saveMin");
     if(message) {
         return message;
     }
@@ -614,11 +614,11 @@ Countly.userData.saveMin = function(keyName, keyValue){
     CountlyReactNative.userData_saveMin([keyName, intValue]);
 };
 Countly.userData.setOnce = function(keyName, keyValue){
-    var message = this.checkEmptyAndStringWithLogPrint(keyName, "key", "setOnce");
+    var message = Countly.checkEmptyAndStringWithLogPrint(keyName, "key", "setOnce");
     if(message) {
         return message;
     }
-    message = this.checkValidUserDataWithLogPrint(keyValue, "value", "setOnce");
+    message = Countly.checkValidUserDataWithLogPrint(keyValue, "value", "setOnce");
     if(message) {
         return message;
     }
@@ -628,11 +628,11 @@ Countly.userData.setOnce = function(keyName, keyValue){
     }
 };
 Countly.userData.pushUniqueValue = function(keyName, keyValue){
-    var message = this.checkEmptyAndStringWithLogPrint(keyName, "key", "pushUniqueValue");
+    var message = Countly.checkEmptyAndStringWithLogPrint(keyName, "key", "pushUniqueValue");
     if(message) {
         return message;
     }
-    message = this.checkValidUserDataWithLogPrint(keyValue, "value", "pushUniqueValue");
+    message = Countly.checkValidUserDataWithLogPrint(keyValue, "value", "pushUniqueValue");
     if(message) {
         return message;
     }
@@ -642,11 +642,11 @@ Countly.userData.pushUniqueValue = function(keyName, keyValue){
     }
 };
 Countly.userData.pushValue = function(keyName, keyValue){
-    var message = this.checkEmptyAndStringWithLogPrint(keyName, "key", "pushValue");
+    var message = Countly.checkEmptyAndStringWithLogPrint(keyName, "key", "pushValue");
     if(message) {
         return message;
     }
-    message = this.checkValidUserDataWithLogPrint(keyValue, "value", "pushValue");
+    message = Countly.checkValidUserDataWithLogPrint(keyValue, "value", "pushValue");
     if(message) {
         return message;
     }
@@ -656,11 +656,11 @@ Countly.userData.pushValue = function(keyName, keyValue){
     }
 };
 Countly.userData.pullValue = function(keyName, keyValue){
-    var message = this.checkEmptyAndStringWithLogPrint(keyName, "key", "pullValue");
+    var message = Countly.checkEmptyAndStringWithLogPrint(keyName, "key", "pullValue");
     if(message) {
         return message;
     }
-    message = this.checkValidUserDataWithLogPrint(keyValue, "value", "pullValue");
+    message = Countly.checkValidUserDataWithLogPrint(keyValue, "value", "pullValue");
     if(message) {
         return message;
     }
@@ -1060,17 +1060,17 @@ Countly.appLoadingFinished = async function(){
 }
 
 Countly.checkUserDataValueWithLogPrint = (stringValue, stringName, functionName) => {
-    var message = this.checkValidUserDataWithLogPrint(stringValue, stringName, functionName);
+    var message = Countly.checkValidUserDataWithLogPrint(stringValue, stringName, functionName);
     if(message) {
         return message;
     }
     
-    message = this.checkUserDataTypeWithLogPrint(stringValue, stringName, functionName);
+    message = Countly.checkUserDataTypeWithLogPrint(stringValue, stringName, functionName);
     if(message) {
         return message;
     }
 
-    message = this.checkParseIntWithLogPrint(stringValue, stringName, functionName);
+    message = Countly.checkParseIntWithLogPrint(stringValue, stringName, functionName);
     return message;
 }
 
@@ -1118,12 +1118,12 @@ Countly.checkParseIntWithLogPrint = async (stringValue, stringName, functionName
 };
 
 Countly.checkEmptyAndStringWithLogPrint = (stringValue, stringName, functionName) => {
-    var message = this.checkEmptyWithLogPrint(stringValue, stringName, functionName);
+    var message = Countly.checkEmptyWithLogPrint(stringValue, stringName, functionName);
     if(message) {
         return message;
     }
     
-    message = this.checkStringWithLogPrint(stringValue, stringName, functionName);
+    message = Countly.checkStringWithLogPrint(stringValue, stringName, functionName);
     return message;
 }
 
