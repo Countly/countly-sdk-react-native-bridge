@@ -575,7 +575,7 @@ Countly.userData.incrementBy = async function(keyName, keyValue){
     if(message) {
         return message;
     }
-    var intValue = parseInt(keyValue);
+    var intValue = parseInt(keyValue).toString();
     CountlyReactNative.userData_incrementBy([keyName, intValue]);
 };
 Countly.userData.multiply = async function(keyName, keyValue){
@@ -587,7 +587,7 @@ Countly.userData.multiply = async function(keyName, keyValue){
     if(message) {
         return message;
     }
-    var intValue = parseInt(keyValue);
+    var intValue = parseInt(keyValue).toString();
     CountlyReactNative.userData_multiply([keyName, intValue]);
 };
 Countly.userData.saveMax = async function(keyName, keyValue){
@@ -599,7 +599,7 @@ Countly.userData.saveMax = async function(keyName, keyValue){
     if(message) {
         return message;
     }
-    var intValue = parseInt(keyValue);
+    var intValue = parseInt(keyValue).toString();
     CountlyReactNative.userData_saveMax([keyName, intValue]);
 };
 Countly.userData.saveMin = async function(keyName, keyValue){
@@ -611,7 +611,7 @@ Countly.userData.saveMin = async function(keyName, keyValue){
     if(message) {
         return message;
     }
-    var intValue = parseInt(keyValue);
+    var intValue = parseInt(keyValue).toString();
     CountlyReactNative.userData_saveMin([keyName, intValue]);
 };
 Countly.userData.setOnce = async function(keyName, keyValue){
@@ -1107,7 +1107,7 @@ Countly.checkValidUserDataWithLogPrint = async (stringValue, stringName, functio
 
 Countly.checkParseIntWithLogPrint = async (stringValue, stringName, functionName) => {
     var intValue = parseInt(stringValue);
-    if (isNaN(intValue)) {
+    if (!isNaN(intValue)) {
         return null;
     }
 
