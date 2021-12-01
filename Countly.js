@@ -116,8 +116,8 @@ Countly.setViewTracking = async function(boolean) {
  * @param {Map} segments - allows to add optional segmentation,
  * Supported data type for segments values are String, int, double and bool
  */
-Countly.recordView = function(recordView, segments){
-    var message = Countly.checkEmptyAndStringWithLogPrint(recordView, "view name", "recordView");
+Countly.recordView = async function(recordView, segments){
+    var message = await Countly.checkEmptyAndStringWithLogPrint(recordView, "view name", "recordView");
     if(message)
         return message;
 
@@ -148,8 +148,8 @@ Countly.disablePushNotifications = function(){
  * Set messaging mode for push notifications
  * Should be called before Countly init
  */
-Countly.pushTokenType = function(tokenType, channelName, channelDescription){
-    var message = Countly.checkEmptyAndStringWithLogPrint(tokenType, "tokenType", "pushTokenType");
+Countly.pushTokenType = async function(tokenType, channelName, channelDescription){
+    var message = await Countly.checkEmptyAndStringWithLogPrint(tokenType, "tokenType", "pushTokenType");
     if(message)
         return message;
 
@@ -282,8 +282,8 @@ Countly.getCurrentDeviceId = async function(){
       return result;
   }
 
-Countly.changeDeviceId = function(newDeviceID, onServer){
-    var message = Countly.checkEmptyAndStringWithLogPrint(newDeviceID, "newDeviceID", "changeDeviceId");
+Countly.changeDeviceId = async function(newDeviceID, onServer){
+    var message = await Countly.checkEmptyAndStringWithLogPrint(newDeviceID, "newDeviceID", "changeDeviceId");
     if(message)
         return message;
 
@@ -415,8 +415,8 @@ Countly.endSession = function(){
  * Set the optional salt to be used for calculating the checksum of requested data which will be sent with each request, using the &checksum field
  * Should be called before Countly init
  */
-Countly.enableParameterTamperingProtection = function(salt){
-    var message = Countly.checkEmptyAndStringWithLogPrint(salt, "salt", "enableParameterTamperingProtection");
+Countly.enableParameterTamperingProtection = async function(salt){
+    var message = await Countly.checkEmptyAndStringWithLogPrint(salt, "salt", "enableParameterTamperingProtection");
     if(message)
         return message;
 
@@ -428,22 +428,22 @@ Countly.enableParameterTamperingProtection = function(salt){
  * It will ensure that connection is made with one of the public keys specified
  * Should be called before Countly init
  */
-Countly.pinnedCertificates = function(certificateName){
-    var message = Countly.checkEmptyAndStringWithLogPrint(certificateName, "certificateName", "pinnedCertificates");
+Countly.pinnedCertificates = async function(certificateName){
+    var message = await Countly.checkEmptyAndStringWithLogPrint(certificateName, "certificateName", "pinnedCertificates");
     if(message)
         return message;
         
     CountlyReactNative.pinnedCertificates([certificateName]);
 }
-Countly.startEvent = function(eventName){
-    var message = Countly.checkEmptyAndStringWithLogPrint(eventName, "eventName", "startEvent");
+Countly.startEvent = async function(eventName){
+    var message = await Countly.checkEmptyAndStringWithLogPrint(eventName, "eventName", "startEvent");
     if(message)
         return message;
 
     CountlyReactNative.startEvent([eventName.toString()]);
 }
-Countly.cancelEvent = function(eventName){
-    var message = Countly.checkEmptyAndStringWithLogPrint(eventName, "eventName", "cancelEvent");
+Countly.cancelEvent = async function(eventName){
+    var message = await Countly.checkEmptyAndStringWithLogPrint(eventName, "eventName", "cancelEvent");
     if(message)
         return message;
 
@@ -540,12 +540,13 @@ Countly.setUserData = async function(userData){
 };
 
 Countly.userData = {};
-Countly.userData.setProperty = function(keyName, keyValue){
-    var message = Countly.checkEmptyAndStringWithLogPrint(keyName, "key", "setProperty");
+Countly.userData.setProperty = async function(keyName, keyValue){
+    var message = await Countly.checkEmptyAndStringWithLogPrint(keyName, "key", "setProperty");
     if(message) {
         return message;
     }
-    message = Countly.checkValidUserDataWithLogPrint(keyValue, "value", "setProperty");
+
+    message = await Countly.checkValidUserDataWithLogPrint(keyValue, "value", "setProperty");
     if(message) {
         return message;
     }
@@ -555,8 +556,8 @@ Countly.userData.setProperty = function(keyName, keyValue){
         CountlyReactNative.userData_setProperty([keyName, keyValue]);
     }
 };
-Countly.userData.increment = function(keyName){
-    var message = Countly.checkEmptyAndStringWithLogPrint(keyName, "key", "setProperty");
+Countly.userData.increment = async function(keyName){
+    var message = await Countly.checkEmptyAndStringWithLogPrint(keyName, "key", "setProperty");
     if(message) {
         return message;
     }
@@ -565,60 +566,60 @@ Countly.userData.increment = function(keyName){
         CountlyReactNative.userData_increment([keyName]);
     }
 };
-Countly.userData.incrementBy = function(keyName, keyValue){
-    var message = Countly.checkEmptyAndStringWithLogPrint(keyName, "key", "incrementBy");
+Countly.userData.incrementBy = async function(keyName, keyValue){
+    var message = await Countly.checkEmptyAndStringWithLogPrint(keyName, "key", "incrementBy");
     if(message) {
         return message;
     }
-    message = Countly.checkUserDataValueWithLogPrint(keyValue, "value", "incrementBy");
+    message = await Countly.checkUserDataValueWithLogPrint(keyValue, "value", "incrementBy");
     if(message) {
         return message;
     }
     var intValue = parseInt(keyValue);
     CountlyReactNative.userData_incrementBy([keyName, intValue]);
 };
-Countly.userData.multiply = function(keyName, keyValue){
-    var message = Countly.checkEmptyAndStringWithLogPrint(keyName, "key", "multiply");
+Countly.userData.multiply = async function(keyName, keyValue){
+    var message = await Countly.checkEmptyAndStringWithLogPrint(keyName, "key", "multiply");
     if(message) {
         return message;
     }
-    message = Countly.checkUserDataValueWithLogPrint(keyValue, "value", "multiply");
+    message = await Countly.checkUserDataValueWithLogPrint(keyValue, "value", "multiply");
     if(message) {
         return message;
     }
     var intValue = parseInt(keyValue);
     CountlyReactNative.userData_multiply([keyName, intValue]);
 };
-Countly.userData.saveMax = function(keyName, keyValue){
-    var message = Countly.checkEmptyAndStringWithLogPrint(keyName, "key", "saveMax");
+Countly.userData.saveMax = async function(keyName, keyValue){
+    var message = await Countly.checkEmptyAndStringWithLogPrint(keyName, "key", "saveMax");
     if(message) {
         return message;
     }
-    message = Countly.checkUserDataValueWithLogPrint(keyValue, "value", "saveMax");
+    message = await Countly.checkUserDataValueWithLogPrint(keyValue, "value", "saveMax");
     if(message) {
         return message;
     }
     var intValue = parseInt(keyValue);
     CountlyReactNative.userData_saveMax([keyName, intValue]);
 };
-Countly.userData.saveMin = function(keyName, keyValue){
-    var message = Countly.checkEmptyAndStringWithLogPrint(keyName, "key", "saveMin");
+Countly.userData.saveMin = async function(keyName, keyValue){
+    var message = await Countly.checkEmptyAndStringWithLogPrint(keyName, "key", "saveMin");
     if(message) {
         return message;
     }
-    message = Countly.checkUserDataValueWithLogPrint(keyValue, "value", "saveMin");
+    message = await Countly.checkUserDataValueWithLogPrint(keyValue, "value", "saveMin");
     if(message) {
         return message;
     }
     var intValue = parseInt(keyValue);
     CountlyReactNative.userData_saveMin([keyName, intValue]);
 };
-Countly.userData.setOnce = function(keyName, keyValue){
-    var message = Countly.checkEmptyAndStringWithLogPrint(keyName, "key", "setOnce");
+Countly.userData.setOnce = async function(keyName, keyValue){
+    var message = await Countly.checkEmptyAndStringWithLogPrint(keyName, "key", "setOnce");
     if(message) {
         return message;
     }
-    message = Countly.checkValidUserDataWithLogPrint(keyValue, "value", "setOnce");
+    message = await Countly.checkValidUserDataWithLogPrint(keyValue, "value", "setOnce");
     if(message) {
         return message;
     }
@@ -627,12 +628,12 @@ Countly.userData.setOnce = function(keyName, keyValue){
         CountlyReactNative.userData_setOnce([keyName, keyValue]);
     }
 };
-Countly.userData.pushUniqueValue = function(keyName, keyValue){
-    var message = Countly.checkEmptyAndStringWithLogPrint(keyName, "key", "pushUniqueValue");
+Countly.userData.pushUniqueValue = async function(keyName, keyValue){
+    var message = await Countly.checkEmptyAndStringWithLogPrint(keyName, "key", "pushUniqueValue");
     if(message) {
         return message;
     }
-    message = Countly.checkValidUserDataWithLogPrint(keyValue, "value", "pushUniqueValue");
+    message = await Countly.checkValidUserDataWithLogPrint(keyValue, "value", "pushUniqueValue");
     if(message) {
         return message;
     }
@@ -641,12 +642,12 @@ Countly.userData.pushUniqueValue = function(keyName, keyValue){
         CountlyReactNative.userData_pushUniqueValue([keyName, keyValue]);
     }
 };
-Countly.userData.pushValue = function(keyName, keyValue){
-    var message = Countly.checkEmptyAndStringWithLogPrint(keyName, "key", "pushValue");
+Countly.userData.pushValue = async function(keyName, keyValue){
+    var message = await Countly.checkEmptyAndStringWithLogPrint(keyName, "key", "pushValue");
     if(message) {
         return message;
     }
-    message = Countly.checkValidUserDataWithLogPrint(keyValue, "value", "pushValue");
+    message = await Countly.checkValidUserDataWithLogPrint(keyValue, "value", "pushValue");
     if(message) {
         return message;
     }
@@ -655,12 +656,12 @@ Countly.userData.pushValue = function(keyName, keyValue){
         CountlyReactNative.userData_pushValue([keyName, keyValue]);
     }
 };
-Countly.userData.pullValue = function(keyName, keyValue){
-    var message = Countly.checkEmptyAndStringWithLogPrint(keyName, "key", "pullValue");
+Countly.userData.pullValue = async function(keyName, keyValue){
+    var message = await Countly.checkEmptyAndStringWithLogPrint(keyName, "key", "pullValue");
     if(message) {
         return message;
     }
-    message = Countly.checkValidUserDataWithLogPrint(keyValue, "value", "pullValue");
+    message = await Countly.checkValidUserDataWithLogPrint(keyValue, "value", "pullValue");
     if(message) {
         return message;
     }
@@ -1059,18 +1060,18 @@ Countly.appLoadingFinished = async function(){
     }
 }
 
-Countly.checkUserDataValueWithLogPrint = (stringValue, stringName, functionName) => {
-    var message = Countly.checkValidUserDataWithLogPrint(stringValue, stringName, functionName);
+Countly.checkUserDataValueWithLogPrint = async (stringValue, stringName, functionName) => {
+    var message = await Countly.checkValidUserDataWithLogPrint(stringValue, stringName, functionName);
     if(message) {
         return message;
     }
     
-    message = Countly.checkUserDataTypeWithLogPrint(stringValue, stringName, functionName);
+    message = await Countly.checkUserDataTypeWithLogPrint(stringValue, stringName, functionName);
     if(message) {
         return message;
     }
 
-    message = Countly.checkParseIntWithLogPrint(stringValue, stringName, functionName);
+    message = await Countly.checkParseIntWithLogPrint(stringValue, stringName, functionName);
     return message;
 }
 
@@ -1117,20 +1118,21 @@ Countly.checkParseIntWithLogPrint = async (stringValue, stringName, functionName
     return message;
 };
 
-Countly.checkEmptyAndStringWithLogPrint = (stringValue, stringName, functionName) => {
-    var message = Countly.checkEmptyWithLogPrint(stringValue, stringName, functionName);
+Countly.checkEmptyAndStringWithLogPrint = async (stringValue, stringName, functionName) => {
+    var message = await Countly.checkEmptyWithLogPrint(stringValue, stringName, functionName);
     if(message) {
         return message;
     }
     
-    message = Countly.checkStringWithLogPrint(stringValue, stringName, functionName);
+    message = await Countly.checkStringWithLogPrint(stringValue, stringName, functionName);
     return message;
 }
 
 Countly.checkEmptyWithLogPrint = async (stringValue, stringName, functionName) => {
-    if (stringValue)
-    return null;
-
+    if (stringValue){
+        return null;
+    }
+    
     var message = stringName +" should not be null, undefined or empty";
     if(await CountlyReactNative.isLoggingEnabled()) {
         console.error("[CountlyReactNative] " + functionName + ", "+ message);
