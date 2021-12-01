@@ -1,5 +1,5 @@
 ## 20.11.11
-* User profile issue fixed.
+* Hotfix for User profile data.
 * Updated underlying android SDK to 20.11.11
 * Updated underlying iOS SDK to 20.11.3
 
