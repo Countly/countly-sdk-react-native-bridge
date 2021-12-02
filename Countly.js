@@ -116,8 +116,9 @@ Countly.setViewTracking = async function(boolean) {
  */
 Countly.recordView = async function(recordView, segments){
     var message = await Countly.validateString(recordView, "view name", "recordView");
-    if(message)
+    if(message) {
         return message;
+    }
 
     var args = [];
     args.push(String(recordView));
@@ -148,8 +149,9 @@ Countly.disablePushNotifications = function(){
  */
 Countly.pushTokenType = async function(tokenType, channelName, channelDescription){
     var message = await Countly.validateString(tokenType, "tokenType", "pushTokenType");
-    if(message)
+    if(message) {
         return message;
+    }
 
     var args = [];
     args.push(tokenType);
@@ -281,8 +283,9 @@ Countly.getCurrentDeviceId = async function(){
 
 Countly.changeDeviceId = async function(newDeviceID, onServer){
     var message = await Countly.validateString(newDeviceID, "newDeviceID", "changeDeviceId");
-    if(message)
+    if(message) {
         return message;
+    }
 
     if(onServer === false){
         onServer = "0";
@@ -414,8 +417,9 @@ Countly.endSession = function(){
  */
 Countly.enableParameterTamperingProtection = async function(salt){
     var message = await Countly.validateString(salt, "salt", "enableParameterTamperingProtection");
-    if(message)
+    if(message) {
         return message;
+    }
 
     CountlyReactNative.enableParameterTamperingProtection([salt.toString()]);
 }
@@ -427,22 +431,25 @@ Countly.enableParameterTamperingProtection = async function(salt){
  */
 Countly.pinnedCertificates = async function(certificateName){
     var message = await Countly.validateString(certificateName, "certificateName", "pinnedCertificates");
-    if(message)
+    if(message) {
         return message;
+    }
         
     CountlyReactNative.pinnedCertificates([certificateName]);
 }
 Countly.startEvent = async function(eventName){
     var message = await Countly.validateString(eventName, "eventName", "startEvent");
-    if(message)
+    if(message) {
         return message;
+    }
 
     CountlyReactNative.startEvent([eventName.toString()]);
 }
 Countly.cancelEvent = async function(eventName){
     var message = await Countly.validateString(eventName, "eventName", "cancelEvent");
-    if(message)
+    if(message) {
         return message;
+    }
 
     CountlyReactNative.cancelEvent([eventName.toString()]);
 }
