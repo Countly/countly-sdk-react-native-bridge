@@ -28,9 +28,7 @@ Countly.init = async function(serverUrl, appKey, deviceId){
 
     if(deviceId == "") {
         deviceId = null;
-        if(await CountlyReactNative.isLoggingEnabled()) {
-            console.error("[CountlyReactNative] init, Device Id during init can't be empty string");
-        }
+        Countly.logError("init", "Device Id during init can't be empty string");
     }
     Countly.serverUrl = serverUrl;
     Countly.appKey = appKey;
@@ -116,9 +114,14 @@ Countly.setViewTracking = async function(boolean) {
  * @param {Map} segments - allows to add optional segmentation,
  * Supported data type for segments values are String, int, double and bool
  */
-Countly.recordView = function(recordView, segments){
+Countly.recordView = async function(recordView, segments){
+    var message = await Countly.validateString(recordView, "view name", "recordView");
+    if(message) {
+        return message;
+    }
+
     var args = [];
-    args.push(String(recordView) || "");
+    args.push(String(recordView));
     if(!segments){
         segments = {};
     }
@@ -144,9 +147,14 @@ Countly.disablePushNotifications = function(){
  * Set messaging mode for push notifications
  * Should be called before Countly init
  */
-Countly.pushTokenType = function(tokenType, channelName, channelDescription){
+Countly.pushTokenType = async function(tokenType, channelName, channelDescription){
+    var message = await Countly.validateString(tokenType, "tokenType", "pushTokenType");
+    if(message) {
+        return message;
+    }
+
     var args = [];
-    args.push(tokenType || "");
+    args.push(tokenType);
     args.push(channelName || "");
     args.push(channelDescription || "");
     CountlyReactNative.pushTokenType(args);
@@ -265,22 +273,26 @@ Countly.disableLocation = function(){
  * */
 Countly.getCurrentDeviceId = async function(){
     if(!await Countly.isInitialized()) {
-        if(await CountlyReactNative.isLoggingEnabled()) {
-            console.warn('[CountlyReactNative] getCurrentDeviceId, init must be called before getCurrentDeviceId');
-        }
-        return "init must be called before getCurrentDeviceId";
+        var message = "init must be called before getCurrentDeviceId";
+        Countly.logWarning("getCurrentDeviceId", message);
+        return message;
       }
       const result = await CountlyReactNative.getCurrentDeviceId();
       return result;
   }
 
-Countly.changeDeviceId = function(newDeviceID, onServer){
+Countly.changeDeviceId = async function(newDeviceID, onServer){
+    var message = await Countly.validateString(newDeviceID, "newDeviceID", "changeDeviceId");
+    if(message) {
+        return message;
+    }
+
     if(onServer === false){
         onServer = "0";
     }else{
         onServer = "1";
     }
-    newDeviceID = newDeviceID.toString() || "";
+    newDeviceID = newDeviceID.toString();
     CountlyReactNative.changeDeviceId([newDeviceID, onServer]);
 }
 
@@ -403,8 +415,13 @@ Countly.endSession = function(){
  * Set the optional salt to be used for calculating the checksum of requested data which will be sent with each request, using the &checksum field
  * Should be called before Countly init
  */
-Countly.enableParameterTamperingProtection = function(salt){
-    CountlyReactNative.enableParameterTamperingProtection([salt.toString() || ""]);
+Countly.enableParameterTamperingProtection = async function(salt){
+    var message = await Countly.validateString(salt, "salt", "enableParameterTamperingProtection");
+    if(message) {
+        return message;
+    }
+
+    CountlyReactNative.enableParameterTamperingProtection([salt.toString()]);
 }
 
 /**
@@ -412,14 +429,29 @@ Countly.enableParameterTamperingProtection = function(salt){
  * It will ensure that connection is made with one of the public keys specified
  * Should be called before Countly init
  */
-Countly.pinnedCertificates = function(certificateName){
-    CountlyReactNative.pinnedCertificates([certificateName || ""]);
+Countly.pinnedCertificates = async function(certificateName){
+    var message = await Countly.validateString(certificateName, "certificateName", "pinnedCertificates");
+    if(message) {
+        return message;
+    }
+        
+    CountlyReactNative.pinnedCertificates([certificateName]);
 }
-Countly.startEvent = function(eventName){
-    CountlyReactNative.startEvent([eventName.toString() || ""]);
+Countly.startEvent = async function(eventName){
+    var message = await Countly.validateString(eventName, "eventName", "startEvent");
+    if(message) {
+        return message;
+    }
+
+    CountlyReactNative.startEvent([eventName.toString()]);
 }
-Countly.cancelEvent = function(eventName){
-    CountlyReactNative.cancelEvent([eventName.toString() || ""]);
+Countly.cancelEvent = async function(eventName){
+    var message = await Countly.validateString(eventName, "eventName", "cancelEvent");
+    if(message) {
+        return message;
+    }
+
+    CountlyReactNative.cancelEvent([eventName.toString()]);
 }
 Countly.endEvent = function(options){
     if(typeof options === "string") {
@@ -468,50 +500,171 @@ Countly.endEvent = function(options){
 };
 
 // countly sending user data
-Countly.setUserData = function(options){
+Countly.setUserData = async function(userData){
+    if(!userData) {
+        var message = "User profile data should not be null or undefined";
+        Countly.logError("setUserData", message);
+        return message;
+    }
+    if(typeof userData !== 'object'){
+        var message = "unsupported data type of user data '" + (typeof userData) + "'";
+        Countly.logWarning("setUserData", message);
+        return message;
+    }
     var args = [];
-    args.push(options.name || "");
-    args.push(options.username || "");
-    args.push(options.email || "");
-    args.push(options.org || "");
-    args.push(options.phone || "");
-    args.push(options.picture || "");
-    args.push(options.picturePath || "");
-    args.push(options.gender || "");
-    args.push(options.byear || 0);
+    for(var key in userData){
+        if (typeof userData[key] != "string" && key.toString() != "byear") 
+        {
+            var message = "skipping value for key '" + key.toString() + "', due to unsupported data type '" + (typeof userData[key]) + "', its data type should be 'string'";
+            Countly.logWarning(setUserData, message);
+        }
+        
+    }
+
+    if(userData.org && !userData.organization) {
+        userData.organization = userData.org;
+        delete userData.org;
+    }
+
+    if(userData.byear) {
+        Countly.validateParseInt(userData.byear, "key byear", "setUserData");
+        userData.byear = userData.byear.toString();
+    }
+    args.push(userData);
+
     CountlyReactNative.setUserData(args);
-}
+};
 
 Countly.userData = {};
-Countly.userData.setProperty = function(keyName, keyValue){
-    CountlyReactNative.userData_setProperty([keyName.toString() || "", keyValue.toString() || ""]);
+Countly.userData.setProperty = async function(keyName, keyValue){
+    var message = await Countly.validateString(keyName, "key", "setProperty");
+    if(message) {
+        return message;
+    }
+
+    message = await Countly.validateValidUserData(keyValue, "value", "setProperty");
+    if(message) {
+        return message;
+    }
+    keyName = keyName.toString();
+    keyValue = keyValue.toString();
+    if(keyName && (keyValue || keyValue == "")) {
+        CountlyReactNative.userData_setProperty([keyName, keyValue]);
+    }
 };
-Countly.userData.increment = function(keyName){
-    CountlyReactNative.userData_increment([keyName.toString() || ""]);
+Countly.userData.increment = async function(keyName){
+    var message = await Countly.validateString(keyName, "key", "setProperty");
+    if(message) {
+        return message;
+    }
+    keyName = keyName.toString();
+    if(keyName) {
+        CountlyReactNative.userData_increment([keyName]);
+    }
 };
-Countly.userData.incrementBy = function(keyName, keyIncrement){
-    CountlyReactNative.userData_incrementBy([keyName.toString() || "", keyIncrement.toString() || ""]);
+Countly.userData.incrementBy = async function(keyName, keyValue){
+    var message = await Countly.validateString(keyName, "key", "incrementBy");
+    if(message) {
+        return message;
+    }
+    message = await Countly.validateUserDataValue(keyValue, "value", "incrementBy");
+    if(message) {
+        return message;
+    }
+    var intValue = parseInt(keyValue).toString();
+    CountlyReactNative.userData_incrementBy([keyName, intValue]);
 };
-Countly.userData.multiply = function(keyName, multiplyValue){
-    CountlyReactNative.userData_multiply([keyName.toString() || "", multiplyValue.toString() || ""]);
+Countly.userData.multiply = async function(keyName, keyValue){
+    var message = await Countly.validateString(keyName, "key", "multiply");
+    if(message) {
+        return message;
+    }
+    message = await Countly.validateUserDataValue(keyValue, "value", "multiply");
+    if(message) {
+        return message;
+    }
+    var intValue = parseInt(keyValue).toString();
+    CountlyReactNative.userData_multiply([keyName, intValue]);
 };
-Countly.userData.saveMax = function(keyName, saveMax){
-    CountlyReactNative.userData_saveMax([keyName.toString() || "", saveMax.toString() || ""]);
+Countly.userData.saveMax = async function(keyName, keyValue){
+    var message = await Countly.validateString(keyName, "key", "saveMax");
+    if(message) {
+        return message;
+    }
+    message = await Countly.validateUserDataValue(keyValue, "value", "saveMax");
+    if(message) {
+        return message;
+    }
+    var intValue = parseInt(keyValue).toString();
+    CountlyReactNative.userData_saveMax([keyName, intValue]);
 };
-Countly.userData.saveMin = function(keyName, saveMin){
-    CountlyReactNative.userData_saveMin([keyName.toString() || "", saveMin.toString() || ""]);
+Countly.userData.saveMin = async function(keyName, keyValue){
+    var message = await Countly.validateString(keyName, "key", "saveMin");
+    if(message) {
+        return message;
+    }
+    message = await Countly.validateUserDataValue(keyValue, "value", "saveMin");
+    if(message) {
+        return message;
+    }
+    var intValue = parseInt(keyValue).toString();
+    CountlyReactNative.userData_saveMin([keyName, intValue]);
 };
-Countly.userData.setOnce = function(keyName, setOnce){
-    CountlyReactNative.userData_setOnce([keyName.toString() || "", setOnce.toString() || ""]);
+Countly.userData.setOnce = async function(keyName, keyValue){
+    var message = await Countly.validateString(keyName, "key", "setOnce");
+    if(message) {
+        return message;
+    }
+    message = await Countly.validateValidUserData(keyValue, "value", "setOnce");
+    if(message) {
+        return message;
+    }
+    keyValue = keyValue.toString();
+    if(keyValue || keyValue == "") {
+        CountlyReactNative.userData_setOnce([keyName, keyValue]);
+    }
 };
-Countly.userData.pushUniqueValue = function(keyName, keyValue){
-    CountlyReactNative.userData_pushUniqueValue([keyName.toString() || "", keyValue.toString() || ""]);
+Countly.userData.pushUniqueValue = async function(keyName, keyValue){
+    var message = await Countly.validateString(keyName, "key", "pushUniqueValue");
+    if(message) {
+        return message;
+    }
+    message = await Countly.validateValidUserData(keyValue, "value", "pushUniqueValue");
+    if(message) {
+        return message;
+    }
+    keyValue = keyValue.toString();
+    if(keyValue || keyValue == "") {
+        CountlyReactNative.userData_pushUniqueValue([keyName, keyValue]);
+    }
 };
-Countly.userData.pushValue = function(keyName, keyValue){
-    CountlyReactNative.userData_pushValue([keyName.toString() || "", keyValue.toString() || ""]);
+Countly.userData.pushValue = async function(keyName, keyValue){
+    var message = await Countly.validateString(keyName, "key", "pushValue");
+    if(message) {
+        return message;
+    }
+    message = await Countly.validateValidUserData(keyValue, "value", "pushValue");
+    if(message) {
+        return message;
+    }
+    keyValue = keyValue.toString();
+    if(keyValue || keyValue == "") {
+        CountlyReactNative.userData_pushValue([keyName, keyValue]);
+    }
 };
-Countly.userData.pullValue = function(keyName, keyValue){
-    CountlyReactNative.userData_pullValue([keyName.toString() || "", keyValue.toString() || ""]);
+Countly.userData.pullValue = async function(keyName, keyValue){
+    var message = await Countly.validateString(keyName, "key", "pullValue");
+    if(message) {
+        return message;
+    }
+    message = await Countly.validateValidUserData(keyValue, "value", "pullValue");
+    if(message) {
+        return message;
+    }
+    keyValue = keyValue.toString();
+    if(keyValue || keyValue == "") {
+        CountlyReactNative.userData_pullValue([keyName, keyValue]);
+    }
 };
 
 
@@ -549,9 +702,8 @@ Countly.giveConsentInit = async function(args){
         features = args;
     }
     else {
-        if(await CountlyReactNative.isLoggingEnabled()) {
-            console.warn("[CountlyReactNative] giveConsentInit, unsupported data type '" + (typeof args) + "'");
-        }
+        var message = "unsupported data type '" + (typeof args) + "'";
+        Countly.logWarning("giveConsentInit", message);
     }
     CountlyReactNative.giveConsentInit(features);
 }
@@ -699,28 +851,23 @@ Countly.getAvailableFeedbackWidgets = async function(){
  */  
 Countly.presentFeedbackWidgetObject = async function(feedbackWidget, closeButtonText){
     if(!feedbackWidget) {
-        if(await CountlyReactNative.isLoggingEnabled()) {
-            console.error("[CountlyReactNative] presentFeedbackWidgetObject, feedbackWidget should not be null or undefined");
-        }
-        return "feedbackWidget should not be null or undefined";
+        var message = "feedbackWidget should not be null or undefined";
+        Countly.logError("presentFeedbackWidgetObject", message);
+        return message;
     }
     if(!feedbackWidget.id) {
-        if(await CountlyReactNative.isLoggingEnabled()) {
-            console.error("[CountlyReactNative] presentFeedbackWidgetObject, feedbackWidget id should not be null or empty");
-        }
-        return "FeedbackWidget id should not be null or empty";
+        var message = "FeedbackWidget id should not be null or empty";
+        Countly.logError("presentFeedbackWidgetObject", message);
+        return message;
     }
     if(!feedbackWidget.type) {
-        if(await CountlyReactNative.isLoggingEnabled()) {
-            console.error("[CountlyReactNative] presentFeedbackWidgetObject, feedbackWidget type should not be null or empty");
-        }
-        return "FeedbackWidget type should not be null or empty";
+        var message = "FeedbackWidget type should not be null or empty";
+        Countly.logError("presentFeedbackWidgetObject", message);
+        return message;
     }
     if (typeof closeButtonText != "string") { 
             closeButtonText = "";
-            if(await CountlyReactNative.isLoggingEnabled()) {
-            console.warn("[CountlyReactNative] presentFeedbackWidgetObject, unsupported data type of closeButtonText : '" + (typeof args) + "'");
-        }
+            Countly.logWarning("presentFeedbackWidgetObject", "unsupported data type of closeButtonText : '" + (typeof args) + "'");
     }
     feedbackWidget.name = feedbackWidget.name || "";
     closeButtonText = closeButtonText || "";
@@ -811,10 +958,9 @@ Countly.enableApm = function(){
 Countly.enableAttribution = async function(attributionID = "") {
     if (Platform.OS.match("ios")) {
         if(attributionID == "") {
-            if(await CountlyReactNative.isLoggingEnabled()) {
-                console.error("[CountlyReactNative] enableAttribution, attribution Id for iOS can't be empty string");
-            }
-            return "attribution Id for iOS can't be empty string";
+            var message = "attribution Id for iOS can't be empty string";
+            Countly.logError("enableAttribution", message);
+            return message;
         }
         Countly.recordAttributionID(attributionID);
     }
@@ -859,10 +1005,9 @@ Countly.removeDifferentAppKeysFromQueue = function(){
  */
 Countly.appLoadingFinished = async function(){
     if(!await Countly.isInitialized()) {
-        if(await CountlyReactNative.isLoggingEnabled()) {
-            console.warn('[CountlyReactNative] appLoadingFinished, init must be called before appLoadingFinished');
-        }
-        return "init must be called before appLoadingFinished";
+        var message = "init must be called before appLoadingFinished";
+        Countly.logWarning("appLoadingFinished", message);
+        return message;
       }
     CountlyReactNative.appLoadingFinished()
   }
@@ -875,34 +1020,159 @@ Countly.appLoadingFinished = async function(){
    */
   Countly.setCustomMetrics = async function(customMetric){
     if(!customMetric) {
-        if(await CountlyReactNative.isLoggingEnabled()) {
-            console.error("[CountlyReactNative] setCustomMetrics, customMetric should not be null or undefined");
-        }
-        return "customMetric should not be null or undefined";
+        var message = "customMetric should not be null or undefined";
+        Countly.logError("setCustomMetrics", message);
+        return message;
     }
     if(typeof customMetric !== 'object'){
-        if(await CountlyReactNative.isLoggingEnabled()) {
-            console.warn("[CountlyReactNative] setCustomMetrics, unsupported data type of customMetric '" + (typeof customMetric) + "'");
-        }
-        return "Unsupported data type of customMetric '" + (typeof customMetric) + "'";
+        var message = "unsupported data type of customMetric '" + (typeof customMetric) + "'";
+        Countly.logWarning("setCustomMetrics", message)
+        return message;
     }
     var args = [];
-    customMetric = customMetric || {};
     for(var key in customMetric){
         if (typeof customMetric[key] == "string") {
             args.push(key.toString());
             args.push(customMetric[key].toString());
         }
         else {
-            if(await CountlyReactNative.isLoggingEnabled()) {
-                console.warn("[CountlyReactNative] setCustomMetrics, skipping value for key '" + key.toString() + "', due to unsupported data type '" + (typeof customMetric[key]) + "'");
-            }
+            Countly.logWarning("setCustomMetrics", "skipping value for key '" + key.toString() + "', due to unsupported data type '" + (typeof customMetric[key]) + "'");
         }
     }
     if(args.length != 0) {
         CountlyReactNative.setCustomMetrics(args);
     }
 }
+/**
+ * Validate user data value, it should be 'number' or 'string' that is parseable to 'number'
+ * and it should not be null or undefined
+ * It will return message if any issue found related to data validation else return null.
+ * @param {String} stringValue : value of data to validate
+ * @param {String} stringName : name of that value string
+ * @param {String} functionName : name of function from where value is validating.
+ * @returns 
+ */
+Countly.validateUserDataValue = async (stringValue, stringName, functionName) => {
+    // validating that value should not be null or undefined
+    var message = await Countly.validateValidUserData(stringValue, stringName, functionName);
+    if(message) {
+        return message;
+    }
+    
+    // validating that value should be 'number' or 'string'
+    message = await Countly.validateUserDataType(stringValue, stringName, functionName);
+    if(message) {
+        return message;
+    }
+
+    // validating that value should be parceable to int.
+    message = await Countly.validateParseInt(stringValue, stringName, functionName);
+    return message;
+}
+
+/**
+ * Validate user data value, it should be 'number' or 'string' that is parseable to 'number'
+ * It will return message if any issue found related to data validation else return null.
+ * @param {String} stringValue : value of data to validate
+ * @param {String} stringName : name of that value string
+ * @param {String} functionName : name of function from where value is validating.
+ * @returns 
+ */
+Countly.validateUserDataType = async (stringValue, stringName, functionName) => {
+    if (typeof stringValue == "number") {
+        return null;
+    }
+    if (typeof stringValue == "string") {
+        var message = "unsupported data type '" + (typeof stringValue) + "', its data type should be 'number'";
+        Countly.logWarning(functionName, message);
+        return null;
+    }
+
+    var message = "skipping value for '" + stringName.toString() + "', due to unsupported data type '" + (typeof stringValue) + "', its data type should be 'number'";
+    Countly.logError(functionName, message);
+    return message
+};
+
+/**
+ * Validate user data value, it should not be null or undefined
+ * It will return message if any issue found related to data validation else return null.
+ * @param {String} stringValue : value of data to validate
+ * @param {String} stringName : name of that value string
+ * @param {String} functionName : name of function from where value is validating.
+ * @returns 
+ */
+Countly.validateValidUserData = async (stringValue, stringName, functionName) => {
+    if (stringValue || stringValue == "") {
+        return null;
+    }
+
+    var message = stringName +" should not be null or undefined";
+    Countly.logError(functionName, message);
+    return message;
+};
+
+/**
+ * Validate user data value, it should be parseable to 'number'
+ * It will return message if any issue found related to data validation else return null.
+ * @param {String} stringValue : value of data to validate
+ * @param {String} stringName : name of that value string
+ * @param {String} functionName : name of function from where value is validating.
+ * @returns 
+ */
+Countly.validateParseInt = async (stringValue, stringName, functionName) => {
+    var intValue = parseInt(stringValue);
+    if (!isNaN(intValue)) {
+        return null;
+    }
+
+    var message = "skipping value for '" + stringName.toString() + "', due to unsupported data type '" + (typeof stringValue) + "', its data type should be 'number' or parseable to 'integer'";
+    Countly.logError(functionName, message);
+    return message;
+};
+
+/**
+ * Validate string, it should not be empty, null or undefined
+ * It will return message if any issue found related to string validation else return null.
+ * @param {String} stringValue : value of string to validate
+ * @param {String} stringName : name of that value string
+ * @param {String} functionName : name of function from where value is validating.
+ * @returns 
+ */
+Countly.validateString = async (stringValue, stringName, functionName) => {
+    var message = null;
+    if(!stringValue) {
+        message = stringName +" should not be null, undefined or empty";
+    }
+    else if (typeof stringValue !== "string") {
+        message = "skipping value for '" + stringName.toString() + "', due to unsupported data type '" + (typeof stringValue) + "', its data type should be 'string'";
+    
+    }
+    if(message) {
+        Countly.logError(functionName, message);
+    }
+    return message;
+};
+
+/**
+ * Print error if logging is enabled
+ * @param {String} functionName : name of function from where value is validating.
+ * @param {String} error : error message
+ */
+Countly.logError = async (functionName, error) => {
+    if(await CountlyReactNative.isLoggingEnabled()) {
+        console.error("[CountlyReactNative] " + functionName + ", " + error);
+    }
+};
+/**
+ * Print warning if logging is enabled
+ * @param {String} functionName : name of function from where value is validating.
+ * @param {String} error : error message
+ */
+Countly.logWarning = async(functionName, warning) => {
+    if(await CountlyReactNative.isLoggingEnabled()) {
+        console.warn("[CountlyReactNative] " + functionName + ", " + warning);
+    }
+};
 
 /*
 Countly.initNative = function(){

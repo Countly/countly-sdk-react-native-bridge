@@ -1,3 +1,8 @@
+## 20.11.11
+* User profile issue fixed, user data was deleted for key if no value,null or undefined value was provided against that key.
+* Updated underlying android SDK to 20.11.11
+* Updated underlying iOS SDK to 20.11.3
+
 ## 20.11.10
 * Error/crash stack parsing issue fixed for React-Native version >= 0.64
 * Underlying android SDK is 20.11.10

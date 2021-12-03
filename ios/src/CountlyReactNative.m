@@ -21,7 +21,7 @@
 + (CountlyFeedbackWidget *)createWithDictionary:(NSDictionary *)dictionary;
 @end
 
-NSString* const kCountlyReactNativeSDKVersion = @"20.11.10";
+NSString* const kCountlyReactNativeSDKVersion = @"20.11.11";
 NSString* const kCountlyReactNativeSDKName = @"js-rnb-ios";
 
 CountlyConfig* config = nil;
@@ -172,25 +172,45 @@ RCT_EXPORT_METHOD(setLoggingEnabled:(NSArray*)arguments)
 RCT_EXPORT_METHOD(setUserData:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
-  NSString* name = [arguments objectAtIndex:0];
-  NSString* username = [arguments objectAtIndex:1];
-  NSString* email = [arguments objectAtIndex:2];
-  NSString* org = [arguments objectAtIndex:3];
-  NSString* phone = [arguments objectAtIndex:4];
-  NSString* picture = [arguments objectAtIndex:5];
-  NSString* pictureLocalPath = [arguments objectAtIndex:6];
-  NSString* gender = [arguments objectAtIndex:7];
-  NSString* byear = [arguments objectAtIndex:8];
-
-  Countly.user.name = name;
-  Countly.user.username = username;
-  Countly.user.email = email;
-  Countly.user.organization = org;
-  Countly.user.phone = phone;
-  Countly.user.pictureURL = picture;
-  Countly.user.pictureLocalPath = pictureLocalPath;
-  Countly.user.gender = gender;
-  Countly.user.birthYear = @([byear integerValue]);
+      
+  NSDictionary* userData = [arguments objectAtIndex:0];
+  NSString* name = [userData objectForKey:@"name"];
+  NSString* username = [userData objectForKey:@"username"];
+  NSString* email = [userData objectForKey:@"email"];
+  NSString* organization = [userData objectForKey:@"organization"];
+  NSString* phone = [userData objectForKey:@"phone"];
+  NSString* picture = [userData objectForKey:@"picture"];
+  NSString* pictureLocalPath = [userData objectForKey:@"pictureLocalPath"];
+  NSString* gender = [userData objectForKey:@"gender"];
+  NSString* byear = [userData objectForKey:@"byear"];
+      
+  if(name) {
+      Countly.user.name = name;
+  }
+  if(username) {
+      Countly.user.username = username;
+  }
+  if(email) {
+      Countly.user.email = email;
+  }
+  if(organization) {
+      Countly.user.organization = organization;
+  }
+  if(phone) {
+      Countly.user.phone = phone;
+  }
+  if(picture) {
+      Countly.user.pictureURL = picture;
+  }
+  if(pictureLocalPath) {
+      Countly.user.pictureLocalPath = pictureLocalPath;
+  }
+  if(gender) {
+      Countly.user.gender = gender;
+  }
+  if(byear) {
+      Countly.user.birthYear = @([byear integerValue]);
+  }
   [Countly.user save];
   });
 }
@@ -1173,7 +1193,7 @@ API_AVAILABLE(ios(10.0)){
             [NSFileManager.defaultManager createDirectoryAtURL:URL withIntermediateDirectories:YES attributes:nil error:&error];
             if (error)
             {
-                COUNTLY_LOG(@"Application Support directory can not be created: \n%@", error);
+                COUNTLY_RN_LOG(@"Application Support directory can not be created: \n%@", error);
             }
         }
     });
@@ -1210,6 +1230,6 @@ API_AVAILABLE(ios(10.0)){
 #pragma clang diagnostic ignored "-Wunused-variable"
 
     BOOL writeResult = [saveData writeToFile:[CountlyReactNative storageFileURL].path atomically:YES];
-    COUNTLY_LOG(@"Result of writing data to file: %d", writeResult);
+    COUNTLY_RN_LOG(@"Result of writing data to file: %d", writeResult);
 }
 @end
