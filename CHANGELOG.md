@@ -1,5 +1,6 @@
 ## 20.11.11
-* User profile issue fixed, user data was deleted for key if no value,null or undefined value was provided against that key.
+* User profile issue fixed, user data was deleted for key if no value, null or undefined value was provided against that key.
+* Fixed an issue on Android devices where events would not be sent.
 * Updated underlying android SDK to 20.11.11
 * Updated underlying iOS SDK to 20.11.3
 
