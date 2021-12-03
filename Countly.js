@@ -868,7 +868,6 @@ Countly.presentFeedbackWidgetObject = async function(feedbackWidget, closeButton
     if (typeof closeButtonText != "string") { 
             closeButtonText = "";
             Countly.logWarning("presentFeedbackWidgetObject", "unsupported data type of closeButtonText : '" + (typeof args) + "'");
-        }
     }
     feedbackWidget.name = feedbackWidget.name || "";
     closeButtonText = closeButtonText || "";
