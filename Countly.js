@@ -501,13 +501,14 @@ Countly.endEvent = function(options){
 
 // countly sending user data
 Countly.setUserData = async function(userData){
+    var message = null;
     if(!userData) {
-        var message = "User profile data should not be null or undefined";
+        message = "User profile data should not be null or undefined";
         Countly.logError("setUserData", message);
         return message;
     }
     if(typeof userData !== 'object'){
-        var message = "unsupported data type of user data '" + (typeof userData) + "'";
+        message = "unsupported data type of user data '" + (typeof userData) + "'";
         Countly.logWarning("setUserData", message);
         return message;
     }
@@ -515,7 +516,7 @@ Countly.setUserData = async function(userData){
     for(var key in userData){
         if (typeof userData[key] != "string" && key.toString() != "byear") 
         {
-            var message = "skipping value for key '" + key.toString() + "', due to unsupported data type '" + (typeof userData[key]) + "', its data type should be 'string'";
+            message = "skipping value for key '" + key.toString() + "', due to unsupported data type '" + (typeof userData[key]) + "', its data type should be 'string'";
             Countly.logWarning(setUserData, message);
         }
         
@@ -850,18 +851,19 @@ Countly.getAvailableFeedbackWidgets = async function(){
  * @param {String} closeButtonText - text for cancel/close button
  */  
 Countly.presentFeedbackWidgetObject = async function(feedbackWidget, closeButtonText){
+    var message = null;
     if(!feedbackWidget) {
-        var message = "feedbackWidget should not be null or undefined";
+        message = "feedbackWidget should not be null or undefined";
         Countly.logError("presentFeedbackWidgetObject", message);
         return message;
     }
     if(!feedbackWidget.id) {
-        var message = "FeedbackWidget id should not be null or empty";
+        message = "FeedbackWidget id should not be null or empty";
         Countly.logError("presentFeedbackWidgetObject", message);
         return message;
     }
     if(!feedbackWidget.type) {
-        var message = "FeedbackWidget type should not be null or empty";
+        message = "FeedbackWidget type should not be null or empty";
         Countly.logError("presentFeedbackWidgetObject", message);
         return message;
     }
@@ -1019,13 +1021,14 @@ Countly.appLoadingFinished = async function(){
    * Supported data type for customMetric values is String
    */
   Countly.setCustomMetrics = async function(customMetric){
+    var message = null;
     if(!customMetric) {
-        var message = "customMetric should not be null or undefined";
+        message = "customMetric should not be null or undefined";
         Countly.logError("setCustomMetrics", message);
         return message;
     }
     if(typeof customMetric !== 'object'){
-        var message = "unsupported data type of customMetric '" + (typeof customMetric) + "'";
+        message = "unsupported data type of customMetric '" + (typeof customMetric) + "'";
         Countly.logWarning("setCustomMetrics", message)
         return message;
     }
@@ -1079,18 +1082,19 @@ Countly.validateUserDataValue = async (stringValue, stringName, functionName) =>
  * @returns 
  */
 Countly.validateUserDataType = async (stringValue, stringName, functionName) => {
+    var message = null;
     if (typeof stringValue == "number") {
         return null;
     }
     if (typeof stringValue == "string") {
-        var message = "unsupported data type '" + (typeof stringValue) + "', its data type should be 'number'";
+        message = "unsupported data type '" + (typeof stringValue) + "', its data type should be 'number'";
         Countly.logWarning(functionName, message);
         return null;
     }
 
-    var message = "skipping value for '" + stringName.toString() + "', due to unsupported data type '" + (typeof stringValue) + "', its data type should be 'number'";
+    message = "skipping value for '" + stringName.toString() + "', due to unsupported data type '" + (typeof stringValue) + "', its data type should be 'number'";
     Countly.logError(functionName, message);
-    return message
+    return message;
 };
 
 /**
