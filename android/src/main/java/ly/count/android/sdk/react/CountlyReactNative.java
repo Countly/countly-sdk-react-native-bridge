@@ -38,6 +38,8 @@ import android.os.Build;
 import android.app.NotificationManager;
 import android.app.NotificationChannel;
 
+import androidx.annotation.NonNull;
+
 import ly.count.android.sdk.StarRatingCallback;
 import ly.count.android.sdk.messaging.CountlyPush;
 
@@ -50,11 +52,10 @@ import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeArray;
 import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.iid.InstanceIdResult;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 
 class CountlyReactException extends Exception {
@@ -548,25 +549,28 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         CountlyPush.init(activity.getApplication(), messagingMode);
         try{
             FirebaseApp.initializeApp(context);
-            FirebaseInstanceId firebaseInstanceId = FirebaseInstanceId.getInstance();
-            if(firebaseInstanceId == null) {
-                log("askForNotificationPermission, firebaseInstanceId is null", LogLevel.WARNING);
+            FirebaseMessaging firebaseMessagingInstance = FirebaseMessaging.getInstance();
+            if(firebaseMessagingInstance == null) {
+                log("askForNotificationPermission, firebaseMessagingInstance is null", LogLevel.WARNING);
                 return;
             }
-            Task<InstanceIdResult> instanceIdResultTask = firebaseInstanceId.getInstanceId();
-            if(instanceIdResultTask == null) {
-                log("askForNotificationPermission, instanceIdResultTask is null", LogLevel.WARNING);
+            Task<String> firebaseMessagingTokenTask = firebaseMessagingInstance.getToken();
+            if(firebaseMessagingTokenTask == null) {
+                log("askForNotificationPermission, firebaseMessagingTokenTask is null", LogLevel.WARNING);
                 return;
             }
-            instanceIdResultTask.addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
+
+            firebaseMessagingTokenTask.addOnCompleteListener(new OnCompleteListener<String>() {
                 @Override
-                public void onComplete(Task<InstanceIdResult> task) {
-                    if (!task.isSuccessful()) {
-                        log("askForNotificationPermission, getInstanceId failed", task.getException(), LogLevel.WARNING);
-                        return;
-                    }
-                    String token = task.getResult().getToken();
-                    CountlyPush.onTokenRefresh(token);
+                public void onComplete(@NonNull Task<String> task) {
+                if (!task.isSuccessful()) {
+                    log("askForNotificationPermission, Fetching FCM registration token failed", task.getException(), LogLevel.WARNING);    
+                    return;
+                }
+
+                // Get new FCM registration token
+                String token = task.getResult();
+                CountlyPush.onTokenRefresh(token);
                 }
             });
         }catch(Exception exception){

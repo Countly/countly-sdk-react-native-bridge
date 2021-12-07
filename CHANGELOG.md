@@ -1,5 +1,6 @@
 ## 20.11.12
-* Bintray dependency removed
+* ! Minor breaking change ! Firebase dependency updated to version '22.0.0', replaced deprecated method to retrieve push token. This change now makes AndroidX mandatory.
+* Bintray respository inclusion removed.
 * Underlying android SDK is 20.11.11
 * Underlying iOS SDK version is 20.11.3
 
