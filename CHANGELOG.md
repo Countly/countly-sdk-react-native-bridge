@@ -1,3 +1,8 @@
+## 20.11.12
+* Bintray dependency removed
+* Underlying android SDK is 20.11.11
+* Underlying iOS SDK version is 20.11.3
+
 ## 20.11.11
 * User profile issue fixed, user data was deleted for key if no value, null or undefined value was provided against that key.
 * Fixed an issue on Android devices where events would not be sent.
