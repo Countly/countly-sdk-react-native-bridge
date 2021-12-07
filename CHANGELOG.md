@@ -1,5 +1,6 @@
 ## 20.11.12
 * Bintray dependency removed
+* Firebase dependency updated, replaced deprecated method to retrieve push token.
 * Underlying android SDK is 20.11.11
 * Underlying iOS SDK version is 20.11.3
 

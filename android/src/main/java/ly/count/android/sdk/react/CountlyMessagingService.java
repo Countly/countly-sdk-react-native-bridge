@@ -42,11 +42,11 @@ public class CountlyMessagingService extends FirebaseMessagingService {
         // decode message data and extract meaningful information from it: title, body, badge, etc.
         CountlyPush.Message message = CountlyPush.decodeMessage(remoteMessage.getData());
 
-        if (message != null && message.has("typ")) {
-            // custom handling only for messages with specific "typ" keys
-            message.recordAction(getApplicationContext());
-            return;
-        }
+        // if (message != null && message.message().contains("typ")) {
+        //     // custom handling only for messages with specific "typ" keys
+        //     message.recordAction(getApplicationContext());
+        //     return;
+        // }
 
         Boolean result = CountlyPush.displayNotification(getApplicationContext(), message, getApplicationContext().getApplicationInfo().icon, null);
         if(Countly.sharedInstance().isLoggingEnabled()) {
