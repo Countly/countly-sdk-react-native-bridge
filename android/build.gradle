@@ -44,5 +44,5 @@ dependencies {
     implementation 'ly.count.android:sdk:20.11.11'
 
     //if any version higher than 18.0.0 is used then it forces AndroidX
-    implementation 'com.google.firebase:firebase-messaging:18.0.0'
+    implementation 'com.google.firebase:firebase-messaging:22.0.0'
 }
