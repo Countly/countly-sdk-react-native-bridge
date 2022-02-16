@@ -16,11 +16,11 @@ def safeExtGet(prop, fallback) {
 }
 
 android {
-    compileSdkVersion safeExtGet('compileSdkVersion', 29)
+    compileSdkVersion safeExtGet('compileSdkVersion', 31)
 
     defaultConfig {
         minSdkVersion safeExtGet('minSdkVersion', 17)
-        targetSdkVersion safeExtGet('targetSdkVersion', 29)
+        targetSdkVersion safeExtGet('targetSdkVersion', 31)
 
         versionCode 2
         versionName "1.1"
@@ -41,8 +41,10 @@ repositories {
 
 dependencies {
     implementation "com.facebook.react:react-native:${safeExtGet('reactNativeVersion', '+')}"
-    implementation 'ly.count.android:sdk:20.11.11'
+    implementation 'ly.count.android:sdk:20.11.12'
 
-    //if any version higher than 18.0.0 is used then it forces AndroidX
-    implementation 'com.google.firebase:firebase-messaging:22.0.0'
+    // Import the BoM for the Firebase platform
+    // The BoM version of 28.4.2 is the newest release that will target firebase-messaging version 22
+    implementation platform('com.google.firebase:firebase-bom:28.4.2')
+    implementation "com.google.firebase:firebase-messaging"
 }
