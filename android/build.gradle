@@ -44,6 +44,7 @@ dependencies {
     implementation 'ly.count.android:sdk:20.11.12'
 
     // Import the BoM for the Firebase platform
-    implementation platform('com.google.firebase:firebase-bom:29.0.0')
+    // The BoM version of 28.4.2 is the newest release that will target firebase-messaging version 22
+    implementation platform('com.google.firebase:firebase-bom:28.4.2')
     implementation "com.google.firebase:firebase-messaging"
 }
