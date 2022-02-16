@@ -1,3 +1,9 @@
+## 20.11.13
+* Updated the "compileSdkVersion" and "targetSdkVersion" to "31"
+* Added missing tag for android 12
+* Updated underlying android SDK to 20.11.12
+* Underlying iOS SDK version is 20.11.3
+
 ## 20.11.12
 * ! Minor breaking change ! Firebase dependency updated to version '22.0.0', replaced deprecated method to retrieve push token. This change now makes AndroidX mandatory.
 * Bintray respository inclusion removed.
