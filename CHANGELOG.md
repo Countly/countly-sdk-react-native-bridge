@@ -1,6 +1,7 @@
 ## 20.11.13
-* Updated the "compileSdkVersion" and "targetSdkVersion" to "31"
-* Added missing tag for android 12
+* Updated the Android "compileSdkVersion" and "targetSdkVersion" to "31".
+* Adding the "exported" tag for the FCM service, required by Android 12.
+* Fixed an Android push bug due to "CLOSE_SYSTEM_DIALOGS" permission denial, related to Android 12.
 * Updated underlying android SDK to 20.11.12
 * Underlying iOS SDK version is 20.11.3
 
