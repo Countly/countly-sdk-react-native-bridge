@@ -1,3 +1,8 @@
+## 20.11.14
+* Typo fix : added missing double quotes of String setUserData.
+* Underlying android SDK version is 20.11.12
+* Underlying iOS SDK version is 20.11.3
+
 ## 20.11.13
 * Updated the Android "compileSdkVersion" and "targetSdkVersion" to "31".
 * Adding the "exported" tag for the FCM service, required by Android 12.
