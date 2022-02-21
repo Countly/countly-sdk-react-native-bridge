@@ -1,5 +1,5 @@
 ## 20.11.14
-* Typo fix : added missing double quotes of String setUserData.
+* Fixed a bug that threw an exception when logging a warning for "setUserData".
 * Underlying android SDK version is 20.11.12
 * Underlying iOS SDK version is 20.11.3
 
