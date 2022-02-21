@@ -517,7 +517,7 @@ Countly.setUserData = async function(userData){
         if (typeof userData[key] != "string" && key.toString() != "byear") 
         {
             message = "skipping value for key '" + key.toString() + "', due to unsupported data type '" + (typeof userData[key]) + "', its data type should be 'string'";
-            Countly.logWarning(setUserData, message);
+            Countly.logWarning("setUserData", message);
         }
         
     }
