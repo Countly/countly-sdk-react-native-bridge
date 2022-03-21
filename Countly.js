@@ -51,6 +51,11 @@ Countly.hasBeenCalledOnStart = function(){
 
 // countly sending various types of events
 Countly.sendEvent = function(options){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before sendEvent";
+        Countly.logError("sendEvent", message);
+        return message;
+    }
     var args = [];
     var eventType = "event"; //event, eventWithSum, eventWithSegment, eventWithSumSegment
     var segments = {};
@@ -115,6 +120,11 @@ Countly.setViewTracking = async function(boolean) {
  * Supported data type for segments values are String, int, double and bool
  */
 Countly.recordView = async function(recordView, segments){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before recordView";
+        Countly.logError("recordView", message);
+        return message;
+    }
     var message = await Countly.validateString(recordView, "view name", "recordView");
     if(message) {
         return message;
@@ -170,6 +180,11 @@ Countly.sendPushToken = function(options){
  * Should be called after Countly init
  */
 Countly.askForNotificationPermission = function(){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before askForNotificationPermission";
+        Countly.logError("askForNotificationPermission", message);
+        return message;
+    }
     CountlyReactNative.askForNotificationPermission([]);
 }
 
@@ -185,11 +200,21 @@ Countly.registerForNotification = function(theListener){
 };
 // countly start for android
 Countly.start = function(){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before start";
+        Countly.logError("start", message);
+        return message;
+    }
     CountlyReactNative.start();
 }
 
 // countly stop for android
 Countly.stop = function(){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before stop";
+        Countly.logError("stop", message);
+        return message;
+    }
     CountlyReactNative.stop();
 }
 
@@ -256,6 +281,11 @@ Countly.setLocationInit = function(countryCode, city, location, ipAddress){
 }
 
 Countly.setLocation = function(countryCode, city, location, ipAddress){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before setLocation";
+        Countly.logError("setLocation", message);
+        return message;
+    }
     var args = [];
     args.push(countryCode || "null");
     args.push(city || "null");
@@ -274,7 +304,7 @@ Countly.disableLocation = function(){
 Countly.getCurrentDeviceId = async function(){
     if(!await Countly.isInitialized()) {
         var message = "init must be called before getCurrentDeviceId";
-        Countly.logWarning("getCurrentDeviceId", message);
+        Countly.logError("getCurrentDeviceId", message);
         return message;
       }
       const result = await CountlyReactNative.getCurrentDeviceId();
@@ -282,6 +312,11 @@ Countly.getCurrentDeviceId = async function(){
   }
 
 Countly.changeDeviceId = async function(newDeviceID, onServer){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before changeDeviceId";
+        Countly.logError("changeDeviceId", message);
+        return message;
+    }
     var message = await Countly.validateString(newDeviceID, "newDeviceID", "changeDeviceId");
     if(message) {
         return message;
@@ -404,9 +439,19 @@ Countly.setCustomCrashSegments = function(segments){
     CountlyReactNative.setCustomCrashSegments(args);
 }
 Countly.startSession = function(){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before startSession";
+        Countly.logError("startSession", message);
+        return message;
+    }
     CountlyReactNative.startSession();
 }
 Countly.endSession = function(){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before endSession";
+        Countly.logError("endSession", message);
+        return message;
+    }
     CountlyReactNative.endSession();
 }
 
@@ -438,6 +483,11 @@ Countly.pinnedCertificates = async function(certificateName){
     CountlyReactNative.pinnedCertificates([certificateName]);
 }
 Countly.startEvent = async function(eventName){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before startEvent";
+        Countly.logError("startEvent", message);
+        return message;
+    }
     var message = await Countly.validateString(eventName, "eventName", "startEvent");
     if(message) {
         return message;
@@ -446,6 +496,11 @@ Countly.startEvent = async function(eventName){
     CountlyReactNative.startEvent([eventName.toString()]);
 }
 Countly.cancelEvent = async function(eventName){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before cancelEvent";
+        Countly.logError("cancelEvent", message);
+        return message;
+    }
     var message = await Countly.validateString(eventName, "eventName", "cancelEvent");
     if(message) {
         return message;
@@ -454,6 +509,11 @@ Countly.cancelEvent = async function(eventName){
     CountlyReactNative.cancelEvent([eventName.toString()]);
 }
 Countly.endEvent = function(options){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before endEvent";
+        Countly.logError("endEvent", message);
+        return message;
+    }
     if(typeof options === "string") {
         options = {eventName: options};
     }
@@ -501,6 +561,11 @@ Countly.endEvent = function(options){
 
 // countly sending user data
 Countly.setUserData = async function(userData){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before setUserData";
+        Countly.logError("setUserData", message);
+        return message;
+    }
     var message = null;
     if(!userData) {
         message = "User profile data should not be null or undefined";
@@ -538,6 +603,11 @@ Countly.setUserData = async function(userData){
 
 Countly.userData = {};
 Countly.userData.setProperty = async function(keyName, keyValue){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before setProperty";
+        Countly.logError("setProperty", message);
+        return message;
+    }
     var message = await Countly.validateString(keyName, "key", "setProperty");
     if(message) {
         return message;
@@ -554,6 +624,11 @@ Countly.userData.setProperty = async function(keyName, keyValue){
     }
 };
 Countly.userData.increment = async function(keyName){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before increment";
+        Countly.logError("increment", message);
+        return message;
+    }
     var message = await Countly.validateString(keyName, "key", "setProperty");
     if(message) {
         return message;
@@ -564,6 +639,11 @@ Countly.userData.increment = async function(keyName){
     }
 };
 Countly.userData.incrementBy = async function(keyName, keyValue){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before incrementBy";
+        Countly.logError("incrementBy", message);
+        return message;
+    }
     var message = await Countly.validateString(keyName, "key", "incrementBy");
     if(message) {
         return message;
@@ -576,6 +656,11 @@ Countly.userData.incrementBy = async function(keyName, keyValue){
     CountlyReactNative.userData_incrementBy([keyName, intValue]);
 };
 Countly.userData.multiply = async function(keyName, keyValue){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before multiply";
+        Countly.logError("multiply", message);
+        return message;
+    }
     var message = await Countly.validateString(keyName, "key", "multiply");
     if(message) {
         return message;
@@ -588,6 +673,11 @@ Countly.userData.multiply = async function(keyName, keyValue){
     CountlyReactNative.userData_multiply([keyName, intValue]);
 };
 Countly.userData.saveMax = async function(keyName, keyValue){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before saveMax";
+        Countly.logError("saveMax", message);
+        return message;
+    }
     var message = await Countly.validateString(keyName, "key", "saveMax");
     if(message) {
         return message;
@@ -600,6 +690,11 @@ Countly.userData.saveMax = async function(keyName, keyValue){
     CountlyReactNative.userData_saveMax([keyName, intValue]);
 };
 Countly.userData.saveMin = async function(keyName, keyValue){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before saveMin";
+        Countly.logError("saveMin", message);
+        return message;
+    }
     var message = await Countly.validateString(keyName, "key", "saveMin");
     if(message) {
         return message;
@@ -612,6 +707,11 @@ Countly.userData.saveMin = async function(keyName, keyValue){
     CountlyReactNative.userData_saveMin([keyName, intValue]);
 };
 Countly.userData.setOnce = async function(keyName, keyValue){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before setOnce";
+        Countly.logError("setOnce", message);
+        return message;
+    }
     var message = await Countly.validateString(keyName, "key", "setOnce");
     if(message) {
         return message;
@@ -626,6 +726,11 @@ Countly.userData.setOnce = async function(keyName, keyValue){
     }
 };
 Countly.userData.pushUniqueValue = async function(keyName, keyValue){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before pushUniqueValue";
+        Countly.logError("pushUniqueValue", message);
+        return message;
+    }
     var message = await Countly.validateString(keyName, "key", "pushUniqueValue");
     if(message) {
         return message;
@@ -640,6 +745,11 @@ Countly.userData.pushUniqueValue = async function(keyName, keyValue){
     }
 };
 Countly.userData.pushValue = async function(keyName, keyValue){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before pushValue";
+        Countly.logError("pushValue", message);
+        return message;
+    }
     var message = await Countly.validateString(keyName, "key", "pushValue");
     if(message) {
         return message;
@@ -654,6 +764,11 @@ Countly.userData.pushValue = async function(keyName, keyValue){
     }
 };
 Countly.userData.pullValue = async function(keyName, keyValue){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before pullValue";
+        Countly.logError("pullValue", message);
+        return message;
+    }
     var message = await Countly.validateString(keyName, "key", "pullValue");
     if(message) {
         return message;
@@ -679,6 +794,11 @@ Countly.setRequiresConsent = function(flag){
 }
 
 Countly.giveConsent = function(args){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before giveConsent";
+        Countly.logError("giveConsent", message);
+        return message;
+    }
     var features = [];
     if (typeof args == "string") {
         features.push(args);
@@ -710,6 +830,11 @@ Countly.giveConsentInit = async function(args){
 }
 
 Countly.removeConsent = function(args){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before removeConsent";
+        Countly.logError("removeConsent", message);
+        return message;
+    }
     var features = [];
     if (typeof args == "string") {
         features.push(args);
@@ -726,14 +851,30 @@ Countly.removeConsent = function(args){
  * Should be called after Countly init
  */
 Countly.giveAllConsent = function(){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before giveAllConsent";
+        Countly.logError("giveAllConsent", message);
+        return message;
+    }
     CountlyReactNative.giveAllConsent();
 }
 
 Countly.removeAllConsent = function(){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before removeAllConsent";
+        Countly.logError("removeAllConsent", message);
+        return message;
+    }
     CountlyReactNative.removeAllConsent();
 }
 
 Countly.remoteConfigUpdate = function(callback){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before remoteConfigUpdate";
+        Countly.logError("remoteConfigUpdate", message);
+        callback(message);
+        return message;
+    }
     CountlyReactNative.remoteConfigUpdate([], (stringItem) => {
         callback(stringItem);
     });
@@ -741,6 +882,12 @@ Countly.remoteConfigUpdate = function(callback){
 
 
 Countly.updateRemoteConfigForKeysOnly = function(keyNames, callback){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before updateRemoteConfigForKeysOnly";
+        Countly.logError("updateRemoteConfigForKeysOnly", message);
+        callback(message);
+        return message;
+    }
     var args = [];
     if(keyNames.length){
         for(var i=0,il=keyNames.length;i<il;i++){
@@ -753,6 +900,12 @@ Countly.updateRemoteConfigForKeysOnly = function(keyNames, callback){
 }
 
 Countly.updateRemoteConfigExceptKeys = function(keyNames, callback){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before updateRemoteConfigExceptKeys";
+        Countly.logError("updateRemoteConfigExceptKeys", message);
+        callback(message);
+        return message;
+    }
     var args = [];
     if(keyNames.length){
         for(var i=0,il=keyNames.length;i<il;i++){
@@ -765,6 +918,12 @@ Countly.updateRemoteConfigExceptKeys = function(keyNames, callback){
 }
 
 Countly.getRemoteConfigValueForKey = function(keyName, callback){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before getRemoteConfigValueForKey";
+        Countly.logError("getRemoteConfigValueForKey", message);
+        callback(message);
+        return message;
+    }
     CountlyReactNative.getRemoteConfigValueForKey([keyName.toString() || ""], (value) => {
         if (Platform.OS == "android" ) {
             try {
@@ -780,6 +939,12 @@ Countly.getRemoteConfigValueForKey = function(keyName, callback){
 }
 
 Countly.getRemoteConfigValueForKeyP = function(keyName){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before getRemoteConfigValueForKeyP";
+        Countly.logError("getRemoteConfigValueForKeyP", message);
+        callback(message);
+        return message;
+    }
         if (Platform.OS != "android" ) return "To be implemented";
         const promise = CountlyReactNative.getRemoteConfigValueForKeyP(keyName);
         return promise.then(value => {
@@ -797,6 +962,12 @@ Countly.getRemoteConfigValueForKeyP = function(keyName){
 }
 
 Countly.remoteConfigClearValues = async function(){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before remoteConfigClearValues";
+        Countly.logError("remoteConfigClearValues", message);
+        callback(message);
+        return message;
+    }
     const result = await CountlyReactNative.remoteConfigClearValues();
     return result;
 }
@@ -816,11 +987,21 @@ Countly.setStarRatingDialogTexts = function(starRatingTextTitle, starRatingTextM
 }
 
 Countly.showStarRating = function(callback){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before showStarRating";
+        Countly.logError("showStarRating", message);
+        return message;
+    }
     if(!callback){callback = function(){}};
     CountlyReactNative.showStarRating([], callback);
 }
 
 Countly.showFeedbackPopup = function(widgetId, closeButtonText){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before showFeedbackPopup";
+        Countly.logError("showFeedbackPopup", message);
+        return message;
+    }
     CountlyReactNative.showFeedbackPopup([widgetId.toString() || "", closeButtonText.toString() || "Done"]);
 }
 
@@ -828,6 +1009,11 @@ Countly.showFeedbackPopup = function(widgetId, closeButtonText){
  * Get a list of available feedback widgets as array of object to handle multiple widgets of same type.
  */
 Countly.getFeedbackWidgets = async function(){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before getFeedbackWidgets";
+        Countly.logError("getFeedbackWidgets", message);
+        return message;
+    }
      const result = await CountlyReactNative.getFeedbackWidgets();
       return result;
   }
@@ -840,6 +1026,11 @@ Countly.getFeedbackWidgets = async function(){
  * The newer function allow also to see the widgets 'name' field which can be further used to filter and identify specific widgets.
  */
 Countly.getAvailableFeedbackWidgets = async function(){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before getAvailableFeedbackWidgets";
+        Countly.logError("getAvailableFeedbackWidgets", message);
+        return message;
+    }
     const result = await CountlyReactNative.getAvailableFeedbackWidgets();
      return result;
  }
@@ -851,6 +1042,11 @@ Countly.getAvailableFeedbackWidgets = async function(){
  * @param {String} closeButtonText - text for cancel/close button
  */  
 Countly.presentFeedbackWidgetObject = async function(feedbackWidget, closeButtonText){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before presentFeedbackWidgetObject";
+        Countly.logError("presentFeedbackWidgetObject", message);
+        return message;
+    }
     var message = null;
     if(!feedbackWidget) {
         message = "feedbackWidget should not be null or undefined";
@@ -885,6 +1081,11 @@ Countly.presentFeedbackWidgetObject = async function(feedbackWidget, closeButton
 * @deprecated in 20.11.1 : use 'presentFeedbackWidgetObject' intead of 'presentFeedbackWidget'.
 */  
 Countly.presentFeedbackWidget = function(widgetType, widgetId, closeButtonText){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before presentFeedbackWidget";
+        Countly.logError("presentFeedbackWidget", message);
+        return message;
+    }
     var feedbackWidget = {
         "id": widgetId,
         "type": widgetType
@@ -902,23 +1103,43 @@ Countly.setEventSendThreshold = function(size){
 }
 
 Countly.startTrace = function(traceKey){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before startTrace";
+        Countly.logError("startTrace", message);
+        return message;
+    }
     var args = [];
     args.push(traceKey);
     CountlyReactNative.startTrace(args);
 }
 
 Countly.cancelTrace = function(traceKey){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before cancelTrace";
+        Countly.logError("cancelTrace", message);
+        return message;
+    }
     var args = [];
     args.push(traceKey);
     CountlyReactNative.cancelTrace(args);
 }
 
 Countly.clearAllTraces = function(){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before clearAllTraces";
+        Countly.logError("clearAllTraces", message);
+        return message;
+    }
     var args = [];
     CountlyReactNative.clearAllTraces(args);
 }
 
 Countly.endTrace = function(traceKey, customMetric){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before endTrace";
+        Countly.logError("endTrace", message);
+        return message;
+    }
     var args = [];
     args.push(traceKey);
     customMetric = customMetric || {};
@@ -931,6 +1152,11 @@ Countly.endTrace = function(traceKey, customMetric){
 
 
 Countly.recordNetworkTrace = function(networkTraceKey, responseCode, requestPayloadSize, responsePayloadSize, startTime, endTime){
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before recordNetworkTrace";
+        Countly.logError("recordNetworkTrace", message);
+        return message;
+    }
     var args = [];
     args.push(networkTraceKey);
     args.push(responseCode.toString());
@@ -1008,9 +1234,14 @@ Countly.removeDifferentAppKeysFromQueue = function(){
 Countly.appLoadingFinished = async function(){
     if(!await Countly.isInitialized()) {
         var message = "init must be called before appLoadingFinished";
-        Countly.logWarning("appLoadingFinished", message);
+        Countly.logError("appLoadingFinished", message);
         return message;
-      }
+    }
+    if(!await Countly.isInitialized()) {
+        var message = "init must be called before appLoadingFinished";
+        Countly.logError("appLoadingFinished", message);
+        return message;
+    }
     CountlyReactNative.appLoadingFinished()
   }
 
