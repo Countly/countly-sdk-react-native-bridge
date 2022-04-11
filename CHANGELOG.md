@@ -1,3 +1,8 @@
+## 20.11.15
+* Adding a mitigation when app is killed and received push notifications.
+* Underlying android SDK version is 20.11.12
+* Underlying iOS SDK version is 20.11.3
+
 ## 20.11.14
 * Fixed a bug that threw an exception when logging a warning for "setUserData".
 * Underlying android SDK version is 20.11.12

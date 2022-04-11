@@ -38,12 +38,13 @@ public class CountlyMessagingService extends FirebaseMessagingService {
             Application application = getApplication();
             if(application == null){
                 Log.d(Countly.TAG, "[CountlyMessagingService] getApplication() returns null: application must be non-null to init CountlyPush");
-                return;
             }
-            if(mode == 0) {
-                CountlyPush.init(application, Countly.CountlyMessagingMode.TEST);
-            } else if(mode == 1) {
-                CountlyPush.init(application, Countly.CountlyMessagingMode.PRODUCTION);
+            else {
+                if(mode == 0) {
+                    CountlyPush.init(application, Countly.CountlyMessagingMode.TEST);
+                } else if(mode == 1) {
+                    CountlyPush.init(application, Countly.CountlyMessagingMode.PRODUCTION);
+                }
             }
         }
 
