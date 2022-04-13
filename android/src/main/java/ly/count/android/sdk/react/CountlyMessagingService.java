@@ -71,7 +71,7 @@ public class CountlyMessagingService extends FirebaseMessagingService {
             }
         }
         
-        // 'onNotification' should be called at the end of 'onMessageReceived'. This is due to an unknown issue that prevents showing notifications otherwise
+        // 'onNotification' should be called at the end of 'onMessageReceived'. This is due to an unknown issue that prevents showing notifications otherwise for some app/hardware configurations
         CountlyReactNative.onNotification(remoteMessage.getData());
     }
 
