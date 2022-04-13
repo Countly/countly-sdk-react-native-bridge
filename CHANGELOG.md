@@ -1,5 +1,5 @@
 ## 20.11.16
-* Fixed push notification issue when received push notifications in app killed state.
+* Fixed push notification issue where some apps were unable to display push notificaitons in their kill state.
 * Underlying android SDK version is 20.11.12
 * Underlying iOS SDK version is 20.11.3
 
