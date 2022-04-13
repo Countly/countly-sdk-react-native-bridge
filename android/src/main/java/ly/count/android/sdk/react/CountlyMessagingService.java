@@ -30,8 +30,6 @@ public class CountlyMessagingService extends FirebaseMessagingService {
         if(Countly.sharedInstance().isLoggingEnabled()) {
             Log.d(Countly.TAG, "[CountlyMessagingService] got new message: " + remoteMessage.getData().toString());
         }
-        CountlyReactNative.onNotification(remoteMessage.getData());
-
 
         if(!Countly.sharedInstance().isInitialized()) {
             int mode = CountlyPush.getLastMessagingMethod(this);
@@ -72,6 +70,9 @@ public class CountlyMessagingService extends FirebaseMessagingService {
                 Log.i(Countly.TAG, "[CountlyMessagingService] Message wasn't handled by Countly SDK because API level is too low for Notification support or because currentActivity is null (not enough lifecycle method calls)");
             }
         }
+        
+        // onNotification call should be call at the end of "onMessageReceived" function because it causes issues if call at some other place.
+        CountlyReactNative.onNotification(remoteMessage.getData());
     }
 
     @Override
