@@ -17,6 +17,7 @@ const eventEmitter = new NativeEventEmitter(CountlyReactNative);
 const Countly = {};
 Countly.serverUrl = "";
 Countly.appKey = "";
+_isInitialized = false;
 
 Countly.messagingMode = {"DEVELOPMENT":"1","PRODUCTION":"0", "ADHOC": "2"};
 if (Platform.OS.match("android")) {
@@ -37,6 +38,7 @@ Countly.init = async function(serverUrl, appKey, deviceId){
     args.push(appKey);
     args.push(deviceId);
     await CountlyReactNative.init(args);
+    _isInitialized = true;
 }
 
 Countly.isInitialized = async function(){
@@ -45,14 +47,18 @@ Countly.isInitialized = async function(){
 }
 
 Countly.hasBeenCalledOnStart = function(){
-    // returns a promise
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'hasBeenCalledOnStart'";
+        Countly.logError("hasBeenCalledOnStart", message);
+        return message;
+    }
     return CountlyReactNative.hasBeenCalledOnStart();
 }
 
 // countly sending various types of events
 Countly.sendEvent = function(options){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before sendEvent";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'sendEvent'";
         Countly.logError("sendEvent", message);
         return message;
     }
@@ -120,8 +126,8 @@ Countly.setViewTracking = async function(boolean) {
  * Supported data type for segments values are String, int, double and bool
  */
 Countly.recordView = async function(recordView, segments){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before recordView";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'recordView'";
         Countly.logError("recordView", message);
         return message;
     }
@@ -180,8 +186,8 @@ Countly.sendPushToken = function(options){
  * Should be called after Countly init
  */
 Countly.askForNotificationPermission = function(){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before askForNotificationPermission";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'askForNotificationPermission'";
         Countly.logError("askForNotificationPermission", message);
         return message;
     }
@@ -200,8 +206,8 @@ Countly.registerForNotification = function(theListener){
 };
 // countly start for android
 Countly.start = function(){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before start";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'start'";
         Countly.logError("start", message);
         return message;
     }
@@ -210,8 +216,8 @@ Countly.start = function(){
 
 // countly stop for android
 Countly.stop = function(){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before stop";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'stop'";
         Countly.logError("stop", message);
         return message;
     }
@@ -281,8 +287,8 @@ Countly.setLocationInit = function(countryCode, city, location, ipAddress){
 }
 
 Countly.setLocation = function(countryCode, city, location, ipAddress){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before setLocation";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'setLocation'";
         Countly.logError("setLocation", message);
         return message;
     }
@@ -294,6 +300,11 @@ Countly.setLocation = function(countryCode, city, location, ipAddress){
     CountlyReactNative.setLocation(args);
 }
 Countly.disableLocation = function(){
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'disableLocation'";
+        Countly.logError("disableLocation", message);
+        return message;
+    }
     CountlyReactNative.disableLocation();
 }
 /** 
@@ -302,8 +313,8 @@ Countly.disableLocation = function(){
  * Should be called after Countly init
  * */
 Countly.getCurrentDeviceId = async function(){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before getCurrentDeviceId";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'getCurrentDeviceId'";
         Countly.logError("getCurrentDeviceId", message);
         return message;
       }
@@ -312,8 +323,8 @@ Countly.getCurrentDeviceId = async function(){
   }
 
 Countly.changeDeviceId = async function(newDeviceID, onServer){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before changeDeviceId";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'changeDeviceId'";
         Countly.logError("changeDeviceId", message);
         return message;
     }
@@ -412,10 +423,20 @@ Countly.getStackTrace = (e) => {
   };
 
 Countly.addCrashLog = function(crashLog){
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'addCrashLog'";
+        Countly.logError("addCrashLog", message);
+        return message;
+    }
     CountlyReactNative.addCrashLog([crashLog]);
 }
 
 Countly.logException = function(exception, nonfatal, segments){
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'logException'";
+        Countly.logError("logException", message);
+        return message;
+    }
     var exceptionArray = exception.split('\n');
     var exceptionString = "";
     for(var i=0,il=exceptionArray.length;i<il;i++){
@@ -439,16 +460,16 @@ Countly.setCustomCrashSegments = function(segments){
     CountlyReactNative.setCustomCrashSegments(args);
 }
 Countly.startSession = function(){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before startSession";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'startSession'";
         Countly.logError("startSession", message);
         return message;
     }
     CountlyReactNative.startSession();
 }
 Countly.endSession = function(){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before endSession";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'endSession'";
         Countly.logError("endSession", message);
         return message;
     }
@@ -483,8 +504,8 @@ Countly.pinnedCertificates = async function(certificateName){
     CountlyReactNative.pinnedCertificates([certificateName]);
 }
 Countly.startEvent = async function(eventName){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before startEvent";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'startEvent'";
         Countly.logError("startEvent", message);
         return message;
     }
@@ -496,8 +517,8 @@ Countly.startEvent = async function(eventName){
     CountlyReactNative.startEvent([eventName.toString()]);
 }
 Countly.cancelEvent = async function(eventName){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before cancelEvent";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'cancelEvent'";
         Countly.logError("cancelEvent", message);
         return message;
     }
@@ -509,8 +530,8 @@ Countly.cancelEvent = async function(eventName){
     CountlyReactNative.cancelEvent([eventName.toString()]);
 }
 Countly.endEvent = function(options){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before endEvent";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'endEvent'";
         Countly.logError("endEvent", message);
         return message;
     }
@@ -561,8 +582,8 @@ Countly.endEvent = function(options){
 
 // countly sending user data
 Countly.setUserData = async function(userData){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before setUserData";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'setUserData'";
         Countly.logError("setUserData", message);
         return message;
     }
@@ -603,8 +624,8 @@ Countly.setUserData = async function(userData){
 
 Countly.userData = {};
 Countly.userData.setProperty = async function(keyName, keyValue){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before setProperty";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'setProperty'";
         Countly.logError("setProperty", message);
         return message;
     }
@@ -624,8 +645,8 @@ Countly.userData.setProperty = async function(keyName, keyValue){
     }
 };
 Countly.userData.increment = async function(keyName){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before increment";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'increment'";
         Countly.logError("increment", message);
         return message;
     }
@@ -639,8 +660,8 @@ Countly.userData.increment = async function(keyName){
     }
 };
 Countly.userData.incrementBy = async function(keyName, keyValue){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before incrementBy";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'incrementBy'";
         Countly.logError("incrementBy", message);
         return message;
     }
@@ -656,8 +677,8 @@ Countly.userData.incrementBy = async function(keyName, keyValue){
     CountlyReactNative.userData_incrementBy([keyName, intValue]);
 };
 Countly.userData.multiply = async function(keyName, keyValue){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before multiply";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'multiply'";
         Countly.logError("multiply", message);
         return message;
     }
@@ -673,8 +694,8 @@ Countly.userData.multiply = async function(keyName, keyValue){
     CountlyReactNative.userData_multiply([keyName, intValue]);
 };
 Countly.userData.saveMax = async function(keyName, keyValue){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before saveMax";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'saveMax'";
         Countly.logError("saveMax", message);
         return message;
     }
@@ -690,8 +711,8 @@ Countly.userData.saveMax = async function(keyName, keyValue){
     CountlyReactNative.userData_saveMax([keyName, intValue]);
 };
 Countly.userData.saveMin = async function(keyName, keyValue){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before saveMin";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'saveMin'";
         Countly.logError("saveMin", message);
         return message;
     }
@@ -707,8 +728,8 @@ Countly.userData.saveMin = async function(keyName, keyValue){
     CountlyReactNative.userData_saveMin([keyName, intValue]);
 };
 Countly.userData.setOnce = async function(keyName, keyValue){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before setOnce";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'setOnce'";
         Countly.logError("setOnce", message);
         return message;
     }
@@ -726,8 +747,8 @@ Countly.userData.setOnce = async function(keyName, keyValue){
     }
 };
 Countly.userData.pushUniqueValue = async function(keyName, keyValue){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before pushUniqueValue";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'pushUniqueValue'";
         Countly.logError("pushUniqueValue", message);
         return message;
     }
@@ -745,8 +766,8 @@ Countly.userData.pushUniqueValue = async function(keyName, keyValue){
     }
 };
 Countly.userData.pushValue = async function(keyName, keyValue){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before pushValue";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'pushValue'";
         Countly.logError("pushValue", message);
         return message;
     }
@@ -764,8 +785,8 @@ Countly.userData.pushValue = async function(keyName, keyValue){
     }
 };
 Countly.userData.pullValue = async function(keyName, keyValue){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before pullValue";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'pullValue'";
         Countly.logError("pullValue", message);
         return message;
     }
@@ -794,8 +815,8 @@ Countly.setRequiresConsent = function(flag){
 }
 
 Countly.giveConsent = function(args){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before giveConsent";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'giveConsent'";
         Countly.logError("giveConsent", message);
         return message;
     }
@@ -830,8 +851,8 @@ Countly.giveConsentInit = async function(args){
 }
 
 Countly.removeConsent = function(args){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before removeConsent";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'removeConsent'";
         Countly.logError("removeConsent", message);
         return message;
     }
@@ -851,8 +872,8 @@ Countly.removeConsent = function(args){
  * Should be called after Countly init
  */
 Countly.giveAllConsent = function(){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before giveAllConsent";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'giveAllConsent'";
         Countly.logError("giveAllConsent", message);
         return message;
     }
@@ -860,8 +881,8 @@ Countly.giveAllConsent = function(){
 }
 
 Countly.removeAllConsent = function(){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before removeAllConsent";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'removeAllConsent'";
         Countly.logError("removeAllConsent", message);
         return message;
     }
@@ -869,8 +890,8 @@ Countly.removeAllConsent = function(){
 }
 
 Countly.remoteConfigUpdate = function(callback){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before remoteConfigUpdate";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'remoteConfigUpdate'";
         Countly.logError("remoteConfigUpdate", message);
         callback(message);
         return message;
@@ -882,8 +903,8 @@ Countly.remoteConfigUpdate = function(callback){
 
 
 Countly.updateRemoteConfigForKeysOnly = function(keyNames, callback){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before updateRemoteConfigForKeysOnly";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'updateRemoteConfigForKeysOnly'";
         Countly.logError("updateRemoteConfigForKeysOnly", message);
         callback(message);
         return message;
@@ -900,8 +921,8 @@ Countly.updateRemoteConfigForKeysOnly = function(keyNames, callback){
 }
 
 Countly.updateRemoteConfigExceptKeys = function(keyNames, callback){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before updateRemoteConfigExceptKeys";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'updateRemoteConfigExceptKeys'";
         Countly.logError("updateRemoteConfigExceptKeys", message);
         callback(message);
         return message;
@@ -918,8 +939,8 @@ Countly.updateRemoteConfigExceptKeys = function(keyNames, callback){
 }
 
 Countly.getRemoteConfigValueForKey = function(keyName, callback){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before getRemoteConfigValueForKey";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'getRemoteConfigValueForKey'";
         Countly.logError("getRemoteConfigValueForKey", message);
         callback(message);
         return message;
@@ -939,8 +960,8 @@ Countly.getRemoteConfigValueForKey = function(keyName, callback){
 }
 
 Countly.getRemoteConfigValueForKeyP = function(keyName){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before getRemoteConfigValueForKeyP";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'getRemoteConfigValueForKeyP'";
         Countly.logError("getRemoteConfigValueForKeyP", message);
         callback(message);
         return message;
@@ -962,8 +983,8 @@ Countly.getRemoteConfigValueForKeyP = function(keyName){
 }
 
 Countly.remoteConfigClearValues = async function(){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before remoteConfigClearValues";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'remoteConfigClearValues'";
         Countly.logError("remoteConfigClearValues", message);
         callback(message);
         return message;
@@ -987,8 +1008,8 @@ Countly.setStarRatingDialogTexts = function(starRatingTextTitle, starRatingTextM
 }
 
 Countly.showStarRating = function(callback){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before showStarRating";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'showStarRating'";
         Countly.logError("showStarRating", message);
         return message;
     }
@@ -997,8 +1018,8 @@ Countly.showStarRating = function(callback){
 }
 
 Countly.showFeedbackPopup = function(widgetId, closeButtonText){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before showFeedbackPopup";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'showFeedbackPopup'";
         Countly.logError("showFeedbackPopup", message);
         return message;
     }
@@ -1009,8 +1030,8 @@ Countly.showFeedbackPopup = function(widgetId, closeButtonText){
  * Get a list of available feedback widgets as array of object to handle multiple widgets of same type.
  */
 Countly.getFeedbackWidgets = async function(){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before getFeedbackWidgets";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'getFeedbackWidgets'";
         Countly.logError("getFeedbackWidgets", message);
         return message;
     }
@@ -1026,8 +1047,8 @@ Countly.getFeedbackWidgets = async function(){
  * The newer function allow also to see the widgets 'name' field which can be further used to filter and identify specific widgets.
  */
 Countly.getAvailableFeedbackWidgets = async function(){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before getAvailableFeedbackWidgets";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'getAvailableFeedbackWidgets'";
         Countly.logError("getAvailableFeedbackWidgets", message);
         return message;
     }
@@ -1042,8 +1063,8 @@ Countly.getAvailableFeedbackWidgets = async function(){
  * @param {String} closeButtonText - text for cancel/close button
  */  
 Countly.presentFeedbackWidgetObject = async function(feedbackWidget, closeButtonText){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before presentFeedbackWidgetObject";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'presentFeedbackWidgetObject'";
         Countly.logError("presentFeedbackWidgetObject", message);
         return message;
     }
@@ -1081,8 +1102,8 @@ Countly.presentFeedbackWidgetObject = async function(feedbackWidget, closeButton
 * @deprecated in 20.11.1 : use 'presentFeedbackWidgetObject' intead of 'presentFeedbackWidget'.
 */  
 Countly.presentFeedbackWidget = function(widgetType, widgetId, closeButtonText){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before presentFeedbackWidget";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'presentFeedbackWidget'";
         Countly.logError("presentFeedbackWidget", message);
         return message;
     }
@@ -1103,8 +1124,8 @@ Countly.setEventSendThreshold = function(size){
 }
 
 Countly.startTrace = function(traceKey){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before startTrace";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'startTrace'";
         Countly.logError("startTrace", message);
         return message;
     }
@@ -1114,8 +1135,8 @@ Countly.startTrace = function(traceKey){
 }
 
 Countly.cancelTrace = function(traceKey){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before cancelTrace";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'cancelTrace'";
         Countly.logError("cancelTrace", message);
         return message;
     }
@@ -1125,8 +1146,8 @@ Countly.cancelTrace = function(traceKey){
 }
 
 Countly.clearAllTraces = function(){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before clearAllTraces";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'clearAllTraces'";
         Countly.logError("clearAllTraces", message);
         return message;
     }
@@ -1135,8 +1156,8 @@ Countly.clearAllTraces = function(){
 }
 
 Countly.endTrace = function(traceKey, customMetric){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before endTrace";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'endTrace'";
         Countly.logError("endTrace", message);
         return message;
     }
@@ -1152,8 +1173,8 @@ Countly.endTrace = function(traceKey, customMetric){
 
 
 Countly.recordNetworkTrace = function(networkTraceKey, responseCode, requestPayloadSize, responsePayloadSize, startTime, endTime){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before recordNetworkTrace";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'recordNetworkTrace'";
         Countly.logError("recordNetworkTrace", message);
         return message;
     }
@@ -1215,6 +1236,11 @@ Countly.recordAttributionID = function(attributionID){
  * these requests' app key will be replaced with the current app key.
  */
 Countly.replaceAllAppKeysInQueueWithCurrentAppKey = function(){
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'replaceAllAppKeysInQueueWithCurrentAppKey'";
+        Countly.logError("replaceAllAppKeysInQueueWithCurrentAppKey", message);
+        return message;
+    }
     CountlyReactNative.replaceAllAppKeysInQueueWithCurrentAppKey();
 }
 /**
@@ -1223,6 +1249,11 @@ Countly.replaceAllAppKeysInQueueWithCurrentAppKey = function(){
  * these requests will be removed from request queue.
  */
 Countly.removeDifferentAppKeysFromQueue = function(){
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'removeDifferentAppKeysFromQueue'";
+        Countly.logError("removeDifferentAppKeysFromQueue", message);
+        return message;
+    }
   CountlyReactNative.removeDifferentAppKeysFromQueue()
 }
 
@@ -1232,13 +1263,8 @@ Countly.removeDifferentAppKeysFromQueue = function(){
  * Should be called after init.
  */
 Countly.appLoadingFinished = async function(){
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before appLoadingFinished";
-        Countly.logError("appLoadingFinished", message);
-        return message;
-    }
-    if(!await Countly.isInitialized()) {
-        var message = "init must be called before appLoadingFinished";
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'appLoadingFinished'";
         Countly.logError("appLoadingFinished", message);
         return message;
     }
