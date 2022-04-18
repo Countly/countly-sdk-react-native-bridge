@@ -127,9 +127,9 @@ Countly.setViewTracking = async function(boolean) {
  */
 Countly.recordView = async function(recordView, segments){
     if(!_isInitialized) {
-        var message = "'init' must be called before 'recordView'";
-        Countly.logError("recordView", message);
-        return message;
+        var msg = "'init' must be called before 'recordView'";
+        Countly.logError("recordView", msg);
+        return msg;
     }
     var message = await Countly.validateString(recordView, "view name", "recordView");
     if(message) {
@@ -324,9 +324,9 @@ Countly.getCurrentDeviceId = async function(){
 
 Countly.changeDeviceId = async function(newDeviceID, onServer){
     if(!_isInitialized) {
-        var message = "'init' must be called before 'changeDeviceId'";
-        Countly.logError("changeDeviceId", message);
-        return message;
+        var msg = "'init' must be called before 'changeDeviceId'";
+        Countly.logError("changeDeviceId", msg);
+        return msg;
     }
     var message = await Countly.validateString(newDeviceID, "newDeviceID", "changeDeviceId");
     if(message) {
@@ -505,9 +505,9 @@ Countly.pinnedCertificates = async function(certificateName){
 }
 Countly.startEvent = async function(eventName){
     if(!_isInitialized) {
-        var message = "'init' must be called before 'startEvent'";
-        Countly.logError("startEvent", message);
-        return message;
+        var msg = "'init' must be called before 'startEvent'";
+        Countly.logError("startEvent", msg);
+        return msg;
     }
     var message = await Countly.validateString(eventName, "eventName", "startEvent");
     if(message) {
@@ -518,9 +518,9 @@ Countly.startEvent = async function(eventName){
 }
 Countly.cancelEvent = async function(eventName){
     if(!_isInitialized) {
-        var message = "'init' must be called before 'cancelEvent'";
-        Countly.logError("cancelEvent", message);
-        return message;
+        var msg = "'init' must be called before 'cancelEvent'";
+        Countly.logError("cancelEvent", msg);
+        return msg;
     }
     var message = await Countly.validateString(eventName, "eventName", "cancelEvent");
     if(message) {
@@ -583,9 +583,9 @@ Countly.endEvent = function(options){
 // countly sending user data
 Countly.setUserData = async function(userData){
     if(!_isInitialized) {
-        var message = "'init' must be called before 'setUserData'";
-        Countly.logError("setUserData", message);
-        return message;
+        var msg = "'init' must be called before 'setUserData'";
+        Countly.logError("setUserData", msg);
+        return msg;
     }
     var message = null;
     if(!userData) {
@@ -625,9 +625,9 @@ Countly.setUserData = async function(userData){
 Countly.userData = {};
 Countly.userData.setProperty = async function(keyName, keyValue){
     if(!_isInitialized) {
-        var message = "'init' must be called before 'setProperty'";
-        Countly.logError("setProperty", message);
-        return message;
+        var msg = "'init' must be called before 'setProperty'";
+        Countly.logError("setProperty", msg);
+        return msg;
     }
     var message = await Countly.validateString(keyName, "key", "setProperty");
     if(message) {
@@ -646,9 +646,9 @@ Countly.userData.setProperty = async function(keyName, keyValue){
 };
 Countly.userData.increment = async function(keyName){
     if(!_isInitialized) {
-        var message = "'init' must be called before 'increment'";
-        Countly.logError("increment", message);
-        return message;
+        var msg = "'init' must be called before 'increment'";
+        Countly.logError("increment", msg);
+        return msg;
     }
     var message = await Countly.validateString(keyName, "key", "setProperty");
     if(message) {
@@ -661,9 +661,9 @@ Countly.userData.increment = async function(keyName){
 };
 Countly.userData.incrementBy = async function(keyName, keyValue){
     if(!_isInitialized) {
-        var message = "'init' must be called before 'incrementBy'";
-        Countly.logError("incrementBy", message);
-        return message;
+        var msg = "'init' must be called before 'incrementBy'";
+        Countly.logError("incrementBy", msg);
+        return msg;
     }
     var message = await Countly.validateString(keyName, "key", "incrementBy");
     if(message) {
@@ -678,9 +678,9 @@ Countly.userData.incrementBy = async function(keyName, keyValue){
 };
 Countly.userData.multiply = async function(keyName, keyValue){
     if(!_isInitialized) {
-        var message = "'init' must be called before 'multiply'";
-        Countly.logError("multiply", message);
-        return message;
+        var msg = "'init' must be called before 'multiply'";
+        Countly.logError("multiply", msg);
+        return msg;
     }
     var message = await Countly.validateString(keyName, "key", "multiply");
     if(message) {
@@ -695,9 +695,9 @@ Countly.userData.multiply = async function(keyName, keyValue){
 };
 Countly.userData.saveMax = async function(keyName, keyValue){
     if(!_isInitialized) {
-        var message = "'init' must be called before 'saveMax'";
-        Countly.logError("saveMax", message);
-        return message;
+        var msg = "'init' must be called before 'saveMax'";
+        Countly.logError("saveMax", msg);
+        return msg;
     }
     var message = await Countly.validateString(keyName, "key", "saveMax");
     if(message) {
@@ -712,9 +712,9 @@ Countly.userData.saveMax = async function(keyName, keyValue){
 };
 Countly.userData.saveMin = async function(keyName, keyValue){
     if(!_isInitialized) {
-        var message = "'init' must be called before 'saveMin'";
-        Countly.logError("saveMin", message);
-        return message;
+        var msg = "'init' must be called before 'saveMin'";
+        Countly.logError("saveMin", msg);
+        return msg;
     }
     var message = await Countly.validateString(keyName, "key", "saveMin");
     if(message) {
@@ -729,9 +729,9 @@ Countly.userData.saveMin = async function(keyName, keyValue){
 };
 Countly.userData.setOnce = async function(keyName, keyValue){
     if(!_isInitialized) {
-        var message = "'init' must be called before 'setOnce'";
-        Countly.logError("setOnce", message);
-        return message;
+        var msg = "'init' must be called before 'setOnce'";
+        Countly.logError("setOnce", msg);
+        return msg;
     }
     var message = await Countly.validateString(keyName, "key", "setOnce");
     if(message) {
@@ -748,9 +748,9 @@ Countly.userData.setOnce = async function(keyName, keyValue){
 };
 Countly.userData.pushUniqueValue = async function(keyName, keyValue){
     if(!_isInitialized) {
-        var message = "'init' must be called before 'pushUniqueValue'";
-        Countly.logError("pushUniqueValue", message);
-        return message;
+        var msg = "'init' must be called before 'pushUniqueValue'";
+        Countly.logError("pushUniqueValue", msg);
+        return msg;
     }
     var message = await Countly.validateString(keyName, "key", "pushUniqueValue");
     if(message) {
@@ -767,9 +767,9 @@ Countly.userData.pushUniqueValue = async function(keyName, keyValue){
 };
 Countly.userData.pushValue = async function(keyName, keyValue){
     if(!_isInitialized) {
-        var message = "'init' must be called before 'pushValue'";
-        Countly.logError("pushValue", message);
-        return message;
+        var msg = "'init' must be called before 'pushValue'";
+        Countly.logError("pushValue", msg);
+        return msg;
     }
     var message = await Countly.validateString(keyName, "key", "pushValue");
     if(message) {
@@ -786,9 +786,9 @@ Countly.userData.pushValue = async function(keyName, keyValue){
 };
 Countly.userData.pullValue = async function(keyName, keyValue){
     if(!_isInitialized) {
-        var message = "'init' must be called before 'pullValue'";
-        Countly.logError("pullValue", message);
-        return message;
+        var msg = "'init' must be called before 'pullValue'";
+        Countly.logError("pullValue", msg);
+        return msg;
     }
     var message = await Countly.validateString(keyName, "key", "pullValue");
     if(message) {
@@ -1064,9 +1064,9 @@ Countly.getAvailableFeedbackWidgets = async function(){
  */  
 Countly.presentFeedbackWidgetObject = async function(feedbackWidget, closeButtonText){
     if(!_isInitialized) {
-        var message = "'init' must be called before 'presentFeedbackWidgetObject'";
-        Countly.logError("presentFeedbackWidgetObject", message);
-        return message;
+        var msg = "'init' must be called before 'presentFeedbackWidgetObject'";
+        Countly.logError("presentFeedbackWidgetObject", msg);
+        return msg;
     }
     var message = null;
     if(!feedbackWidget) {
