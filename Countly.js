@@ -225,18 +225,6 @@ Countly.setLoggingEnabled = function(enabled = true){
     CountlyReactNative.setLoggingEnabled([enabled]);
 }
 
-Countly.onSuccess = function(result){
-    // alert(result);
-}
-
-Countly.onError = function(error){
-     // alert("error");
-     // alert(error);
-}
-Countly.demo = function(){
-
-}
-
 /**
  * Set user initial location
  * Should be called before init
