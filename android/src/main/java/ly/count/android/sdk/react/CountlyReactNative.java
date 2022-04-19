@@ -323,7 +323,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
     @ReactMethod
     public void disableLocation(){
-        Countly.sharedInstance().disableLocation();
+        if(Countly.sharedInstance().isInitialized()) {
+            Countly.sharedInstance().disableLocation();
+        }
+        else {
+            this.config.setDisableLocation();
+        }
     }
 
     @ReactMethod
