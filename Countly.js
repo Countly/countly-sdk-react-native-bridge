@@ -18,6 +18,10 @@ const Countly = {};
 Countly.serverUrl = "";
 Countly.appKey = "";
 _isInitialized = false;
+/*
+* Listner for rating widget callback, when callback recieve we will remove the callback using listner. 
+*/
+var _ratingWidgetListner;
 
 Countly.messagingMode = {"DEVELOPMENT":"1","PRODUCTION":"0", "ADHOC": "2"};
 if (Platform.OS.match("android")) {
@@ -1005,14 +1009,55 @@ Countly.showStarRating = function(callback){
     CountlyReactNative.showStarRating([], callback);
 }
 
+/**
+* Present a Rating Popup using rating widget Id
+* 
+* @param {String} widgetId - id of rating widget to present
+* @param {String} closeButtonText - text for cancel/close button
+* @deprecated use 'presentRatingWidgetWithID' intead of 'showFeedbackPopup'.
+*/ 
 Countly.showFeedbackPopup = function(widgetId, closeButtonText){
     if(!_isInitialized) {
         var message = "'init' must be called before 'showFeedbackPopup'";
         Countly.logError("showFeedbackPopup", message);
         return message;
     }
-    CountlyReactNative.showFeedbackPopup([widgetId.toString() || "", closeButtonText.toString() || "Done"]);
+    Countly.presentRatingWidgetWithID(widgetId, closeButtonText);
 }
+
+/**
+* Present a Rating Popup using rating widget Id
+* 
+* @param {String} widgetId - id of rating widget to present
+* @param {String} closeButtonText - text for cancel/close button
+* @param { callback listner} ratingWidgetCallback
+*/ 
+Countly.presentRatingWidgetWithID = function(widgetId, closeButtonText, ratingWidgetCallback){
+    if(!_isInitialized) {
+        var message = "'init' must be called before 'presentRatingWidgetWithID'";
+        Countly.logError("presentRatingWidgetWithID", message);
+        return message;
+    }
+    if(!widgetId) {
+        message = "Rating Widget id should not be null or empty";
+        Countly.logError("presentRatingWidgetWithID", message);
+        return message;
+    }
+    if (typeof closeButtonText != "string") { 
+        closeButtonText = "";
+        Countly.logWarning("presentRatingWidgetWithID", "unsupported data type of closeButtonText : '" + (typeof args) + "'");
+    }
+    if(ratingWidgetCallback){
+        // eventEmitter.addListener('ratingWidgetCallback', ratingWidgetCallback);
+        _ratingWidgetListner = eventEmitter.addListener('ratingWidgetCallback', (error) => {
+            ratingWidgetCallback(error);
+            _ratingWidgetListner.remove();
+        }
+        );
+    }
+    CountlyReactNative.presentRatingWidgetWithID([widgetId.toString() || "", closeButtonText.toString() || "Done"]);
+}
+  
 
 /**
  * Get a list of available feedback widgets as array of object to handle multiple widgets of same type.
