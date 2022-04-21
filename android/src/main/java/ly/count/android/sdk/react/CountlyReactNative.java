@@ -38,6 +38,8 @@ import android.os.Build;
 import android.app.NotificationManager;
 import android.app.NotificationChannel;
 
+import androidx.annotation.NonNull;
+
 import ly.count.android.sdk.StarRatingCallback;
 import ly.count.android.sdk.messaging.CountlyPush;
 
@@ -56,11 +58,10 @@ import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeArray;
 import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.iid.InstanceIdResult;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 
 class CountlyReactException extends Exception {
@@ -138,8 +139,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         this.config.setServerURL(serverUrl);
         this.config.setAppKey(appKey);
 
-          Countly.sharedInstance().COUNTLY_SDK_NAME = COUNTLY_RN_SDK_NAME;
-          Countly.sharedInstance().COUNTLY_SDK_VERSION_STRING = COUNTLY_RN_SDK_VERSION_STRING;
+        Countly.sharedInstance().COUNTLY_SDK_NAME = COUNTLY_RN_SDK_NAME;
+        Countly.sharedInstance().COUNTLY_SDK_VERSION_STRING = COUNTLY_RN_SDK_VERSION_STRING;
 
         this.config.setContext(_reactContext);
         Activity activity = getActivity();
@@ -189,7 +190,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         Boolean result = Countly.sharedInstance().hasBeenCalledOnStart();
         promise.resolve(result);
     }
-    
+
     @ReactMethod
     public void getCurrentDeviceId(Promise promise){
         String deviceID = Countly.sharedInstance().getDeviceID();
@@ -330,7 +331,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
     @ReactMethod
     public void disableLocation(){
-        Countly.sharedInstance().disableLocation();
+        if(Countly.sharedInstance().isInitialized()) {
+            Countly.sharedInstance().disableLocation();
+        }
+        else {
+            this.config.setDisableLocation();
+        }
     }
 
     @ReactMethod
@@ -463,17 +469,17 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     @ReactMethod
     public void setUserData(ReadableArray args){
         Countly.sharedInstance();
-        Map<String, String> bundle = new HashMap<String, String>();
-        bundle.put("name", args.getString(0));
-        bundle.put("username", args.getString(1));
-        bundle.put("email", args.getString(2));
-        bundle.put("organization", args.getString(3));
-        bundle.put("phone", args.getString(4));
-        bundle.put("picture", args.getString(5));
-        bundle.put("picturePath", args.getString(6));
-        bundle.put("gender", args.getString(7));
-        bundle.put("byear", String.valueOf(args.getInt(8)));
-        Countly.userData.setUserData(bundle);
+        ReadableMap userData = args.getMap(0);
+        Map<String, Object> userDataObjectMap = userData.toHashMap();
+        Map<String,String> userDataMap =new HashMap<String,String>();
+        for (Map.Entry<String, Object> entry : userDataObjectMap.entrySet()) {
+            Object value = entry.getValue();
+            if(value instanceof String){
+                userDataMap.put(entry.getKey(), (String) value);
+            }
+        }
+
+        Countly.userData.setUserData(userDataMap);
         Countly.userData.save();
     }
 
@@ -489,7 +495,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         this.channelName = args.getString(1);
         this.channelDescription = args.getString(2);
         log("pushTokenType [" + messagingMode + "][" + this.channelName + "][" + this.channelDescription + "]", LogLevel.INFO);
-        
+
         if (messagingMode == 0) {
             this.messagingMode = Countly.CountlyMessagingMode.PRODUCTION;
         } else {
@@ -502,7 +508,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         JSONObject json = new JSONObject(notification);
         String notificationString = json.toString();
         log("onNotification [" + notificationString + "]", LogLevel.INFO);
-        
+
         if(notificationListener != null){
             //there is a listener for notifications, send the just received notification to it
             log("onNotification, listener exists", LogLevel.INFO);
@@ -554,19 +560,35 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         }
         CountlyPush.useAdditionalIntentRedirectionChecks = true;
         CountlyPush.init(activity.getApplication(), messagingMode);
-        FirebaseApp.initializeApp(context);
-        FirebaseInstanceId.getInstance().getInstanceId()
-                .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
-                    @Override
-                    public void onComplete(Task<InstanceIdResult> task) {
-                        if (!task.isSuccessful()) {
-                            log("getInstanceId failed", task.getException(), LogLevel.WARNING);
-                            return;
-                        }
-                        String token = task.getResult().getToken();
-                        CountlyPush.onTokenRefresh(token);
-                    }
-                });
+        try{
+            FirebaseApp.initializeApp(context);
+            FirebaseMessaging firebaseMessagingInstance = FirebaseMessaging.getInstance();
+            if(firebaseMessagingInstance == null) {
+                log("askForNotificationPermission, firebaseMessagingInstance is null", LogLevel.WARNING);
+                return;
+            }
+            Task<String> firebaseMessagingTokenTask = firebaseMessagingInstance.getToken();
+            if(firebaseMessagingTokenTask == null) {
+                log("askForNotificationPermission, firebaseMessagingTokenTask is null", LogLevel.WARNING);
+                return;
+            }
+
+            firebaseMessagingTokenTask.addOnCompleteListener(new OnCompleteListener<String>() {
+                @Override
+                public void onComplete(@NonNull Task<String> task) {
+                if (!task.isSuccessful()) {
+                    log("askForNotificationPermission, Fetching FCM registration token failed", task.getException(), LogLevel.WARNING);    
+                    return;
+                }
+
+                // Get new FCM registration token
+                String token = task.getResult();
+                CountlyPush.onTokenRefresh(token);
+                }
+            });
+        }catch(Exception exception){
+            log("askForNotificationPermission, Firebase exception",exception, LogLevel.WARNING);
+        }
     }
 
     @ReactMethod
@@ -880,7 +902,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
     @ReactMethod
     public void getFeedbackWidgets(final Promise promise)
-     {
+    {
         Countly.sharedInstance().feedback().getAvailableFeedbackWidgets(new RetrieveFeedbackWidgets() {
             @Override
             public void onFinished(List<CountlyFeedbackWidget> retrievedWidgets, String error) {
@@ -900,11 +922,11 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 promise.resolve(retrievedWidgetsArray);
             }
         });
-    } 
+    }
 
     @ReactMethod
     public void getAvailableFeedbackWidgets(final Promise promise)
-     {
+    {
         Countly.sharedInstance().feedback().getAvailableFeedbackWidgets(new RetrieveFeedbackWidgets() {
             @Override
             public void onFinished(List<CountlyFeedbackWidget> retrievedWidgets, String error) {
@@ -920,7 +942,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 promise.resolve(retrievedWidgetsMap);
             }
         });
-    } 
+    }
 
     @ReactMethod
     public void presentFeedbackWidget(ReadableArray args, final Promise promise) {
@@ -1041,12 +1063,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     @ReactMethod
     public void replaceAllAppKeysInQueueWithCurrentAppKey() {
         Countly.sharedInstance().requestQueueOverwriteAppKeys();
-    } 
-    
+    }
+
     @ReactMethod
     public void removeDifferentAppKeysFromQueue() {
         Countly.sharedInstance().requestQueueEraseAppKeysRequests();
-    } 
+    }
 
     @ReactMethod
     public void setEventSendThreshold(ReadableArray args){
@@ -1136,7 +1158,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         }
         this.config.setMetricOverride(customMetric);
     }
-    
+
     enum LogLevel {INFO, DEBUG, VERBOSE, WARNING, ERROR}
     static void log(String message, LogLevel logLevel)  {
         log(message, null, logLevel);

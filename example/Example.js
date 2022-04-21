@@ -20,6 +20,7 @@ class Example extends Component {
         this.startEvent = this.startEvent.bind(this);
         this.test = this.test.bind(this);
         this.onSendUserData = this.onSendUserData.bind(this);
+        this.onUpdateUserData = this.onUpdateUserData.bind(this);
         this.userData_setProperty = this.userData_setProperty.bind(this);
         this.userData_increment = this.userData_increment.bind(this);
         this.userData_multiply = this.userData_multiply.bind(this);
@@ -93,12 +94,22 @@ class Example extends Component {
       options.name = "Name of User";
       options.username = "Username";
       options.email = "User Email";
-      options.org = "User Organization";
+      options.organization = "User Organization";
       options.phone = "User Contact number";
       options.picture = "https://count.ly/images/logos/countly-logo.png";
       options.picturePath = "";
-      options.gender = "User Gender";
+      options.gender = "Male";
       options.byear = 1989;
+      Countly.setUserData(options);
+    };
+
+    onUpdateUserData(){
+      // example for setUserData
+      var options = {};
+      options.organization = "Updated User Organization";
+      options.phone = "Updated User Contact number";
+      options.gender = "Female";
+      options.byear = 1995;
       Countly.setUserData(options);
     };
     basicEvent(){
@@ -544,6 +555,7 @@ class Example extends Component {
       this.startEvent();
 
       this.onSendUserData();
+      this.onUpdateUserData();
       this.userData_setProperty();
       this.userData_increment();
       this.userData_incrementBy();
@@ -606,6 +618,7 @@ class Example extends Component {
             <Text style={[{textAlign: 'center'}]}>User Methods Start</Text>
 
             < Button onPress = { this.onSendUserData } title = "Send Users Data" color = "#00b5ad"> </Button>
+            < Button onPress = { this.onUpdateUserData } title = "Update Users Data" color = "#00b5ad"> </Button>
             < Button onPress = { this.userData_setProperty } title = "UserData.setProperty" color = "#00b5ad"> </Button>
             < Button onPress = { this.userData_increment } title = "UserData.increment" color = "#00b5ad"> </Button>
             < Button onPress = { this.userData_incrementBy } title = "UserData.incrementBy" color = "#00b5ad"> </Button>

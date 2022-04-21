@@ -8,6 +8,39 @@
 * Updated minimum supported iOS versions to 10.0
 * Updated underlying android SDK to 21.11.0
 * Updated underlying iOS SDK to 21.11.1
+## 20.11.16
+* Fixed push notification issue where some apps were unable to display push notifications in their kill state.
+* Underlying android SDK version is 20.11.12
+* Underlying iOS SDK version is 20.11.3
+
+## 20.11.15
+* Adding a mitigation when app is killed and received push notifications.
+* Underlying android SDK version is 20.11.12
+* Underlying iOS SDK version is 20.11.3
+
+## 20.11.14
+* Fixed a bug that threw an exception when logging a warning for "setUserData".
+* Underlying android SDK version is 20.11.12
+* Underlying iOS SDK version is 20.11.3
+
+## 20.11.13
+* Updated the Android "compileSdkVersion" and "targetSdkVersion" to "31".
+* Adding the "exported" tag for the FCM service, required by Android 12.
+* Fixed an Android push bug due to "CLOSE_SYSTEM_DIALOGS" permission denial, related to Android 12.
+* Updated underlying android SDK to 20.11.12
+* Underlying iOS SDK version is 20.11.3
+
+## 20.11.12
+* ! Minor breaking change ! Firebase dependency updated to version '22.0.0', replaced deprecated method to retrieve push token. This change now makes AndroidX mandatory.
+* Bintray respository inclusion removed.
+* Underlying android SDK is 20.11.11
+* Underlying iOS SDK version is 20.11.3
+
+## 20.11.11
+* User profile issue fixed, user data was deleted for key if no value, null or undefined value was provided against that key.
+* Fixed an issue on Android devices where events would not be sent.
+* Updated underlying android SDK to 20.11.11
+* Updated underlying iOS SDK to 20.11.3
 
 ## 20.11.10
 * Error/crash stack parsing issue fixed for React-Native version >= 0.64
