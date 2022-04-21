@@ -19,6 +19,15 @@ Countly.serverUrl = "";
 Countly.appKey = "";
 _isInitialized = false;
 
+/*
+* Listner for appeat feedback widget callback, when callback recieve we will remove the callback using listner. 
+*/
+var _appearWidgetListner;
+/*
+* Listner for dismiss feedback widget callback, when callback recieve we will remove the callback using listner. 
+*/
+var _dismissWidgetListner;
+
 Countly.messagingMode = {"DEVELOPMENT":"1","PRODUCTION":"0", "ADHOC": "2"};
 if (Platform.OS.match("android")) {
     Countly.messagingMode.DEVELOPMENT = "2";
@@ -1049,20 +1058,6 @@ Countly.getAvailableFeedbackWidgets = async function(){
  * @param { callback listner } dismissCallback
  */  
 Countly.presentFeedbackWidgetObject = async function(feedbackWidget, closeButtonText, appearCallback, dismissCallback){
-
-    eventEmitter.addListener('appearCallback', appearCallback);
-    eventEmitter.addListener('dismissCallback', dismissCallback);
-    // eventEmitter.addListener('appearCallback', (event) => {
-    //     console.log("appearCallback");
-    //     eventEmitter.emit("appearWidgetCallback", {});
-    //  }
-    //  );
-
-    //  eventEmitter.addListener('dismissCallback', (event) => {{
-    //     console.log("dismissCallback");
-    //     eventEmitter.emit("dismissWidgetCallback", {});
-    //  }
-    //  );
     if(!_isInitialized) {
         var msg = "'init' must be called before 'presentFeedbackWidgetObject'";
         Countly.logError("presentFeedbackWidgetObject", msg);
@@ -1087,6 +1082,19 @@ Countly.presentFeedbackWidgetObject = async function(feedbackWidget, closeButton
     if (typeof closeButtonText != "string") { 
             closeButtonText = "";
             Countly.logWarning("presentFeedbackWidgetObject", "unsupported data type of closeButtonText : '" + (typeof args) + "'");
+    }
+    
+    if(appearCallback){
+        _appearWidgetListner = eventEmitter.addListener('appearCallback', () => {
+            appearCallback();
+            _appearWidgetListner.remove();
+        });
+    }
+    if(dismissCallback){
+        _dismissWidgetListner = eventEmitter.addListener('dismissCallback', () => {
+            dismissCallback();
+            _dismissWidgetListner.remove();
+        });
     }
     feedbackWidget.name = feedbackWidget.name || "";
     closeButtonText = closeButtonText || "";

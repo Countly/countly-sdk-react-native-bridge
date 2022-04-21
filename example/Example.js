@@ -357,10 +357,10 @@ class Example extends Component {
       Countly.getFeedbackWidgets().then((retrivedWidgets) => {
           var surveyWidget =  retrivedWidgets.find(x => x.type === 'survey')
           if(surveyWidget) {
-              Countly.presentFeedbackWidgetObject(surveyWidget, "Close", function(event){
+              Countly.presentFeedbackWidgetObject(surveyWidget, "Close", function(){
               console.log("appearWidgetCallback");
               },
-              function(event){
+              function(){
                 console.log("dismissWidgetCallback");
                 },
               )
