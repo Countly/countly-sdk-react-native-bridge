@@ -1158,7 +1158,7 @@ Countly.getFeedbackWidgetData = async function(widgetInfo){
 * @param {Object} widgetData - widget data for this specific widget
 * @param {Object} widgetResult - segmentation of the filled out feedback. If this segmentation is null, it will be assumed that the survey was closed before completion and mark it appropriately
 */  
-Countly.reportFeedbackWidgetManually = function(widgetInfo, widgetData, widgetResult){
+Countly.reportFeedbackWidgetManually = async function(widgetInfo, widgetData, widgetResult){
     if(!widgetInfo) {
         if(await CountlyReactNative.isLoggingEnabled()) {
             console.error("[CountlyReactNative] reportFeedbackWidgetManually, widgetInfo should not be null or undefined");

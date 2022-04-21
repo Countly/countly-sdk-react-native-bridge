@@ -436,10 +436,10 @@ class Example extends Component {
               case 'radio':
               //dropdown value selector
               case 'dropdown':
-                var choices = question.choices;
-                var pick = this.random(choices.length);
+                var dropDownChoices = question.choices;
+                var pick = this.random(dropDownChoices.length);
                 segments[answerKey] =
-                choices[pick].key; //pick the key of random choice
+                dropDownChoices[pick].key; //pick the key of random choice
                 break;
             //text input field
               case 'text':
