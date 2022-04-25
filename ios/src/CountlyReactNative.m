@@ -929,12 +929,18 @@ RCT_EXPORT_METHOD(presentFeedbackWidget:(NSArray*)arguments)
         NSString* widgetId = [arguments objectAtIndex:0];
         NSString* widgetType = [arguments objectAtIndex:1];
         NSString* widgetName = [arguments objectAtIndex:2];
-        CountlyFeedbackWidget* feedbackWidget = [self getFeedbackWidget:widgetId widgetType:widgetType widgetName:widgetName];
-        [feedbackWidget presentWithAppearBlock:^{
-            [self sendEventWithName:@"appearCallback" body: NULL];
-        } andDismissBlock:^{
-            [self sendEventWithName:@"dismissCallback" body: NULL];
-        }];
+        CountlyFeedbackWidget* feedbackWidget = [self getFeedbackWidget:widgetId];
+        if(feedbackWidget == nil) {
+          NSString* errorMessage = [NSString stringWithFormat:@"[presentFeedbackWidget] No feedbackWidget is found against widget Id : '%@', always call 'getFeedbackWidgets' to get updated list of feedback widgets.", widgetId];
+          COUNTLY_RN_LOG(errorMessage);
+        }
+        else {
+          [feedbackWidget presentWithAppearBlock:^{
+              [self sendEventWithName:@"appearCallback" body: NULL];
+          } andDismissBlock:^{
+              [self sendEventWithName:@"dismissCallback" body: NULL];
+          }];
+        }
         });
 }
 
@@ -947,9 +953,14 @@ RCT_REMAP_METHOD(getFeedbackWidgetData,
     NSString* widgetId = [arguments objectAtIndex:0];
     NSString* widgetType = [arguments objectAtIndex:1];
     NSString* widgetName = [arguments objectAtIndex:2];
-    CountlyFeedbackWidget* feedbackWidget = [self getFeedbackWidget:widgetId widgetType:widgetType widgetName:widgetName];
-
-        [feedbackWidget getWidgetData:^(NSDictionary * _Nullable widgetData, NSError * _Nullable error) {
+    CountlyFeedbackWidget* feedbackWidget = [self getFeedbackWidget:widgetId];
+    if(feedbackWidget == nil) {
+      NSString* errorMessage = [NSString stringWithFormat:@"[getFeedbackWidgetData] No feedbackWidget is found against widget Id : '%@', always call 'getFeedbackWidgets' to get updated list of feedback widgets.", widgetId];
+      COUNTLY_RN_LOG(errorMessage);
+      reject(@"getFeedbackWidgetData", @"getFeedbackWidgetData failed", errorMessage);
+    }
+    else {
+      [feedbackWidget getWidgetData:^(NSDictionary * _Nullable widgetData, NSError * _Nullable error) {
             if (error){
                 reject(@"getFeedbackWidgetData", @"getFeedbackWidgetData failed", error);
             }
@@ -957,6 +968,7 @@ RCT_REMAP_METHOD(getFeedbackWidgetData,
                 resolve(widgetData);
             }
         }];
+    }        
     });
 }
 RCT_EXPORT_METHOD(reportFeedbackWidgetManually:(NSArray*)arguments)
@@ -970,21 +982,15 @@ RCT_EXPORT_METHOD(reportFeedbackWidgetManually:(NSArray*)arguments)
     NSString* widgetType = [widgetInfo objectAtIndex:1];
     NSString* widgetName = [widgetInfo objectAtIndex:2];
         
-    CountlyFeedbackWidget* feedbackWidget = [self getFeedbackWidget:widgetId widgetType:widgetType widgetName:widgetName];
-
-    [feedbackWidget recordResult:widgetResult];
-    });
-}
-
-- (CountlyFeedbackWidget*)getFeedbackWidget:(NSString*)widgetId widgetType:(NSString *)widgetType widgetName:(NSString *)widgetName
-{
     CountlyFeedbackWidget* feedbackWidget = [self getFeedbackWidget:widgetId];
-
     if(feedbackWidget == nil) {
-        COUNTLY_RN_LOG(@"No feedbackWidget is found against widget Id : '%@', always call 'getFeedbackWidgets' to get updated list of feedback widgets.", widgetId);
-      feedbackWidget = [self createFeedbackWidget:widgetId widgetType:widgetType widgetName:widgetName];
+      NSString* errorMessage = [NSString stringWithFormat:@"[reportFeedbackWidgetManually] No feedbackWidget is found against widget Id : '%@', always call 'getFeedbackWidgets' to get updated list of feedback widgets.", widgetId];
+      COUNTLY_RN_LOG(errorMessage);
     }
-    return feedbackWidget;
+    else {
+      [feedbackWidget recordResult:widgetResult];
+    }
+    });
 }
 
 - (CountlyFeedbackWidget*)getFeedbackWidget:(NSString*)widgetId
@@ -998,16 +1004,6 @@ RCT_EXPORT_METHOD(reportFeedbackWidgetManually:(NSArray*)arguments)
     }
   }
   return nil;
-}
-
-- (CountlyFeedbackWidget*)createFeedbackWidget:(NSString*)widgetId widgetType:(NSString *)widgetType widgetName:(NSString *)widgetName
-{
-  NSMutableDictionary* feedbackWidgetsDict = [NSMutableDictionary dictionaryWithCapacity:3];
-  feedbackWidgetsDict[@"_id"] = widgetId;
-  feedbackWidgetsDict[@"type"] = widgetType;
-  feedbackWidgetsDict[@"name"] = widgetName;
-  CountlyFeedbackWidget *feedbackWidget = [CountlyFeedbackWidget createWithDictionary:feedbackWidgetsDict];
-  return feedbackWidget;  
 }
 
 RCT_EXPORT_METHOD(replaceAllAppKeysInQueueWithCurrentAppKey)
