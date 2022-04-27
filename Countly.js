@@ -1125,8 +1125,9 @@ Countly.presentFeedbackWidget = function(widgetType, widgetId, closeButtonText){
 /**
  * Downloads widget info and returns
  * @param {Object} widgetInfo - feeback Widget with id, type and name
+ * @param { callback listner } onFinished
  */
-Countly.getFeedbackWidgetData = async function(widgetInfo){
+Countly.getFeedbackWidgetData = async function(widgetInfo, onFinished){
     if(!widgetInfo) {
         if(await CountlyReactNative.isLoggingEnabled()) {
             console.error("[CountlyReactNative] getFeedbackWidgetData, widgetInfo should not be null or undefined");
@@ -1150,6 +1151,13 @@ Countly.getFeedbackWidgetData = async function(widgetInfo){
             console.error("[CountlyReactNative] getFeedbackWidgetData, widgetInfo type should not be null or empty");
         }
         return "widgetInfo name should not be null or empty";
+    }
+    
+    if(onFinished){
+        _onFinishedWidgetDataListner = eventEmitter.addListener('onFinished', (error) => {
+            onFinished(error);
+            _onFinishedWidgetDataListner.remove();
+        });
     }
     var args = [];
     args.push(widgetInfo.id);
