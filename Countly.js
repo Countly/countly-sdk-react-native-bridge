@@ -1030,7 +1030,7 @@ Countly.showFeedbackPopup = function(widgetId, closeButtonText){
 * 
 * @param {String} widgetId - id of rating widget to present
 * @param {String} closeButtonText - text for cancel/close button
-* @param { callback listner} ratingWidgetCallback
+* @param { callback listener} ratingWidgetCallback
 */ 
 Countly.presentRatingWidgetWithID = function(widgetId, closeButtonText, ratingWidgetCallback){
     if(!_isInitialized) {
