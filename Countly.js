@@ -19,9 +19,9 @@ Countly.serverUrl = "";
 Countly.appKey = "";
 _isInitialized = false;
 /*
-* Listner for rating widget callback, when callback recieve we will remove the callback using listner. 
+* Listener for rating widget callback, when callback recieve we will remove the callback using listener. 
 */
-var _ratingWidgetListner;
+var _ratingWidgetListener;
 
 Countly.messagingMode = {"DEVELOPMENT":"1","PRODUCTION":"0", "ADHOC": "2"};
 if (Platform.OS.match("android")) {
@@ -201,7 +201,7 @@ Countly.askForNotificationPermission = function(){
 /**
  * 
  * Set callback to receive push notifications
- * @param { callback listner } theListener 
+ * @param { callback listener } theListener 
  */
 Countly.registerForNotification = function(theListener){
     var event = eventEmitter.addListener('onCountlyPushNotification', theListener);
@@ -1049,9 +1049,9 @@ Countly.presentRatingWidgetWithID = function(widgetId, closeButtonText, ratingWi
     }
     if(ratingWidgetCallback){
         // eventEmitter.addListener('ratingWidgetCallback', ratingWidgetCallback);
-        _ratingWidgetListner = eventEmitter.addListener('ratingWidgetCallback', (error) => {
+        _ratingWidgetListener = eventEmitter.addListener('ratingWidgetCallback', (error) => {
             ratingWidgetCallback(error);
-            _ratingWidgetListner.remove();
+            _ratingWidgetListener.remove();
         }
         );
     }
