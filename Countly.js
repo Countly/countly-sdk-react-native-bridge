@@ -201,7 +201,7 @@ Countly.askForNotificationPermission = function(){
 /**
  * 
  * Set callback to receive push notifications
- * @param { callback listener } theListener 
+ * @param {callback listener } theListener 
  */
 Countly.registerForNotification = function(theListener){
     var event = eventEmitter.addListener('onCountlyPushNotification', theListener);
@@ -1030,7 +1030,7 @@ Countly.showFeedbackPopup = function(widgetId, closeButtonText){
 * 
 * @param {String} widgetId - id of rating widget to present
 * @param {String} closeButtonText - text for cancel/close button
-* @param { callback listener} ratingWidgetCallback
+* @param {callback listener} ratingWidgetCallback
 */ 
 Countly.presentRatingWidgetWithID = function(widgetId, closeButtonText, ratingWidgetCallback){
     if(!_isInitialized) {
