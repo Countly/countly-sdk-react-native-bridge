@@ -456,7 +456,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         for(int i=1,il=args.size();i<il;i+=2){
             segmentation.put(args.getString(i), args.getString(i+1));
         }
-        // Countly.sharedInstance().recordView(viewName, segmentation);
         Countly.sharedInstance().views().recordView(viewName, segmentation);
         
     }

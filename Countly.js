@@ -1048,7 +1048,6 @@ Countly.presentRatingWidgetWithID = function(widgetId, closeButtonText, ratingWi
         Countly.logWarning("presentRatingWidgetWithID", "unsupported data type of closeButtonText : '" + (typeof args) + "'");
     }
     if(ratingWidgetCallback){
-        // eventEmitter.addListener('ratingWidgetCallback', ratingWidgetCallback);
         _ratingWidgetListener = eventEmitter.addListener('ratingWidgetCallback', (error) => {
             ratingWidgetCallback(error);
             _ratingWidgetListener.remove();
