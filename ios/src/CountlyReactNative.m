@@ -38,7 +38,7 @@ NSInteger notificationCacheButtonIndex = 0;
 NSString* const kCountlyNotificationPersistencyKey = @"kCountlyNotificationPersistencyKey";
 
 - (NSArray<NSString *> *)supportedEvents {
-    return @[@"onCountlyPushNotification"];
+    return @[@"onCountlyPushNotification", @"ratingWidgetCallback"];
 }
 
 RCT_EXPORT_MODULE();
@@ -873,13 +873,17 @@ RCT_EXPORT_METHOD(showStarRating:(NSArray*)arguments callback:(RCTResponseSender
   });
 }
 
-RCT_EXPORT_METHOD(showFeedbackPopup:(NSArray*)arguments)
+RCT_EXPORT_METHOD(presentRatingWidgetWithID:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* FEEDBACK_WIDGET_ID = [arguments objectAtIndex:0];
   [Countly.sharedInstance presentFeedbackWidgetWithID:FEEDBACK_WIDGET_ID completionHandler:^(NSError* error)
   {
-
+    NSString* errorStr = nil;
+    if (error){
+        errorStr = error.localizedDescription;
+    }
+    [self sendEventWithName:@"ratingWidgetCallback" body: errorStr];
   }];
   });
 }

@@ -20,6 +20,7 @@ import ly.count.android.sdk.Countly;
 import ly.count.android.sdk.CountlyConfig;
 import ly.count.android.sdk.DeviceId;
 import ly.count.android.sdk.RemoteConfigCallback;
+import ly.count.android.sdk.FeedbackRatingCallback;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -455,7 +456,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         for(int i=1,il=args.size();i<il;i+=2){
             segmentation.put(args.getString(i), args.getString(i+1));
         }
-        Countly.sharedInstance().recordView(viewName, segmentation);
+        // Countly.sharedInstance().recordView(viewName, segmentation);
+        Countly.sharedInstance().views().recordView(viewName, segmentation);
+        
     }
 
     @ReactMethod
@@ -881,15 +884,24 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     }
 
     @ReactMethod
-    public void showFeedbackPopup(ReadableArray args){
+    public void presentRatingWidgetWithID(ReadableArray args){
         Activity activity = getActivity();
         if (activity == null) {
-            log("showFeedbackPopup failed, Activity is null", LogLevel.ERROR);
+            log("presentRatingWidgetWithID failed, Activity is null", LogLevel.ERROR);
             return;
         }
         String widgetId = args.getString(0);
-        String closeFeedBackButton = args.getString(1);
-        Countly.sharedInstance().ratings().showFeedbackPopup( widgetId, closeFeedBackButton, activity, null);
+        String closeButtonText = args.getString(1);
+
+        final Context context = this._reactContext;
+        Countly.sharedInstance().ratings().presentRatingWidgetWithID(widgetId, closeButtonText, activity, new FeedbackRatingCallback() {
+            @Override
+            public void callback(String error) {
+                ((ReactApplicationContext) context)
+                        .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                        .emit("ratingWidgetCallback", error);
+            }
+        });
     }
 
     @ReactMethod
@@ -960,6 +972,10 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 else {
                     promise.resolve("presentFeedbackWidget success");
                 }
+            }
+            @Override
+            public void onClosed() {
+
             }
         });
     }

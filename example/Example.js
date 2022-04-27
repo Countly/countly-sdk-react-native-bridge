@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Text, Button, ScrollView, Image, View, Alert } from 'react-native';
+import { Text, Button, ScrollView, Image, View, TextInput } from 'react-native';
 import Countly from 'countly-sdk-react-native-bridge';
 
 var successCodes = [100, 101, 200, 201, 202, 205, 300, 301, 303, 305];
@@ -351,6 +351,27 @@ class Example extends Component {
       Countly.showFeedbackPopup("5f8c837a5294f7aae370067c", "Submit");
     }
 
+
+    presentRatingWidget(){
+      Countly.presentRatingWidgetWithID("625f9032028614795fe5a85b", "Submit", function(error){
+        if (error != null) {
+          console.log(error);
+        }
+      });
+    }
+
+    _ratingId = '';
+    setRatingId(ratingId) {
+      this._ratingId = ratingId;
+    }
+    presentRatingWidgetUsingEditBox(){
+      Countly.presentRatingWidgetWithID(this._ratingId, "Submit", function(error){
+        if (error != null) {
+          console.log(error);
+        }
+      });
+    }
+
     showSurvey = function(){
       Countly.getFeedbackWidgets().then((retrivedWidgets) => {
           var surveyWidget =  retrivedWidgets.find(x => x.type === 'survey')
@@ -488,7 +509,6 @@ class Example extends Component {
 
     }
     render() {
-
         return (
 
           <ScrollView >
@@ -549,7 +569,11 @@ class Example extends Component {
             < Button onPress = { this.setLocation } title = "Set Location" color = "#00b5ad"> </Button>
             < Button onPress = { this.disableLocation } title = "Disable Location" color = "#00b5ad"> </Button>
             < Button onPress = { this.showStarRating } title = "Show Star Rating Model" color = "#00b5ad"> </Button>
-            < Button onPress = { this.showFeedbackPopup } title = "Show FeedBack Model" color = "#00b5ad"> </Button>
+            < Button onPress = { this.presentRatingWidget } title = "Show FeedBack Model" color = "#00b5ad"> </Button>
+           {/*
+           <TextInput style={{height: 40}} placeholder="Enter a Rating ID" onChangeText={(ratingId) => this.setRatingId(ratingId)} > </TextInput>
+           < Button onPress = { this.presentRatingWidgetUsingEditBox } title = "Show Feedback using EditBox" color = "#00b5ad"> </Button>  
+          */}
             < Button onPress = { this.showSurvey } title = "Show Survey" color = "#00b5ad"> </Button>
             < Button onPress = { this.showNPS } title = "Show NPS" color = "#00b5ad"> </Button>
             < Button onPress = { this.eventSendThreshold } title = "Set Event Threshold" color = "#00b5ad"> </Button>
