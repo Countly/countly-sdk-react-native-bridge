@@ -10,7 +10,6 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
-import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.JavaScriptModule;
 
@@ -18,7 +17,7 @@ import com.facebook.react.bridge.JavaScriptModule;
 import android.content.Context;
 import ly.count.android.sdk.Countly;
 import ly.count.android.sdk.CountlyConfig;
-import ly.count.android.sdk.DeviceId;
+import ly.count.android.sdk.DeviceIdType;
 import ly.count.android.sdk.RemoteConfigCallback;
 import ly.count.android.sdk.FeedbackRatingCallback;
 
@@ -60,14 +59,15 @@ import com.google.firebase.messaging.FirebaseMessaging;
 
 
 class CountlyReactException extends Exception {
-    private String jsError;
-    private String jsStack;
-    private String jsMessage;
+    private final String jsError;
+    private final String jsStack;
+    private final String jsMessage;
     CountlyReactException(String err, String message, String stack){
         jsError = err;
         jsStack = stack;
         jsMessage = message;
     }
+    @NonNull
     public String toString(){
         return "[React] " + jsError + ": " + jsMessage + "\n" + jsStack + "\n\nJava Stack:";
     }
@@ -79,7 +79,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     private String COUNTLY_RN_SDK_VERSION_STRING = "21.11.0";
     private String COUNTLY_RN_SDK_NAME = "js-rnb-android";
 
-    private static CountlyConfig config = new CountlyConfig();
+    private static final CountlyConfig config = new CountlyConfig();
     private static Countly.CountlyMessagingMode messagingMode = Countly.CountlyMessagingMode.PRODUCTION;
     private static String channelName = "Default Name";
     private static String channelDescription = "Default Description";
@@ -90,9 +90,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     private boolean isOnResumeBeforeInit = false;
     private Boolean isSessionStarted_ = false;
 
-    private ReactApplicationContext _reactContext;
+    private final ReactApplicationContext _reactContext;
 
-    private final Set<String> validConsentFeatureNames = new HashSet<String>(Arrays.asList(
+    private final Set<String> validConsentFeatureNames = new HashSet<>(Arrays.asList(
             Countly.CountlyFeatureNames.sessions,
             Countly.CountlyFeatureNames.events,
             Countly.CountlyFeatureNames.views,
@@ -110,10 +110,11 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     public CountlyReactNative(ReactApplicationContext reactContext) {
         super(reactContext);
         _reactContext = reactContext;
-        this.config.enableManualAppLoadedTrigger();
-        this.config.enableManualForegroundBackgroundTriggerAPM();
+        config.enableManualAppLoadedTrigger();
+        config.enableManualForegroundBackgroundTriggerAPM();
         reactContext.addLifecycleEventListener(this);
     }
+    @NonNull
     @Override
     public String getName() {
         return "CountlyReactNative";
@@ -129,16 +130,16 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         String serverUrl = args.getString(0);
         String appKey = args.getString(1);
         String deviceId = args.getString(2);
-        this.config.setServerURL(serverUrl);
-        this.config.setAppKey(appKey);
+        config.setServerURL(serverUrl);
+        config.setAppKey(appKey);
 
         Countly.sharedInstance().COUNTLY_SDK_NAME = COUNTLY_RN_SDK_NAME;
         Countly.sharedInstance().COUNTLY_SDK_VERSION_STRING = COUNTLY_RN_SDK_VERSION_STRING;
 
-        this.config.setContext(_reactContext);
+        config.setContext(_reactContext);
         Activity activity = getActivity();
         if (activity != null) {
-            this.config.setApplication(activity.getApplication());
+            config.setApplication(activity.getApplication());
         }
         else {
             log("init, Activity is null, some features will not work", LogLevel.WARNING);
@@ -146,12 +147,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         if(deviceId == null || "".equals(deviceId)){
         }else{
             if(deviceId.equals("TemporaryDeviceID")){
-                this.config.enableTemporaryDeviceIdMode();
+                config.enableTemporaryDeviceIdMode();
             }else{
-                this.config.setDeviceId(deviceId);
+                config.setDeviceId(deviceId);
             }
         }
-        Countly.sharedInstance().init(this.config);
+        Countly.sharedInstance().init(config);
         if(isOnResumeBeforeInit) {
             isOnResumeBeforeInit = false;
             Countly.sharedInstance().apm().triggerForeground();
@@ -161,14 +162,15 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
     @ReactMethod
     public void setLoggingEnabled(ReadableArray args){
-        Boolean enabled = args.getBoolean(0);
-        this.config.setLoggingEnabled(enabled);
+        boolean enabled = args.getBoolean(0);
+        config.setLoggingEnabled(enabled);
         loggingEnabled = enabled;
     }
 
     @ReactMethod
     public void isLoggingEnabled(final Promise promise){
-        Boolean result = loggingEnabled;
+        boolean result;
+        result = loggingEnabled;
         promise.resolve(result);
     }
 
@@ -186,7 +188,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
     @ReactMethod
     public void getCurrentDeviceId(Promise promise){
-        String deviceID = Countly.sharedInstance().getDeviceID();
+        String deviceID = Countly.sharedInstance().deviceId().getID();
         if (deviceID == null) {
             log("getCurrentDeviceId, deviceIdNotFound", LogLevel.DEBUG);
             promise.resolve("deviceIdNotFound");
@@ -199,14 +201,14 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
     @ReactMethod
     public void getDeviceIdAuthor(ReadableArray args, final Callback myCallback){
-        DeviceId.Type deviceIDType = Countly.sharedInstance().getDeviceIDType();
+        DeviceIdType deviceIDType = Countly.sharedInstance().deviceId().getType();
         if (deviceIDType == null) {
             log("getDeviceIdAuthor, deviceIdAuthorNotFound", LogLevel.DEBUG);
             myCallback.invoke("deviceIdAuthorNotFound");
         }
         else {
             log("getDeviceIdAuthor: " + deviceIDType, LogLevel.DEBUG);
-            if(deviceIDType == DeviceId.Type.DEVELOPER_SUPPLIED){
+            if(deviceIDType == DeviceIdType.DEVELOPER_SUPPLIED){
                 myCallback.invoke("developerProvided");
             }else{
                 myCallback.invoke("sdkGenerated");
@@ -219,12 +221,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         String newDeviceID = args.getString(0);
         String onServerString = args.getString(1);
         if(newDeviceID.equals("TemporaryDeviceID")){
-            Countly.sharedInstance().enableTemporaryIdMode();
+            Countly.sharedInstance().deviceId().enableTemporaryIdMode();
         }else{
             if ("1".equals(onServerString)) {
-                Countly.sharedInstance().changeDeviceIdWithMerge(newDeviceID);
+                Countly.sharedInstance().deviceId().changeWithMerge(newDeviceID);
             } else {
-                Countly.sharedInstance().changeDeviceIdWithoutMerge(DeviceId.Type.DEVELOPER_SUPPLIED, newDeviceID);
+                Countly.sharedInstance().deviceId().changeWithoutMerge(newDeviceID);
             }
         }
     }
@@ -233,26 +235,26 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     public void setHttpPostForced(ReadableArray args){
         int isEnabled = Integer.parseInt(args.getString(0));
         if(isEnabled == 1){
-            this.config.setHttpPostForced(true);
+            config.setHttpPostForced(true);
         }else{
-            this.config.setHttpPostForced(false);
+            config.setHttpPostForced(false);
         }
     }
 
     @ReactMethod
     public void enableParameterTamperingProtection(ReadableArray args){
         String salt = args.getString(0);
-        this.config.setParameterTamperingProtectionSalt(salt);
+        config.setParameterTamperingProtectionSalt(salt);
     }
 
     @ReactMethod
     public void pinnedCertificates(ReadableArray args){
         String certificateName = args.getString(0);
-        this.config.enablePublicKeyPinning(this.readCertificate(certificateName));
+        config.enablePublicKeyPinning(this.readCertificate(certificateName));
     }
 
     public String [] readCertificate(String certificateName){
-        String certificateString = "";
+        StringBuilder certificateString = new StringBuilder();
         BufferedReader reader = null;
         try {
             reader = new BufferedReader(
@@ -261,10 +263,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             // do reading, usually loop until end of file reading
             String mLine;
             while ((mLine = reader.readLine()) != null) {
-                certificateString += mLine;
+                certificateString.append(mLine);
             }
-            String certificateArray[] = new String[] {certificateString};
-            return certificateArray;
+            return new String[] {certificateString.toString()};
         } catch (IOException e) {
             //log the exception
         } finally {
@@ -298,7 +299,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         if("null".equals(ipAddress)){
             ipAddress = null;
         }
-        this.config.setLocation(countryCode, city, location, ipAddress);
+        config.setLocation(countryCode, city, location, ipAddress);
     }
 
     @ReactMethod
@@ -319,22 +320,22 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         if("null".equals(ipAddress)){
             ipAddress = null;
         }
-        Countly.sharedInstance().setLocation(countryCode, city, location, ipAddress);
+        Countly.sharedInstance().location().setLocation(countryCode, city, location, ipAddress);
     }
 
     @ReactMethod
     public void disableLocation(){
         if(Countly.sharedInstance().isInitialized()) {
-            Countly.sharedInstance().disableLocation();
+            Countly.sharedInstance().location().disableLocation();
         }
         else {
-            this.config.setDisableLocation();
+            config.setDisableLocation();
         }
     }
 
     @ReactMethod
     public void enableCrashReporting(){
-        this.config.enableCrashReporting();
+        config.enableCrashReporting();
     }
 
     @ReactMethod
@@ -357,47 +358,53 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
     @ReactMethod
     public void setCustomCrashSegments(ReadableArray args){
-        Map<String, Object> segments = new HashMap<String, Object>();
+        Map<String, Object> segments = new HashMap<>();
         for(int i=0,il=args.size();i<il;i+=2){
             segments.put(args.getString(i), args.getString(i+1));
         }
-        this.config.setCustomCrashSegment(segments);
+        config.setCustomCrashSegment(segments);
     }
 
     @ReactMethod
     public void event(ReadableArray args){
         String eventType = args.getString(0);
-        if("event".equals(eventType)){
-            String eventName = args.getString(1);
-            int eventCount= Integer.parseInt(args.getString(2));
-            Countly.sharedInstance().events().recordEvent(eventName, eventCount);
-        }
-        else if ("eventWithSum".equals(eventType)) {
-            String eventName = args.getString(1);
-            int eventCount= Integer.parseInt(args.getString(2));
-            float eventSum= new Float(args.getString(3)).floatValue();
-            Countly.sharedInstance().events().recordEvent(eventName, eventCount, eventSum);
-        }
-        else if ("eventWithSegment".equals(eventType)) {
-            String eventName = args.getString(1);
-            int eventCount= Integer.parseInt(args.getString(2));
-            HashMap<String, Object> segmentation = new HashMap<String, Object>();
-            for(int i=3,il=args.size();i<il;i+=2){
-                segmentation.put(args.getString(i), args.getString(i+1));
+        switch (eventType) {
+            case "event": {
+                String eventName = args.getString(1);
+                int eventCount = Integer.parseInt(args.getString(2));
+                Countly.sharedInstance().events().recordEvent(eventName, eventCount);
+                break;
             }
-            Countly.sharedInstance().events().recordEvent(eventName, segmentation, eventCount);
-        }
-        else if ("eventWithSumSegment".equals(eventType)) {
-            String eventName = args.getString(1);
-            int eventCount= Integer.parseInt(args.getString(2));
-            float eventSum= new Float(args.getString(3)).floatValue();
-            HashMap<String, Object> segmentation = new HashMap<String, Object>();
-            for(int i=4,il=args.size();i<il;i+=2){
-                segmentation.put(args.getString(i), args.getString(i+1));
+            case "eventWithSum": {
+                String eventName = args.getString(1);
+                int eventCount = Integer.parseInt(args.getString(2));
+                float eventSum = Float.parseFloat(args.getString(3));
+                Countly.sharedInstance().events().recordEvent(eventName, eventCount, eventSum);
+                break;
             }
-            Countly.sharedInstance().events().recordEvent(eventName, segmentation, eventCount,eventSum);
-        }
-        else{
+            case "eventWithSegment": {
+                String eventName = args.getString(1);
+                int eventCount = Integer.parseInt(args.getString(2));
+                HashMap<String, Object> segmentation = new HashMap<>();
+                for (int i = 3, il = args.size(); i < il; i += 2) {
+                    segmentation.put(args.getString(i), args.getString(i + 1));
+                }
+                Countly.sharedInstance().events().recordEvent(eventName, segmentation, eventCount);
+                break;
+            }
+            case "eventWithSumSegment": {
+                String eventName = args.getString(1);
+                int eventCount = Integer.parseInt(args.getString(2));
+                float eventSum = Float.parseFloat(args.getString(3));
+                HashMap<String, Object> segmentation = new HashMap<>();
+                for (int i = 4, il = args.size(); i < il; i += 2) {
+                    segmentation.put(args.getString(i), args.getString(i + 1));
+                }
+                Countly.sharedInstance().events().recordEvent(eventName, segmentation, eventCount, eventSum);
+                break;
+            }
+            default:
+                break;
         }
     }
 
@@ -416,49 +423,55 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     @ReactMethod
     public void endEvent(ReadableArray args){
         String eventType = args.getString(0);
-        if("event".equals(eventType)){
-            String eventName = args.getString(1);
-            Countly.sharedInstance().events().endEvent(eventName);
-        }
-        else if ("eventWithSum".equals(eventType)) {
-            String eventName = args.getString(1);
-            int eventCount= Integer.parseInt(args.getString(2));
-            float eventSum= new Float(args.getString(3)).floatValue();
-            Countly.sharedInstance().events().endEvent(eventName, null, eventCount,eventSum);
-        }
-        else if ("eventWithSegment".equals(eventType)) {
-            String eventName = args.getString(1);
-            int eventCount= Integer.parseInt(args.getString(2));
-            HashMap<String, Object> segmentation = new HashMap<String, Object>();
-            for(int i=4,il=args.size();i<il;i+=2){
-                segmentation.put(args.getString(i), args.getString(i+1));
+        switch (eventType) {
+            case "event": {
+                String eventName = args.getString(1);
+                Countly.sharedInstance().events().endEvent(eventName);
+                break;
             }
-            Countly.sharedInstance().events().endEvent(eventName, segmentation, eventCount,0);
-        }
-        else if ("eventWithSumSegment".equals(eventType)) {
-            String eventName = args.getString(1);
-            int eventCount= Integer.parseInt(args.getString(2));
-            float eventSum= new Float(args.getString(3)).floatValue();
-            HashMap<String, Object> segmentation = new HashMap<String, Object>();
-            for(int i=4,il=args.size();i<il;i+=2){
-                segmentation.put(args.getString(i), args.getString(i+1));
+            case "eventWithSum": {
+                String eventName = args.getString(1);
+                int eventCount = Integer.parseInt(args.getString(2));
+                float eventSum = Float.parseFloat(args.getString(3));
+                Countly.sharedInstance().events().endEvent(eventName, null, eventCount, eventSum);
+                break;
             }
-            Countly.sharedInstance().events().endEvent(eventName, segmentation, eventCount,eventSum);
-        }
-        else{
+            case "eventWithSegment": {
+                String eventName = args.getString(1);
+                int eventCount = Integer.parseInt(args.getString(2));
+                HashMap<String, Object> segmentation = new HashMap<>();
+                for (int i = 4, il = args.size(); i < il; i += 2) {
+                    segmentation.put(args.getString(i), args.getString(i + 1));
+                }
+                Countly.sharedInstance().events().endEvent(eventName, segmentation, eventCount, 0);
+                break;
+            }
+            case "eventWithSumSegment": {
+                String eventName = args.getString(1);
+                int eventCount = Integer.parseInt(args.getString(2));
+                float eventSum = Float.parseFloat(args.getString(3));
+                HashMap<String, Object> segmentation = new HashMap<>();
+                for (int i = 4, il = args.size(); i < il; i += 2) {
+                    segmentation.put(args.getString(i), args.getString(i + 1));
+                }
+                Countly.sharedInstance().events().endEvent(eventName, segmentation, eventCount, eventSum);
+                break;
+            }
+            default:
+                break;
         }
     }
 
     @ReactMethod
     public void recordView(ReadableArray args){
         String viewName = args.getString(0);
-        HashMap<String, Object> segmentation = new HashMap<String, Object>();
+        HashMap<String, Object> segmentation = new HashMap<>();
         for(int i=1,il=args.size();i<il;i+=2){
             segmentation.put(args.getString(i), args.getString(i+1));
         }
         // Countly.sharedInstance().recordView(viewName, segmentation);
         Countly.sharedInstance().views().recordView(viewName, segmentation);
-        
+
     }
 
     @ReactMethod
@@ -466,7 +479,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         Countly.sharedInstance();
         ReadableMap userData = args.getMap(0);
         Map<String, Object> userDataObjectMap = userData.toHashMap();
-        Map<String,String> userDataMap =new HashMap<String,String>();
+        Map<String,Object> userDataMap = new HashMap<>();
         for (Map.Entry<String, Object> entry : userDataObjectMap.entrySet()) {
             Object value = entry.getValue();
             if(value instanceof String){
@@ -474,8 +487,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             }
         }
 
-        Countly.userData.setUserData(userDataMap);
-        Countly.userData.save();
+        Countly.sharedInstance().userProfile().setProperties(userDataMap);
+        Countly.sharedInstance().userProfile().save();
     }
 
     @ReactMethod
@@ -487,14 +500,14 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     @ReactMethod
     public void pushTokenType(ReadableArray args) {
         int messagingMode = Integer.parseInt(args.getString(0));
-        this.channelName = args.getString(1);
-        this.channelDescription = args.getString(2);
-        log("pushTokenType [" + messagingMode + "][" + this.channelName + "][" + this.channelDescription + "]", LogLevel.INFO);
+        channelName = args.getString(1);
+        channelDescription = args.getString(2);
+        log("pushTokenType [" + messagingMode + "][" + channelName + "][" + channelDescription + "]", LogLevel.INFO);
 
         if (messagingMode == 0) {
-            this.messagingMode = Countly.CountlyMessagingMode.PRODUCTION;
+            CountlyReactNative.messagingMode = Countly.CountlyMessagingMode.PRODUCTION;
         } else {
-            this.messagingMode = Countly.CountlyMessagingMode.TEST;
+            CountlyReactNative.messagingMode = Countly.CountlyMessagingMode.TEST;
         }
     }
 
@@ -520,12 +533,11 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     }
     @ReactMethod
     public void registerForNotification(ReadableArray args){
-        final Context context = this._reactContext;
         notificationListener = new CCallback(){
             @Override
             public void callback(String result) {
                 log("registerForNotification callback result [" + result + "]", LogLevel.WARNING);
-                ((ReactApplicationContext) context)
+                ((ReactApplicationContext) _reactContext)
                         .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                         .emit("onCountlyPushNotification", result);
             }
@@ -546,7 +558,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         }
         Context context = this._reactContext;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationManager notificationManager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
+            NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
             if (notificationManager != null) {
                 NotificationChannel channel = new NotificationChannel(CountlyPush.CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_DEFAULT);
                 channel.setDescription(channelDescription);
@@ -572,7 +584,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 @Override
                 public void onComplete(@NonNull Task<String> task) {
                 if (!task.isSuccessful()) {
-                    log("askForNotificationPermission, Fetching FCM registration token failed", task.getException(), LogLevel.WARNING);    
+                    log("askForNotificationPermission, Fetching FCM registration token failed", task.getException(), LogLevel.WARNING);
                     return;
                 }
 
@@ -615,16 +627,16 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         Countly.sharedInstance();
         String keyName = args.getString(0);
         String keyValue = args.getString(1);
-        Countly.userData.setProperty(keyName, keyValue);
-        Countly.userData.save();
+        Countly.sharedInstance().userProfile().setProperty(keyName, keyValue);
+        Countly.sharedInstance().userProfile().save();
     }
 
     @ReactMethod
     public void userData_increment(ReadableArray args){
         Countly.sharedInstance();
         String keyName = args.getString(0);
-        Countly.userData.increment(keyName);
-        Countly.userData.save();
+        Countly.sharedInstance().userProfile().increment(keyName);
+        Countly.sharedInstance().userProfile().save();
     }
 
     @ReactMethod
@@ -632,8 +644,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         Countly.sharedInstance();
         String keyName = args.getString(0);
         int keyIncrement = Integer.parseInt(args.getString(1));
-        Countly.userData.incrementBy(keyName, keyIncrement);
-        Countly.userData.save();
+        Countly.sharedInstance().userProfile().incrementBy(keyName, keyIncrement);
+        Countly.sharedInstance().userProfile().save();
     }
 
     @ReactMethod
@@ -641,8 +653,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         Countly.sharedInstance();
         String keyName = args.getString(0);
         int multiplyValue = Integer.parseInt(args.getString(1));
-        Countly.userData.multiply(keyName, multiplyValue);
-        Countly.userData.save();
+        Countly.sharedInstance().userProfile().multiply(keyName, multiplyValue);
+        Countly.sharedInstance().userProfile().save();
     }
 
     @ReactMethod
@@ -650,8 +662,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         Countly.sharedInstance();
         String keyName = args.getString(0);
         int maxScore = Integer.parseInt(args.getString(1));
-        Countly.userData.saveMax(keyName, maxScore);
-        Countly.userData.save();
+        Countly.sharedInstance().userProfile().saveMax(keyName, maxScore);
+        Countly.sharedInstance().userProfile().save();
     }
 
     @ReactMethod
@@ -659,8 +671,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         Countly.sharedInstance();
         String keyName = args.getString(0);
         int minScore = Integer.parseInt(args.getString(1));
-        Countly.userData.saveMin(keyName, minScore);
-        Countly.userData.save();
+        Countly.sharedInstance().userProfile().saveMin(keyName, minScore);
+        Countly.sharedInstance().userProfile().save();
     }
 
     @ReactMethod
@@ -668,8 +680,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         Countly.sharedInstance();
         String keyName = args.getString(0);
         String minScore = args.getString(1);
-        Countly.userData.setOnce(keyName, minScore);
-        Countly.userData.save();
+        Countly.sharedInstance().userProfile().setOnce(keyName, minScore);
+        Countly.sharedInstance().userProfile().save();
     }
 
     @ReactMethod
@@ -677,8 +689,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         Countly.sharedInstance();
         String keyName = args.getString(0);
         String keyValue = args.getString(1);
-        Countly.userData.pushUniqueValue(keyName, keyValue);
-        Countly.userData.save();
+        Countly.sharedInstance().userProfile().pushUnique(keyName, keyValue);
+        Countly.sharedInstance().userProfile().save();
     }
 
     @ReactMethod
@@ -686,8 +698,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         Countly.sharedInstance();
         String keyName = args.getString(0);
         String keyValue = args.getString(1);
-        Countly.userData.pushValue(keyName, keyValue);
-        Countly.userData.save();
+        Countly.sharedInstance().userProfile().push(keyName, keyValue);
+        Countly.sharedInstance().userProfile().save();
     }
 
     @ReactMethod
@@ -695,15 +707,15 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         Countly.sharedInstance();
         String keyName = args.getString(0);
         String keyValue = args.getString(1);
-        Countly.userData.pullValue(keyName, keyValue);
-        Countly.userData.save();
+        Countly.sharedInstance().userProfile().pull(keyName, keyValue);
+        Countly.sharedInstance().userProfile().save();
     }
 
     // GDPR
     @ReactMethod
     public void setRequiresConsent(ReadableArray args){
-        Boolean consentFlag = args.getBoolean(0);
-        this.config.setRequiresConsent(consentFlag);
+        boolean consentFlag = args.getBoolean(0);
+        config.setRequiresConsent(consentFlag);
     }
 
     @ReactMethod
@@ -718,7 +730,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 log("Not a valid consent feature to add: " + featureName, LogLevel.DEBUG);
             }
         }
-        this.config.setConsentEnabled(features.toArray(new String[features.size()]));
+        config.setConsentEnabled(features.toArray(new String[features.size()]));
     }
 
     @ReactMethod
@@ -857,9 +869,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     }
     @ReactMethod
     public void setStarRatingDialogTexts(ReadableArray args) {
-        this.config.setStarRatingTextTitle(args.getString(0));
-        this.config.setStarRatingTextMessage(args.getString(1));
-        this.config.setStarRatingTextDismiss(args.getString(2));
+        config.setStarRatingTextTitle(args.getString(0));
+        config.setStarRatingTextMessage(args.getString(1));
+        config.setStarRatingTextDismiss(args.getString(2));
     }
     @ReactMethod
     public void showStarRating(ReadableArray args, final Callback callback){
@@ -893,11 +905,10 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         String widgetId = args.getString(0);
         String closeButtonText = args.getString(1);
 
-        final Context context = this._reactContext;
         Countly.sharedInstance().ratings().presentRatingWidgetWithID(widgetId, closeButtonText, activity, new FeedbackRatingCallback() {
             @Override
             public void callback(String error) {
-                ((ReactApplicationContext) context)
+                ((ReactApplicationContext) _reactContext)
                         .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                         .emit("ratingWidgetCallback", error);
             }
@@ -983,18 +994,18 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
     @ReactMethod
     public void replaceAllAppKeysInQueueWithCurrentAppKey() {
-        Countly.sharedInstance().requestQueueOverwriteAppKeys();
+        Countly.sharedInstance().requestQueue().overwriteAppKeys();
     }
 
     @ReactMethod
     public void removeDifferentAppKeysFromQueue() {
-        Countly.sharedInstance().requestQueueEraseAppKeysRequests();
+        Countly.sharedInstance().requestQueue().eraseWrongAppKeyRequests();
     }
 
     @ReactMethod
     public void setEventSendThreshold(ReadableArray args){
         int size = Integer.parseInt(args.getString(0));
-        this.config.setEventQueueSizeToSend(size);
+        config.setEventQueueSizeToSend(size);
         // Countly.sharedInstance().setEventQueueSizeToSend(size);
     }
 
@@ -1018,7 +1029,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     @ReactMethod
     public void endTrace(ReadableArray args){
         String traceKey = args.getString(0);
-        HashMap<String, Integer> customMetric = new HashMap<String, Integer>();
+        HashMap<String, Integer> customMetric = new HashMap<>();
         for (int i = 1, il = args.size(); i < il; i += 2) {
             try{
                 customMetric.put(args.getString(i), Integer.parseInt(args.getString(i + 1)));
@@ -1040,18 +1051,18 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             long endTime = Long.parseLong(args.getString(5));
             Countly.sharedInstance().apm().recordNetworkTrace(networkTraceKey, responseCode, requestPayloadSize, responsePayloadSize, startTime, endTime);
         }catch(Exception exception){
-            log("Exception occured at recordNetworkTrace method: " + exception.toString(), LogLevel.ERROR);
+            log("Exception occurred at recordNetworkTrace method: " + exception, LogLevel.ERROR);
         }
     }
 
     @ReactMethod
     public void enableApm(ReadableArray args){
-        this.config.setRecordAppStartTime(true);
+        config.setRecordAppStartTime(true);
     }
 
     @ReactMethod
     public void enableAttribution(){
-        this.config.setEnableAttribution(true);
+        config.setEnableAttribution(true);
     }
 
     @ReactMethod
@@ -1077,7 +1088,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 log("setCustomMetrics, could not parse metrics, skipping it. ", LogLevel.ERROR);
             }
         }
-        this.config.setMetricOverride(customMetric);
+        config.setMetricOverride(customMetric);
     }
 
     enum LogLevel {INFO, DEBUG, VERBOSE, WARNING, ERROR}

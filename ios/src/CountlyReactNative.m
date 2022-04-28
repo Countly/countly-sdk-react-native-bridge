@@ -501,7 +501,7 @@ RCT_EXPORT_METHOD(setLocation:(NSArray*)arguments)
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* countryCode = [arguments objectAtIndex:0];
   NSString* city = [arguments objectAtIndex:1];
-  NSString* locationString = [arguments objectAtIndex:2];
+  NSString* gpsCoordinate = [arguments objectAtIndex:2];
   NSString* ipAddress = [arguments objectAtIndex:3];
 
   if([@"null" isEqualToString:city]){
@@ -510,30 +510,15 @@ RCT_EXPORT_METHOD(setLocation:(NSArray*)arguments)
   if([@"null" isEqualToString:countryCode]){
       countryCode = nil;
   }
-  if([@"null" isEqualToString:locationString]){
-      locationString = nil;
+  if([@"null" isEqualToString:gpsCoordinate]){
+      gpsCoordinate = nil;
   }
   if([@"null" isEqualToString:ipAddress]){
       ipAddress = nil;
   }
-
-  if(locationString != nil && [locationString containsString:@","]){
-      @try{
-          NSArray *locationArray = [locationString componentsSeparatedByString:@","];
-          NSString* latitudeString = [locationArray objectAtIndex:0];
-          NSString* longitudeString = [locationArray objectAtIndex:1];
-
-          double latitudeDouble = [latitudeString doubleValue];
-          double longitudeDouble = [longitudeString doubleValue];
-          [Countly.sharedInstance recordLocation:(CLLocationCoordinate2D){latitudeDouble,longitudeDouble}];
-      }
-      @catch(NSException *exception){
-          COUNTLY_RN_LOG(@"Invalid location: %@", locationString);
-      }
-  }
-
-  [Countly.sharedInstance recordCity:city andISOCountryCode:countryCode];
-  [Countly.sharedInstance recordIP:ipAddress];
+      
+  CLLocationCoordinate2D locationCoordinate = [self getCoordinate:gpsCoordinate];
+  [Countly.sharedInstance recordLocation:locationCoordinate city:city ISOCountryCode:countryCode IP:ipAddress];
   });
 }
 
@@ -543,6 +528,39 @@ RCT_EXPORT_METHOD(disableLocation)
   [Countly.sharedInstance disableLocationInfo];
   });
 }
+
+- (CLLocationCoordinate2D) getCoordinate:(NSString*) gpsCoordinate
+{
+    CLLocationCoordinate2D locationCoordinate = kCLLocationCoordinate2DInvalid;
+    if(gpsCoordinate){
+        if([gpsCoordinate containsString:@","]) {
+            @try{
+                NSArray *locationArray = [gpsCoordinate componentsSeparatedByString:@","];
+                if(locationArray.count > 2) {
+                    COUNTLY_RN_LOG(@"Invalid location Coordinates:[%@], it should contains only two comma seperated values", gpsCoordinate);
+                }
+                NSString* latitudeString = [locationArray objectAtIndex:0];
+                NSString* longitudeString = [locationArray objectAtIndex:1];
+                
+                double latitudeDouble = [latitudeString doubleValue];
+                double longitudeDouble = [longitudeString doubleValue];
+                if(latitudeDouble == 0 || longitudeDouble == 0) {
+                    COUNTLY_RN_LOG(@"Invalid location Coordinates, One of the values parsed to a 0, double check that given coordinates are correct:[%@]", gpsCoordinate);
+                }
+                locationCoordinate = (CLLocationCoordinate2D){latitudeDouble,longitudeDouble};
+            }
+            @catch(NSException *exception) {
+                COUNTLY_RN_LOG(@"Invalid location Coordinates:[%@], Exception occurred while parsing Coordinates:[%@]", gpsCoordinate, exception);
+            }
+        }
+        else {
+            COUNTLY_RN_LOG(@"Invalid location Coordinates:[%@], lat and long values should be comma separated", gpsCoordinate);
+        }
+        
+    }
+    return locationCoordinate;
+}
+
 
 RCT_EXPORT_METHOD(enableCrashReporting)
 {
@@ -1045,16 +1063,6 @@ RCT_EXPORT_METHOD(recordNetworkTrace:(NSArray*)arguments) {
 RCT_EXPORT_METHOD(enableApm:(NSArray*)arguments) {
   dispatch_async(dispatch_get_main_queue(), ^ {
     config.enablePerformanceMonitoring = YES;
-  });
-}
-
-RCT_EXPORT_METHOD(enableAttribution)
-{
-  dispatch_async(dispatch_get_main_queue(), ^ {
-  if (config == nil){
-    config = CountlyConfig.new;
-  }
-  config.enableAttribution = YES;
   });
 }
 

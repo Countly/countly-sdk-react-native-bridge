@@ -36,10 +36,10 @@ Pod::Spec.new do |s|
   s.source_files = 'ios/src/*.{h,m}'
   s.public_header_files = 'ios/src/CountlyReactNative.h'
   s.requires_arc = true
-  s.ios.deployment_target = '8.0'
-  s.osx.deployment_target = '8.0'
-  s.watchos.deployment_target = '2.0'
-  s.tvos.deployment_target = '9.0'
+  s.ios.deployment_target = '10.0'
+  s.osx.deployment_target = '10.14'
+  s.watchos.deployment_target = '4.0'
+  s.tvos.deployment_target = '10.0'
   s.static_framework = true
 
   s.subspec 'NotificationService' do |ns|
