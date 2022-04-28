@@ -187,15 +187,19 @@ Countly.sendPushToken = function(options){
 
 /**
  * This method will ask for permission, enables push notification and send push token to countly server.
+ * 
+ * @param {string} customSoundPath - name of custom sound for push notifications (Only for Android)
+ * Custom sound should be place at 'your_project_root/android/app/src/main/res/raw'
  * Should be called after Countly init
+ * 
  */
-Countly.askForNotificationPermission = function(){
+Countly.askForNotificationPermission = function(customSoundPath = "null"){
     if(!_isInitialized) {
         var message = "'init' must be called before 'askForNotificationPermission'";
         Countly.logError("askForNotificationPermission", message);
         return message;
     }
-    CountlyReactNative.askForNotificationPermission([]);
+    CountlyReactNative.askForNotificationPermission([customSoundPath]);
 }
 
 /**

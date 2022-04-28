@@ -1,6 +1,9 @@
 package ly.count.android.sdk.react;
 
 import android.app.Activity;
+import android.content.ContentResolver;
+import android.media.AudioAttributes;
+import android.net.Uri;
 import android.util.Log;
 
 import com.facebook.react.bridge.Callback;
@@ -556,12 +559,29 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             log("askForNotificationPermission failed, Activity is null", LogLevel.ERROR);
             return;
         }
+        String soundPath = args.getString(0);
         Context context = this._reactContext;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
             if (notificationManager != null) {
                 NotificationChannel channel = new NotificationChannel(CountlyPush.CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_DEFAULT);
                 channel.setDescription(channelDescription);
+                if(!"null".equals(soundPath)){
+                    AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                            .build();
+
+                    try {
+                        Uri soundUri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + context.getPackageName() + "/" + soundPath);
+                        channel.setSound(soundUri, audioAttributes);
+                    }
+                    catch (Exception exception) {
+                        log("askForNotificationPermission, Uri.parse failed with exception : ",exception, LogLevel.WARNING);
+                    }
+
+                }
+
                 notificationManager.createNotificationChannel(channel);
             }
         }
@@ -583,14 +603,14 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             firebaseMessagingTokenTask.addOnCompleteListener(new OnCompleteListener<String>() {
                 @Override
                 public void onComplete(@NonNull Task<String> task) {
-                if (!task.isSuccessful()) {
-                    log("askForNotificationPermission, Fetching FCM registration token failed", task.getException(), LogLevel.WARNING);
-                    return;
-                }
+                    if (!task.isSuccessful()) {
+                        log("askForNotificationPermission, Fetching FCM registration token failed", task.getException(), LogLevel.WARNING);
+                        return;
+                    }
 
-                // Get new FCM registration token
-                String token = task.getResult();
-                CountlyPush.onTokenRefresh(token);
+                    // Get new FCM registration token
+                    String token = task.getResult();
+                    CountlyPush.onTokenRefresh(token);
                 }
             });
         }catch(Exception exception){
