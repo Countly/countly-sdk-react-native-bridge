@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Text, Button, ScrollView, Image, View, TextInput } from 'react-native';
+import { Text, Button, ScrollView, Image, View, TextInput, StyleSheet } from 'react-native';
 import Countly from 'countly-sdk-react-native-bridge';
 
 var successCodes = [100, 101, 200, 201, 202, 205, 300, 301, 303, 305];
@@ -8,7 +8,7 @@ var failureCodes = [400, 402, 405, 408, 500, 501, 502, 505];
 class Example extends Component {
     constructor(props) {
         super(props);
-        
+        this.state = {ratingId: '625f9032028614795fe5a85b'};
         this.config = {};
 
         this.onInit = this.onInit.bind(this);
@@ -36,6 +36,7 @@ class Example extends Component {
         this.recordNetworkTraceFailure = this.recordNetworkTraceFailure.bind(this);
         this.random = this.random.bind(this);
         this.setCustomCrashSegments = this.setCustomCrashSegments.bind(this);
+        this.presentRatingWidgetUsingEditBox = this.presentRatingWidgetUsingEditBox.bind(this);
     };
 
     componentDidMount(){
@@ -360,14 +361,10 @@ class Example extends Component {
       });
     }
 
-    _ratingId = '';
-    setRatingId(ratingId) {
-      this._ratingId = ratingId;
-    }
-    presentRatingWidgetUsingEditBox(){
-      Countly.presentRatingWidgetWithID(this._ratingId, "Submit", function(error){
+    presentRatingWidgetUsingEditBox = function() {
+      Countly.presentRatingWidgetWithID(this.state.ratingId, "Submit", function(error){
         if (error != null) {
-          console.log(error);
+          console.log("presentRatingWidgetUsingEditBox : " + error);
         }
       });
     }
@@ -570,10 +567,8 @@ class Example extends Component {
             < Button onPress = { this.disableLocation } title = "Disable Location" color = "#00b5ad"> </Button>
             < Button onPress = { this.showStarRating } title = "Show Star Rating Model" color = "#00b5ad"> </Button>
             < Button onPress = { this.presentRatingWidget } title = "Show FeedBack Model" color = "#00b5ad"> </Button>
-           {/*
-           <TextInput style={{height: 40}} placeholder="Enter a Rating ID" onChangeText={(ratingId) => this.setRatingId(ratingId)} > </TextInput>
-           < Button onPress = { this.presentRatingWidgetUsingEditBox } title = "Show Feedback using EditBox" color = "#00b5ad"> </Button>  
-          */}
+            <TextInput style={styles.inputRoundedBorder} placeholder="Enter a Rating ID" onChangeText={(ratingId) => this.setState({ ratingId })} onSubmitEditing={(ratingId) => this.setState({ ratingId })} value={this.state.ratingId} />
+            < Button disabled={!this.state.ratingId} onPress = { this.presentRatingWidgetUsingEditBox } title = "Show Feedback using EditBox" color = "#00b5ad"> </Button>  
             < Button onPress = { this.showSurvey } title = "Show Survey" color = "#00b5ad"> </Button>
             < Button onPress = { this.showNPS } title = "Show NPS" color = "#00b5ad"> </Button>
             < Button onPress = { this.eventSendThreshold } title = "Set Event Threshold" color = "#00b5ad"> </Button>
@@ -669,5 +664,17 @@ class Example extends Component {
         );
     }
 }
+const styles = StyleSheet.create({
+  inputRoundedBorder: {
+      margin: 5,
+      backgroundColor: "white",
+      borderWidth: 1,
+      borderRadius: 10,
+      borderColor: 'grey',
+      padding: 10,
+      fontSize: 20,
+  },
+
+})
 
 module.exports = Example;
