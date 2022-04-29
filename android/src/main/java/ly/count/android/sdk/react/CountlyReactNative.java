@@ -566,7 +566,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             if (notificationManager != null) {
                 NotificationChannel channel = new NotificationChannel(CountlyPush.CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_DEFAULT);
                 channel.setDescription(channelDescription);
-                if(!"null".equals(soundPath)){
+                // It will set the custom sound for push notifications
+                if(!"null".equals(soundPath) && !soundPath.isEmpty()){
                     AudioAttributes audioAttributes = new AudioAttributes.Builder()
                             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                             .setUsage(AudioAttributes.USAGE_NOTIFICATION)
