@@ -568,13 +568,14 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 channel.setDescription(channelDescription);
                 // It will set the custom sound for push notifications
                 if(!"null".equals(soundPath) && !soundPath.isEmpty()){
+                    log("askForNotificationPermission, Custom Sound provided for push notifications : " + soundPath, LogLevel.INFO);
                     AudioAttributes audioAttributes = new AudioAttributes.Builder()
                             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                             .setUsage(AudioAttributes.USAGE_NOTIFICATION)
                             .build();
 
                     try {
-                        Uri soundUri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + context.getPackageName() + "/" + soundPath);
+                        Uri soundUri = Uri.parse(soundPath);
                         channel.setSound(soundUri, audioAttributes);
                     }
                     catch (Exception exception) {
