@@ -3,7 +3,7 @@
 * Deprecated 'askForFeedback' method. Added 'presentRatingWidgetWithID' method that should be used as it's replacement.
 * Updated minimum supported iOS versions to 10.0
 * Underlying android SDK version is 21.11.0-RC5
-* Updated underlying iOS SDK version to 21.11.1
+* Updated underlying iOS SDK version to 21.11.2
 
 ## 20.11.16
 * Fixed push notification issue where some apps were unable to display push notifications in their kill state.

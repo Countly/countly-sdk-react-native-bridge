@@ -895,7 +895,7 @@ RCT_EXPORT_METHOD(presentRatingWidgetWithID:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* FEEDBACK_WIDGET_ID = [arguments objectAtIndex:0];
-  [Countly.sharedInstance presentFeedbackWidgetWithID:FEEDBACK_WIDGET_ID completionHandler:^(NSError* error)
+  [Countly.sharedInstance presentRatingWidgetWithID:FEEDBACK_WIDGET_ID completionHandler:^(NSError* error)
   {
     NSString* errorStr = nil;
     if (error){
