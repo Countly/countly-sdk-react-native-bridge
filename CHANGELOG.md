@@ -1,4 +1,6 @@
 ## 21.11.0
+* !! Major breaking change !! Changing device ID without merging will now clear all consent. It has to be given again after this operation.
+* !! Major breaking change !! Entering temporary ID mode will now clear all consent. It has to be given again after this operation.
 * Added ability to add custom sound effect for android push notifications.
 * Deprecated 'askForFeedback' method. Added 'presentRatingWidgetWithID' method that should be used as it's replacement.
 * Updated minimum supported iOS versions to 10.0
