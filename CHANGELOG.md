@@ -2,7 +2,7 @@
 * Added ability to add custom sound effect for android push notifications.
 * Deprecated 'askForFeedback' method. Added 'presentRatingWidgetWithID' method that should be used as it's replacement.
 * Updated minimum supported iOS versions to 10.0
-* Underlying android SDK version is 21.11.0-RC5
+* Updated underlying android SDK version to 21.11.0
 * Updated underlying iOS SDK version to 21.11.2
 
 ## 20.11.16
