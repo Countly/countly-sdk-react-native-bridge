@@ -2,10 +2,22 @@
 * !! Major breaking change !! Changing device ID without merging will now clear all consent. It has to be given again after this operation.
 * !! Major breaking change !! Entering temporary ID mode will now clear all consent. It has to be given again after this operation.
 * Added ability to add custom sound effect for android push notifications.
+* Added platform information to push actioned events
 * Deprecated 'askForFeedback' method. Added 'presentRatingWidgetWithID' method that should be used as it's replacement.
 * Updated minimum supported iOS versions to 10.0
 * Updated underlying android SDK version to 21.11.0
 * Updated underlying iOS SDK version to 21.11.2
+* Underlying android SDK Changes:
+    * !! Major breaking change !! Deprecating "ADVERTISING_ID" as device ID generation strategy. SDK will fall back to 'OPEN_UDID'. All "ADVERTISING_ID" device ID's will have their type changed to "OPEN_UDID". If the device will have a "null" device ID, a random one will be generated.
+    * !! Major breaking change !! Changing device ID without merging will now clear all consent. It has to be given again after this operation.
+    * !! Major breaking change !! Entering temporary ID mode will now clear all consent. It has to be given again after this operation.
+    * Device ID can now be changed when no consent is given
+    * Push notification now display/use the sent badge number. It's visualization depends on the launcher.
+    * When recording internal events with 'recordEvent', the respective feature consent will now be checked instead of the 'events' consent.
+    * Consent changes will now send the whole consent state and not just the "delta"
+    * Fixed potential deadlock issue
+* Underlying iOS SDK Changes:
+    * Fixed possible SecTrustCopyExceptions leak
 
 ## 20.11.16
 * Fixed push notification issue where some apps were unable to display push notifications in their kill state.
