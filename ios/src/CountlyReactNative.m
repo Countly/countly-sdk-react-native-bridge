@@ -21,7 +21,7 @@
 + (CountlyFeedbackWidget *)createWithDictionary:(NSDictionary *)dictionary;
 @end
 
-NSString* const kCountlyReactNativeSDKVersion = @"21.11.0";
+NSString* const kCountlyReactNativeSDKVersion = @"21.11.1";
 NSString* const kCountlyReactNativeSDKName = @"js-rnb-ios";
 
 CountlyConfig* config = nil;
