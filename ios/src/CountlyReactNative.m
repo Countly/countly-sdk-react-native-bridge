@@ -31,6 +31,10 @@ NSMutableArray *notificationIDs = nil;        // alloc here
 NSMutableArray<CLYFeature>* countlyFeatures = nil;
 BOOL enablePushNotifications = true;
 
+typedef NSString* CLYUserDefaultKey NS_EXTENSIBLE_STRING_ENUM;
+CLYUserDefaultKey const CLYPushDictionaryKey  = @"notificationDictionaryKey";
+CLYUserDefaultKey const CLYPushButtonIndexKey = @"notificationBtnIndexKey";
+
 @implementation CountlyReactNative
 NSString* const kCountlyNotificationPersistencyKey = @"kCountlyNotificationPersistencyKey";
 
@@ -1135,8 +1139,8 @@ void CountlyRNInternalLog(NSString *format, ...)
       lastStoredNotification = notificationMessage;
     }
     if(!CountlyCommon.sharedInstance.hasStarted) {
-        [[NSUserDefaults standardUserDefaults] setObject:notificationMessage forKey:@"notificationDictionaryKey"];
-        [[NSUserDefaults standardUserDefaults] setInteger:btnIndex forKey:@"notificationBtnIndexKey"];
+        [[NSUserDefaults standardUserDefaults] setObject:notificationMessage forKey:CLYPushDictionaryKey];
+        [[NSUserDefaults standardUserDefaults] setInteger:btnIndex forKey:CLYPushButtonIndexKey];
         [[NSUserDefaults standardUserDefaults] synchronize];
         // [CountlyReactNative saveToFile:notificationDictionary buttonIndex:buttonIndex];
     }
@@ -1231,8 +1235,8 @@ API_AVAILABLE(ios(10.0)){
 
 - (void) recordPushAction {
     
-    NSDictionary* responseDictionary =  [[NSUserDefaults standardUserDefaults] dictionaryForKey:@"notificationDictionaryKey"];
-    NSInteger responseBtnIndex =  [[NSUserDefaults standardUserDefaults] integerForKey:@"notificationBtnIndexKey"];
+    NSDictionary* responseDictionary =  [[NSUserDefaults standardUserDefaults] dictionaryForKey:CLYPushDictionaryKey];
+    NSInteger responseBtnIndex =  [[NSUserDefaults standardUserDefaults] integerForKey:CLYPushButtonIndexKey];
     if (responseDictionary != nil)
     {
         if([responseDictionary count] > 0) {
@@ -1249,12 +1253,11 @@ API_AVAILABLE(ios(10.0)){
             }
             
             [Countly.sharedInstance recordActionForNotification:responseDictionary clickedButtonIndex:responseBtnIndex];
-            [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"notificationDictionaryKey"];
-            [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"notificationBtnIndexKey"];
+            [[NSUserDefaults standardUserDefaults] removeObjectForKey:CLYPushDictionaryKey];
+            [[NSUserDefaults standardUserDefaults] removeObjectForKey:CLYPushButtonIndexKey];
             [[NSUserDefaults standardUserDefaults] synchronize];
             
             [self openURL:URL];
-            // [CountlyReactNative saveToFile:NSMutableDictionary.new buttonIndex:0];
         }
         
     }
@@ -1269,6 +1272,7 @@ API_AVAILABLE(ios(10.0)){
     {
 #if (TARGET_OS_IOS)
         [UIApplication.sharedApplication openURL:[NSURL URLWithString:URLString] options:@{} completionHandler:nil];
+// Removing this line because currently we are not supporting OSX
 //#elif (TARGET_OS_OSX)
 //        [NSWorkspace.sharedWorkspace openURL:[NSURL URLWithString:URLString]];
 #endif
