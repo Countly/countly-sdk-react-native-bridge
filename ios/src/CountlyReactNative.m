@@ -1142,7 +1142,6 @@ void CountlyRNInternalLog(NSString *format, ...)
         [[NSUserDefaults standardUserDefaults] setObject:notificationMessage forKey:CLYPushDictionaryKey];
         [[NSUserDefaults standardUserDefaults] setInteger:btnIndex forKey:CLYPushButtonIndexKey];
         [[NSUserDefaults standardUserDefaults] synchronize];
-        // [CountlyReactNative saveToFile:notificationDictionary buttonIndex:buttonIndex];
     }
     if(notificationMessage){
       if(notificationIDs == nil){
@@ -1169,97 +1168,38 @@ API_AVAILABLE(ios(10.0)){
     [CountlyReactNative onNotification:notificationDictionary buttonIndex:buttonIndex];
     
 }
-+ (NSURL *)storageDirectoryURL
-{
-    static NSURL* URL = nil;
-
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^
-    {
-#if (TARGET_OS_TV)
-        NSSearchPathDirectory directory = NSCachesDirectory;
-#else
-        NSSearchPathDirectory directory = NSApplicationSupportDirectory;
-#endif
-        URL = [[NSFileManager.defaultManager URLsForDirectory:directory inDomains:NSUserDomainMask] lastObject];
-
-#if (TARGET_OS_OSX)
-        URL = [URL URLByAppendingPathComponent:NSBundle.mainBundle.bundleIdentifier];
-#endif
-        NSError *error = nil;
-
-        if (![NSFileManager.defaultManager fileExistsAtPath:URL.path])
-        {
-            [NSFileManager.defaultManager createDirectoryAtURL:URL withIntermediateDirectories:YES attributes:nil error:&error];
-            if (error)
-            {
-                COUNTLY_RN_LOG(@"Application Support directory can not be created: \n%@", error);
-            }
-        }
-    });
-
-    return URL;
-}
-
-+ (NSURL *)storageFileURL
-{
-    NSString* const kCountlyPersistencyFileName = @"CountlyBridge.dat";
-
-    static NSURL* URL = nil;
-
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^
-    {
-        URL = [[CountlyReactNative storageDirectoryURL] URLByAppendingPathComponent:kCountlyPersistencyFileName];
-    });
-
-    return URL;
-}
-
-+ (void)saveToFile:(NSDictionary *)notificationMessage buttonIndex:(NSInteger)btnIndex
-{
-    NSData* saveData;
-
-    @synchronized (self)
-    {
-        saveData = [NSKeyedArchiver archivedDataWithRootObject:@{kCountlyNotificationPersistencyKey: notificationMessage}];
-        
-    }
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-variable"
-
-    BOOL writeResult = [saveData writeToFile:[CountlyReactNative storageFileURL].path atomically:YES];
-    COUNTLY_RN_LOG(@"Result of writing data to file: %d", writeResult);
-}
 
 - (void) recordPushAction {
-    
-    NSDictionary* responseDictionary =  [[NSUserDefaults standardUserDefaults] dictionaryForKey:CLYPushDictionaryKey];
-    NSInteger responseBtnIndex =  [[NSUserDefaults standardUserDefaults] integerForKey:CLYPushButtonIndexKey];
-    if (responseDictionary != nil)
-    {
-        if([responseDictionary count] > 0) {
-            
-            NSDictionary* countlyPayload = responseDictionary[kCountlyPNKeyCountlyPayload];
-            NSString* URL = @"";
-            if (responseBtnIndex == 0)
-            {
-                URL = countlyPayload[kCountlyPNKeyDefaultURL];
+    @try{
+        NSDictionary* responseDictionary = [[NSUserDefaults standardUserDefaults] dictionaryForKey:CLYPushDictionaryKey];
+        NSInteger responseBtnIndex = [[NSUserDefaults standardUserDefaults] integerForKey:CLYPushButtonIndexKey];
+        if (responseDictionary != nil)
+        {
+            if([responseDictionary count] > 0) {
+                
+                NSDictionary* countlyPayload = responseDictionary[kCountlyPNKeyCountlyPayload];
+                NSString* URL = @"";
+                if (responseBtnIndex == 0)
+                {
+                    URL = countlyPayload[kCountlyPNKeyDefaultURL];
+                }
+                else
+                {
+                    URL = countlyPayload[kCountlyPNKeyButtons][responseBtnIndex - 1][kCountlyPNKeyActionButtonURL];
+                }
+                
+                [Countly.sharedInstance recordActionForNotification:responseDictionary clickedButtonIndex:responseBtnIndex];
+                [[NSUserDefaults standardUserDefaults] removeObjectForKey:CLYPushDictionaryKey];
+                [[NSUserDefaults standardUserDefaults] removeObjectForKey:CLYPushButtonIndexKey];
+                [[NSUserDefaults standardUserDefaults] synchronize];
+                
+                [self openURL:URL];
             }
-            else
-            {
-                URL = countlyPayload[kCountlyPNKeyButtons][responseBtnIndex - 1][kCountlyPNKeyActionButtonURL];
-            }
             
-            [Countly.sharedInstance recordActionForNotification:responseDictionary clickedButtonIndex:responseBtnIndex];
-            [[NSUserDefaults standardUserDefaults] removeObjectForKey:CLYPushDictionaryKey];
-            [[NSUserDefaults standardUserDefaults] removeObjectForKey:CLYPushButtonIndexKey];
-            [[NSUserDefaults standardUserDefaults] synchronize];
-            
-            [self openURL:URL];
         }
-        
+    }
+    @catch(NSException *exception){
+        COUNTLY_RN_LOG(@"Exception Occurred while recording push action: %@", exception);
     }
 }
 
