@@ -31,9 +31,6 @@ NSMutableArray *notificationIDs = nil;        // alloc here
 NSMutableArray<CLYFeature>* countlyFeatures = nil;
 BOOL enablePushNotifications = true;
 
-NSDictionary* notificationCacheDictionary = nil;
-NSInteger notificationCacheButtonIndex = 0;
-
 @implementation CountlyReactNative
 NSString* const kCountlyNotificationPersistencyKey = @"kCountlyNotificationPersistencyKey";
 
@@ -73,23 +70,9 @@ RCT_REMAP_METHOD(init,
         dispatch_async(dispatch_get_main_queue(), ^
         {
             [[Countly sharedInstance] startWithConfig:config];
-            
+            [self recordPushAction];
             resolve(@"Success");
-            // NSData* readData = [NSData dataWithContentsOfURL:[CountlyReactNative storageFileURL]];
-
-            if (notificationCacheDictionary != nil)
-            {
-                // NSDictionary* readDict = [NSKeyedUnarchiver unarchiveObjectWithData:readData];
-                NSDictionary* notificationDictionary = notificationCacheDictionary;// [readDict[kCountlyNotificationPersistencyKey] mutableCopy];
-                NSInteger buttonIndex = notificationCacheButtonIndex;
-                if([notificationDictionary count] > 0) {
-                    [Countly.sharedInstance recordActionForNotification:notificationDictionary clickedButtonIndex:buttonIndex];
-                    notificationCacheDictionary = nil;
-                    notificationCacheButtonIndex = 0;
-                    // [CountlyReactNative saveToFile:NSMutableDictionary.new buttonIndex:0];
-                }
-                
-            }
+            
         });
     }
   });
@@ -228,7 +211,7 @@ RCT_EXPORT_METHOD(sendPushToken:(NSArray*)arguments)
 
     NSString* token = [arguments objectAtIndex:0];
     NSString* messagingMode = @"1";
-    if(config.pushTestMode == nil || [config.pushTestMode  isEqual: @""] || [config.pushTestMode isEqualToString:@"CLYPushTestModeTestFlightOrAdHoc"]) {
+    if(config.pushTestMode == nil || [config.pushTestMode  isEqual: @""] || [config.pushTestMode isEqualToString:CLYPushTestModeTestFlightOrAdHoc]) {
         messagingMode = @"0";
     }
     NSString *urlString = [ @"" stringByAppendingFormat:@"%@?device_id=%@&app_key=%@&token_session=1&test_mode=%@&ios_token=%@", config.host, [Countly.sharedInstance deviceID], config.appKey, messagingMode, token];
@@ -246,10 +229,10 @@ RCT_EXPORT_METHOD(pushTokenType:(NSArray*)arguments)
   config.sendPushTokenAlways = YES;
   NSString* tokenType = [arguments objectAtIndex:0];
   if([tokenType isEqualToString: @"1"]){
-      config.pushTestMode = @"CLYPushTestModeDevelopment";
+      config.pushTestMode = CLYPushTestModeDevelopment;
   }
-  else if([tokenType isEqualToString: @"2"]){
-      config.pushTestMode = @"CLYPushTestModeTestFlightOrAdHoc";
+  else if([tokenType isEqualToString: @"2"] || [tokenType isEqualToString: @"0"]){
+      config.pushTestMode = CLYPushTestModeTestFlightOrAdHoc;
   }else{
   }
   });
@@ -1151,6 +1134,12 @@ void CountlyRNInternalLog(NSString *format, ...)
     }else{
       lastStoredNotification = notificationMessage;
     }
+    if(!CountlyCommon.sharedInstance.hasStarted) {
+        [[NSUserDefaults standardUserDefaults] setObject:notificationMessage forKey:@"notificationDictionaryKey"];
+        [[NSUserDefaults standardUserDefaults] setInteger:btnIndex forKey:@"notificationBtnIndexKey"];
+        [[NSUserDefaults standardUserDefaults] synchronize];
+        // [CountlyReactNative saveToFile:notificationDictionary buttonIndex:buttonIndex];
+    }
     if(notificationMessage){
       if(notificationIDs == nil){
         notificationIDs = [[NSMutableArray alloc] init];
@@ -1172,11 +1161,6 @@ API_AVAILABLE(ios(10.0)){
     if ([response.actionIdentifier hasPrefix:kCountlyActionIdentifier])
     {
         buttonIndex = [[response.actionIdentifier stringByReplacingOccurrencesOfString:kCountlyActionIdentifier withString:@""] integerValue];
-    }
-    if(!CountlyCommon.sharedInstance.hasStarted) {
-      notificationCacheDictionary = notificationDictionary;
-      notificationCacheButtonIndex = buttonIndex;
-        // [CountlyReactNative saveToFile:notificationDictionary buttonIndex:buttonIndex];
     }
     [CountlyReactNative onNotification:notificationDictionary buttonIndex:buttonIndex];
     
@@ -1243,5 +1227,51 @@ API_AVAILABLE(ios(10.0)){
 
     BOOL writeResult = [saveData writeToFile:[CountlyReactNative storageFileURL].path atomically:YES];
     COUNTLY_RN_LOG(@"Result of writing data to file: %d", writeResult);
+}
+
+- (void) recordPushAction {
+    
+    NSDictionary* responseDictionary =  [[NSUserDefaults standardUserDefaults] dictionaryForKey:@"notificationDictionaryKey"];
+    NSInteger responseBtnIndex =  [[NSUserDefaults standardUserDefaults] integerForKey:@"notificationBtnIndexKey"];
+    if (responseDictionary != nil)
+    {
+        if([responseDictionary count] > 0) {
+            
+            NSDictionary* countlyPayload = responseDictionary[kCountlyPNKeyCountlyPayload];
+            NSString* URL = @"";
+            if (responseBtnIndex == 0)
+            {
+                URL = countlyPayload[kCountlyPNKeyDefaultURL];
+            }
+            else
+            {
+                URL = countlyPayload[kCountlyPNKeyButtons][responseBtnIndex - 1][kCountlyPNKeyActionButtonURL];
+            }
+            
+            [Countly.sharedInstance recordActionForNotification:responseDictionary clickedButtonIndex:responseBtnIndex];
+            [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"notificationDictionaryKey"];
+            [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"notificationBtnIndexKey"];
+            [[NSUserDefaults standardUserDefaults] synchronize];
+            
+            [self openURL:URL];
+            // [CountlyReactNative saveToFile:NSMutableDictionary.new buttonIndex:0];
+        }
+        
+    }
+}
+
+- (void)openURL:(NSString *)URLString
+{
+    if (!URLString)
+        return;
+
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.01 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^
+    {
+#if (TARGET_OS_IOS)
+        [UIApplication.sharedApplication openURL:[NSURL URLWithString:URLString] options:@{} completionHandler:nil];
+//#elif (TARGET_OS_OSX)
+//        [NSWorkspace.sharedWorkspace openURL:[NSURL URLWithString:URLString]];
+#endif
+    });
 }
 @end
