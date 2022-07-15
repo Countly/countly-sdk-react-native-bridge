@@ -1,3 +1,8 @@
+## 21.11.2
+* Fixed iOS push notification open url issue when notification is cached.
+* Underlying android SDK version is 21.11.2
+* Underlying iOS SDK version is 21.11.2
+
 ## 21.11.1
 * Fixed bug that caused crashes when migrating from older versions on Android devices.
 * Updated underlying android SDK version to 21.11.2
