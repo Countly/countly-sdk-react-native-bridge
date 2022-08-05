@@ -1,6 +1,6 @@
 ## 22.02.0
 * Fixed notification trampoline restrictions in Android 12 using reverse activity trampolining implementation.
-* Updated underlying android SDK version is 22.02.0
+* Updated underlying android SDK version to 22.02.0
 * Underlying iOS SDK version is 21.11.2
 
 ## 21.11.2
