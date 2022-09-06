@@ -65,6 +65,9 @@ class Example extends Component {
         else {
           Countly.enableAttribution(); // Enable to measure your marketing campaign performance by attributing installs from specific campaigns.
         }
+
+        Countly.configureIntentRedirectionCheck(["MainActivity"], ["com.countly.demo"]);
+        
         Countly.setStarRatingDialogTexts("Title", "Message", "Dismiss");
         await Countly.init("https://try.count.ly", "YOUR_APP_KEY"); // Initialize the countly SDK.
         Countly.appLoadingFinished();
