@@ -1,3 +1,9 @@
+## 22.02.2
+* Added a way to add allowed package names for push notification intent security.
+* Added a way to add allowed class names for push notification intent security.
+* Updated underlying android SDK version to 22.02.3
+* Updated underlying iOS SDK version to 22.06.1
+
 ## 22.02.1
 * Fixed opening two intent for MainActivity when clicking on push notification with deep-link.
 * Updated underlying android SDK version to 22.02.1
