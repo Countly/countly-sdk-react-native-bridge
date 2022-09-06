@@ -18,6 +18,7 @@ const Countly = {};
 Countly.serverUrl = "";
 Countly.appKey = "";
 _isInitialized = false;
+_isPushInitialized = false;
 /*
 * Listener for rating widget callback, when callback recieve we will remove the callback using listener. 
 */
@@ -200,6 +201,7 @@ Countly.askForNotificationPermission = function(customSoundPath = "null"){
         return message;
     }
     CountlyReactNative.askForNotificationPermission([customSoundPath]);
+    _isPushInitialized = true;
 }
 
 /**
@@ -212,6 +214,54 @@ Countly.registerForNotification = function(theListener){
     CountlyReactNative.registerForNotification([]);
     return event;
 };
+
+/**
+ * 
+ * Configure intent redirection checks for push notification
+ * Should be called before Countly "askForNotificationPermission"
+ * 
+ * @param {array of allowed class names } allowedIntentClassNames set allowed intent class names
+ * @param {array of allowed package names } allowedIntentClassNames set allowed intent package names
+ * @param {bool to check additional intent checks} useAdditionalIntentRedirectionChecks by default its true
+ */
+Countly.configureIntentRedirectionCheck = function(allowedIntentClassNames = [], allowedIntentPackageNames = [], useAdditionalIntentRedirectionChecks = true){
+    if (Platform.OS.match("ios")) return "configureIntentRedirectionCheck : not required for iOS";
+
+    if(_isPushInitialized) {
+        var message = "'configureIntentRedirectionCheck' must be called before 'askForNotificationPermission'";
+        Countly.logError("configureIntentRedirectionCheck", message);
+        return message;
+    }
+    if(!Array.isArray(allowedIntentClassNames)) {
+        var message = "Ignoring, unsupported data type '" + (typeof allowedIntentClassNames) + "' 'allowedIntentClassNames' should be an array of String";
+        Countly.logWarning("configureIntentRedirectionCheck", message);
+        allowedIntentClassNames = []
+    }
+    if(!Array.isArray(allowedIntentPackageNames)) {
+        var message = "Ignoring, unsupported data type '" + (typeof allowedIntentPackageNames) + "' 'allowedIntentPackageNames' should be an array of String";
+        Countly.logWarning("configureIntentRedirectionCheck", message);
+        allowedIntentPackageNames = []
+    }
+
+    if(typeof useAdditionalIntentRedirectionChecks != "boolean") {
+        var message = "Ignoring, unsupported data type '" + (typeof useAdditionalIntentRedirectionChecks) + "' 'useAdditionalIntentRedirectionChecks' should be a boolean";
+        Countly.logWarning("configureIntentRedirectionCheck", message);
+        useAdditionalIntentRedirectionChecks = true
+    }
+
+    var _allowedIntentClassNames = [];
+    for(var className of allowedIntentClassNames){
+        _allowedIntentClassNames.push(className.toString());
+    }
+
+    var _allowedIntentPackageNames = [];
+    for(var packageName of allowedIntentPackageNames){
+        _allowedIntentPackageNames.push(packageName.toString());
+    }
+
+    CountlyReactNative.configureIntentRedirectionCheck(_allowedIntentClassNames, _allowedIntentPackageNames, useAdditionalIntentRedirectionChecks);
+}
+
 // countly start for android
 Countly.start = function(){
     if(!_isInitialized) {

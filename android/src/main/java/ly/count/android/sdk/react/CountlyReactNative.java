@@ -28,6 +28,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -44,6 +45,7 @@ import android.app.NotificationChannel;
 import androidx.annotation.NonNull;
 
 import ly.count.android.sdk.StarRatingCallback;
+import ly.count.android.sdk.messaging.CountlyConfigPush;
 import ly.count.android.sdk.messaging.CountlyPush;
 
 
@@ -92,6 +94,11 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
     private boolean isOnResumeBeforeInit = false;
     private Boolean isSessionStarted_ = false;
+
+
+    private List<String> allowedIntentClassNames = new ArrayList<>();
+    private List<String> allowedIntentPackageNames = new ArrayList<>();
+    private boolean useAdditionalIntentRedirectionChecks = true;
 
     private final ReactApplicationContext _reactContext;
 
@@ -587,8 +594,15 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 notificationManager.createNotificationChannel(channel);
             }
         }
-        CountlyPush.useAdditionalIntentRedirectionChecks = true;
-        CountlyPush.init(activity.getApplication(), messagingMode);
+        CountlyPush.useAdditionalIntentRedirectionChecks = useAdditionalIntentRedirectionChecks;
+        CountlyConfigPush configPush = new CountlyConfigPush(activity.getApplication(), messagingMode);
+        if(allowedIntentClassNames.size() > 0) {
+            configPush.setAllowedIntentClassNames(allowedIntentClassNames);
+        }
+        if(allowedIntentPackageNames.size() > 0) {
+            configPush.setAllowedIntentPackageNames(allowedIntentPackageNames);
+        }
+        CountlyPush.init(configPush);
         try{
             FirebaseApp.initializeApp(context);
             FirebaseMessaging firebaseMessagingInstance = FirebaseMessaging.getInstance();
@@ -617,6 +631,24 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             });
         }catch(Exception exception){
             log("askForNotificationPermission, Firebase exception",exception, LogLevel.WARNING);
+        }
+    }
+
+    @ReactMethod
+    public void configureIntentRedirectionCheck(ReadableArray intentClassNames, ReadableArray intentPackageNames, boolean useAdditionalIntentRedirectionChecks){
+        Countly.sharedInstance();
+        this.useAdditionalIntentRedirectionChecks = useAdditionalIntentRedirectionChecks;
+        allowedIntentClassNames.clear();
+        allowedIntentPackageNames.clear();
+
+        for (int i = 0; i < intentClassNames.size(); i++) {
+            String className = intentClassNames.getString(i);
+            allowedIntentClassNames.add(className);
+        }
+
+        for (int i = 0; i < intentPackageNames.size(); i++) {
+            String packageName = intentPackageNames.getString(i);
+            allowedIntentPackageNames.add(packageName);
         }
     }
 
