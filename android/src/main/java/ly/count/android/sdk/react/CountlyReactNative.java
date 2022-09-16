@@ -765,6 +765,107 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         Countly.sharedInstance().userProfile().save();
     }
 
+    @ReactMethod
+    public void userDataBulk_setUserProperties(ReadableMap userData){
+        Countly.sharedInstance();
+        Map<String, Object> userDataObjectMap = userData.toHashMap();
+        Map<String,Object> userDataMap = new HashMap<>();
+        for (Map.Entry<String, Object> entry : userDataObjectMap.entrySet()) {
+            Object value = entry.getValue();
+            if(value instanceof String){
+                userDataMap.put(entry.getKey(), (String) value);
+            }
+        }
+
+        Countly.sharedInstance().userProfile().setProperties(userDataMap);
+    }
+
+    @ReactMethod
+    public void userDataBulk_save(){
+        Countly.sharedInstance();
+        Countly.sharedInstance().userProfile().save();
+    }
+    
+    @ReactMethod
+    public void userDataBulk_setProperty(ReadableArray args){
+        Countly.sharedInstance();
+        String keyName = args.getString(0);
+        String keyValue = args.getString(1);
+        Countly.sharedInstance().userProfile().setProperty(keyName, keyValue);
+    }
+
+    @ReactMethod
+    public void userDataBulk_increment(ReadableArray args){
+        Countly.sharedInstance();
+        String keyName = args.getString(0);
+        Countly.sharedInstance().userProfile().increment(keyName);
+    }
+
+    @ReactMethod
+    public void userDataBulk_incrementBy(ReadableArray args){
+        Countly.sharedInstance();
+        String keyName = args.getString(0);
+        int keyIncrement = Integer.parseInt(args.getString(1));
+        Countly.sharedInstance().userProfile().incrementBy(keyName, keyIncrement);
+    }
+
+    @ReactMethod
+    public void userDataBulk_multiply(ReadableArray args){
+        Countly.sharedInstance();
+        String keyName = args.getString(0);
+        int multiplyValue = Integer.parseInt(args.getString(1));
+        Countly.sharedInstance().userProfile().multiply(keyName, multiplyValue);
+    }
+
+    @ReactMethod
+    public void userDataBulk_saveMax(ReadableArray args){
+        Countly.sharedInstance();
+        String keyName = args.getString(0);
+        int maxScore = Integer.parseInt(args.getString(1));
+        Countly.sharedInstance().userProfile().saveMax(keyName, maxScore);
+    }
+
+    @ReactMethod
+    public void userDataBulk_saveMin(ReadableArray args){
+        Countly.sharedInstance();
+        String keyName = args.getString(0);
+        int minScore = Integer.parseInt(args.getString(1));
+        Countly.sharedInstance().userProfile().saveMin(keyName, minScore);
+    }
+
+    @ReactMethod
+    public void userDataBulk_setOnce(ReadableArray args){
+        Countly.sharedInstance();
+        String keyName = args.getString(0);
+        String minScore = args.getString(1);
+        Countly.sharedInstance().userProfile().setOnce(keyName, minScore);
+        Countly.sharedInstance().userProfile().save();
+    }
+
+    @ReactMethod
+    public void userDataBulk_pushUniqueValue(ReadableArray args){
+        Countly.sharedInstance();
+        String keyName = args.getString(0);
+        String keyValue = args.getString(1);
+        Countly.sharedInstance().userProfile().pushUnique(keyName, keyValue);
+    }
+
+    @ReactMethod
+    public void userDataBulk_pushValue(ReadableArray args){
+        Countly.sharedInstance();
+        String keyName = args.getString(0);
+        String keyValue = args.getString(1);
+        Countly.sharedInstance().userProfile().push(keyName, keyValue);
+    }
+
+    @ReactMethod
+    public void userDataBulk_pullValue(ReadableArray args){
+        Countly.sharedInstance();
+        String keyName = args.getString(0);
+        String keyValue = args.getString(1);
+        Countly.sharedInstance().userProfile().pull(keyName, keyValue);
+    }
+
     // GDPR
     @ReactMethod
     public void setRequiresConsent(ReadableArray args){

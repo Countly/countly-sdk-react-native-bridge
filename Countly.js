@@ -850,6 +850,240 @@ Countly.userData.pullValue = async function(keyName, keyValue){
     }
 };
 
+//nothing is sent without calling save
+Countly.userDataBulk = {};
+
+//providing key/values with predefined and custom properties
+Countly.userDataBulk.setUserProperties = async function(customAndPredefined){
+    if(!_isInitialized) {
+        var msg = "'init' must be called before 'setUserProperties'";
+        Countly.logError("setUserProperties", msg);
+        return msg;
+    }
+    var message = null;
+    if(!customAndPredefined) {
+        message = "User profile data should not be null or undefined";
+        Countly.logError("setUserProperties", message);
+        return message;
+    }
+    if(typeof customAndPredefined !== 'object'){
+        message = "unsupported data type of user data '" + (typeof customAndPredefined) + "'";
+        Countly.logWarning("setUserProperties", message);
+        return message;
+    }
+    for(var key in customAndPredefined){
+        if (typeof customAndPredefined[key] != "string" && key.toString() != "byear") 
+        {
+            message = "skipping value for key '" + key.toString() + "', due to unsupported data type '" + (typeof customAndPredefined[key]) + "', its data type should be 'string'";
+            Countly.logWarning("setUserProperties", message);
+        }
+        
+    }
+
+    if(customAndPredefined.org && !customAndPredefined.organization) {
+        customAndPredefined.organization = customAndPredefined.org;
+        delete customAndPredefined.org;
+    }
+
+    if(customAndPredefined.byear) {
+        Countly.validateParseInt(customAndPredefined.byear, "key byear", "setUserProperties");
+        customAndPredefined.byear = customAndPredefined.byear.toString();
+    }
+
+    CountlyReactNative.userDataBulk_setUserProperties(customAndPredefined);
+};
+
+Countly.userDataBulk.save = async function(){
+    if(!_isInitialized) {
+        var msg = "'init' must be called before 'save'";
+        Countly.logError("save", msg);
+        return msg;
+    }
+    
+    CountlyReactNative.userDataBulk_save();
+};
+
+Countly.userDataBulk.setProperty = async function(keyName, keyValue){
+    if(!_isInitialized) {
+        var msg = "'init' must be called before 'setProperty'";
+        Countly.logError("setProperty", msg);
+        return msg;
+    }
+    var message = await Countly.validateString(keyName, "key", "setProperty");
+    if(message) {
+        return message;
+    }
+
+    message = await Countly.validateValidUserData(keyValue, "value", "setProperty");
+    if(message) {
+        return message;
+    }
+    keyName = keyName.toString();
+    keyValue = keyValue.toString();
+    if(keyName && (keyValue || keyValue == "")) {
+        CountlyReactNative.userDataBulk_setProperty([keyName, keyValue]);
+    }
+};
+Countly.userDataBulk.increment = async function(keyName){
+    if(!_isInitialized) {
+        var msg = "'init' must be called before 'increment'";
+        Countly.logError("increment", msg);
+        return msg;
+    }
+    var message = await Countly.validateString(keyName, "key", "setProperty");
+    if(message) {
+        return message;
+    }
+    keyName = keyName.toString();
+    if(keyName) {
+        CountlyReactNative.userDataBulk_increment([keyName]);
+    }
+};
+Countly.userDataBulk.incrementBy = async function(keyName, keyValue){
+    if(!_isInitialized) {
+        var msg = "'init' must be called before 'incrementBy'";
+        Countly.logError("incrementBy", msg);
+        return msg;
+    }
+    var message = await Countly.validateString(keyName, "key", "incrementBy");
+    if(message) {
+        return message;
+    }
+    message = await Countly.validateUserDataValue(keyValue, "value", "incrementBy");
+    if(message) {
+        return message;
+    }
+    var intValue = parseInt(keyValue).toString();
+    CountlyReactNative.userDataBulk_incrementBy([keyName, intValue]);
+};
+Countly.userDataBulk.multiply = async function(keyName, keyValue){
+    if(!_isInitialized) {
+        var msg = "'init' must be called before 'multiply'";
+        Countly.logError("multiply", msg);
+        return msg;
+    }
+    var message = await Countly.validateString(keyName, "key", "multiply");
+    if(message) {
+        return message;
+    }
+    message = await Countly.validateUserDataValue(keyValue, "value", "multiply");
+    if(message) {
+        return message;
+    }
+    var intValue = parseInt(keyValue).toString();
+    CountlyReactNative.userDataBulk_multiply([keyName, intValue]);
+};
+Countly.userDataBulk.saveMax = async function(keyName, keyValue){
+    if(!_isInitialized) {
+        var msg = "'init' must be called before 'saveMax'";
+        Countly.logError("saveMax", msg);
+        return msg;
+    }
+    var message = await Countly.validateString(keyName, "key", "saveMax");
+    if(message) {
+        return message;
+    }
+    message = await Countly.validateUserDataValue(keyValue, "value", "saveMax");
+    if(message) {
+        return message;
+    }
+    var intValue = parseInt(keyValue).toString();
+    CountlyReactNative.userDataBulk_saveMax([keyName, intValue]);
+};
+Countly.userDataBulk.saveMin = async function(keyName, keyValue){
+    if(!_isInitialized) {
+        var msg = "'init' must be called before 'saveMin'";
+        Countly.logError("saveMin", msg);
+        return msg;
+    }
+    var message = await Countly.validateString(keyName, "key", "saveMin");
+    if(message) {
+        return message;
+    }
+    message = await Countly.validateUserDataValue(keyValue, "value", "saveMin");
+    if(message) {
+        return message;
+    }
+    var intValue = parseInt(keyValue).toString();
+    CountlyReactNative.userDataBulk_saveMin([keyName, intValue]);
+};
+Countly.userDataBulk.setOnce = async function(keyName, keyValue){
+    if(!_isInitialized) {
+        var msg = "'init' must be called before 'setOnce'";
+        Countly.logError("setOnce", msg);
+        return msg;
+    }
+    var message = await Countly.validateString(keyName, "key", "setOnce");
+    if(message) {
+        return message;
+    }
+    message = await Countly.validateValidUserData(keyValue, "value", "setOnce");
+    if(message) {
+        return message;
+    }
+    keyValue = keyValue.toString();
+    if(keyValue || keyValue == "") {
+        CountlyReactNative.userDataBulk_setOnce([keyName, keyValue]);
+    }
+};
+Countly.userDataBulk.pushUniqueValue = async function(keyName, keyValue){
+    if(!_isInitialized) {
+        var msg = "'init' must be called before 'pushUniqueValue'";
+        Countly.logError("pushUniqueValue", msg);
+        return msg;
+    }
+    var message = await Countly.validateString(keyName, "key", "pushUniqueValue");
+    if(message) {
+        return message;
+    }
+    message = await Countly.validateValidUserData(keyValue, "value", "pushUniqueValue");
+    if(message) {
+        return message;
+    }
+    keyValue = keyValue.toString();
+    if(keyValue || keyValue == "") {
+        CountlyReactNative.userDataBulk_pushUniqueValue([keyName, keyValue]);
+    }
+};
+Countly.userDataBulk.pushValue = async function(keyName, keyValue){
+    if(!_isInitialized) {
+        var msg = "'init' must be called before 'pushValue'";
+        Countly.logError("pushValue", msg);
+        return msg;
+    }
+    var message = await Countly.validateString(keyName, "key", "pushValue");
+    if(message) {
+        return message;
+    }
+    message = await Countly.validateValidUserData(keyValue, "value", "pushValue");
+    if(message) {
+        return message;
+    }
+    keyValue = keyValue.toString();
+    if(keyValue || keyValue == "") {
+        CountlyReactNative.userDataBulk_pushValue([keyName, keyValue]);
+    }
+};
+Countly.userDataBulk.pullValue = async function(keyName, keyValue){
+    if(!_isInitialized) {
+        var msg = "'init' must be called before 'pullValue'";
+        Countly.logError("pullValue", msg);
+        return msg;
+    }
+    var message = await Countly.validateString(keyName, "key", "pullValue");
+    if(message) {
+        return message;
+    }
+    message = await Countly.validateValidUserData(keyValue, "value", "pullValue");
+    if(message) {
+        return message;
+    }
+    keyValue = keyValue.toString();
+    if(keyValue || keyValue == "") {
+        CountlyReactNative.userDataBulk_pullValue([keyName, keyValue]);
+    }
+};
+
 
 /**
  * 
