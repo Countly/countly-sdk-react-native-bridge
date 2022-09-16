@@ -21,7 +21,7 @@
 + (CountlyFeedbackWidget *)createWithDictionary:(NSDictionary *)dictionary;
 @end
 
-NSString* const kCountlyReactNativeSDKVersion = @"22.02.2";
+NSString* const kCountlyReactNativeSDKVersion = @"22.02.3";
 NSString* const kCountlyReactNativeSDKName = @"js-rnb-ios";
 
 CountlyConfig* config = nil;
@@ -172,7 +172,7 @@ RCT_EXPORT_METHOD(setUserData:(NSArray*)arguments)
   dispatch_async(dispatch_get_main_queue(), ^ {
       
   NSDictionary* userData = [arguments objectAtIndex:0];
-  [self setUserData:userData];
+  [self setUserDataIntenral:userData];
   [Countly.user save];
   });
 }
@@ -695,16 +695,16 @@ RCT_EXPORT_METHOD(userData_pullValue:(NSArray*)arguments)
   });
 }
 
-RCT_EXPORT_METHOD(userDataBulk_setProperty:(NSDictionary*)userProperties)
+RCT_EXPORT_METHOD(userDataBulk_setUserProperties:(NSDictionary*)userProperties)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
-    [self setUserData:userProperties];
+    [self setUserDataIntenral:userProperties];
     NSDictionary* customeProperties = [self removePredefinedUserProperties:userProperties];
     Countly.user.custom = customeProperties;
   });
 }
 
-RCT_EXPORT_METHOD(userDataBulk_save:()
+RCT_EXPORT_METHOD(userDataBulk_save:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
     [Countly.user save];
@@ -1224,7 +1224,7 @@ void CountlyRNInternalLog(NSString *format, ...)
     return userProperties;
 }
 
--(void) setUserData:(NSDictionary * __nullable) userData {
+-(void) setUserDataIntenral:(NSDictionary * __nullable) userData {
     NSString* name = userData[NAME_KEY];
     NSString* username = userData[USERNAME_KEY];
     NSString* email = userData[EMAIL_KEY];
@@ -1355,4 +1355,5 @@ API_AVAILABLE(ios(10.0)){
 #endif
     });
 }
+
 @end

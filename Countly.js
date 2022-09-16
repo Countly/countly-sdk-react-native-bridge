@@ -899,8 +899,7 @@ Countly.userDataBulk.save = async function(){
         Countly.logError("save", msg);
         return msg;
     }
-    
-    CountlyReactNative.userDataBulk_save();
+    CountlyReactNative.userDataBulk_save([]);
 };
 
 Countly.userDataBulk.setProperty = async function(keyName, keyValue){

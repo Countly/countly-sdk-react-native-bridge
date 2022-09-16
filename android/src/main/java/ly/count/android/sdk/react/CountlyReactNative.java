@@ -81,7 +81,7 @@ class CountlyReactException extends Exception {
 public class CountlyReactNative extends ReactContextBaseJavaModule implements LifecycleEventListener {
 
     public static final String TAG = "CountlyRNPlugin";
-    private String COUNTLY_RN_SDK_VERSION_STRING = "22.02.2";
+    private String COUNTLY_RN_SDK_VERSION_STRING = "22.02.3";
     private String COUNTLY_RN_SDK_NAME = "js-rnb-android";
 
     private static final CountlyConfig config = new CountlyConfig();
@@ -781,7 +781,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     }
 
     @ReactMethod
-    public void userDataBulk_save(){
+    public void userDataBulk_save(ReadableArray args){
         Countly.sharedInstance();
         Countly.sharedInstance().userProfile().save();
     }
