@@ -146,8 +146,10 @@ class Example extends Component {
         Countly.userDataBulk.setOnce("setOnce", 200),
         Countly.userDataBulk.pushUniqueValue("type", "morning"),
         Countly.userDataBulk.pushValue("type", "morning"),
-        Countly.userDataBulk.pullValue("type", "morning")]).then(values => {
-        Countly.userDataBulk.save();
+        Countly.userDataBulk.pullValue("type", "morning")])
+        .then(values => {
+          // We need to call the "save" in then block else it will cause a race condition and "save" may call before all the user profiles calls are completed
+          Countly.userDataBulk.save();
       })
 
     };
