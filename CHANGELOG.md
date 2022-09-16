@@ -1,5 +1,6 @@
 ## 22.02.3
 * User profile added option to send bulk data in single request instead of individual request
+* Fixed isInitialized variable reset on hot reload
 * Underlying android SDK version is 22.02.3
 * Underlying iOS SDK version is 22.06.1
 

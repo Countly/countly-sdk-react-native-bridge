@@ -48,7 +48,8 @@ Countly.init = async function(serverUrl, appKey, deviceId){
 
 Countly.isInitialized = async function(){
     // returns a promise
-    return await CountlyReactNative.isInitialized();
+    _isInitialized = await CountlyReactNative.isInitialized();
+    return _isInitialized;
 }
 
 Countly.hasBeenCalledOnStart = function(){
