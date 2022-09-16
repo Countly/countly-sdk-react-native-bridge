@@ -21,7 +21,7 @@
 + (CountlyFeedbackWidget *)createWithDictionary:(NSDictionary *)dictionary;
 @end
 
-NSString* const kCountlyReactNativeSDKVersion = @"22.02.2";
+NSString* const kCountlyReactNativeSDKVersion = @"22.02.3";
 NSString* const kCountlyReactNativeSDKName = @"js-rnb-ios";
 
 CountlyConfig* config = nil;
@@ -34,6 +34,17 @@ BOOL enablePushNotifications = true;
 typedef NSString* CLYUserDefaultKey NS_EXTENSIBLE_STRING_ENUM;
 CLYUserDefaultKey const CLYPushDictionaryKey  = @"notificationDictionaryKey";
 CLYUserDefaultKey const CLYPushButtonIndexKey = @"notificationBtnIndexKey";
+
+NSString* const NAME_KEY = @"name";
+NSString* const USERNAME_KEY = @"username";
+NSString* const EMAIL_KEY = @"email";
+NSString* const ORG_KEY = @"organization";
+NSString* const PHONE_KEY = @"phone";
+NSString* const PICTURE_KEY = @"picture";
+NSString* const PICTURE_PATH_KEY = @"picturePath";
+NSString* const GENDER_KEY = @"gender";
+NSString* const BYEAR_KEY = @"byear";
+NSString* const CUSTOM_KEY = @"custom";
 
 @implementation CountlyReactNative
 NSString* const kCountlyNotificationPersistencyKey = @"kCountlyNotificationPersistencyKey";
@@ -161,43 +172,7 @@ RCT_EXPORT_METHOD(setUserData:(NSArray*)arguments)
   dispatch_async(dispatch_get_main_queue(), ^ {
       
   NSDictionary* userData = [arguments objectAtIndex:0];
-  NSString* name = [userData objectForKey:@"name"];
-  NSString* username = [userData objectForKey:@"username"];
-  NSString* email = [userData objectForKey:@"email"];
-  NSString* organization = [userData objectForKey:@"organization"];
-  NSString* phone = [userData objectForKey:@"phone"];
-  NSString* picture = [userData objectForKey:@"picture"];
-  NSString* pictureLocalPath = [userData objectForKey:@"pictureLocalPath"];
-  NSString* gender = [userData objectForKey:@"gender"];
-  NSString* byear = [userData objectForKey:@"byear"];
-      
-  if(name) {
-      Countly.user.name = name;
-  }
-  if(username) {
-      Countly.user.username = username;
-  }
-  if(email) {
-      Countly.user.email = email;
-  }
-  if(organization) {
-      Countly.user.organization = organization;
-  }
-  if(phone) {
-      Countly.user.phone = phone;
-  }
-  if(picture) {
-      Countly.user.pictureURL = picture;
-  }
-  if(pictureLocalPath) {
-      Countly.user.pictureLocalPath = pictureLocalPath;
-  }
-  if(gender) {
-      Countly.user.gender = gender;
-  }
-  if(byear) {
-      Countly.user.birthYear = @([byear integerValue]);
-  }
+  [self setUserDataIntenral:userData];
   [Countly.user save];
   });
 }
@@ -720,6 +695,122 @@ RCT_EXPORT_METHOD(userData_pullValue:(NSArray*)arguments)
   });
 }
 
+RCT_EXPORT_METHOD(userDataBulk_setUserProperties:(NSDictionary*)userProperties)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+    [self setUserDataIntenral:userProperties];
+    NSDictionary* customeProperties = [self removePredefinedUserProperties:userProperties];
+    Countly.user.custom = customeProperties;
+  });
+}
+
+RCT_EXPORT_METHOD(userDataBulk_save:(NSArray*)arguments)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+    [Countly.user save];
+  });
+}
+
+RCT_EXPORT_METHOD(userDataBulk_setProperty:(NSArray*)arguments)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+  NSString* keyName = [arguments objectAtIndex:0];
+  NSString* keyValue = [arguments objectAtIndex:1];
+
+  [Countly.user set:keyName value:keyValue];
+  });
+}
+
+RCT_EXPORT_METHOD(userDataBulk_increment:(NSArray*)arguments)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+  NSString* keyName = [arguments objectAtIndex:0];
+
+  [Countly.user increment:keyName];
+  });
+}
+
+RCT_EXPORT_METHOD(userDataBulk_incrementBy:(NSArray*)arguments)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+  NSString* keyName = [arguments objectAtIndex:0];
+  NSString* keyValue = [arguments objectAtIndex:1];
+  int keyValueInteger = [keyValue intValue];
+
+  [Countly.user incrementBy:keyName value:[NSNumber numberWithInt:keyValueInteger]];
+  });
+}
+
+RCT_EXPORT_METHOD(userDataBulk_multiply:(NSArray*)arguments)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+  NSString* keyName = [arguments objectAtIndex:0];
+  NSString* keyValue = [arguments objectAtIndex:1];
+  int keyValueInteger = [keyValue intValue];
+
+  [Countly.user multiply:keyName value:[NSNumber numberWithInt:keyValueInteger]];
+  });
+}
+
+RCT_EXPORT_METHOD(userDataBulk_saveMax:(NSArray*)arguments)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+  NSString* keyName = [arguments objectAtIndex:0];
+  NSString* keyValue = [arguments objectAtIndex:1];
+  int keyValueInteger = [keyValue intValue];
+
+  [Countly.user max:keyName value:[NSNumber numberWithInt:keyValueInteger]];
+  });
+}
+
+RCT_EXPORT_METHOD(userDataBulk_saveMin:(NSArray*)arguments)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+  NSString* keyName = [arguments objectAtIndex:0];
+  NSString* keyValue = [arguments objectAtIndex:1];
+  int keyValueInteger = [keyValue intValue];
+
+  [Countly.user min:keyName value:[NSNumber numberWithInt:keyValueInteger]];
+  });
+}
+
+RCT_EXPORT_METHOD(userDataBulk_setOnce:(NSArray*)arguments)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+  NSString* keyName = [arguments objectAtIndex:0];
+  NSString* keyValue = [arguments objectAtIndex:1];
+
+  [Countly.user setOnce:keyName value:keyValue];
+  });
+}
+RCT_EXPORT_METHOD(userDataBulk_pushUniqueValue:(NSArray*)arguments)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+  NSString* keyName = [arguments objectAtIndex:0];
+  NSString* keyValue = [arguments objectAtIndex:1];
+
+  [Countly.user pushUnique:keyName value:keyValue];
+  });
+}
+RCT_EXPORT_METHOD(userDataBulk_pushValue:(NSArray*)arguments)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+  NSString* keyName = [arguments objectAtIndex:0];
+  NSString* keyValue = [arguments objectAtIndex:1];
+
+  [Countly.user push:keyName value:keyValue];
+  });
+}
+RCT_EXPORT_METHOD(userDataBulk_pullValue:(NSArray*)arguments)
+{
+  dispatch_async(dispatch_get_main_queue(), ^ {
+  NSString* keyName = [arguments objectAtIndex:0];
+  NSString* keyValue = [arguments objectAtIndex:1];
+
+  [Countly.user pull:keyName value:keyValue];
+  });
+}
+
 
 
 RCT_EXPORT_METHOD(demo:(NSArray*)arguments)
@@ -1123,6 +1214,52 @@ void CountlyRNInternalLog(NSString *format, ...)
     va_end(args);
 }
 
+-(NSDictionary*) removePredefinedUserProperties:(NSDictionary * __nullable) userData {
+    NSMutableDictionary* userProperties = [userData mutableCopy];
+    NSArray* nameFields = [[NSArray alloc] initWithObjects:NAME_KEY, USERNAME_KEY, EMAIL_KEY, ORG_KEY, PHONE_KEY, PICTURE_KEY, PICTURE_PATH_KEY, GENDER_KEY, BYEAR_KEY, nil];
+    
+    for (NSString* nameField in nameFields) {
+        [userProperties removeObjectForKey:nameField];
+    }
+    return userProperties;
+}
+
+-(void) setUserDataIntenral:(NSDictionary * __nullable) userData {
+    NSString* name = userData[NAME_KEY];
+    NSString* username = userData[USERNAME_KEY];
+    NSString* email = userData[EMAIL_KEY];
+    NSString* organization = userData[ORG_KEY];
+    NSString* phone = userData[PHONE_KEY];
+    NSString* picture = userData[PICTURE_KEY];
+    NSString* gender = userData[GENDER_KEY];
+    NSString* byear = userData[BYEAR_KEY];
+    
+    if(name) {
+        Countly.user.name = name;
+    }
+    if(username) {
+        Countly.user.username = username;
+    }
+    if(email) {
+        Countly.user.email = email;
+    }
+    if(organization) {
+        Countly.user.organization = organization;
+    }
+    if(phone) {
+        Countly.user.phone = phone;
+    }
+    if(picture) {
+        Countly.user.pictureURL = picture;
+    }
+    if(gender) {
+        Countly.user.gender = gender;
+    }
+    if(byear) {
+        Countly.user.birthYear = @([byear integerValue]);
+    }
+}
+
 + (void)onNotification:(NSDictionary *)notificationMessage
 {
     [CountlyReactNative onNotification:notificationMessage buttonIndex:0];
@@ -1218,4 +1355,5 @@ API_AVAILABLE(ios(10.0)){
 #endif
     });
 }
+
 @end

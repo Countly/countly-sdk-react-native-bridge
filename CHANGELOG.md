@@ -1,3 +1,8 @@
+## 22.02.3
+* User profile added option to send bulk data in single request instead of individual request
+* Underlying android SDK version is 22.02.3
+* Underlying iOS SDK version is 22.06.1
+
 ## 22.02.2
 * Added a way to add allowed package names for push notification intent security.
 * Added a way to add allowed class names for push notification intent security.

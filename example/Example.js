@@ -8,7 +8,7 @@ var failureCodes = [400, 402, 405, 408, 500, 501, 502, 505];
 class Example extends Component {
     constructor(props) {
         super(props);
-        this.state = {ratingId: '625f9032028614795fe5a85b'};
+        this.state = {ratingId: '61eac4627b8ad224e37bb3f5'};
         this.config = {};
 
         this.onInit = this.onInit.bind(this);
@@ -20,6 +20,8 @@ class Example extends Component {
         this.startEvent = this.startEvent.bind(this);
         this.test = this.test.bind(this);
         this.onSendUserData = this.onSendUserData.bind(this);
+        this.onSendUserDataBulk = this.onSendUserDataBulk.bind(this);
+        this.onSetUserProperties = this.onSetUserProperties.bind(this);
         this.onUpdateUserData = this.onUpdateUserData.bind(this);
         this.userData_setProperty = this.userData_setProperty.bind(this);
         this.userData_increment = this.userData_increment.bind(this);
@@ -40,7 +42,7 @@ class Example extends Component {
     };
 
     componentDidMount(){
-      this.onInit();
+//       this.onInit();
     }
 
     onInit = async() => {
@@ -57,8 +59,8 @@ class Example extends Component {
         // Countly.pinnedCertificates("count.ly.cer"); // It will ensure that connection is made with one of the public keys specified
         // Countly.setHttpPostForced(false); // Set to "true" if you want HTTP POST to be used for all requests
         Countly.enableApm(); // Enable APM features, which includes the recording of app start time.
-        Countly.pushTokenType(Countly.messagingMode.DEVELOPMENT, "Channel Name", "Channel Description"); // Set messaging mode for push notifications
-        
+        Countly.pushTokenType(Countly.messagingMode.DEVELOPMENT, "ChannelName", "ChannelDescription"); // Set messaging mode for push notifications
+
         if (Platform.OS.match("ios")) {
           Countly.recordAttributionID("ADVERTISING_ID");
         }
@@ -71,15 +73,16 @@ class Example extends Component {
         Countly.setStarRatingDialogTexts("Title", "Message", "Dismiss");
         await Countly.init("https://try.count.ly", "YOUR_APP_KEY"); // Initialize the countly SDK.
         Countly.appLoadingFinished();
-        /** 
-         * Push notifications settings 
+        /**
+         * Push notifications settings
          * Should be call after init
         */
         Countly.registerForNotification(function(theNotification){
-          console.log("Just received this notification data: " + JSON.stringify(theNotification));
-          alert('theNotification: ' + JSON.stringify(theNotification));
+          var jsonString = JSON.stringify(JSON.parse(theNotification))
+          console.log("Just received this notification data: " + jsonString);
+          alert('theNotification: ' + jsonString);
         }); // Set callback to receive push notifications
-        Countly.askForNotificationPermission(); // This method will ask for permission, enables push notification and send push token to countly server.
+        Countly.askForNotificationPermission("android.resource://com.countly.demo/raw/notif_sample"); // This method will ask for permission, enables push notification and send push token to countly server.
 
       }
     }
@@ -103,6 +106,52 @@ class Example extends Component {
       options.gender = "Male";
       options.byear = 1989;
       Countly.setUserData(options);
+    };
+
+    onSetUserProperties(){
+      // example for setUserData
+      var options = {};
+      // Predefined user properties
+      options.name = "Name of User";
+      options.username = "Username";
+      options.email = "User Email";
+      options.organization = "User Organization";
+      options.phone = "User Contact number";
+      options.picture = "https://count.ly/images/logos/countly-logo.png";
+      options.picturePath = "";
+      options.gender = "Male";
+      options.byear = 1989;
+
+      // Custom User Properties
+      options.customeValueA = "Custom value A";
+      options.customeValueB = "Custom value B";
+
+      Countly.userDataBulk.setUserProperties(options);
+
+      Countly.userDataBulk.save();
+    };
+
+    onSendUserDataBulk(){
+      Promise.allSettled([Countly.userDataBulk.setProperty("key", "value"),
+        Countly.userDataBulk.setProperty("increment", 5),
+        Countly.userDataBulk.increment("increment"),
+        Countly.userDataBulk.setProperty("incrementBy", 5),
+        Countly.userDataBulk.incrementBy("incrementBy", 10),
+        Countly.userDataBulk.setProperty("multiply", 5),
+        Countly.userDataBulk.multiply("multiply", 20),
+        Countly.userDataBulk.setProperty("saveMax", 5),
+        Countly.userDataBulk.saveMax("saveMax", 100),
+        Countly.userDataBulk.setProperty("saveMin", 5),
+        Countly.userDataBulk.saveMin("saveMin", 50),
+        Countly.userDataBulk.setOnce("setOnce", 200),
+        Countly.userDataBulk.pushUniqueValue("type", "morning"),
+        Countly.userDataBulk.pushValue("type", "morning"),
+        Countly.userDataBulk.pullValue("type", "morning")])
+        .then(values => {
+          // We need to call the "save" in then block else it will cause a race condition and "save" may call before all the user profiles calls are completed
+          Countly.userDataBulk.save();
+      })
+
     };
 
     onUpdateUserData(){
@@ -484,6 +533,8 @@ class Example extends Component {
       this.startEvent();
 
       this.onSendUserData();
+      this.onSendUserDataBulk();
+      this.onSetUserProperties();
       this.onUpdateUserData();
       this.userData_setProperty();
       this.userData_increment();
@@ -558,8 +609,13 @@ class Example extends Component {
             < Button onPress = { this.userData_pushValue } title = "UserData.pushValue" color = "#00b5ad"> </Button>
             < Button onPress = { this.userData_pullValue } title = "UserData.pullValue" color = "#00b5ad"> </Button>
 
+
+            < Button onPress = { this.onSetUserProperties } title = "Set Users Properties" color = "#00b5ad"> </Button>
+            < Button onPress = { this.onSendUserDataBulk } title = "Send Users Data Bulk" color = "#00b5ad"> </Button>
+
             <Text style={[{textAlign: 'center'}]}>User Methods End</Text>
             <Text style={[{textAlign: 'center'}]}>.</Text>
+            
 
 
             <Text style={[{textAlign: 'center'}]}>Other Methods Start</Text>
