@@ -252,12 +252,18 @@ Countly.configureIntentRedirectionCheck = function(allowedIntentClassNames = [],
 
     var _allowedIntentClassNames = [];
     for(var className of allowedIntentClassNames){
-        _allowedIntentClassNames.push(className.toString());
+        var message = Countly.validateString(className, "class name", "configureIntentRedirectionCheck");
+        if(message == null) {
+            _allowedIntentClassNames.push(className);
+        }
     }
 
     var _allowedIntentPackageNames = [];
     for(var packageName of allowedIntentPackageNames){
-        _allowedIntentPackageNames.push(packageName.toString());
+        var message = Countly.validateString(packageName, "package name", "configureIntentRedirectionCheck");
+        if(message == null) {
+            _allowedIntentPackageNames.push(packageName);
+        }
     }
 
     CountlyReactNative.configureIntentRedirectionCheck(_allowedIntentClassNames, _allowedIntentPackageNames, useAdditionalIntentRedirectionChecks);
