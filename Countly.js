@@ -666,7 +666,7 @@ Countly.setUserData = async function(userData){
     }
     args.push(userData);
 
-    CountlyReactNative.setUserData(args);
+    await CountlyReactNative.setUserData(args);
 };
 
 Countly.userData = {};
@@ -688,7 +688,7 @@ Countly.userData.setProperty = async function(keyName, keyValue){
     keyName = keyName.toString();
     keyValue = keyValue.toString();
     if(keyName && (keyValue || keyValue == "")) {
-        CountlyReactNative.userData_setProperty([keyName, keyValue]);
+        await CountlyReactNative.userData_setProperty([keyName, keyValue]);
     }
 };
 Countly.userData.increment = async function(keyName){
@@ -703,7 +703,7 @@ Countly.userData.increment = async function(keyName){
     }
     keyName = keyName.toString();
     if(keyName) {
-        CountlyReactNative.userData_increment([keyName]);
+        await CountlyReactNative.userData_increment([keyName]);
     }
 };
 Countly.userData.incrementBy = async function(keyName, keyValue){
@@ -721,7 +721,7 @@ Countly.userData.incrementBy = async function(keyName, keyValue){
         return message;
     }
     var intValue = parseInt(keyValue).toString();
-    CountlyReactNative.userData_incrementBy([keyName, intValue]);
+    await CountlyReactNative.userData_incrementBy([keyName, intValue]);
 };
 Countly.userData.multiply = async function(keyName, keyValue){
     if(!_isInitialized) {
@@ -738,7 +738,7 @@ Countly.userData.multiply = async function(keyName, keyValue){
         return message;
     }
     var intValue = parseInt(keyValue).toString();
-    CountlyReactNative.userData_multiply([keyName, intValue]);
+    await CountlyReactNative.userData_multiply([keyName, intValue]);
 };
 Countly.userData.saveMax = async function(keyName, keyValue){
     if(!_isInitialized) {
@@ -755,7 +755,7 @@ Countly.userData.saveMax = async function(keyName, keyValue){
         return message;
     }
     var intValue = parseInt(keyValue).toString();
-    CountlyReactNative.userData_saveMax([keyName, intValue]);
+    await CountlyReactNative.userData_saveMax([keyName, intValue]);
 };
 Countly.userData.saveMin = async function(keyName, keyValue){
     if(!_isInitialized) {
@@ -772,7 +772,7 @@ Countly.userData.saveMin = async function(keyName, keyValue){
         return message;
     }
     var intValue = parseInt(keyValue).toString();
-    CountlyReactNative.userData_saveMin([keyName, intValue]);
+    await CountlyReactNative.userData_saveMin([keyName, intValue]);
 };
 Countly.userData.setOnce = async function(keyName, keyValue){
     if(!_isInitialized) {
@@ -790,7 +790,7 @@ Countly.userData.setOnce = async function(keyName, keyValue){
     }
     keyValue = keyValue.toString();
     if(keyValue || keyValue == "") {
-        CountlyReactNative.userData_setOnce([keyName, keyValue]);
+        await CountlyReactNative.userData_setOnce([keyName, keyValue]);
     }
 };
 Countly.userData.pushUniqueValue = async function(keyName, keyValue){
@@ -809,7 +809,7 @@ Countly.userData.pushUniqueValue = async function(keyName, keyValue){
     }
     keyValue = keyValue.toString();
     if(keyValue || keyValue == "") {
-        CountlyReactNative.userData_pushUniqueValue([keyName, keyValue]);
+        await CountlyReactNative.userData_pushUniqueValue([keyName, keyValue]);
     }
 };
 Countly.userData.pushValue = async function(keyName, keyValue){
@@ -828,7 +828,7 @@ Countly.userData.pushValue = async function(keyName, keyValue){
     }
     keyValue = keyValue.toString();
     if(keyValue || keyValue == "") {
-        CountlyReactNative.userData_pushValue([keyName, keyValue]);
+        await CountlyReactNative.userData_pushValue([keyName, keyValue]);
     }
 };
 Countly.userData.pullValue = async function(keyName, keyValue){
@@ -847,7 +847,7 @@ Countly.userData.pullValue = async function(keyName, keyValue){
     }
     keyValue = keyValue.toString();
     if(keyValue || keyValue == "") {
-        CountlyReactNative.userData_pullValue([keyName, keyValue]);
+        await CountlyReactNative.userData_pullValue([keyName, keyValue]);
     }
 };
 
@@ -891,7 +891,7 @@ Countly.userDataBulk.setUserProperties = async function(customAndPredefined){
         customAndPredefined.byear = customAndPredefined.byear.toString();
     }
 
-    CountlyReactNative.userDataBulk_setUserProperties(customAndPredefined);
+    await CountlyReactNative.userDataBulk_setUserProperties(customAndPredefined);
 };
 
 Countly.userDataBulk.save = async function(){
@@ -900,7 +900,7 @@ Countly.userDataBulk.save = async function(){
         Countly.logError("save", msg);
         return msg;
     }
-    CountlyReactNative.userDataBulk_save([]);
+    await CountlyReactNative.userDataBulk_save([]);
 };
 
 Countly.userDataBulk.setProperty = async function(keyName, keyValue){
@@ -921,7 +921,7 @@ Countly.userDataBulk.setProperty = async function(keyName, keyValue){
     keyName = keyName.toString();
     keyValue = keyValue.toString();
     if(keyName && (keyValue || keyValue == "")) {
-        CountlyReactNative.userDataBulk_setProperty([keyName, keyValue]);
+        await CountlyReactNative.userDataBulk_setProperty([keyName, keyValue]);
     }
 };
 Countly.userDataBulk.increment = async function(keyName){
@@ -936,7 +936,7 @@ Countly.userDataBulk.increment = async function(keyName){
     }
     keyName = keyName.toString();
     if(keyName) {
-        CountlyReactNative.userDataBulk_increment([keyName]);
+        await CountlyReactNative.userDataBulk_increment([keyName]);
     }
 };
 Countly.userDataBulk.incrementBy = async function(keyName, keyValue){
@@ -954,7 +954,7 @@ Countly.userDataBulk.incrementBy = async function(keyName, keyValue){
         return message;
     }
     var intValue = parseInt(keyValue).toString();
-    CountlyReactNative.userDataBulk_incrementBy([keyName, intValue]);
+    await CountlyReactNative.userDataBulk_incrementBy([keyName, intValue]);
 };
 Countly.userDataBulk.multiply = async function(keyName, keyValue){
     if(!_isInitialized) {
@@ -971,7 +971,7 @@ Countly.userDataBulk.multiply = async function(keyName, keyValue){
         return message;
     }
     var intValue = parseInt(keyValue).toString();
-    CountlyReactNative.userDataBulk_multiply([keyName, intValue]);
+    await CountlyReactNative.userDataBulk_multiply([keyName, intValue]);
 };
 Countly.userDataBulk.saveMax = async function(keyName, keyValue){
     if(!_isInitialized) {
@@ -988,7 +988,7 @@ Countly.userDataBulk.saveMax = async function(keyName, keyValue){
         return message;
     }
     var intValue = parseInt(keyValue).toString();
-    CountlyReactNative.userDataBulk_saveMax([keyName, intValue]);
+    await CountlyReactNative.userDataBulk_saveMax([keyName, intValue]);
 };
 Countly.userDataBulk.saveMin = async function(keyName, keyValue){
     if(!_isInitialized) {
@@ -1005,7 +1005,7 @@ Countly.userDataBulk.saveMin = async function(keyName, keyValue){
         return message;
     }
     var intValue = parseInt(keyValue).toString();
-    CountlyReactNative.userDataBulk_saveMin([keyName, intValue]);
+    await CountlyReactNative.userDataBulk_saveMin([keyName, intValue]);
 };
 Countly.userDataBulk.setOnce = async function(keyName, keyValue){
     if(!_isInitialized) {
@@ -1023,7 +1023,7 @@ Countly.userDataBulk.setOnce = async function(keyName, keyValue){
     }
     keyValue = keyValue.toString();
     if(keyValue || keyValue == "") {
-        CountlyReactNative.userDataBulk_setOnce([keyName, keyValue]);
+        await CountlyReactNative.userDataBulk_setOnce([keyName, keyValue]);
     }
 };
 Countly.userDataBulk.pushUniqueValue = async function(keyName, keyValue){
@@ -1042,7 +1042,7 @@ Countly.userDataBulk.pushUniqueValue = async function(keyName, keyValue){
     }
     keyValue = keyValue.toString();
     if(keyValue || keyValue == "") {
-        CountlyReactNative.userDataBulk_pushUniqueValue([keyName, keyValue]);
+        await CountlyReactNative.userDataBulk_pushUniqueValue([keyName, keyValue]);
     }
 };
 Countly.userDataBulk.pushValue = async function(keyName, keyValue){
@@ -1061,7 +1061,7 @@ Countly.userDataBulk.pushValue = async function(keyName, keyValue){
     }
     keyValue = keyValue.toString();
     if(keyValue || keyValue == "") {
-        CountlyReactNative.userDataBulk_pushValue([keyName, keyValue]);
+        await CountlyReactNative.userDataBulk_pushValue([keyName, keyValue]);
     }
 };
 Countly.userDataBulk.pullValue = async function(keyName, keyValue){
@@ -1080,7 +1080,7 @@ Countly.userDataBulk.pullValue = async function(keyName, keyValue){
     }
     keyValue = keyValue.toString();
     if(keyValue || keyValue == "") {
-        CountlyReactNative.userDataBulk_pullValue([keyName, keyValue]);
+        await CountlyReactNative.userDataBulk_pullValue([keyName, keyValue]);
     }
 };
 
@@ -1127,7 +1127,7 @@ Countly.giveConsentInit = async function(args){
         var message = "unsupported data type '" + (typeof args) + "'";
         Countly.logWarning("giveConsentInit", message);
     }
-    CountlyReactNative.giveConsentInit(features);
+    await CountlyReactNative.giveConsentInit(features);
 }
 
 Countly.removeConsent = function(args){

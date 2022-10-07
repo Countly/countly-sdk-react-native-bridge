@@ -485,7 +485,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     }
 
     @ReactMethod
-    public void setUserData(ReadableArray args){
+    public void setUserData(ReadableArray args, Promise promise){
         Countly.sharedInstance();
         ReadableMap userData = args.getMap(0);
         Map<String, Object> userDataObjectMap = userData.toHashMap();
@@ -499,6 +499,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
         Countly.sharedInstance().userProfile().setProperties(userDataMap);
         Countly.sharedInstance().userProfile().save();
+        promise.resolve("Success");
     }
 
     @ReactMethod
@@ -677,96 +678,106 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     }
 
     @ReactMethod
-    public void userData_setProperty(ReadableArray args){
+    public void userData_setProperty(ReadableArray args, Promise promise){
         Countly.sharedInstance();
         String keyName = args.getString(0);
         String keyValue = args.getString(1);
         Countly.sharedInstance().userProfile().setProperty(keyName, keyValue);
         Countly.sharedInstance().userProfile().save();
+        promise.resolve("Success");
     }
 
     @ReactMethod
-    public void userData_increment(ReadableArray args){
+    public void userData_increment(ReadableArray args, Promise promise){
         Countly.sharedInstance();
         String keyName = args.getString(0);
         Countly.sharedInstance().userProfile().increment(keyName);
         Countly.sharedInstance().userProfile().save();
+        promise.resolve("Success");
     }
 
     @ReactMethod
-    public void userData_incrementBy(ReadableArray args){
+    public void userData_incrementBy(ReadableArray args, Promise promise){
         Countly.sharedInstance();
         String keyName = args.getString(0);
         int keyIncrement = Integer.parseInt(args.getString(1));
         Countly.sharedInstance().userProfile().incrementBy(keyName, keyIncrement);
         Countly.sharedInstance().userProfile().save();
+        promise.resolve("Success");
     }
 
     @ReactMethod
-    public void userData_multiply(ReadableArray args){
+    public void userData_multiply(ReadableArray args, Promise promise){
         Countly.sharedInstance();
         String keyName = args.getString(0);
         int multiplyValue = Integer.parseInt(args.getString(1));
         Countly.sharedInstance().userProfile().multiply(keyName, multiplyValue);
         Countly.sharedInstance().userProfile().save();
+        promise.resolve("Success");
     }
 
     @ReactMethod
-    public void userData_saveMax(ReadableArray args){
+    public void userData_saveMax(ReadableArray args, Promise promise){
         Countly.sharedInstance();
         String keyName = args.getString(0);
         int maxScore = Integer.parseInt(args.getString(1));
         Countly.sharedInstance().userProfile().saveMax(keyName, maxScore);
         Countly.sharedInstance().userProfile().save();
+        promise.resolve("Success");
     }
 
     @ReactMethod
-    public void userData_saveMin(ReadableArray args){
+    public void userData_saveMin(ReadableArray args, Promise promise){
         Countly.sharedInstance();
         String keyName = args.getString(0);
         int minScore = Integer.parseInt(args.getString(1));
         Countly.sharedInstance().userProfile().saveMin(keyName, minScore);
         Countly.sharedInstance().userProfile().save();
+        promise.resolve("Success");
     }
 
     @ReactMethod
-    public void userData_setOnce(ReadableArray args){
+    public void userData_setOnce(ReadableArray args, Promise promise){
         Countly.sharedInstance();
         String keyName = args.getString(0);
         String minScore = args.getString(1);
         Countly.sharedInstance().userProfile().setOnce(keyName, minScore);
         Countly.sharedInstance().userProfile().save();
+        promise.resolve("Success");
     }
 
     @ReactMethod
-    public void userData_pushUniqueValue(ReadableArray args){
+    public void userData_pushUniqueValue(ReadableArray args, Promise promise){
         Countly.sharedInstance();
         String keyName = args.getString(0);
         String keyValue = args.getString(1);
         Countly.sharedInstance().userProfile().pushUnique(keyName, keyValue);
         Countly.sharedInstance().userProfile().save();
+        promise.resolve("Success");
     }
 
     @ReactMethod
-    public void userData_pushValue(ReadableArray args){
+    public void userData_pushValue(ReadableArray args, Promise promise){
         Countly.sharedInstance();
         String keyName = args.getString(0);
         String keyValue = args.getString(1);
         Countly.sharedInstance().userProfile().push(keyName, keyValue);
         Countly.sharedInstance().userProfile().save();
+        promise.resolve("Success");
     }
 
     @ReactMethod
-    public void userData_pullValue(ReadableArray args){
+    public void userData_pullValue(ReadableArray args, Promise promise){
         Countly.sharedInstance();
         String keyName = args.getString(0);
         String keyValue = args.getString(1);
         Countly.sharedInstance().userProfile().pull(keyName, keyValue);
         Countly.sharedInstance().userProfile().save();
+        promise.resolve("Success");
     }
 
     @ReactMethod
-    public void userDataBulk_setUserProperties(ReadableMap userData){
+    public void userDataBulk_setUserProperties(ReadableMap userData, Promise promise){
         Countly.sharedInstance();
         Map<String, Object> userDataObjectMap = userData.toHashMap();
         Map<String,Object> userDataMap = new HashMap<>();
@@ -778,92 +789,103 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         }
 
         Countly.sharedInstance().userProfile().setProperties(userDataMap);
+        promise.resolve("Success");
     }
 
     @ReactMethod
-    public void userDataBulk_save(ReadableArray args){
+    public void userDataBulk_save(ReadableArray args, Promise promise){
         Countly.sharedInstance();
         Countly.sharedInstance().userProfile().save();
+        promise.resolve("Success");
     }
     
     @ReactMethod
-    public void userDataBulk_setProperty(ReadableArray args){
+    public void userDataBulk_setProperty(ReadableArray args, Promise promise){
         Countly.sharedInstance();
         String keyName = args.getString(0);
         String keyValue = args.getString(1);
         Countly.sharedInstance().userProfile().setProperty(keyName, keyValue);
+        promise.resolve("Success");
     }
 
     @ReactMethod
-    public void userDataBulk_increment(ReadableArray args){
+    public void userDataBulk_increment(ReadableArray args, Promise promise){
         Countly.sharedInstance();
         String keyName = args.getString(0);
         Countly.sharedInstance().userProfile().increment(keyName);
+        promise.resolve("Success");
     }
 
     @ReactMethod
-    public void userDataBulk_incrementBy(ReadableArray args){
+    public void userDataBulk_incrementBy(ReadableArray args, Promise promise){
         Countly.sharedInstance();
         String keyName = args.getString(0);
         int keyIncrement = Integer.parseInt(args.getString(1));
         Countly.sharedInstance().userProfile().incrementBy(keyName, keyIncrement);
+        promise.resolve("Success");
     }
 
     @ReactMethod
-    public void userDataBulk_multiply(ReadableArray args){
+    public void userDataBulk_multiply(ReadableArray args, Promise promise){
         Countly.sharedInstance();
         String keyName = args.getString(0);
         int multiplyValue = Integer.parseInt(args.getString(1));
         Countly.sharedInstance().userProfile().multiply(keyName, multiplyValue);
+        promise.resolve("Success");
     }
 
     @ReactMethod
-    public void userDataBulk_saveMax(ReadableArray args){
+    public void userDataBulk_saveMax(ReadableArray args, Promise promise){
         Countly.sharedInstance();
         String keyName = args.getString(0);
         int maxScore = Integer.parseInt(args.getString(1));
         Countly.sharedInstance().userProfile().saveMax(keyName, maxScore);
+        promise.resolve("Success");
     }
 
     @ReactMethod
-    public void userDataBulk_saveMin(ReadableArray args){
+    public void userDataBulk_saveMin(ReadableArray args, Promise promise){
         Countly.sharedInstance();
         String keyName = args.getString(0);
         int minScore = Integer.parseInt(args.getString(1));
         Countly.sharedInstance().userProfile().saveMin(keyName, minScore);
+        promise.resolve("Success");
     }
 
     @ReactMethod
-    public void userDataBulk_setOnce(ReadableArray args){
+    public void userDataBulk_setOnce(ReadableArray args, Promise promise){
         Countly.sharedInstance();
         String keyName = args.getString(0);
         String minScore = args.getString(1);
         Countly.sharedInstance().userProfile().setOnce(keyName, minScore);
-        Countly.sharedInstance().userProfile().save();
+        promise.resolve("Success");
     }
 
     @ReactMethod
-    public void userDataBulk_pushUniqueValue(ReadableArray args){
+    public void userDataBulk_pushUniqueValue(ReadableArray args, Promise promise){
         Countly.sharedInstance();
         String keyName = args.getString(0);
         String keyValue = args.getString(1);
         Countly.sharedInstance().userProfile().pushUnique(keyName, keyValue);
+        promise.resolve("Success");
     }
 
     @ReactMethod
-    public void userDataBulk_pushValue(ReadableArray args){
+    public void userDataBulk_pushValue(ReadableArray args, Promise promise){
         Countly.sharedInstance();
         String keyName = args.getString(0);
         String keyValue = args.getString(1);
         Countly.sharedInstance().userProfile().push(keyName, keyValue);
+        promise.resolve("Success");
     }
 
     @ReactMethod
-    public void userDataBulk_pullValue(ReadableArray args){
+    public void userDataBulk_pullValue(ReadableArray args, Promise promise){
         Countly.sharedInstance();
         String keyName = args.getString(0);
         String keyValue = args.getString(1);
         Countly.sharedInstance().userProfile().pull(keyName, keyValue);
+        promise.resolve("Success");
     }
 
     // GDPR

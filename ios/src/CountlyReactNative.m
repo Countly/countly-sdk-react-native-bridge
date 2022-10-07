@@ -167,13 +167,17 @@ RCT_EXPORT_METHOD(setLoggingEnabled:(NSArray*)arguments)
   });
 }
 
-RCT_EXPORT_METHOD(setUserData:(NSArray*)arguments)
+RCT_REMAP_METHOD(setUserData,
+                 params: (NSArray*)arguments
+                 setUserDataWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
       
   NSDictionary* userData = [arguments objectAtIndex:0];
   [self setUserDataIntenral:userData];
   [Countly.user save];
+  resolve(@"Success");
   });
 }
 
@@ -585,7 +589,10 @@ RCT_EXPORT_METHOD(logJSException:(NSString *)errTitle withMessage:(NSString *)me
   });
 }
 
-RCT_EXPORT_METHOD(userData_setProperty:(NSArray*)arguments)
+RCT_REMAP_METHOD(userData_setProperty,
+                  params:(NSArray*)arguments
+                  userDataSetPropertyWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* keyName = [arguments objectAtIndex:0];
@@ -593,20 +600,28 @@ RCT_EXPORT_METHOD(userData_setProperty:(NSArray*)arguments)
 
   [Countly.user set:keyName value:keyValue];
   [Countly.user save];
+  resolve(@"Success");
   });
 }
 
-RCT_EXPORT_METHOD(userData_increment:(NSArray*)arguments)
+RCT_REMAP_METHOD(userData_increment,
+                 params :(NSArray*)arguments
+                 userDataIncrementWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* keyName = [arguments objectAtIndex:0];
 
   [Countly.user increment:keyName];
   [Countly.user save];
+  resolve(@"Success");
   });
 }
 
-RCT_EXPORT_METHOD(userData_incrementBy:(NSArray*)arguments)
+RCT_REMAP_METHOD(userData_incrementBy,
+                 params :(NSArray*)arguments
+                 userDataIncrementByWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* keyName = [arguments objectAtIndex:0];
@@ -615,10 +630,14 @@ RCT_EXPORT_METHOD(userData_incrementBy:(NSArray*)arguments)
 
   [Countly.user incrementBy:keyName value:[NSNumber numberWithInt:keyValueInteger]];
   [Countly.user save];
+  resolve(@"Success");
   });
 }
 
-RCT_EXPORT_METHOD(userData_multiply:(NSArray*)arguments)
+RCT_REMAP_METHOD(userData_multiply,
+                 params :(NSArray*)arguments
+                 userDataMultiplyWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* keyName = [arguments objectAtIndex:0];
@@ -627,10 +646,14 @@ RCT_EXPORT_METHOD(userData_multiply:(NSArray*)arguments)
 
   [Countly.user multiply:keyName value:[NSNumber numberWithInt:keyValueInteger]];
   [Countly.user save];
+  resolve(@"Success");
   });
 }
 
-RCT_EXPORT_METHOD(userData_saveMax:(NSArray*)arguments)
+RCT_REMAP_METHOD(userData_saveMax,
+                 params :(NSArray*)arguments
+                 userDataSaveMaxWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* keyName = [arguments objectAtIndex:0];
@@ -639,10 +662,14 @@ RCT_EXPORT_METHOD(userData_saveMax:(NSArray*)arguments)
 
   [Countly.user max:keyName value:[NSNumber numberWithInt:keyValueInteger]];
   [Countly.user save];
+  resolve(@"Success");
   });
 }
 
-RCT_EXPORT_METHOD(userData_saveMin:(NSArray*)arguments)
+RCT_REMAP_METHOD(userData_saveMin,
+                 params :(NSArray*)arguments
+                 userDataSaveMinWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* keyName = [arguments objectAtIndex:0];
@@ -651,10 +678,14 @@ RCT_EXPORT_METHOD(userData_saveMin:(NSArray*)arguments)
 
   [Countly.user min:keyName value:[NSNumber numberWithInt:keyValueInteger]];
   [Countly.user save];
+  resolve(@"Success");
   });
 }
 
-RCT_EXPORT_METHOD(userData_setOnce:(NSArray*)arguments)
+RCT_REMAP_METHOD(userData_setOnce,
+                 params :(NSArray*)arguments
+                 userDataSetOnce:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* keyName = [arguments objectAtIndex:0];
@@ -662,9 +693,14 @@ RCT_EXPORT_METHOD(userData_setOnce:(NSArray*)arguments)
 
   [Countly.user setOnce:keyName value:keyValue];
   [Countly.user save];
+  resolve(@"Success");
   });
 }
-RCT_EXPORT_METHOD(userData_pushUniqueValue:(NSArray*)arguments)
+
+RCT_REMAP_METHOD(userData_pushUniqueValue,
+                 params :(NSArray*)arguments
+                 userDataPushUniqueValueWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* keyName = [arguments objectAtIndex:0];
@@ -672,9 +708,14 @@ RCT_EXPORT_METHOD(userData_pushUniqueValue:(NSArray*)arguments)
 
   [Countly.user pushUnique:keyName value:keyValue];
   [Countly.user save];
+  resolve(@"Success");
   });
 }
-RCT_EXPORT_METHOD(userData_pushValue:(NSArray*)arguments)
+
+RCT_REMAP_METHOD(userData_pushValue,
+                 params :(NSArray*)arguments
+                 userDataPushValueWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* keyName = [arguments objectAtIndex:0];
@@ -682,9 +723,14 @@ RCT_EXPORT_METHOD(userData_pushValue:(NSArray*)arguments)
 
   [Countly.user push:keyName value:keyValue];
   [Countly.user save];
+  resolve(@"Success");
   });
 }
-RCT_EXPORT_METHOD(userData_pullValue:(NSArray*)arguments)
+
+RCT_REMAP_METHOD(userData_pullValue,
+                 params :(NSArray*)arguments
+                 userDataPullValueWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* keyName = [arguments objectAtIndex:0];
@@ -692,45 +738,65 @@ RCT_EXPORT_METHOD(userData_pullValue:(NSArray*)arguments)
 
   [Countly.user pull:keyName value:keyValue];
   [Countly.user save];
+  resolve(@"Success");
   });
 }
 
-RCT_EXPORT_METHOD(userDataBulk_setUserProperties:(NSDictionary*)userProperties)
+RCT_REMAP_METHOD(userDataBulk_setUserProperties,
+                 params :(NSDictionary*)userProperties
+                 userDataBulkSetUserPropertiesWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
     [self setUserDataIntenral:userProperties];
     NSDictionary* customeProperties = [self removePredefinedUserProperties:userProperties];
     Countly.user.custom = customeProperties;
+    resolve(@"Success");
   });
 }
 
-RCT_EXPORT_METHOD(userDataBulk_save:(NSArray*)arguments)
+RCT_REMAP_METHOD(userDataBulk_save,
+                 params :(NSArray*)arguments
+                 userDataBulkSaveWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
     [Countly.user save];
+    resolve(@"Success");
   });
 }
 
-RCT_EXPORT_METHOD(userDataBulk_setProperty:(NSArray*)arguments)
+RCT_REMAP_METHOD(userDataBulk_setProperty,
+                 params :(NSArray*)arguments
+                 userDataBulkSetPropertyWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* keyName = [arguments objectAtIndex:0];
   NSString* keyValue = [arguments objectAtIndex:1];
 
   [Countly.user set:keyName value:keyValue];
+  resolve(@"Success");
   });
 }
 
-RCT_EXPORT_METHOD(userDataBulk_increment:(NSArray*)arguments)
+RCT_REMAP_METHOD(userDataBulk_increment,
+                 params :(NSArray*)arguments
+                 userDataBulkIncrementWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* keyName = [arguments objectAtIndex:0];
 
   [Countly.user increment:keyName];
+  resolve(@"Success");
   });
 }
 
-RCT_EXPORT_METHOD(userDataBulk_incrementBy:(NSArray*)arguments)
+RCT_REMAP_METHOD(userDataBulk_incrementBy,
+                 params :(NSArray*)arguments
+                 userDataBulkIncrementByWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* keyName = [arguments objectAtIndex:0];
@@ -738,10 +804,14 @@ RCT_EXPORT_METHOD(userDataBulk_incrementBy:(NSArray*)arguments)
   int keyValueInteger = [keyValue intValue];
 
   [Countly.user incrementBy:keyName value:[NSNumber numberWithInt:keyValueInteger]];
+  resolve(@"Success");
   });
 }
 
-RCT_EXPORT_METHOD(userDataBulk_multiply:(NSArray*)arguments)
+RCT_REMAP_METHOD(userDataBulk_multiply,
+                 params :(NSArray*)arguments
+                 userDataBulkMultiplyWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* keyName = [arguments objectAtIndex:0];
@@ -749,10 +819,14 @@ RCT_EXPORT_METHOD(userDataBulk_multiply:(NSArray*)arguments)
   int keyValueInteger = [keyValue intValue];
 
   [Countly.user multiply:keyName value:[NSNumber numberWithInt:keyValueInteger]];
+  resolve(@"Success");
   });
 }
 
-RCT_EXPORT_METHOD(userDataBulk_saveMax:(NSArray*)arguments)
+RCT_REMAP_METHOD(userDataBulk_saveMax,
+                 params :(NSArray*)arguments
+                 userDataBulkSaveMaxWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* keyName = [arguments objectAtIndex:0];
@@ -760,10 +834,14 @@ RCT_EXPORT_METHOD(userDataBulk_saveMax:(NSArray*)arguments)
   int keyValueInteger = [keyValue intValue];
 
   [Countly.user max:keyName value:[NSNumber numberWithInt:keyValueInteger]];
+  resolve(@"Success");
   });
 }
 
-RCT_EXPORT_METHOD(userDataBulk_saveMin:(NSArray*)arguments)
+RCT_REMAP_METHOD(userDataBulk_saveMin,
+                 params :(NSArray*)arguments
+                 userDataBulkSaveMinWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* keyName = [arguments objectAtIndex:0];
@@ -771,43 +849,61 @@ RCT_EXPORT_METHOD(userDataBulk_saveMin:(NSArray*)arguments)
   int keyValueInteger = [keyValue intValue];
 
   [Countly.user min:keyName value:[NSNumber numberWithInt:keyValueInteger]];
+  resolve(@"Success");
   });
 }
 
-RCT_EXPORT_METHOD(userDataBulk_setOnce:(NSArray*)arguments)
+RCT_REMAP_METHOD(userDataBulk_setOnce,
+                 params :(NSArray*)arguments
+                 userDataBulkSetOnceWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* keyName = [arguments objectAtIndex:0];
   NSString* keyValue = [arguments objectAtIndex:1];
 
   [Countly.user setOnce:keyName value:keyValue];
+  resolve(@"Success");
   });
 }
-RCT_EXPORT_METHOD(userDataBulk_pushUniqueValue:(NSArray*)arguments)
+RCT_REMAP_METHOD(userDataBulk_pushUniqueValue,
+                 params :(NSArray*)arguments
+                 userDataBulkPushUniqueValueWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* keyName = [arguments objectAtIndex:0];
   NSString* keyValue = [arguments objectAtIndex:1];
 
   [Countly.user pushUnique:keyName value:keyValue];
+  resolve(@"Success");
   });
 }
-RCT_EXPORT_METHOD(userDataBulk_pushValue:(NSArray*)arguments)
+RCT_REMAP_METHOD(userDataBulk_pushValue,
+                 params :(NSArray*)arguments
+                 userDataBulkPushValueWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* keyName = [arguments objectAtIndex:0];
   NSString* keyValue = [arguments objectAtIndex:1];
 
   [Countly.user push:keyName value:keyValue];
+  resolve(@"Success");
   });
 }
-RCT_EXPORT_METHOD(userDataBulk_pullValue:(NSArray*)arguments)
+
+RCT_REMAP_METHOD(userDataBulk_pullValue,
+                 params :(NSArray*)arguments
+                 userDataBulkPullValueWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
   NSString* keyName = [arguments objectAtIndex:0];
   NSString* keyValue = [arguments objectAtIndex:1];
 
   [Countly.user pull:keyName value:keyValue];
+  resolve(@"Success");
   });
 }
 
