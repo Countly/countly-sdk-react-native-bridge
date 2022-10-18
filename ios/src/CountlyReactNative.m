@@ -50,7 +50,7 @@ NSString* const CUSTOM_KEY = @"custom";
 NSString* const kCountlyNotificationPersistencyKey = @"kCountlyNotificationPersistencyKey";
 
 - (NSArray<NSString *> *)supportedEvents {
-    return @[@"onCountlyPushNotification", @"ratingWidgetCallback"];
+    return @[@"onCountlyPushNotification", @"ratingWidgetCallback", @"widgetShown", @"widgetClosed"];
 }
 
 RCT_EXPORT_MODULE();
@@ -87,7 +87,6 @@ RCT_REMAP_METHOD(init,
             [[Countly sharedInstance] startWithConfig:config];
             [self recordPushAction];
             resolve(@"Success");
-            
         });
     }
   });
@@ -1086,7 +1085,12 @@ RCT_REMAP_METHOD(getFeedbackWidgets,
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
     [Countly.sharedInstance getFeedbackWidgets:^(NSArray<CountlyFeedbackWidget *> * _Nonnull feedbackWidgets, NSError * _Nonnull error) {
-      NSMutableArray* feedbackWidgetsArray = [NSMutableArray arrayWithCapacity:feedbackWidgets.count];
+      if (error){
+        NSString* errorStr = error.localizedDescription;
+        reject(@"getFeedbackWidgets_failure", errorStr, nil);
+    }
+    else {
+       NSMutableArray* feedbackWidgetsArray = [NSMutableArray arrayWithCapacity:feedbackWidgets.count];
       for (CountlyFeedbackWidget* retrievedWidget in feedbackWidgets) {
           NSMutableDictionary* feedbackWidget = [NSMutableDictionary dictionaryWithCapacity:3];
           feedbackWidget[@"id"] = retrievedWidget.ID;
@@ -1095,6 +1099,7 @@ RCT_REMAP_METHOD(getFeedbackWidgets,
           [feedbackWidgetsArray addObject:feedbackWidget];
       }
       resolve(feedbackWidgetsArray);
+    }
     }];
   });
 }
@@ -1126,7 +1131,12 @@ RCT_EXPORT_METHOD(presentFeedbackWidget:(NSArray*)arguments)
             feedbackWidgetsDict[@"type"] = widgetType;
             feedbackWidgetsDict[@"name"] = widgetName;
             CountlyFeedbackWidget *feedback = [CountlyFeedbackWidget createWithDictionary:feedbackWidgetsDict];
-            [feedback present];
+            [feedback presentWithAppearBlock:^{
+                [self sendEventWithName:@"widgetShown" body: nil];
+              }
+              andDismissBlock:^{
+                [self sendEventWithName:@"widgetClosed" body: nil];
+                }];
         });
 }
 
@@ -1453,3 +1463,4 @@ API_AVAILABLE(ios(10.0)){
 }
 
 @end
+

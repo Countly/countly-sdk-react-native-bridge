@@ -1099,7 +1099,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             @Override
             public void onFinished(List<CountlyFeedbackWidget> retrievedWidgets, String error) {
                 if(error != null) {
-                    promise.reject("getFeedbackWidgets", error);
+                    promise.reject("getFeedbackWidgets_failure", error);
                     return;
                 }
                 WritableArray retrievedWidgetsArray = new WritableNativeArray();
@@ -1159,11 +1159,17 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 }
                 else {
                     promise.resolve("presentFeedbackWidget success");
+                    ((ReactApplicationContext) _reactContext)
+                        .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                        .emit("widgetShown", null);
                 }
             }
             @Override
             public void onClosed() {
-
+                promise.resolve("presentFeedbackWidget success");
+                    ((ReactApplicationContext) _reactContext)
+                        .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                        .emit("widgetClosed", null);
             }
         });
     }
