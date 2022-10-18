@@ -1,3 +1,9 @@
+## 22.06.0
+* User profile added option to send bulk data in single request instead of individual request
+* Fixed isInitialized variable reset on hot reload
+* Updated underlying android SDK version to 22.06.0
+* Updated underlying iOS SDK version to 22.06.2
+
 ## 22.02.3
 * User profile added option to send bulk data in single request instead of individual request
 * Fixed isInitialized variable reset on hot reload
