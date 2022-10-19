@@ -26,12 +26,17 @@ var _ratingWidgetListener;
 /*
 * Callback to be executed when feedback widget is displayed 
 */
-var _widgetShown;
+var _widgetShownCallback;
 
 /*
 * Callback to be executed when feedback widget is closed 
 */
-var _widgetClosed;
+var _widgetClosedCallback;
+
+const widgetShownCallbackName = "widgetShownCallback"
+const widgetClosedCallbackName = "widgetClosedCallback"
+const ratingWidgetCallbackName = "ratingWidgetCallback"
+const pushNotificationCallbackName = "pushNotificationCallback"
 
 Countly.messagingMode = {"DEVELOPMENT":"1","PRODUCTION":"0", "ADHOC": "2"};
 if (Platform.OS.match("android")) {
@@ -220,7 +225,7 @@ Countly.askForNotificationPermission = function(customSoundPath = "null"){
  * @param {callback listener } theListener 
  */
 Countly.registerForNotification = function(theListener){
-    var event = eventEmitter.addListener('onCountlyPushNotification', theListener);
+    var event = eventEmitter.addListener(pushNotificationCallbackName, theListener);
     CountlyReactNative.registerForNotification([]);
     return event;
 };
@@ -1352,7 +1357,7 @@ Countly.presentRatingWidgetWithID = function(widgetId, closeButtonText, ratingWi
     }
     if(ratingWidgetCallback){
         // eventEmitter.addListener('ratingWidgetCallback', ratingWidgetCallback);
-        _ratingWidgetListener = eventEmitter.addListener('ratingWidgetCallback', (error) => {
+        _ratingWidgetListener = eventEmitter.addListener(ratingWidgetCallbackName, (error) => {
             ratingWidgetCallback(error);
             _ratingWidgetListener.remove();
         }
@@ -1364,9 +1369,9 @@ Countly.presentRatingWidgetWithID = function(widgetId, closeButtonText, ratingWi
 
 /**
  * Get a list of available feedback widgets as array of object to handle multiple widgets of same type. 
- * @param {callback listener} onFinsihed - returns (retrievedWidgets, error)
+ * @param {callback listener} onFinished - returns (retrievedWidgets, error)
  */
-Countly.getFeedbackWidgets = async function(onFinsihed){
+Countly.getFeedbackWidgets = async function(onFinished){
     if(!_isInitialized) {
         var message = "'init' must be called before 'getFeedbackWidgets'";
         Countly.logError("getFeedbackWidgets", message);
@@ -1379,8 +1384,8 @@ Countly.getFeedbackWidgets = async function(onFinsihed){
       } catch (e) {
         error = e.message;
       }
-      if(onFinsihed) {
-        onFinsihed(result, error);
+      if(onFinished) {
+        onFinished(result, error);
       }
       return result;
   }
@@ -1407,10 +1412,10 @@ Countly.getAvailableFeedbackWidgets = async function(){
  * 
  * @param {Object} feedbackWidget - feeback Widget with id, type and name
  * @param {String} closeButtonText - text for cancel/close button
- * @param {callback listener} widgetShown - Callback to be executed when feedback widget is displayed 
- * @param {callback listener} widgetClosed - Callback to be executed when feedback widget is closed 
+ * @param {callback listener} widgetShownCallback - Callback to be executed when feedback widget is displayed 
+ * @param {callback listener} widgetClosedCallback - Callback to be executed when feedback widget is closed 
  */  
-Countly.presentFeedbackWidgetObject = async function(feedbackWidget, closeButtonText, widgetShown, widgetClosed){
+Countly.presentFeedbackWidgetObject = async function(feedbackWidget, closeButtonText, widgetShownCallback, widgetClosedCallback){
     if(!_isInitialized) {
         var msg = "'init' must be called before 'presentFeedbackWidgetObject'";
         Countly.logError("presentFeedbackWidgetObject", msg);
@@ -1432,22 +1437,22 @@ Countly.presentFeedbackWidgetObject = async function(feedbackWidget, closeButton
         Countly.logError("presentFeedbackWidgetObject", message);
         return message;
     }
-    if (typeof closeButtonText != "string") { 
+    if(typeof closeButtonText != "string") { 
             closeButtonText = "";
             Countly.logWarning("presentFeedbackWidgetObject", "unsupported data type of closeButtonText : '" + (typeof args) + "'");
     }
 
-    if(widgetShown){
-        _widgetShown = eventEmitter.addListener('widgetShown', () => {
-            widgetShown();
-            _widgetShown.remove();
+    if(widgetShownCallback) {
+        _widgetShownCallback = eventEmitter.addListener(widgetShownCallbackName, () => {
+            widgetShownCallback();
+            _widgetShownCallback.remove();
         }
         );
     }
-    if(widgetClosed){
-        _widgetClosed = eventEmitter.addListener('widgetClosed', () => {
-            widgetClosed();
-            _widgetClosed.remove();
+    if(widgetClosedCallback) {
+        _widgetClosedCallback = eventEmitter.addListener(widgetClosedCallbackName, () => {
+            widgetClosedCallback();
+            _widgetClosedCallback.remove();
         }
         );
     }

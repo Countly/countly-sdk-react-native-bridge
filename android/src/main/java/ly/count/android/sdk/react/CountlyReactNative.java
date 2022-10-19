@@ -101,7 +101,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     private boolean useAdditionalIntentRedirectionChecks = true;
 
     private final ReactApplicationContext _reactContext;
-
+    
+    private static String widgetShownCallbackName = "widgetShownCallback";
+    private static String widgetClosedCallbackName = "widgetClosedCallback";
+    private static String ratingWidgetCallbackName = "ratingWidgetCallback";
+    private static String pushNotificationCallbackName = "pushNotificationCallback";
+ 
     private final Set<String> validConsentFeatureNames = new HashSet<>(Arrays.asList(
             Countly.CountlyFeatureNames.sessions,
             Countly.CountlyFeatureNames.events,
@@ -550,7 +555,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 log("registerForNotification callback result [" + result + "]", LogLevel.WARNING);
                 ((ReactApplicationContext) _reactContext)
                         .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                        .emit("onCountlyPushNotification", result);
+                        .emit(pushNotificationCallbackName, result);
             }
         };
         log("registerForNotification theCallback", LogLevel.INFO);
@@ -1087,7 +1092,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             public void callback(String error) {
                 ((ReactApplicationContext) _reactContext)
                         .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                        .emit("ratingWidgetCallback", error);
+                        .emit(ratingWidgetCallbackName, error);
             }
         });
     }
@@ -1161,7 +1166,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                     promise.resolve("presentFeedbackWidget success");
                     ((ReactApplicationContext) _reactContext)
                         .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                        .emit("widgetShown", null);
+                        .emit(widgetShownCallbackName, null);
                 }
             }
             @Override
@@ -1169,7 +1174,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 promise.resolve("presentFeedbackWidget success");
                     ((ReactApplicationContext) _reactContext)
                         .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                        .emit("widgetClosed", null);
+                        .emit(widgetClosedCallbackName, null);
             }
         });
     }

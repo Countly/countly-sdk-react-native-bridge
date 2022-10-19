@@ -46,11 +46,16 @@ NSString* const GENDER_KEY = @"gender";
 NSString* const BYEAR_KEY = @"byear";
 NSString* const CUSTOM_KEY = @"custom";
 
+NSString* const widgetShownCallbackName = @"widgetShownCallback";
+NSString* const widgetClosedCallbackName = @"widgetClosedCallback";
+NSString* const ratingWidgetCallbackName = @"ratingWidgetCallback";
+NSString* const pushNotificationCallbackName = @"pushNotificationCallback";
+
 @implementation CountlyReactNative
 NSString* const kCountlyNotificationPersistencyKey = @"kCountlyNotificationPersistencyKey";
 
 - (NSArray<NSString *> *)supportedEvents {
-    return @[@"onCountlyPushNotification", @"ratingWidgetCallback", @"widgetShown", @"widgetClosed"];
+    return @[pushNotificationCallbackName, ratingWidgetCallbackName, widgetShownCallbackName, widgetClosedCallbackName];
 }
 
 RCT_EXPORT_MODULE();
@@ -233,11 +238,11 @@ RCT_EXPORT_METHOD(registerForNotification:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
     [self saveListener: ^(id  _Nullable result) {
-         [self sendEventWithName:@"onCountlyPushNotification" body: [CountlyReactNative toJSON:lastStoredNotification]];
+         [self sendEventWithName:pushNotificationCallbackName body: [CountlyReactNative toJSON:lastStoredNotification]];
          lastStoredNotification = nil;
     }];
     if(lastStoredNotification != nil){
-        [self sendEventWithName:@"onCountlyPushNotification" body: [CountlyReactNative toJSON:lastStoredNotification]];
+        [self sendEventWithName:pushNotificationCallbackName body: [CountlyReactNative toJSON:lastStoredNotification]];
         lastStoredNotification = nil;
     }
   });
@@ -1074,7 +1079,7 @@ RCT_EXPORT_METHOD(presentRatingWidgetWithID:(NSArray*)arguments)
     if (error){
         errorStr = error.localizedDescription;
     }
-    [self sendEventWithName:@"ratingWidgetCallback" body: errorStr];
+    [self sendEventWithName:ratingWidgetCallbackName body: errorStr];
   }];
   });
 }
@@ -1132,10 +1137,10 @@ RCT_EXPORT_METHOD(presentFeedbackWidget:(NSArray*)arguments)
             feedbackWidgetsDict[@"name"] = widgetName;
             CountlyFeedbackWidget *feedback = [CountlyFeedbackWidget createWithDictionary:feedbackWidgetsDict];
             [feedback presentWithAppearBlock:^{
-                [self sendEventWithName:@"widgetShown" body: nil];
+                [self sendEventWithName:widgetShownCallbackName body: nil];
               }
               andDismissBlock:^{
-                [self sendEventWithName:@"widgetClosed" body: nil];
+                [self sendEventWithName:widgetClosedCallbackName body: nil];
                 }];
         });
 }
