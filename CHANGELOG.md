@@ -1,5 +1,5 @@
 ## 22.06.0
-* Added Feedback widget callbacks (widgetShown, widgetClosed and RetrivedWidgets)
+* Added Feedback widget callbacks (widgetShown, widgetClosed and retrievedWidgets)
 * Updated underlying android SDK version to 22.06.0
 * Updated underlying iOS SDK version to 22.06.2
 
