@@ -422,26 +422,44 @@ class Example extends Component {
     }
 
     showSurvey = function(){
-      Countly.getFeedbackWidgets().then((retrivedWidgets) => {
+      Countly.getFeedbackWidgets(function(retrivedWidgets, error){
+        if (error != null) {
+          console.log("showSurvey Error : " + error);
+        }
+        else {
+          console.log("showSurvey Success : " + retrivedWidgets.length);
           var surveyWidget =  retrivedWidgets.find(x => x.type === 'survey')
           if(surveyWidget) {
-              Countly.presentFeedbackWidgetObject(surveyWidget, "Close")
+            Countly.presentFeedbackWidgetObject(surveyWidget, "Close", function() {
+              console.log("showSurvey presentFeedbackWidgetObject : " + "Widgetshown");
+            },
+            function() {
+              console.log("showSurvey presentFeedbackWidgetObject : " + "Widgetclosed");
+            })
           }
-      },(err) => {
-          console.error("showSurvey getFeedbackWidgets error : " +err);
+        }
       });
-  }
+    }
 
-  showNPS = function(){
-    Countly.getFeedbackWidgets().then((retrivedWidgets) => {
-      var npsWidget =  retrivedWidgets.find(x => x.type === 'nps')
-      if(npsWidget) {
-          Countly.presentFeedbackWidgetObject(npsWidget, "Close")
-      }
-  },(err) => {
-      console.error("showNPS getFeedbackWidgets error : " +err);
-  });
-  }
+    showNPS = function(){
+      Countly.getFeedbackWidgets(function(retrivedWidgets, error){
+        if (error != null) {
+          console.log("showNPS Error : " + error);
+        }
+        else {
+          console.log("showNPS Success : " + retrivedWidgets.length);
+          var npsWidget =  retrivedWidgets.find(x => x.type === 'nps')
+          if(npsWidget) {
+            Countly.presentFeedbackWidgetObject(npsWidget, "Close", function() {
+              console.log("showNPS presentFeedbackWidgetObject : " + "Widgetshown");
+            },
+            function() {
+              console.log("showNPS presentFeedbackWidgetObject : " + "Widgetclosed");
+            })
+          }
+        }
+      });
+    }
 
     addCrashLog(){
       Countly.addCrashLog("My crash log in string.");

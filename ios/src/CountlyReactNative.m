@@ -46,11 +46,16 @@ NSString* const GENDER_KEY = @"gender";
 NSString* const BYEAR_KEY = @"byear";
 NSString* const CUSTOM_KEY = @"custom";
 
+NSString* const widgetShownCallbackName = @"widgetShownCallback";
+NSString* const widgetClosedCallbackName = @"widgetClosedCallback";
+NSString* const ratingWidgetCallbackName = @"ratingWidgetCallback";
+NSString* const pushNotificationCallbackName = @"pushNotificationCallback";
+
 @implementation CountlyReactNative
 NSString* const kCountlyNotificationPersistencyKey = @"kCountlyNotificationPersistencyKey";
 
 - (NSArray<NSString *> *)supportedEvents {
-    return @[@"onCountlyPushNotification", @"ratingWidgetCallback"];
+    return @[pushNotificationCallbackName, ratingWidgetCallbackName, widgetShownCallbackName, widgetClosedCallbackName];
 }
 
 RCT_EXPORT_MODULE();
@@ -87,7 +92,6 @@ RCT_REMAP_METHOD(init,
             [[Countly sharedInstance] startWithConfig:config];
             [self recordPushAction];
             resolve(@"Success");
-            
         });
     }
   });
@@ -234,11 +238,11 @@ RCT_EXPORT_METHOD(registerForNotification:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
     [self saveListener: ^(id  _Nullable result) {
-         [self sendEventWithName:@"onCountlyPushNotification" body: [CountlyReactNative toJSON:lastStoredNotification]];
+         [self sendEventWithName:pushNotificationCallbackName body: [CountlyReactNative toJSON:lastStoredNotification]];
          lastStoredNotification = nil;
     }];
     if(lastStoredNotification != nil){
-        [self sendEventWithName:@"onCountlyPushNotification" body: [CountlyReactNative toJSON:lastStoredNotification]];
+        [self sendEventWithName:pushNotificationCallbackName body: [CountlyReactNative toJSON:lastStoredNotification]];
         lastStoredNotification = nil;
     }
   });
@@ -1075,7 +1079,7 @@ RCT_EXPORT_METHOD(presentRatingWidgetWithID:(NSArray*)arguments)
     if (error){
         errorStr = error.localizedDescription;
     }
-    [self sendEventWithName:@"ratingWidgetCallback" body: errorStr];
+    [self sendEventWithName:ratingWidgetCallbackName body: errorStr];
   }];
   });
 }
@@ -1086,7 +1090,12 @@ RCT_REMAP_METHOD(getFeedbackWidgets,
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
     [Countly.sharedInstance getFeedbackWidgets:^(NSArray<CountlyFeedbackWidget *> * _Nonnull feedbackWidgets, NSError * _Nonnull error) {
-      NSMutableArray* feedbackWidgetsArray = [NSMutableArray arrayWithCapacity:feedbackWidgets.count];
+      if (error){
+        NSString* errorStr = error.localizedDescription;
+        reject(@"getFeedbackWidgets_failure", errorStr, nil);
+    }
+    else {
+       NSMutableArray* feedbackWidgetsArray = [NSMutableArray arrayWithCapacity:feedbackWidgets.count];
       for (CountlyFeedbackWidget* retrievedWidget in feedbackWidgets) {
           NSMutableDictionary* feedbackWidget = [NSMutableDictionary dictionaryWithCapacity:3];
           feedbackWidget[@"id"] = retrievedWidget.ID;
@@ -1095,6 +1104,7 @@ RCT_REMAP_METHOD(getFeedbackWidgets,
           [feedbackWidgetsArray addObject:feedbackWidget];
       }
       resolve(feedbackWidgetsArray);
+    }
     }];
   });
 }
@@ -1126,7 +1136,12 @@ RCT_EXPORT_METHOD(presentFeedbackWidget:(NSArray*)arguments)
             feedbackWidgetsDict[@"type"] = widgetType;
             feedbackWidgetsDict[@"name"] = widgetName;
             CountlyFeedbackWidget *feedback = [CountlyFeedbackWidget createWithDictionary:feedbackWidgetsDict];
-            [feedback present];
+            [feedback presentWithAppearBlock:^{
+                [self sendEventWithName:widgetShownCallbackName body: nil];
+              }
+              andDismissBlock:^{
+                [self sendEventWithName:widgetClosedCallbackName body: nil];
+                }];
         });
 }
 
@@ -1453,3 +1468,4 @@ API_AVAILABLE(ios(10.0)){
 }
 
 @end
+

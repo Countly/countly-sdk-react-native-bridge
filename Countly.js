@@ -23,6 +23,20 @@ _isPushInitialized = false;
 * Listener for rating widget callback, when callback recieve we will remove the callback using listener. 
 */
 var _ratingWidgetListener;
+/*
+* Callback to be executed when feedback widget is displayed 
+*/
+var _widgetShownCallback;
+
+/*
+* Callback to be executed when feedback widget is closed 
+*/
+var _widgetClosedCallback;
+
+const widgetShownCallbackName = "widgetShownCallback"
+const widgetClosedCallbackName = "widgetClosedCallback"
+const ratingWidgetCallbackName = "ratingWidgetCallback"
+const pushNotificationCallbackName = "pushNotificationCallback"
 
 Countly.messagingMode = {"DEVELOPMENT":"1","PRODUCTION":"0", "ADHOC": "2"};
 if (Platform.OS.match("android")) {
@@ -211,7 +225,7 @@ Countly.askForNotificationPermission = function(customSoundPath = "null"){
  * @param {callback listener } theListener 
  */
 Countly.registerForNotification = function(theListener){
-    var event = eventEmitter.addListener('onCountlyPushNotification', theListener);
+    var event = eventEmitter.addListener(pushNotificationCallbackName, theListener);
     CountlyReactNative.registerForNotification([]);
     return event;
 };
@@ -1343,7 +1357,7 @@ Countly.presentRatingWidgetWithID = function(widgetId, closeButtonText, ratingWi
     }
     if(ratingWidgetCallback){
         // eventEmitter.addListener('ratingWidgetCallback', ratingWidgetCallback);
-        _ratingWidgetListener = eventEmitter.addListener('ratingWidgetCallback', (error) => {
+        _ratingWidgetListener = eventEmitter.addListener(ratingWidgetCallbackName, (error) => {
             ratingWidgetCallback(error);
             _ratingWidgetListener.remove();
         }
@@ -1354,15 +1368,25 @@ Countly.presentRatingWidgetWithID = function(widgetId, closeButtonText, ratingWi
   
 
 /**
- * Get a list of available feedback widgets as array of object to handle multiple widgets of same type.
+ * Get a list of available feedback widgets as array of object to handle multiple widgets of same type. 
+ * @param {callback listener} onFinished - returns (retrievedWidgets, error)
  */
-Countly.getFeedbackWidgets = async function(){
+Countly.getFeedbackWidgets = async function(onFinished){
     if(!_isInitialized) {
         var message = "'init' must be called before 'getFeedbackWidgets'";
         Countly.logError("getFeedbackWidgets", message);
         return message;
     }
-     const result = await CountlyReactNative.getFeedbackWidgets();
+    var result = [];
+    var error = null;
+    try {
+        result = await CountlyReactNative.getFeedbackWidgets();
+      } catch (e) {
+        error = e.message;
+      }
+      if(onFinished) {
+        onFinished(result, error);
+      }
       return result;
   }
 
@@ -1388,8 +1412,10 @@ Countly.getAvailableFeedbackWidgets = async function(){
  * 
  * @param {Object} feedbackWidget - feeback Widget with id, type and name
  * @param {String} closeButtonText - text for cancel/close button
+ * @param {callback listener} widgetShownCallback - Callback to be executed when feedback widget is displayed 
+ * @param {callback listener} widgetClosedCallback - Callback to be executed when feedback widget is closed 
  */  
-Countly.presentFeedbackWidgetObject = async function(feedbackWidget, closeButtonText){
+Countly.presentFeedbackWidgetObject = async function(feedbackWidget, closeButtonText, widgetShownCallback, widgetClosedCallback){
     if(!_isInitialized) {
         var msg = "'init' must be called before 'presentFeedbackWidgetObject'";
         Countly.logError("presentFeedbackWidgetObject", msg);
@@ -1411,10 +1437,26 @@ Countly.presentFeedbackWidgetObject = async function(feedbackWidget, closeButton
         Countly.logError("presentFeedbackWidgetObject", message);
         return message;
     }
-    if (typeof closeButtonText != "string") { 
+    if(typeof closeButtonText != "string") { 
             closeButtonText = "";
             Countly.logWarning("presentFeedbackWidgetObject", "unsupported data type of closeButtonText : '" + (typeof args) + "'");
     }
+
+    if(widgetShownCallback) {
+        _widgetShownCallback = eventEmitter.addListener(widgetShownCallbackName, () => {
+            widgetShownCallback();
+            _widgetShownCallback.remove();
+        }
+        );
+    }
+    if(widgetClosedCallback) {
+        _widgetClosedCallback = eventEmitter.addListener(widgetClosedCallbackName, () => {
+            widgetClosedCallback();
+            _widgetClosedCallback.remove();
+        }
+        );
+    }
+    
     feedbackWidget.name = feedbackWidget.name || "";
     closeButtonText = closeButtonText || "";
     CountlyReactNative.presentFeedbackWidget([feedbackWidget.id, feedbackWidget.type, feedbackWidget.name, closeButtonText]);
