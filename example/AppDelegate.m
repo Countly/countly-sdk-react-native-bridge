@@ -7,11 +7,13 @@
   [CountlyReactNative onNotification: userInfo];
   completionHandler(0);
 }
+
 // When app is killed.
 - (void)userNotificationCenter:(UNUserNotificationCenter *)center didReceiveNotificationResponse:(UNNotificationResponse *)response withCompletionHandler:(void (^)(void))completionHandler{
-  [CountlyReactNative onNotification: response.notification.request.content.userInfo];
+  [CountlyReactNative onNotificationResponse: response];
   completionHandler();
 }
+
 // When app is running.
 - (void)userNotificationCenter:(UNUserNotificationCenter *)center willPresentNotification:(UNNotification *)notification withCompletionHandler:(void (^)(UNNotificationPresentationOptions options))completionHandler{
   [CountlyReactNative onNotification: notification.request.content.userInfo];

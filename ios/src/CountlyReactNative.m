@@ -1373,10 +1373,10 @@ void CountlyRNInternalLog(NSString *format, ...)
 
 + (void)onNotification:(NSDictionary *)notificationMessage
 {
-    [CountlyReactNative onNotification:notificationMessage buttonIndex:0];
+    [CountlyReactNative onNotification:notificationMessage buttonIndex:0 persistData:!CountlyCommon.sharedInstance.hasStarted];
 }
 
-+ (void)onNotification:(NSDictionary *)notificationMessage buttonIndex:(NSInteger)btnIndex
++ (void)onNotification:(NSDictionary *)notificationMessage buttonIndex:(NSInteger)btnIndex persistData:(BOOL)persistNotification
 {
     COUNTLY_RN_LOG(@"Notification received");
     COUNTLY_RN_LOG(@"The notification %@", [CountlyReactNative toJSON:notificationMessage]);
@@ -1386,7 +1386,7 @@ void CountlyRNInternalLog(NSString *format, ...)
     }else{
       lastStoredNotification = notificationMessage;
     }
-    if(!CountlyCommon.sharedInstance.hasStarted) {
+    if(persistNotification) {
         [[NSUserDefaults standardUserDefaults] setObject:notificationMessage forKey:CLYPushDictionaryKey];
         [[NSUserDefaults standardUserDefaults] setInteger:btnIndex forKey:CLYPushButtonIndexKey];
         [[NSUserDefaults standardUserDefaults] synchronize];
@@ -1413,8 +1413,7 @@ API_AVAILABLE(ios(10.0)){
     {
         buttonIndex = [[response.actionIdentifier stringByReplacingOccurrencesOfString:kCountlyActionIdentifier withString:@""] integerValue];
     }
-    [CountlyReactNative onNotification:notificationDictionary buttonIndex:buttonIndex];
-    
+    [CountlyReactNative onNotification:notificationDictionary buttonIndex:buttonIndex persistData:true];
 }
 
 - (void) recordPushAction {
