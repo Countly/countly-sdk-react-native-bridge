@@ -10,6 +10,7 @@
 #import "CountlyConnectionManager.h"
 #import "CountlyRemoteConfig.h"
 #import "CountlyCommon.h"
+#import "CountlyRNPushNotifications.h"
 
 #if DEBUG
 #define COUNTLY_RN_LOG(fmt, ...) CountlyRNInternalLog(fmt, ##__VA_ARGS__)
@@ -24,16 +25,9 @@
 NSString* const kCountlyReactNativeSDKVersion = @"22.06.0";
 NSString* const kCountlyReactNativeSDKName = @"js-rnb-ios";
 
-CountlyConfig* config = nil;
-NSDictionary *lastStoredNotification = nil;
-Result notificationListener = nil;
-NSMutableArray *notificationIDs = nil;        // alloc here
+CountlyConfig* config = nil;    // alloc here
 NSMutableArray<CLYFeature>* countlyFeatures = nil;
 BOOL enablePushNotifications = true;
-
-typedef NSString* CLYUserDefaultKey NS_EXTENSIBLE_STRING_ENUM;
-CLYUserDefaultKey const CLYPushDictionaryKey  = @"notificationDictionaryKey";
-CLYUserDefaultKey const CLYPushButtonIndexKey = @"notificationBtnIndexKey";
 
 NSString* const NAME_KEY = @"name";
 NSString* const USERNAME_KEY = @"username";
@@ -54,6 +48,17 @@ NSString* const pushNotificationCallbackName = @"pushNotificationCallback";
 @implementation CountlyReactNative
 NSString* const kCountlyNotificationPersistencyKey = @"kCountlyNotificationPersistencyKey";
 
+- (instancetype)init
+{
+	if (self = [super init])
+	{
+		
+	}
+	
+	[CountlyRNPushNotifications.sharedInstance setCountlyReactNative:self];
+	
+	return self;
+}
 - (NSArray<NSString *> *)supportedEvents {
     return @[pushNotificationCallbackName, ratingWidgetCallbackName, widgetShownCallbackName, widgetClosedCallbackName];
 }
@@ -90,7 +95,7 @@ RCT_REMAP_METHOD(init,
         dispatch_async(dispatch_get_main_queue(), ^
         {
             [[Countly sharedInstance] startWithConfig:config];
-            [self recordPushAction];
+            [CountlyRNPushNotifications.sharedInstance recordPushActions];
             resolve(@"Success");
         });
     }
@@ -210,57 +215,48 @@ RCT_EXPORT_METHOD(sendPushToken:(NSArray*)arguments)
 RCT_EXPORT_METHOD(pushTokenType:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
-  if (config == nil){
-    config = CountlyConfig.new;
-  }
-  config.sendPushTokenAlways = YES;
-  NSString* tokenType = [arguments objectAtIndex:0];
-  if([tokenType isEqualToString: @"1"]){
-      config.pushTestMode = CLYPushTestModeDevelopment;
-  }
-  else if([tokenType isEqualToString: @"2"] || [tokenType isEqualToString: @"0"]){
-      config.pushTestMode = CLYPushTestModeTestFlightOrAdHoc;
-  }else{
-  }
+	  if (config == nil){
+		config = CountlyConfig.new;
+	  }
+	  config.sendPushTokenAlways = YES;
+	  NSString* tokenType = [arguments objectAtIndex:0];
+	  if([tokenType isEqualToString: @"1"]){
+		  config.pushTestMode = CLYPushTestModeDevelopment;
+	  }
+	  else if([tokenType isEqualToString: @"2"] || [tokenType isEqualToString: @"0"]){
+		  config.pushTestMode = CLYPushTestModeTestFlightOrAdHoc;
+	  }
+	  
+	  CountlyPushNotifications.sharedInstance.pushTestMode = config.pushTestMode;
   });
 }
 
 RCT_EXPORT_METHOD(askForNotificationPermission:(NSArray*)arguments)
 {
-  dispatch_async(dispatch_get_main_queue(), ^ {
-  [Countly.sharedInstance askForNotificationPermission];
-  });
-}
-- (void) saveListener:(Result) result{
-    notificationListener = result;
+	[CountlyRNPushNotifications.sharedInstance askForNotificationPermission];
 }
 RCT_EXPORT_METHOD(registerForNotification:(NSArray*)arguments)
 {
-  dispatch_async(dispatch_get_main_queue(), ^ {
-    [self saveListener: ^(id  _Nullable result) {
-         [self sendEventWithName:pushNotificationCallbackName body: [CountlyReactNative toJSON:lastStoredNotification]];
-         lastStoredNotification = nil;
-    }];
-    if(lastStoredNotification != nil){
-        [self sendEventWithName:pushNotificationCallbackName body: [CountlyReactNative toJSON:lastStoredNotification]];
-        lastStoredNotification = nil;
-    }
-  });
+	[CountlyRNPushNotifications.sharedInstance registerForNotification];
     
 };
 
-+ (NSString *) toJSON: (NSDictionary  *) json{
-    NSError *error;
-    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:json options:NSJSONWritingPrettyPrinted error:&error];
-
-    if (! jsonData) {
-        COUNTLY_RN_LOG(@"Got an error: %@", error);
-        return [NSString stringWithFormat:@"{'error': '%@'}", error];
-    } else {
-        NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
-        return jsonString;
-    }
+- (void)notificationCallback:(NSString*_Nullable)notificationJson {
+	[self sendEventWithName:pushNotificationCallbackName body: notificationJson];
 }
+
++ (void)startObservingNotifications {
+	[CountlyRNPushNotifications.sharedInstance startObservingNotifications];
+}
+
+
++ (void)onNotification:(NSDictionary *_Nullable)notification {
+	[CountlyRNPushNotifications.sharedInstance onNotification:notification];
+}
++ (void)onNotificationResponse:(UNNotificationResponse* _Nullable)response {
+	[CountlyRNPushNotifications.sharedInstance onNotificationResponse:response];
+}
+
 + (void) log: (NSString *) theMessage{
     if(config.enableDebug == YES){
         COUNTLY_RN_LOG(theMessage);
@@ -911,13 +907,6 @@ RCT_REMAP_METHOD(userDataBulk_pullValue,
   });
 }
 
-
-
-RCT_EXPORT_METHOD(demo:(NSArray*)arguments)
-{
-
-}
-
 RCT_EXPORT_METHOD(setRequiresConsent:(NSArray*)arguments)
 {
   dispatch_async(dispatch_get_main_queue(), ^ {
@@ -1371,100 +1360,6 @@ void CountlyRNInternalLog(NSString *format, ...)
     }
 }
 
-+ (void)onNotification:(NSDictionary *)notificationMessage
-{
-    [CountlyReactNative onNotification:notificationMessage buttonIndex:0 persistData:!CountlyCommon.sharedInstance.hasStarted];
-}
-
-+ (void)onNotification:(NSDictionary *)notificationMessage buttonIndex:(NSInteger)btnIndex persistData:(BOOL)persistNotification
-{
-    COUNTLY_RN_LOG(@"Notification received");
-    COUNTLY_RN_LOG(@"The notification %@", [CountlyReactNative toJSON:notificationMessage]);
-    if(notificationMessage && notificationListener != nil){
-      lastStoredNotification = notificationMessage;
-      notificationListener(@[[CountlyReactNative toJSON:notificationMessage]]);
-    }else{
-      lastStoredNotification = notificationMessage;
-    }
-    if(persistNotification) {
-        [[NSUserDefaults standardUserDefaults] setObject:notificationMessage forKey:CLYPushDictionaryKey];
-        [[NSUserDefaults standardUserDefaults] setInteger:btnIndex forKey:CLYPushButtonIndexKey];
-        [[NSUserDefaults standardUserDefaults] synchronize];
-    }
-    if(notificationMessage){
-      if(notificationIDs == nil){
-        notificationIDs = [[NSMutableArray alloc] init];
-      }
-      if ([[notificationMessage allKeys] containsObject:@"c"]) {
-        NSDictionary* countlyPayload = notificationMessage[@"c"];
-        if ([[countlyPayload allKeys] containsObject:@"c"]) {
-          NSString *notificationID = countlyPayload[@"i"];
-          [notificationIDs insertObject:notificationID atIndex:[notificationIDs count]];
-        }
-      }
-    }
-}
-
-+(void)onNotificationResponse:(UNNotificationResponse *)response
-API_AVAILABLE(ios(10.0)){
-    NSDictionary* notificationDictionary = response.notification.request.content.userInfo;
-    NSInteger buttonIndex = 0;
-    if ([response.actionIdentifier hasPrefix:kCountlyActionIdentifier])
-    {
-        buttonIndex = [[response.actionIdentifier stringByReplacingOccurrencesOfString:kCountlyActionIdentifier withString:@""] integerValue];
-    }
-    [CountlyReactNative onNotification:notificationDictionary buttonIndex:buttonIndex persistData:true];
-}
-
-- (void) recordPushAction {
-    @try{
-        NSDictionary* responseDictionary = [[NSUserDefaults standardUserDefaults] dictionaryForKey:CLYPushDictionaryKey];
-        NSInteger responseBtnIndex = [[NSUserDefaults standardUserDefaults] integerForKey:CLYPushButtonIndexKey];
-        if (responseDictionary != nil)
-        {
-            if([responseDictionary count] > 0) {
-                
-                NSDictionary* countlyPayload = responseDictionary[kCountlyPNKeyCountlyPayload];
-                NSString* URL = @"";
-                if (responseBtnIndex == 0)
-                {
-                    URL = countlyPayload[kCountlyPNKeyDefaultURL];
-                }
-                else
-                {
-                    URL = countlyPayload[kCountlyPNKeyButtons][responseBtnIndex - 1][kCountlyPNKeyActionButtonURL];
-                }
-                
-                [Countly.sharedInstance recordActionForNotification:responseDictionary clickedButtonIndex:responseBtnIndex];
-                [[NSUserDefaults standardUserDefaults] removeObjectForKey:CLYPushDictionaryKey];
-                [[NSUserDefaults standardUserDefaults] removeObjectForKey:CLYPushButtonIndexKey];
-                [[NSUserDefaults standardUserDefaults] synchronize];
-                
-                [self openURL:URL];
-            }
-            
-        }
-    }
-    @catch(NSException *exception){
-        COUNTLY_RN_LOG(@"Exception Occurred while recording push action: %@", exception);
-    }
-}
-
-- (void)openURL:(NSString *)URLString
-{
-    if (!URLString)
-        return;
-
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.01 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^
-    {
-#if (TARGET_OS_IOS)
-        [UIApplication.sharedApplication openURL:[NSURL URLWithString:URLString] options:@{} completionHandler:nil];
-// Removing this line because currently we are not supporting OSX
-//#elif (TARGET_OS_OSX)
-//        [NSWorkspace.sharedWorkspace openURL:[NSURL URLWithString:URLString]];
-#endif
-    });
-}
 
 @end
 
