@@ -143,7 +143,26 @@ CLYUserDefaultKey const CLYPushButtonIndexKey = @"notificationBtnIndexKey";
 // When app is running and notification received
 - (void)userNotificationCenter:(UNUserNotificationCenter *)center willPresentNotification:(UNNotification *)notification withCompletionHandler:(void (^)(UNNotificationPresentationOptions options))completionHandler{
 	[self onNotification: notification.request.content.userInfo];
-	completionHandler(0);
+	NSDictionary* countlyPayload = notification.request.content.userInfo[kCountlyPNKeyCountlyPayload];
+	NSString* notificationID = countlyPayload[kCountlyPNKeyNotificationID];
+	
+	if (notificationID)
+	{
+		UNNotificationPresentationOptions presentationOption = UNNotificationPresentationOptionNone;
+		if (@available(iOS 14.0, tvOS 14.0, macOS 11.0, watchOS 7.0, *))
+		{
+			presentationOption = UNNotificationPresentationOptionList | UNNotificationPresentationOptionBanner;
+		}
+		else
+		{
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+			presentationOption = UNNotificationPresentationOptionAlert;
+#pragma GCC diagnostic pop
+		}
+		completionHandler(presentationOption);
+	}
+	completionHandler(UNNotificationPresentationOptionNone);
 }
 
 - (void)onNotification:(NSDictionary *)notificationMessage
