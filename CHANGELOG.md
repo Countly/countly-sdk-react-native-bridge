@@ -1,3 +1,10 @@
+## 22.06.1
+* !! iOS Push notification action issue fixed. To handle the push notification action you need to add this new call "[CountlyReactNative startObservingNotifications];" in "AppDelegate.m"
+For more details please check the below mentioned link of "Handling push callbacks" section in Countly SDK documentation.
+https://support.count.ly/hc/en-us/articles/360037813231-React-Native-Bridge-#handling-push-callbacks
+* Underlying android SDK version is 22.06.0
+* Underlying iOS SDK version is 22.06.2
+
 ## 22.06.0
 * Added Feedback widget callbacks (widgetShown, widgetClosed and retrievedWidgets)
 * Updated underlying android SDK version to 22.06.0
