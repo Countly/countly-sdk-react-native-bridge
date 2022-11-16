@@ -1,3 +1,10 @@
+## 22.06.1
+* !! iOS Push notification action issue fixed. To handle the push notification action you need to add this new call "[CountlyReactNative startObservingNotifications];" in "AppDelegate.m"
+For more details please check the below mentioned link of "Handling push callbacks" section in Countly SDK documentation.
+https://support.count.ly/hc/en-us/articles/360037813231-React-Native-Bridge-#handling-push-callbacks
+* Underlying android SDK version is 22.06.0
+* Underlying iOS SDK version is 22.06.2
+
 ## 22.06.0
 * Added Feedback widget callbacks (widgetShown, widgetClosed and retrievedWidgets)
 * Updated underlying android SDK version to 22.06.0
@@ -142,7 +149,7 @@ https://support.count.ly/hc/en-us/articles/360037813231-React-Native-Bridge-#han
 * Updated underlying ios SDK to 20.11.1
 
 ## 20.11.0
-* !! Due to cocoapods issue with Xcode 12, we have created a new temporary Pod with a fix for Countly iOS SDK and named it "CounltyPod". 
+* !! Due to cocoapods issue with Xcode 12, we have created a new temporary Pod with a fix for Countly iOS SDK and named it "CountlyPod". 
 Due to that change if you have already add the reference of files "CountlyNotificationService.h/m" then you need to update these files references by adding the files from "CountlyPod" and remove the old reference files.
 * !! Consent change !! To use remote config, you now need to give "remote-config" consent
 * !! Push breaking changes !! Google play vulnerability issue fixed due to broadcast receiver for android push notification
