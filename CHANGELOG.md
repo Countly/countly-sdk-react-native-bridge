@@ -1,3 +1,8 @@
+## 22.06.2
+* Fixed a bug in Android SDK that would throw a null pointer exception when calling "CountlyPush.onTokenRefresh" and CountlyPush was not initialized
+* Updated Underlying android SDK version to 22.06.1
+* Underlying iOS SDK version is 22.06.2
+
 ## 22.06.1
 * !! iOS Push notification action issue fixed. To handle the push notification action you need to add this new call "[CountlyReactNative startObservingNotifications];" in "AppDelegate.m"
 For more details please check the below mentioned link of "Handling push callbacks" section in Countly SDK documentation.
