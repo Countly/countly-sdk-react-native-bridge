@@ -1,6 +1,5 @@
 ## 22.06.3
 * Fixed a bug in Android SDK that would throw a null pointer exception when calling "CountlyPush.displayNotification " and CountlyPush was not initialized
-* Fixed iOS push notification delegation function calls when iOS SDK is not initialized.
 * Updated Underlying android SDK version to 22.06.2
 * Underlying iOS SDK version is 22.06.2
 
