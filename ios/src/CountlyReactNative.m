@@ -22,8 +22,10 @@
 + (CountlyFeedbackWidget *)createWithDictionary:(NSDictionary *)dictionary;
 @end
 
-NSString* const kCountlyReactNativeSDKVersion = @"22.06.3";
+NSString* const kCountlyReactNativeSDKVersion = @"22.06.4";
 NSString* const kCountlyReactNativeSDKName = @"js-rnb-ios";
+
+CLYPushTestMode const CLYPushTestModeProduction = @"CLYPushTestModeProduction";
 
 CountlyConfig* config = nil;    // alloc here
 NSMutableArray<CLYFeature>* countlyFeatures = nil;
@@ -219,11 +221,13 @@ RCT_EXPORT_METHOD(pushTokenType:(NSArray*)arguments)
 		config = CountlyConfig.new;
 	  }
 	  config.sendPushTokenAlways = YES;
+	  config.pushTestMode = CLYPushTestModeProduction;
+
 	  NSString* tokenType = [arguments objectAtIndex:0];
 	  if([tokenType isEqualToString: @"1"]){
 		  config.pushTestMode = CLYPushTestModeDevelopment;
 	  }
-	  else if([tokenType isEqualToString: @"2"] || [tokenType isEqualToString: @"0"]){
+	  else if([tokenType isEqualToString: @"2"]){
 		  config.pushTestMode = CLYPushTestModeTestFlightOrAdHoc;
 	  }
 	  
