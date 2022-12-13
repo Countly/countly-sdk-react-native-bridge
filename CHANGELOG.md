@@ -1,3 +1,8 @@
+## 22.06.4
+* Fixed incorrect iOS push token type when passing "Countly.messagingMode.PRODUCTION" as token type.
+* Underlying android SDK version is 22.06.2
+* Underlying iOS SDK version is 22.06.2
+
 ## 22.06.3
 * Fixed a bug in Android SDK that would throw a null pointer exception when calling "CountlyPush.displayNotification " and CountlyPush was not initialized
 * Updated Underlying android SDK version to 22.06.2
