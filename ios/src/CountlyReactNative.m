@@ -59,6 +59,12 @@ NSString* const kCountlyNotificationPersistencyKey = @"kCountlyNotificationPersi
 	
 	return self;
 }
+
++ (BOOL)requiresMainQueueSetup
+{
+  return NO;
+}
+
 - (NSArray<NSString *> *)supportedEvents {
     return @[pushNotificationCallbackName, ratingWidgetCallbackName, widgetShownCallbackName, widgetClosedCallbackName];
 }
