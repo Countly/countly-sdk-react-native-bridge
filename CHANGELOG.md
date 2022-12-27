@@ -1,5 +1,6 @@
 ## 22.06.5
-* Added COUNTLY_NOT_SET_PUSH_DELEGATE flag to explicity handle the push delegate in host app, after defining this host app is responsible to call the push delegate function of CountlyPushNotifications.m file.
+* Added COUNTLY_EXCLUDE_PUSHNOTIFICATIONS flag in iOS React Native side to disable push notifications altogether.
+* Forwarding push callbacks to appDelegate if CountlyRNPushNotifications.m is action as push notification delegate.
 * Underlying android SDK version is 22.06.2
 * Underlying iOS SDK version is 22.06.2
 
