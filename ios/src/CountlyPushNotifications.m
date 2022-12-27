@@ -67,10 +67,7 @@ CLYPushTestMode const CLYPushTestModeTestFlightOrAdHoc = @"CLYPushTestModeTestFl
     if (!CountlyConsentManager.sharedInstance.consentForPushNotifications)
         return;
 
-
-#ifndef COUNTLY_NOT_SET_PUSH_DELEGATE
     UNUserNotificationCenter.currentNotificationCenter.delegate = self;
-#endif
 	
 	[self swizzlePushNotificationMethods];
 	[CLYApplication.sharedApplication registerForRemoteNotifications];
@@ -86,10 +83,9 @@ CLYPushTestMode const CLYPushTestModeTestFlightOrAdHoc = @"CLYPushTestModeTestFl
 {
     if (!self.isEnabledOnInitialConfig)
         return;
-#ifndef COUNTLY_NOT_SET_PUSH_DELEGATE
     if (UNUserNotificationCenter.currentNotificationCenter.delegate == self)
         UNUserNotificationCenter.currentNotificationCenter.delegate = nil;
-#endif
+	
 	[CLYApplication.sharedApplication unregisterForRemoteNotifications];
 }
 
@@ -271,13 +267,11 @@ CLYPushTestMode const CLYPushTestModeTestFlightOrAdHoc = @"CLYPushTestModeTestFl
         }
     }
 
-#ifndef COUNTLY_NOT_SET_PUSH_DELEGATE
     id<UNUserNotificationCenterDelegate> appDelegate = (id<UNUserNotificationCenterDelegate>)CLYApplication.sharedApplication.delegate;
 
     if ([appDelegate respondsToSelector:@selector(userNotificationCenter:willPresentNotification:withCompletionHandler:)])
         [appDelegate userNotificationCenter:center willPresentNotification:notification withCompletionHandler:completionHandler];
     else
-#endif
         completionHandler(UNNotificationPresentationOptionNone);
 }
 
@@ -314,19 +308,15 @@ CLYPushTestMode const CLYPushTestModeTestFlightOrAdHoc = @"CLYPushTestModeTestFl
         }
     }
 
-#ifndef COUNTLY_NOT_SET_PUSH_DELEGATE
     id<UNUserNotificationCenterDelegate> appDelegate = (id<UNUserNotificationCenterDelegate>)CLYApplication.sharedApplication.delegate;
     if ([appDelegate respondsToSelector:@selector(userNotificationCenter:didReceiveNotificationResponse:withCompletionHandler:)])
         [appDelegate userNotificationCenter:center didReceiveNotificationResponse:response withCompletionHandler:completionHandler];
     else
-#endif
         completionHandler();
 }
 
 - (void)userNotificationCenter:(UNUserNotificationCenter *)center openSettingsForNotification:(UNNotification *)notification API_AVAILABLE(ios(12.0), macos(10.14))
 {
-	
-#ifndef COUNTLY_NOT_SET_PUSH_DELEGATE
     if (@available(iOS 12.0, *))
     {
         id<UNUserNotificationCenterDelegate> appDelegate = (id<UNUserNotificationCenterDelegate>)CLYApplication.sharedApplication.delegate;
@@ -334,7 +324,6 @@ CLYPushTestMode const CLYPushTestModeTestFlightOrAdHoc = @"CLYPushTestModeTestFl
         if ([appDelegate respondsToSelector:@selector(userNotificationCenter:openSettingsForNotification:)])
             [appDelegate userNotificationCenter:center openSettingsForNotification:notification];
     }
-#endif
 }
 
 #pragma mark ---
