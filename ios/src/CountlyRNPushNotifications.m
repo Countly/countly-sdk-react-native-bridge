@@ -8,7 +8,7 @@
 #import "UserNotifications/UserNotifications.h"
 #import "CountlyCommon.h"
 
-
+#ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
 NSDictionary *lastStoredNotification = nil;
 Result notificationListener = nil;
 NSMutableArray *notifications = nil;
@@ -19,12 +19,12 @@ CountlyReactNative *_countlyReactNative = nil;
 typedef NSString* CLYUserDefaultKey NS_EXTENSIBLE_STRING_ENUM;
 CLYUserDefaultKey const CLYPushNotificationsKey  = @"notificationsKey";
 CLYUserDefaultKey const CLYPushButtonIndexKey = @"notificationBtnIndexKey";
-
+#endif
 @interface CountlyRNPushNotifications () <UNUserNotificationCenterDelegate>
 @end
 
 @implementation CountlyRNPushNotifications
-
+#ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
 + (instancetype)sharedInstance
 {
 	static CountlyRNPushNotifications* s_sharedInstance;
@@ -209,5 +209,6 @@ API_AVAILABLE(ios(10.0)){
 		return jsonString;
 	}
 }
+#endif
 
 @end
