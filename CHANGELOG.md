@@ -1,3 +1,9 @@
+## 22.06.5
+* Added COUNTLY_EXCLUDE_PUSHNOTIFICATIONS flag in iOS React Native side to disable push notifications altogether.
+* Forwarding push callbacks to appDelegate if CountlyRNPushNotifications.m is acting as push notification delegate.
+* Underlying android SDK version is 22.06.2
+* Underlying iOS SDK version is 22.06.2
+
 ## 22.06.4
 * Fixed incorrect iOS push token type when passing "Countly.messagingMode.PRODUCTION" as token type.
 * Underlying android SDK version is 22.06.2

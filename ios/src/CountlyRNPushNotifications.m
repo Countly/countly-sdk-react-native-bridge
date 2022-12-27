@@ -8,7 +8,7 @@
 #import "UserNotifications/UserNotifications.h"
 #import "CountlyCommon.h"
 
-
+#ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
 NSDictionary *lastStoredNotification = nil;
 Result notificationListener = nil;
 NSMutableArray *notifications = nil;
@@ -19,12 +19,12 @@ CountlyReactNative *_countlyReactNative = nil;
 typedef NSString* CLYUserDefaultKey NS_EXTENSIBLE_STRING_ENUM;
 CLYUserDefaultKey const CLYPushNotificationsKey  = @"notificationsKey";
 CLYUserDefaultKey const CLYPushButtonIndexKey = @"notificationBtnIndexKey";
-
+#endif
 @interface CountlyRNPushNotifications () <UNUserNotificationCenterDelegate>
 @end
 
 @implementation CountlyRNPushNotifications
-
+#ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
 + (instancetype)sharedInstance
 {
 	static CountlyRNPushNotifications* s_sharedInstance;
@@ -137,7 +137,12 @@ CLYUserDefaultKey const CLYPushButtonIndexKey = @"notificationBtnIndexKey";
 // when user open the app by tapping notification in any state.
 - (void)userNotificationCenter:(UNUserNotificationCenter *)center didReceiveNotificationResponse:(UNNotificationResponse *)response withCompletionHandler:(void (^)(void))completionHandler{
 	[self onNotificationResponse: response];
-	completionHandler();
+	
+	id<UNUserNotificationCenterDelegate> appDelegate = (id<UNUserNotificationCenterDelegate>)UIApplication.sharedApplication.delegate;
+	if ([appDelegate respondsToSelector:@selector(userNotificationCenter:didReceiveNotificationResponse:withCompletionHandler:)])
+		[appDelegate userNotificationCenter:center didReceiveNotificationResponse:response withCompletionHandler:completionHandler];
+	else
+		completionHandler();
 }
 
 // When app is running and notification received
@@ -162,7 +167,13 @@ CLYUserDefaultKey const CLYPushButtonIndexKey = @"notificationBtnIndexKey";
 		}
 		completionHandler(presentationOption);
 	}
-	completionHandler(UNNotificationPresentationOptionNone);
+	
+	id<UNUserNotificationCenterDelegate> appDelegate = (id<UNUserNotificationCenterDelegate>)UIApplication.sharedApplication.delegate;
+	
+	if ([appDelegate respondsToSelector:@selector(userNotificationCenter:willPresentNotification:withCompletionHandler:)])
+		[appDelegate userNotificationCenter:center willPresentNotification:notification withCompletionHandler:completionHandler];
+	else
+		completionHandler(UNNotificationPresentationOptionNone);
 }
 
 - (void)onNotification:(NSDictionary *)notificationMessage
@@ -209,5 +220,6 @@ API_AVAILABLE(ios(10.0)){
 		return jsonString;
 	}
 }
+#endif
 
 @end

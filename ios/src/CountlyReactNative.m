@@ -6,11 +6,13 @@
 #import "Countly.h"
 #import "CountlyReactNative.h"
 #import "CountlyConfig.h"
-#import "CountlyPushNotifications.h"
 #import "CountlyConnectionManager.h"
 #import "CountlyRemoteConfig.h"
 #import "CountlyCommon.h"
+
+#ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
 #import "CountlyRNPushNotifications.h"
+#endif
 
 #if DEBUG
 #define COUNTLY_RN_LOG(fmt, ...) CountlyRNInternalLog(fmt, ##__VA_ARGS__)
@@ -22,7 +24,7 @@
 + (CountlyFeedbackWidget *)createWithDictionary:(NSDictionary *)dictionary;
 @end
 
-NSString* const kCountlyReactNativeSDKVersion = @"22.06.4";
+NSString* const kCountlyReactNativeSDKVersion = @"22.06.5";
 NSString* const kCountlyReactNativeSDKName = @"js-rnb-ios";
 
 CLYPushTestMode const CLYPushTestModeProduction = @"CLYPushTestModeProduction";
@@ -57,7 +59,9 @@ NSString* const kCountlyNotificationPersistencyKey = @"kCountlyNotificationPersi
 		
 	}
 	
+#ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
 	[CountlyRNPushNotifications.sharedInstance setCountlyReactNative:self];
+#endif
 	
 	return self;
 }
@@ -89,15 +93,19 @@ RCT_REMAP_METHOD(init,
 
     CountlyCommon.sharedInstance.SDKName = kCountlyReactNativeSDKName;
     CountlyCommon.sharedInstance.SDKVersion = kCountlyReactNativeSDKVersion;
+	  
+#ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
     if(enablePushNotifications) {
       [self addCountlyFeature:CLYPushNotifications];
     }
-
+#endif
     if (serverurl != nil && [serverurl length] > 0) {
         dispatch_async(dispatch_get_main_queue(), ^
         {
             [[Countly sharedInstance] startWithConfig:config];
+#ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
             [CountlyRNPushNotifications.sharedInstance recordPushActions];
+#endif
             resolve(@"Success");
         });
     }
@@ -194,13 +202,16 @@ RCT_REMAP_METHOD(setUserData,
 
 RCT_EXPORT_METHOD(disablePushNotifications)
 {
+#ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
   dispatch_async(dispatch_get_main_queue(), ^ {
     enablePushNotifications = false;
   });
+#endif
 }
 
 RCT_EXPORT_METHOD(sendPushToken:(NSArray*)arguments)
 {
+#ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
   dispatch_async(dispatch_get_main_queue(), ^ {
 
     NSString* token = [arguments objectAtIndex:0];
@@ -213,16 +224,17 @@ RCT_EXPORT_METHOD(sendPushToken:(NSArray*)arguments)
     [request setHTTPMethod:@"GET"];
     [request setURL:[NSURL URLWithString:urlString]];
   });
+#endif
 }
 RCT_EXPORT_METHOD(pushTokenType:(NSArray*)arguments)
 {
+#ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
   dispatch_async(dispatch_get_main_queue(), ^ {
 	  if (config == nil){
 		config = CountlyConfig.new;
 	  }
 	  config.sendPushTokenAlways = YES;
 	  config.pushTestMode = CLYPushTestModeProduction;
-
 	  NSString* tokenType = [arguments objectAtIndex:0];
 	  if([tokenType isEqualToString: @"1"]){
 		  config.pushTestMode = CLYPushTestModeDevelopment;
@@ -233,18 +245,24 @@ RCT_EXPORT_METHOD(pushTokenType:(NSArray*)arguments)
 	  
 	  CountlyPushNotifications.sharedInstance.pushTestMode = config.pushTestMode;
   });
+#endif
 }
 
 RCT_EXPORT_METHOD(askForNotificationPermission:(NSArray*)arguments)
 {
+#ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
 	[CountlyRNPushNotifications.sharedInstance askForNotificationPermission];
+#endif
 }
 RCT_EXPORT_METHOD(registerForNotification:(NSArray*)arguments)
 {
+#ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
 	[CountlyRNPushNotifications.sharedInstance registerForNotification];
+#endif
     
 };
 
+#ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
 - (void)notificationCallback:(NSString*_Nullable)notificationJson {
 	[self sendEventWithName:pushNotificationCallbackName body: notificationJson];
 }
@@ -260,6 +278,7 @@ RCT_EXPORT_METHOD(registerForNotification:(NSArray*)arguments)
 + (void)onNotificationResponse:(UNNotificationResponse* _Nullable)response {
 	[CountlyRNPushNotifications.sharedInstance onNotificationResponse:response];
 }
+#endif
 
 + (void) log: (NSString *) theMessage{
     if(config.enableDebug == YES){

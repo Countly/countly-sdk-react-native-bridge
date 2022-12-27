@@ -9,7 +9,7 @@
 
 
 @interface CountlyRNPushNotifications : NSObject
-
+#ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
 + (instancetype _Nonnull )sharedInstance;
 
 - (void)startObservingNotifications;
@@ -20,4 +20,5 @@
 - (void)setCountlyReactNative:(CountlyReactNative *_Nullable)countlyReactNative;
 - (void)onNotification:(NSDictionary *_Nullable)notification;
 - (void)onNotificationResponse:(UNNotificationResponse* _Nullable)response;
+#endif
 @end

@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name = 'CountlyReactNative'
-  s.version = '22.06.4'
+  s.version = '22.06.5'
   s.license = {
     :type => 'COMMUNITY',
     :text => <<-LICENSE
@@ -34,7 +34,7 @@ Pod::Spec.new do |s|
   s.author = {'Countly' => 'hello@count.ly'}
   s.source = { :git => 'https://github.com/Countly/countly-sdk-ios.git', :tag => s.version.to_s }
   s.source_files = 'ios/src/*.{h,m}'
-  s.public_header_files = 'ios/src/CountlyReactNative.h'
+  s.public_header_files = 'ios/src/CountlyReactNative.h, ios/src/CountlyPushNotifications.h'
   s.requires_arc = true
   s.ios.deployment_target = '10.0'
   s.osx.deployment_target = '10.14'

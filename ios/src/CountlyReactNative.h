@@ -55,9 +55,11 @@ typedef void (^Result)(id _Nullable result);
 - (void)recordAttributionID:(NSArray*_Nullable)arguments;
 - (void)appLoadingFinished;
 - (void)disablePushNotifications;
-- (void)notificationCallback:(NSString*_Nullable)notificationJson;
 
+#ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
+- (void)notificationCallback:(NSString*_Nullable)notificationJson;
 + (void)startObservingNotifications;
 + (void)onNotification:(NSDictionary *_Nullable)notification;
 + (void)onNotificationResponse:(UNNotificationResponse* _Nullable)response;
+#endif
 @end
