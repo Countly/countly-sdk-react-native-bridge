@@ -26,9 +26,9 @@ CLYPushTestMode const CLYPushTestModeTestFlightOrAdHoc = @"CLYPushTestModeTestFl
 @end
 
 #if (TARGET_OS_IOS)
-	#define CLYApplication UIApplication
+    #define CLYApplication UIApplication
 #elif (TARGET_OS_OSX)
-	#define CLYApplication NSApplication
+    #define CLYApplication NSApplication
 #endif
 
 @implementation CountlyPushNotifications
@@ -68,9 +68,10 @@ CLYPushTestMode const CLYPushTestModeTestFlightOrAdHoc = @"CLYPushTestModeTestFl
         return;
 
     UNUserNotificationCenter.currentNotificationCenter.delegate = self;
-	
-	[self swizzlePushNotificationMethods];
-	[CLYApplication.sharedApplication registerForRemoteNotifications];
+
+    [self swizzlePushNotificationMethods];
+
+    [CLYApplication.sharedApplication registerForRemoteNotifications];
 
 #if (TARGET_OS_OSX)
     UNNotificationResponse* notificationResponse = self.launchNotification.userInfo[NSApplicationLaunchUserNotificationKey];
@@ -83,10 +84,11 @@ CLYPushTestMode const CLYPushTestModeTestFlightOrAdHoc = @"CLYPushTestModeTestFl
 {
     if (!self.isEnabledOnInitialConfig)
         return;
+
     if (UNUserNotificationCenter.currentNotificationCenter.delegate == self)
         UNUserNotificationCenter.currentNotificationCenter.delegate = nil;
-	
-	[CLYApplication.sharedApplication unregisterForRemoteNotifications];
+
+    [CLYApplication.sharedApplication unregisterForRemoteNotifications];
 }
 
 - (void)swizzlePushNotificationMethods
@@ -309,6 +311,7 @@ CLYPushTestMode const CLYPushTestModeTestFlightOrAdHoc = @"CLYPushTestModeTestFl
     }
 
     id<UNUserNotificationCenterDelegate> appDelegate = (id<UNUserNotificationCenterDelegate>)CLYApplication.sharedApplication.delegate;
+
     if ([appDelegate respondsToSelector:@selector(userNotificationCenter:didReceiveNotificationResponse:withCompletionHandler:)])
         [appDelegate userNotificationCenter:center didReceiveNotificationResponse:response withCompletionHandler:completionHandler];
     else
