@@ -1,3 +1,8 @@
+## 22.06.5
+* Added COUNTLY_NOT_SET_PUSH_DELEGATE flag to explicity handle the push delegate in host app, after defining this host app is responsible to call the push delegate function of CountlyPushNotifications.m file.
+* Underlying android SDK version is 22.06.2
+* Underlying iOS SDK version is 22.06.2
+
 ## 22.06.4
 * Fixed incorrect iOS push token type when passing "Countly.messagingMode.PRODUCTION" as token type.
 * Underlying android SDK version is 22.06.2
