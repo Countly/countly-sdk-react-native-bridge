@@ -19,7 +19,6 @@
         "react",
         "react-native"
     ],
-    "lint": "eslint .",
     "rules": {
         // allow .js files to contain JSX code
         "react/jsx-filename-extension": [1, { "extensions": [".js", ".jsx"] }],
