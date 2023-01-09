@@ -2,8 +2,8 @@ import React, { Component } from 'react';
 import { Text, Button, ScrollView, Image, View, TextInput, StyleSheet } from 'react-native';
 import Countly from 'countly-sdk-react-native-bridge';
 
-var successCodes = [100, 101, 200, 201, 202, 205, 300, 301, 303, 305];
-var failureCodes = [400, 402, 405, 408, 500, 501, 502, 505];
+const successCodes = [100, 101, 200, 201, 202, 205, 300, 301, 303, 305];
+const failureCodes = [400, 402, 405, 408, 500, 501, 502, 505];
 
 class Example extends Component {
     constructor(props) {
@@ -45,7 +45,7 @@ class Example extends Component {
         //       this.onInit();
     }
 
-    onInit = async () => {
+    async onInit() {
         if (!(await Countly.isInitialized())) {
             /** Recommended settings for Countly initialisation */
             Countly.setLoggingEnabled(true); // Enable countly internal debugging logs
@@ -76,24 +76,26 @@ class Example extends Component {
              * Push notifications settings
              * Should be call after init
              */
-            Countly.registerForNotification(function (theNotification) {
-                var jsonString = JSON.stringify(JSON.parse(theNotification));
-                console.log('Just received this notification data: ' + jsonString);
-                alert('theNotification: ' + jsonString);
+            Countly.registerForNotification((theNotification) => {
+                const jsonString = JSON.stringify(JSON.parse(theNotification));
+                console.log(`Just received this notification data: ${jsonString}`);
+                alert(`theNotification: ${jsonString}`);
             }); // Set callback to receive push notifications
             Countly.askForNotificationPermission('android.resource://com.countly.demo/raw/notif_sample'); // This method will ask for permission, enables push notification and send push token to countly server.
         }
-    };
+    }
 
     onStart() {
         Countly.start();
     }
+
     onStop() {
         Countly.stop();
     }
+
     onSendUserData() {
         // example for setUserData
-        var options = {};
+        const options = {};
         options.name = 'Name of User';
         options.username = 'Username';
         options.email = 'User Email';
@@ -108,7 +110,7 @@ class Example extends Component {
 
     onSetUserProperties() {
         // example for setUserData
-        var options = {};
+        const options = {};
         // Predefined user properties
         options.name = 'Name of User';
         options.username = 'Username';
@@ -154,35 +156,39 @@ class Example extends Component {
 
     onUpdateUserData() {
         // example for setUserData
-        var options = {};
+        const options = {};
         options.organization = 'Updated User Organization';
         options.phone = 'Updated User Contact number';
         options.gender = 'Female';
         options.byear = 1995;
         Countly.setUserData(options);
     }
+
     basicEvent() {
         // example for basic event
-        var event = { 'eventName': 'Basic Event', 'eventCount': 1 };
+        const event = { 'eventName': 'Basic Event', 'eventCount': 1 };
         Countly.sendEvent(event);
     }
+
     eventWithSum() {
         // example for event with sum
-        var event = { 'eventName': 'Event With Sum', 'eventCount': 1, 'eventSum': '0.99' };
+        const event = { 'eventName': 'Event With Sum', 'eventCount': 1, 'eventSum': '0.99' };
         Countly.sendEvent(event);
     }
+
     eventWithSegment() {
         // example for event with segment
-        var event = { 'eventName': 'Event With Segment', 'eventCount': 1 };
+        let event = { 'eventName': 'Event With Segment', 'eventCount': 1 };
         event.segments = { 'Country': 'Turkey', 'Age': '28' };
         Countly.sendEvent(event);
         event = { 'eventName': 'Event With Segment', 'eventCount': 1 };
         event.segments = { 'Country': 'France', 'Age': '38' };
         Countly.sendEvent(event);
     }
+
     eventWithSumAndSegment() {
         // example for event with segment and sum
-        var event = { 'eventName': 'Event With Sum And Segment', 'eventCount': 1, 'eventSum': '0.99' };
+        let event = { 'eventName': 'Event With Sum And Segment', 'eventCount': 1, 'eventSum': '0.99' };
         event.segments = { 'Country': 'Turkey', 'Age': '28' };
         Countly.sendEvent(event);
         event = { 'eventName': 'Event With Sum And Segment', 'eventCount': 3, 'eventSum': '1.99' };
@@ -193,7 +199,7 @@ class Example extends Component {
     // TIMED EVENTS
     startEvent() {
         Countly.startEvent('timedEvent');
-        setTimeout(function () {
+        setTimeout(() => {
             Countly.endEvent('timedEvent');
         }, 1000);
     }
@@ -205,11 +211,11 @@ class Example extends Component {
     timedEventWithSum() {
         // Event with sum
         Countly.startEvent('timedEventWithSum');
-        var event = {
+        const event = {
             'eventName': 'timedEventWithSum',
             'eventSum': '0.99',
         };
-        setTimeout(function () {
+        setTimeout(() => {
             Countly.endEvent(event);
         }, 1000);
     }
@@ -217,14 +223,14 @@ class Example extends Component {
     timedEventWithSegment() {
         // Event with segment
         Countly.startEvent('timedEventWithSegment');
-        var event = {
+        const event = {
             'eventName': 'timedEventWithSegment',
         };
         event.segments = {
             'Country': 'Germany',
             'Age': '32',
         };
-        setTimeout(function () {
+        setTimeout(() => {
             Countly.endEvent(event);
         }, 1000);
     }
@@ -232,7 +238,7 @@ class Example extends Component {
     timedEventWithSumAndSegment() {
         // Event with Segment, sum and count
         Countly.startEvent('timedEventWithSumAndSegment');
-        var event = {
+        const event = {
             'eventName': 'timedEventWithSumAndSegment',
             'eventCount': 1,
             'eventSum': '0.99',
@@ -241,7 +247,7 @@ class Example extends Component {
             'Country': 'India',
             'Age': '21',
         };
-        setTimeout(function () {
+        setTimeout(() => {
             Countly.endEvent(event);
         }, 1000);
     }
@@ -321,45 +327,49 @@ class Example extends Component {
     }
 
     remoteConfigUpdate() {
-        Countly.remoteConfigUpdate(function (data) {
+        Countly.remoteConfigUpdate((data) => {
             console.log(data);
         });
     }
 
     updateRemoteConfigForKeysOnly() {
-        Countly.updateRemoteConfigForKeysOnly(['test1'], function (data) {
+        Countly.updateRemoteConfigForKeysOnly(['test1'], (data) => {
             console.log(data);
         });
     }
 
     updateRemoteConfigExceptKeys() {
-        Countly.updateRemoteConfigExceptKeys(['test1'], function (data) {
+        Countly.updateRemoteConfigExceptKeys(['test1'], (data) => {
             console.log(data);
         });
     }
 
     getRemoteConfigValueForKeyBoolean() {
-        Countly.getRemoteConfigValueForKey('booleanValue', function (data) {
+        Countly.getRemoteConfigValueForKey('booleanValue', (data) => {
             console.log(data);
         });
     }
+
     getRemoteConfigValueForKeyFloat() {
-        Countly.getRemoteConfigValueForKey('floatValue', function (data) {
+        Countly.getRemoteConfigValueForKey('floatValue', (data) => {
             console.log(data);
         });
     }
+
     getRemoteConfigValueForKeyInteger() {
-        Countly.getRemoteConfigValueForKey('integerValue', function (data) {
+        Countly.getRemoteConfigValueForKey('integerValue', (data) => {
             console.log(data);
         });
     }
+
     getRemoteConfigValueForKeyString() {
-        Countly.getRemoteConfigValueForKey('stringValue', function (data) {
+        Countly.getRemoteConfigValueForKey('stringValue', (data) => {
             console.log(data);
         });
     }
+
     getRemoteConfigValueForKeyJSON() {
-        Countly.getRemoteConfigValueForKey('jsonValue', function (data) {
+        Countly.getRemoteConfigValueForKey('jsonValue', (data) => {
             console.log(data);
         });
     }
@@ -369,14 +379,15 @@ class Example extends Component {
     }
 
     setLocation() {
-        var countryCode = 'us';
-        var city = 'Houston';
-        var latitude = '29.634933';
-        var longitude = '-95.220255';
-        var ipAddress = '103.238.105.167';
+        const countryCode = 'us';
+        const city = 'Houston';
+        const latitude = '29.634933';
+        const longitude = '-95.220255';
+        const ipAddress = '103.238.105.167';
 
-        Countly.setLocation(countryCode, city, latitude + ',' + longitude, ipAddress);
+        Countly.setLocation(countryCode, city, `${latitude},${longitude}`, ipAddress);
     }
+
     disableLocation() {
         Countly.disableLocation();
     }
@@ -398,66 +409,66 @@ class Example extends Component {
     }
 
     presentRatingWidget() {
-        Countly.presentRatingWidgetWithID('625f9032028614795fe5a85b', 'Submit', function (error) {
+        Countly.presentRatingWidgetWithID('625f9032028614795fe5a85b', 'Submit', (error) => {
             if (error != null) {
                 console.log(error);
             }
         });
     }
 
-    presentRatingWidgetUsingEditBox = function () {
-        Countly.presentRatingWidgetWithID(this.state.ratingId, 'Submit', function (error) {
+    presentRatingWidgetUsingEditBox() {
+        Countly.presentRatingWidgetWithID(this.state.ratingId, 'Submit', (error) => {
             if (error != null) {
-                console.log('presentRatingWidgetUsingEditBox : ' + error);
+                console.log(`presentRatingWidgetUsingEditBox : ${error}`);
             }
         });
-    };
+    }
 
-    showSurvey = function () {
-        Countly.getFeedbackWidgets(function (retrivedWidgets, error) {
+    showSurvey() {
+        Countly.getFeedbackWidgets((retrivedWidgets, error) => {
             if (error != null) {
-                console.log('showSurvey Error : ' + error);
+                console.log(`showSurvey Error : ${error}`);
             } else {
-                console.log('showSurvey Success : ' + retrivedWidgets.length);
-                var surveyWidget = retrivedWidgets.find((x) => x.type === 'survey');
+                console.log(`showSurvey Success : ${retrivedWidgets.length}`);
+                const surveyWidget = retrivedWidgets.find((x) => x.type === 'survey');
                 if (surveyWidget) {
                     Countly.presentFeedbackWidgetObject(
                         surveyWidget,
                         'Close',
-                        function () {
+                        () => {
                             console.log('showSurvey presentFeedbackWidgetObject : ' + 'Widgetshown');
                         },
-                        function () {
+                        () => {
                             console.log('showSurvey presentFeedbackWidgetObject : ' + 'Widgetclosed');
                         }
                     );
                 }
             }
         });
-    };
+    }
 
-    showNPS = function () {
-        Countly.getFeedbackWidgets(function (retrivedWidgets, error) {
+    showNPS() {
+        Countly.getFeedbackWidgets((retrivedWidgets, error) => {
             if (error != null) {
-                console.log('showNPS Error : ' + error);
+                console.log(`showNPS Error : ${error}`);
             } else {
-                console.log('showNPS Success : ' + retrivedWidgets.length);
-                var npsWidget = retrivedWidgets.find((x) => x.type === 'nps');
+                console.log(`showNPS Success : ${retrivedWidgets.length}`);
+                const npsWidget = retrivedWidgets.find((x) => x.type === 'nps');
                 if (npsWidget) {
                     Countly.presentFeedbackWidgetObject(
                         npsWidget,
                         'Close',
-                        function () {
+                        () => {
                             console.log('showNPS presentFeedbackWidgetObject : ' + 'Widgetshown');
                         },
-                        function () {
+                        () => {
                             console.log('showNPS presentFeedbackWidgetObject : ' + 'Widgetclosed');
                         }
                     );
                 }
             }
         });
-    };
+    }
 
     addCrashLog() {
         Countly.addCrashLog('My crash log in string.');
@@ -465,17 +476,17 @@ class Example extends Component {
 
     addLogException() {
         Countly.addCrashLog('User Performed Step A');
-        setTimeout(function () {
+        setTimeout(() => {
             Countly.addCrashLog('User Performed Step B');
         }, 1000);
-        setTimeout(function () {
+        setTimeout(() => {
             Countly.addCrashLog('User Performed Step C');
             try {
-                var a = {};
-                var x = a.b.c; // this will create error.
+                const a = {};
+                const x = a.b.c; // this will create error.
             } catch (error) {
-                setTimeout(function () {
-                    var stack = error.stack.toString();
+                setTimeout(() => {
+                    const stack = error.stack.toString();
                     Countly.logException(stack, true, { '_facebook_version': '0.0.1' });
                 }, 1000);
             }
@@ -488,48 +499,53 @@ class Example extends Component {
 
     // APM Examples
     startTrace() {
-        var traceKey = 'Trace Key';
+        const traceKey = 'Trace Key';
         Countly.startTrace(traceKey);
     }
+
     endTrace() {
-        var traceKey = 'Trace Key';
-        var customMetric = {
+        const traceKey = 'Trace Key';
+        const customMetric = {
             'ABC': 1233,
             'C44C': 1337,
         };
         Countly.endTrace(traceKey, customMetric);
     }
+
     random(number) {
         return Math.floor(Math.random() * number);
     }
+
     recordNetworkTraceSuccess() {
-        var networkTraceKey = 'api/endpoint.1';
-        var responseCode = successCodes[this.random(successCodes.length)];
-        var requestPayloadSize = this.random(700) + 200;
-        var responsePayloadSize = this.random(700) + 200;
+        const networkTraceKey = 'api/endpoint.1';
+        const responseCode = successCodes[this.random(successCodes.length)];
+        const requestPayloadSize = this.random(700) + 200;
+        const responsePayloadSize = this.random(700) + 200;
         Countly.recordNetworkTrace(networkTraceKey, responseCode, requestPayloadSize, responsePayloadSize);
     }
+
     recordNetworkTraceFailure() {
-        var networkTraceKey = 'api/endpoint.1';
-        var responseCode = failureCodes[this.random(failureCodes.length)];
-        var requestPayloadSize = this.random(700) + 250;
-        var responsePayloadSize = this.random(700) + 250;
-        var startTime = new Date().getTime();
-        var endTime = startTime + 500;
+        const networkTraceKey = 'api/endpoint.1';
+        const responseCode = failureCodes[this.random(failureCodes.length)];
+        const requestPayloadSize = this.random(700) + 250;
+        const responsePayloadSize = this.random(700) + 250;
+        const startTime = new Date().getTime();
+        const endTime = startTime + 500;
         Countly.recordNetworkTrace(networkTraceKey, responseCode, requestPayloadSize, responsePayloadSize, startTime, endTime);
     }
 
     setCustomCrashSegments() {
-        var segment = { 'Key': 'Value' };
+        const segment = { 'Key': 'Value' };
         Countly.setCustomCrashSegments(segment);
     }
+
     /*
     testCrash(){
         Countly.testCrash();
     }
     */
     setCustomMetrics() {
-        var customMetric = {
+        const customMetric = {
             '_carrier': 'Custom Carrier',
         };
         Countly.setCustomMetrics(customMetric);
@@ -572,6 +588,7 @@ class Example extends Component {
         // Countly.setLocation(countryCode, city, "a,b", ipAddress);
         // Countly.setLocation(countryCode, city, "abcd", ipAddress);
     }
+
     render() {
         return (
             <ScrollView>

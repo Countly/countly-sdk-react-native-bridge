@@ -20,6 +20,7 @@
 
         // ignore errors for the react-navigation package
         "react/prop-types": ["error", { "ignore": ["navigation", "navigation.navigate"] }],
-        "no-var": "off"
+        "no-var": "warn",
+        "curly": ["error", "all"]
     }
 }
