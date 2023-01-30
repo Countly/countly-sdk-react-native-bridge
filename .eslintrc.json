@@ -8,7 +8,8 @@
             "jsx": true
         },
         "ecmaVersion": 8,
-        "sourceType": "module"
+        "sourceType": "module",
+        "project": ["./tsconfig.json"]
     },
     "parser": "@typescript-eslint/parser",
     "plugins": ["react", "react-native", "@typescript-eslint"],
