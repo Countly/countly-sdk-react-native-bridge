@@ -1,0 +1,7 @@
+{
+    "compilerOptions": {
+        "jsx": "react-native",
+        "types": ["react-native"]
+    },
+    "extends": "@tsconfig/react-native/tsconfig.json"
+}
