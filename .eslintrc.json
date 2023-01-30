@@ -2,6 +2,11 @@
     "env": {
         "react-native/react-native": true
     },
+    "settings": {
+        "react": {
+            "version": "detect"
+        }
+    },
     "extends": ["plugin:react/recommended", "prettier", "eslint:recommended", "plugin:@typescript-eslint/recommended"],
     "parserOptions": {
         "ecmaFeatures": {
