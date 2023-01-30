@@ -18,4 +18,4 @@ android/local.properties
 android/android.iml
 android/.settings/org.eclipse.buildship.core.prefs
 android/.classpath
-countly-sdk-react-native-bridge-22.06.5.tgz
+countly-sdk-react-native-bridge-*.tgz
