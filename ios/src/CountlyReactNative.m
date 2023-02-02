@@ -180,6 +180,7 @@ RCT_EXPORT_METHOD(setLoggingEnabled:(NSArray*)arguments)
   }
   if(boolean){
     config.enableDebug = YES;
+    config.internalLogLevel = CLYInternalLogLevelVerbose;
   }else{
     config.enableDebug = NO;
   }
