@@ -86,8 +86,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
     private static final CountlyConfig config = new CountlyConfig();
     private static Countly.CountlyMessagingMode messagingMode = Countly.CountlyMessagingMode.PRODUCTION;
-    private static String channelName = "Default Name";
-    private static String channelDescription = "Default Description";
+    private static String channelName = "General Notifications";
+    private static String channelDescription = "Receive notifications about important updates and events.";
     private static CCallback notificationListener = null;
     private static String lastStoredNotification = null;
     protected static boolean loggingEnabled = false;
