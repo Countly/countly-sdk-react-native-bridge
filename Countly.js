@@ -55,6 +55,53 @@ Countly.init = async function (serverUrl, appKey, deviceId) {
     _isInitialized = true;
 };
 
+// countly initialization with config
+Countly.initWithConfig = async function (countlyConfig) {
+    if (countlyConfig.deviceId == '') {
+        Countly.logError('init', "Device Id during init can't be empty string");
+    }
+
+    await CountlyReactNative.init([countlyConfig.serverUrl, countlyConfig.appKey, countlyConfig.deviceId]);
+    _isInitialized = true;
+
+    if (countlyConfig.hasSetLoggingEnabled) {
+        Countly.setLoggingEnabled(countlyConfig.loggingEnabled);
+    }
+    if (countlyConfig.hasSetCrashReporting) {
+        Countly.enableCrashReporting();
+    }
+    if (countlyConfig.hasSetRequiresConsent) {
+        Countly.setRequiresConsent(countlyConfig.flag);
+    }
+    if (countlyConfig.hasSetConsent) {
+        Countly.giveConsentInit(countlyConfig.features);
+    }
+    if (countlyConfig.hasSetLocation) {
+        Countly.setLocationInit(countlyConfig.countryCode, countlyConfig.city, countlyConfig.location, countlyConfig.ipAddress);
+    }
+    if (countlyConfig.hasSetTamperProtection) {
+        Countly.enableParameterTamperingProtection(countlyConfig.salt);
+    }
+    if (countlyConfig.hasSetApm) {
+        Countly.enableApm();
+    }
+    if (countlyConfig.hasSetPushTokenType) {
+        Countly.pushTokenType(countlyConfig.tokenType, countlyConfig.channelName, countlyConfig.channelDescription);
+    }
+    if (countlyConfig.hasSetRecordAttributionID) {
+        Countly.recordAttributionID(countlyConfig.attributionID);
+    }
+    if (countlyConfig.hasSetAttribution) {
+        Countly.enableAttribution();
+    }
+    if (countlyConfig.hasSetIntentRedirectionCheck) {
+        Countly.configureIntentRedirectionCheck(countlyConfig.allowedIntentClassNames, countlyConfig.allowedIntentPackageNames);
+    }
+    if (countlyConfig.hasSetStarRatingDialogTexts) {
+        Countly.setStarRatingDialogTexts(countlyConfig.starRatingTextTitle, countlyConfig.starRatingTextMessage, countlyConfig.starRatingTextDismiss);
+    }
+};
+
 Countly.isInitialized = async function () {
     // returns a promise
     _isInitialized = await CountlyReactNative.isInitialized();
