@@ -176,6 +176,145 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     }
 
     @ReactMethod
+    public void initWithConfig(ReadableMap args, Promise promise){
+        log("Initializing...", LogLevel.DEBUG);
+
+        populateConfig(args);
+
+        Countly.sharedInstance().COUNTLY_SDK_NAME = COUNTLY_RN_SDK_NAME;
+        Countly.sharedInstance().COUNTLY_SDK_VERSION_STRING = COUNTLY_RN_SDK_VERSION_STRING;
+
+        config.setContext(_reactContext);
+        Activity activity = getActivity();
+        if (activity != null) {
+            config.setApplication(activity.getApplication());
+        }
+        else {
+            log("init, Activity is null, some features will not work", LogLevel.WARNING);
+        }
+        Countly.sharedInstance().init(config);
+        if(isOnResumeBeforeInit) {
+            isOnResumeBeforeInit = false;
+            Countly.sharedInstance().apm().triggerForeground();
+        }
+        promise.resolve("Success");
+    }
+
+    private void populateConfig(ReadableMap _config) throws JSONException {
+        if (_config.has("serverURL")) {
+            config.setServerURL(_config.getString("serverURL"));
+        }
+        if (_config.has("appKey")) {
+            config.setAppKey(_config.getString("appKey"));
+        }
+        if (_config.has("deviceID")) {
+            String deviceID = _config.getString("deviceID");
+            if (deviceID.equals("TemporaryDeviceID")) {
+                config.enableTemporaryDeviceIdMode();
+            } else {
+                config.setDeviceId(deviceID);
+            }
+        }
+        if (_config.has("loggingEnabled")) {
+            config.setLoggingEnabled(_config.getBoolean("loggingEnabled"));
+        }
+        // if (_config.has("httpPostForced")) {
+        //     config.setHttpPostForced(_config.getBoolean("httpPostForced"));
+        // }
+        if (_config.has("shouldRequireConsent")) {
+            config.setRequiresConsent(_config.getBoolean("shouldRequireConsent"));
+        }
+        if (_config.has("tamperingProtectionSalt")) {
+            config.setParameterTamperingProtectionSalt(_config.getString("tamperingProtectionSalt"));
+        }
+        // if (_config.has("eventQueueSizeThreshold")) {
+        //     config.setEventQueueSizeToSend(_config.getInt("eventQueueSizeThreshold"));
+        // }
+        // if (_config.has("sessionUpdateTimerDelay")) {
+        //     config.setUpdateSessionTimerDelay(_config.getInt("sessionUpdateTimerDelay"));
+        // }
+
+        // if (_config.has("customCrashSegment")) {
+        //     Map<String, Object> customCrashSegment = toMap(_config.getJSONObject("customCrashSegment"));
+        //     config.setCustomCrashSegment(customCrashSegment);
+        // }
+        // if (_config.has("providedUserProperties")) {
+        //     Map<String, Object> providedUserProperties = toMap(_config.getJSONObject("providedUserProperties"));
+        //         config.setUserProperties(providedUserProperties);
+        // }
+
+        if (_config.has("consents")) {
+            String[] consents = toStringArray(_config.getJSONArray("consents"));
+            config.setConsentEnabled(consents);
+        }
+        if (_config.has("starRatingTextTitle")) {
+            config.setStarRatingTextTitle(_config.getString("starRatingTextTitle"));
+        }
+        if (_config.has("starRatingTextMessage")) {
+            config.setStarRatingTextMessage(_config.getString("starRatingTextMessage"));
+        }
+        if (_config.has("starRatingTextDismiss")) {
+            config.setStarRatingTextDismiss(_config.getString("starRatingTextDismiss"));
+        }
+        // if (_config.has("recordAppStartTime")) {
+        //     config.setRecordAppStartTime(_config.getBoolean("recordAppStartTime"));
+        // }
+        if (_config.has("enableUnhandledCrashReporting") && _config.getBoolean("enableUnhandledCrashReporting")) {
+            config.enableCrashReporting();
+        }
+
+        // if (_config.has("maxRequestQueueSize")) {
+        //     config.setMaxRequestQueueSize(_config.getInt("maxRequestQueueSize"));
+        // }
+
+        // if (_config.has("manualSessionEnabled") && _config.getBoolean("manualSessionEnabled")) {
+        //     enableManualSessionControl();
+        // }
+
+        // if (_config.has("enableRemoteConfigAutomaticDownload")) {
+        //     boolean enableRemoteConfigAutomaticDownload = _config.getBoolean("enableRemoteConfigAutomaticDownload");
+        //     config.setRemoteConfigAutomaticDownload(enableRemoteConfigAutomaticDownload, new RemoteConfigCallback() {
+        //         @Override
+        //         public void callback(String error) {
+        //             methodChannel.invokeMethod("remoteConfigCallback", error);
+        //         }
+        //     });
+        // }
+
+        String countryCode = null;
+        String city = null;
+        String gpsCoordinates = null;
+        String ipAddress = null;
+
+        if (_config.has("locationCountryCode")) {
+            countryCode = _config.getString("locationCountryCode");
+        }
+        if (_config.has("locationCity")) {
+            city = _config.getString("locationCity");
+        }
+        if (_config.has("locationGpsCoordinates")) {
+            gpsCoordinates = _config.getString("locationGpsCoordinates");
+        }
+        if (_config.has("locationIpAddress")) {
+            ipAddress = _config.getString("locationIpAddress");
+        }
+        if (city != null || countryCode != null || gpsCoordinates != null || ipAddress != null) {
+            config.setLocation(countryCode, city, gpsCoordinates, ipAddress);
+        }
+
+        if (_config.has("campaignType")) {
+            String campaignType = _config.getString("campaignType");
+            String campaignData = _config.getString("campaignData");
+            config.setDirectAttribution(campaignType, campaignData);
+        }
+
+        // if (_config.has("attributionValues")) {
+        //     JSONObject attributionValues = _config.getJSONObject("attributionValues");
+        //     config.setIndirectAttribution(toMapString(attributionValues));
+        // }
+    }
+
+    @ReactMethod
     public void setLoggingEnabled(ReadableArray args){
         boolean enabled = args.getBoolean(0);
         config.setLoggingEnabled(enabled);

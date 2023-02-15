@@ -1,3 +1,4 @@
+/* eslint-disable */
 /**
  * Countly SDK React Native Bridge
  * https://github.com/Countly/countly-sdk-react-native-bridge
@@ -57,49 +58,140 @@ Countly.init = async function (serverUrl, appKey, deviceId) {
 
 // countly initialization with config
 Countly.initWithConfig = async function (countlyConfig) {
-    if (countlyConfig.deviceId == '') {
-        Countly.logError('init', "Device Id during init can't be empty string");
+    if (countlyConfig.deviceID == '') {
+        Countly.logError("initWithConfig", "Device ID during init can't be an empty string");
+    }
+    if (countlyConfig.serverURL == '') {
+        Countly.logError("initWithConfig", "Server URL during init can't be an empty string");
+    }
+    if (countlyConfig.appKey == '') {
+        Countly.logError("initWithConfig", "App Key during init can't be an empty string");
+    }
+    if (_isInitialized) {
+        Countly.logError("initWithConfig", "SDK is already initialized");
     }
 
-    await CountlyReactNative.init([countlyConfig.serverUrl, countlyConfig.appKey, countlyConfig.deviceId]);
+    // const args = [];
+    // args.add(_configToJson(countlyConfig));
+    const args = _configToJson(countlyConfig);
+    await CountlyReactNative.initWithConfig(args);
     _isInitialized = true;
 
-    if (countlyConfig.hasSetLoggingEnabled) {
-        Countly.setLoggingEnabled(countlyConfig.loggingEnabled);
+    // if (countlyConfig.hasSetLoggingEnabled) {
+    //     Countly.setLoggingEnabled(countlyConfig.loggingEnabled);
+    // }
+    // if (countlyConfig.hasSetCrashReporting) {
+    //     Countly.enableCrashReporting();
+    // }
+    // if (countlyConfig.hasSetRequiresConsent) {
+    //     Countly.setRequiresConsent(countlyConfig.flag);
+    // }
+    // if (countlyConfig.hasSetConsent) {
+    //     Countly.giveConsentInit(countlyConfig.features);
+    // }
+    // if (countlyConfig.hasSetLocation) {
+    //     Countly.setLocationInit(countlyConfig.countryCode, countlyConfig.city, countlyConfig.location, countlyConfig.ipAddress);
+    // }
+    // if (countlyConfig.hasSetTamperProtection) {
+    //     Countly.enableParameterTamperingProtection(countlyConfig.salt);
+    // }
+    // if (countlyConfig.hasSetApm) {
+    //     Countly.enableApm();
+    // }
+    // if (countlyConfig.hasSetPushTokenType) {
+    //     Countly.pushTokenType(countlyConfig.tokenType, countlyConfig.channelName, countlyConfig.channelDescription);
+    // }
+    // if (countlyConfig.hasSetRecordAttributionID) {
+    //     Countly.recordAttributionID(countlyConfig.attributionID);
+    // }
+    // if (countlyConfig.hasSetAttribution) {
+    //     Countly.enableAttribution();
+    // }
+    // if (countlyConfig.hasSetIntentRedirectionCheck) {
+    //     Countly.configureIntentRedirectionCheck(countlyConfig.allowedIntentClassNames, countlyConfig.allowedIntentPackageNames);
+    // }
+    // if (countlyConfig.hasSetStarRatingDialogTexts) {
+    //     Countly.setStarRatingDialogTexts(countlyConfig.starRatingTextTitle, countlyConfig.starRatingTextMessage, countlyConfig.starRatingTextDismiss);
+    // }
+
+    // await CountlyReactNative.init([countlyConfig.serverUrl, countlyConfig.appKey, countlyConfig.deviceID]);
+    // _isInitialized = true;
+};
+
+_configToJson = async function (config) {
+    const json = {};
+    try {
+        json['serverURL'] = config.serverURL;
+        json['appKey'] = config.appKey;
+        json['deviceID'] = config.deviceID;
+
+        if (countlyConfig.loggingEnabled) {
+            json['loggingEnabled'] = config.loggingEnabled;
+        }
+        // not used - enableUnhandledCrashReporting
+        if (countlyConfig.crashReporting) {
+            json['crashReporting'] = config.crashReporting;
+        }
+        if (countlyConfig.shouldRequireConsent) {
+            json['shouldRequireConsent'] = config.shouldRequireConsent;
+        }
+        if (countlyConfig.consents) {
+            json['consents'] = config.consents;
+        }
+        if (countlyConfig.locationCountryCode) {
+            json['locationCountryCode'] = config.locationCountryCode;
+        }
+        if (countlyConfig.locationCity) {
+            json['locationCity'] = config.locationCity;
+        }
+        if (countlyConfig.locationGpsCoordinates) {
+            json['locationGpsCoordinates'] = config.locationGpsCoordinates;
+        }
+        if (countlyConfig.locationIpAddress) {
+            json['locationIpAddress'] = config.locationIpAddress;
+        }
+        if (countlyConfig.tamperingProtectionSalt) {
+            json['tamperingProtectionSalt'] = config.tamperingProtectionSalt;
+        }
+        // not used
+        if (countlyConfig.enableApm) {
+            json['enableApm'] = enableApm;
+        }
+        // not used
+        if (countlyConfig.tokenType) {
+            json['tokenType'] = config.tokenType;
+            json['channelName'] = config.channelName;
+            json['channelDescription'] = config.channelDescription;
+        }
+        // not used
+        if (countlyConfig.attributionID) {
+            json['attributionID'] = config.attributionID;
+        }
+        // not used
+        if (countlyConfig.enableAttribution) {
+            json['enableAttribution'] = true;
+        }
+        // not used
+        if (countlyConfig.allowedIntentClassNames) {
+            json['allowedIntentClassNames'] = config.allowedIntentClassNames;
+        }
+        // not used
+        if (countlyConfig.allowedIntentClassNames) {
+            json['allowedIntentPackageNames'] = config.allowedIntentPackageNames;
+        }
+        if (countlyConfig.starRatingTextTitle) {
+            json['starRatingTextTitle'] = config.starRatingTextTitle;
+        }
+        if (countlyConfig.starRatingTextMessage) {
+            json['starRatingTextMessage'] = config.starRatingTextMessage;
+        }
+        if (countlyConfig.starRatingTextDismiss) {
+            json['starRatingTextDismiss'] = config.starRatingTextDismiss;
+        }
+    } catch (err) {
+        Countly.logError('_configToJson', 'Exception occured during converting config to json.');
     }
-    if (countlyConfig.hasSetCrashReporting) {
-        Countly.enableCrashReporting();
-    }
-    if (countlyConfig.hasSetRequiresConsent) {
-        Countly.setRequiresConsent(countlyConfig.flag);
-    }
-    if (countlyConfig.hasSetConsent) {
-        Countly.giveConsentInit(countlyConfig.features);
-    }
-    if (countlyConfig.hasSetLocation) {
-        Countly.setLocationInit(countlyConfig.countryCode, countlyConfig.city, countlyConfig.location, countlyConfig.ipAddress);
-    }
-    if (countlyConfig.hasSetTamperProtection) {
-        Countly.enableParameterTamperingProtection(countlyConfig.salt);
-    }
-    if (countlyConfig.hasSetApm) {
-        Countly.enableApm();
-    }
-    if (countlyConfig.hasSetPushTokenType) {
-        Countly.pushTokenType(countlyConfig.tokenType, countlyConfig.channelName, countlyConfig.channelDescription);
-    }
-    if (countlyConfig.hasSetRecordAttributionID) {
-        Countly.recordAttributionID(countlyConfig.attributionID);
-    }
-    if (countlyConfig.hasSetAttribution) {
-        Countly.enableAttribution();
-    }
-    if (countlyConfig.hasSetIntentRedirectionCheck) {
-        Countly.configureIntentRedirectionCheck(countlyConfig.allowedIntentClassNames, countlyConfig.allowedIntentPackageNames);
-    }
-    if (countlyConfig.hasSetStarRatingDialogTexts) {
-        Countly.setStarRatingDialogTexts(countlyConfig.starRatingTextTitle, countlyConfig.starRatingTextMessage, countlyConfig.starRatingTextDismiss);
-    }
+    return json;
 };
 
 Countly.isInitialized = async function () {

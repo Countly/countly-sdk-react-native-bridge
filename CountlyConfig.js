@@ -11,50 +11,44 @@ class CountlyConfig {
     }
 
     setLoggingEnabled(loggingEnabled) {
-        this.hasSetLoggingEnabled = true;
         this.loggingEnabled = loggingEnabled;
         return this;
     }
 
     enableCrashReporting() {
-        this.hasSetCrashReporting = true;
+        this.crashReporting = true;
         return this;
     }
 
-    setRequiresConsent(flag) {
-        this.hasSetRequiresConsent = true;
-        this.flag = flag;
+    setRequiresConsent(shouldRequireConsent) {
+        this.shouldRequireConsent = shouldRequireConsent;
         return this;
     }
 
-    giveConsentInit(features) {
-        this.hasSetConsent = true;
-        this.features = features;
+    giveConsentInit(consents) {
+        this.consents = consents;
         return this;
     }
 
-    setLocationInit(countryCode, city, location, ipAddress) {
-        this.hasSetLocation = true;
-        this.countryCode = countryCode;
-        this.city = city;
-        this.location = location;
-        this.ipAddress = ipAddress;
+    setLocationInit(locationCountryCode, locationCity, locationGpsCoordinates, locationIpAddress) {
+        this.locationCountryCode = locationCountryCode;
+        this.locationCity = locationCity;
+        this.locationGpsCoordinates = locationGpsCoordinates;
+        this.locationIpAddress = locationIpAddress;
         return this;
     }
 
-    enableParameterTamperingProtection(salt) {
-        this.hasSetTamperProtection = true;
-        this.salt = salt;
+    enableParameterTamperingProtection(tamperingProtectionSalt) {
+        this.tamperingProtectionSalt = tamperingProtectionSalt;
         return this;
     }
 
     enableApm() {
-        this.hasSetApm = true;
+        this.enableApm = true;
         return this;
     }
 
     pushTokenType(tokenType, channelName, channelDescription) {
-        this.hasSetPushTokenType = true;
         this.tokenType = tokenType;
         this.channelName = channelName;
         this.channelDescription = channelDescription;
@@ -62,18 +56,16 @@ class CountlyConfig {
     }
 
     recordAttributionID(attributionID) {
-        this.hasSetRecordAttributionID = true;
         this.attributionID = attributionID;
         return this;
     }
 
     enableAttribution() {
-        this.hasSetAttribution = true;
+        this.enableAttribution = true;
         return this;
     }
 
     configureIntentRedirectionCheck(allowedIntentClassNames, allowedIntentPackageNames) {
-        this.hasSetIntentRedirectionCheck = true;
         this.allowedIntentClassNames = allowedIntentClassNames;
         this.allowedIntentPackageNames = allowedIntentPackageNames;
         return this;
