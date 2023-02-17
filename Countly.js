@@ -59,137 +59,89 @@ Countly.init = async function (serverUrl, appKey, deviceId) {
 // countly initialization with config
 Countly.initWithConfig = async function (countlyConfig) {
     if (countlyConfig.deviceID == '') {
-        Countly.logError("initWithConfig", "Device ID during init can't be an empty string");
+        Countly.logError('initWithConfig', "Device ID during init can't be an empty string");
     }
     if (countlyConfig.serverURL == '') {
-        Countly.logError("initWithConfig", "Server URL during init can't be an empty string");
+        Countly.logError('initWithConfig', "Server URL during init can't be an empty string");
     }
     if (countlyConfig.appKey == '') {
-        Countly.logError("initWithConfig", "App Key during init can't be an empty string");
+        Countly.logError('initWithConfig', "App Key during init can't be an empty string");
     }
     if (_isInitialized) {
-        Countly.logError("initWithConfig", "SDK is already initialized");
+        Countly.logError('initWithConfig', 'SDK is already initialized');
     }
 
-    // const args = [];
-    // args.add(_configToJson(countlyConfig));
-    const args = _configToJson(countlyConfig);
+    const args = [];
+    const argsMap = _configToJson(countlyConfig);
+    const argsString = JSON.stringify(argsMap);
+    args.push(argsString);
     await CountlyReactNative.initWithConfig(args);
     _isInitialized = true;
-
-    // if (countlyConfig.hasSetLoggingEnabled) {
-    //     Countly.setLoggingEnabled(countlyConfig.loggingEnabled);
-    // }
-    // if (countlyConfig.hasSetCrashReporting) {
-    //     Countly.enableCrashReporting();
-    // }
-    // if (countlyConfig.hasSetRequiresConsent) {
-    //     Countly.setRequiresConsent(countlyConfig.flag);
-    // }
-    // if (countlyConfig.hasSetConsent) {
-    //     Countly.giveConsentInit(countlyConfig.features);
-    // }
-    // if (countlyConfig.hasSetLocation) {
-    //     Countly.setLocationInit(countlyConfig.countryCode, countlyConfig.city, countlyConfig.location, countlyConfig.ipAddress);
-    // }
-    // if (countlyConfig.hasSetTamperProtection) {
-    //     Countly.enableParameterTamperingProtection(countlyConfig.salt);
-    // }
-    // if (countlyConfig.hasSetApm) {
-    //     Countly.enableApm();
-    // }
-    // if (countlyConfig.hasSetPushTokenType) {
-    //     Countly.pushTokenType(countlyConfig.tokenType, countlyConfig.channelName, countlyConfig.channelDescription);
-    // }
-    // if (countlyConfig.hasSetRecordAttributionID) {
-    //     Countly.recordAttributionID(countlyConfig.attributionID);
-    // }
-    // if (countlyConfig.hasSetAttribution) {
-    //     Countly.enableAttribution();
-    // }
-    // if (countlyConfig.hasSetIntentRedirectionCheck) {
-    //     Countly.configureIntentRedirectionCheck(countlyConfig.allowedIntentClassNames, countlyConfig.allowedIntentPackageNames);
-    // }
-    // if (countlyConfig.hasSetStarRatingDialogTexts) {
-    //     Countly.setStarRatingDialogTexts(countlyConfig.starRatingTextTitle, countlyConfig.starRatingTextMessage, countlyConfig.starRatingTextDismiss);
-    // }
-
-    // await CountlyReactNative.init([countlyConfig.serverUrl, countlyConfig.appKey, countlyConfig.deviceID]);
-    // _isInitialized = true;
 };
 
-_configToJson = async function (config) {
+_configToJson = function (config) {
     const json = {};
     try {
         json['serverURL'] = config.serverURL;
         json['appKey'] = config.appKey;
         json['deviceID'] = config.deviceID;
 
-        if (countlyConfig.loggingEnabled) {
+        if (config.loggingEnabled) {
             json['loggingEnabled'] = config.loggingEnabled;
         }
-        // not used - enableUnhandledCrashReporting
-        if (countlyConfig.crashReporting) {
+        if (config.crashReporting) {
             json['crashReporting'] = config.crashReporting;
         }
-        if (countlyConfig.shouldRequireConsent) {
+        if (config.shouldRequireConsent) {
             json['shouldRequireConsent'] = config.shouldRequireConsent;
         }
-        if (countlyConfig.consents) {
+        if (config.consents) {
             json['consents'] = config.consents;
         }
-        if (countlyConfig.locationCountryCode) {
+        if (config.locationCountryCode) {
             json['locationCountryCode'] = config.locationCountryCode;
         }
-        if (countlyConfig.locationCity) {
+        if (config.locationCity) {
             json['locationCity'] = config.locationCity;
         }
-        if (countlyConfig.locationGpsCoordinates) {
+        if (config.locationGpsCoordinates) {
             json['locationGpsCoordinates'] = config.locationGpsCoordinates;
         }
-        if (countlyConfig.locationIpAddress) {
+        if (config.locationIpAddress) {
             json['locationIpAddress'] = config.locationIpAddress;
         }
-        if (countlyConfig.tamperingProtectionSalt) {
+        if (config.tamperingProtectionSalt) {
             json['tamperingProtectionSalt'] = config.tamperingProtectionSalt;
         }
-        // not used
-        if (countlyConfig.enableApm) {
-            json['enableApm'] = enableApm;
+        if (config.enableApm) {
+            json['enableApm'] = config.enableApm;
         }
-        // not used
-        if (countlyConfig.tokenType) {
-            json['tokenType'] = config.tokenType;
-            json['channelName'] = config.channelName;
-            json['channelDescription'] = config.channelDescription;
+        if (config.tokenType) {
+            json['pushNotification'] = [config.tokenType, config.channelName, config.channelDescription];
         }
-        // not used
-        if (countlyConfig.attributionID) {
+        if (config.attributionID) {
             json['attributionID'] = config.attributionID;
         }
-        // not used
-        if (countlyConfig.enableAttribution) {
+        if (config.enableAttribution) {
             json['enableAttribution'] = true;
         }
-        // not used
-        if (countlyConfig.allowedIntentClassNames) {
+        if (config.allowedIntentClassNames) {
             json['allowedIntentClassNames'] = config.allowedIntentClassNames;
         }
-        // not used
-        if (countlyConfig.allowedIntentClassNames) {
+        if (config.allowedIntentClassNames) {
             json['allowedIntentPackageNames'] = config.allowedIntentPackageNames;
         }
-        if (countlyConfig.starRatingTextTitle) {
+        if (config.starRatingTextTitle) {
             json['starRatingTextTitle'] = config.starRatingTextTitle;
         }
-        if (countlyConfig.starRatingTextMessage) {
+        if (config.starRatingTextMessage) {
             json['starRatingTextMessage'] = config.starRatingTextMessage;
         }
-        if (countlyConfig.starRatingTextDismiss) {
+        if (config.starRatingTextDismiss) {
             json['starRatingTextDismiss'] = config.starRatingTextDismiss;
         }
     } catch (err) {
-        Countly.logError('_configToJson', 'Exception occured during converting config to json.');
+        Countly.logError('_configToJson', 'Exception occured during converting config to json.' + err.toString());
     }
     return json;
 };

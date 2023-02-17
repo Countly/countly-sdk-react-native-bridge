@@ -3,11 +3,11 @@
  * https://github.com/Countly/countly-sdk-react-native-bridge
  * @Countly
  */
-class CountlyConfig {
-    constructor(appKey, deviceId, serverUrl) {
+ class CountlyConfig {
+    constructor(serverURL, appKey, deviceID) {
+        this.serverURL = serverURL;
         this.appKey = appKey;
-        this.deviceId = deviceId;
-        this.serverUrl = serverUrl;
+        this.deviceID = deviceID;
     }
 
     setLoggingEnabled(loggingEnabled) {
