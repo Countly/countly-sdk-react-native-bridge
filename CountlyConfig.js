@@ -4,10 +4,9 @@
  * @Countly
  */
  class CountlyConfig {
-    constructor(serverURL, appKey, deviceID) {
+    constructor(serverURL, appKey) {
         this.serverURL = serverURL;
         this.appKey = appKey;
-        this.deviceID = deviceID;
     }
 
     setLoggingEnabled(loggingEnabled) {

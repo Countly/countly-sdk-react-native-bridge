@@ -58,9 +58,6 @@ Countly.init = async function (serverUrl, appKey, deviceId) {
 
 // countly initialization with config
 Countly.initWithConfig = async function (countlyConfig) {
-    if (countlyConfig.deviceID == '') {
-        Countly.logError('initWithConfig', "Device ID during init can't be an empty string");
-    }
     if (countlyConfig.serverURL == '') {
         Countly.logError('initWithConfig', "Server URL during init can't be an empty string");
     }
@@ -84,7 +81,6 @@ _configToJson = function (config) {
     try {
         json['serverURL'] = config.serverURL;
         json['appKey'] = config.appKey;
-        json['deviceID'] = config.deviceID;
 
         if (config.loggingEnabled) {
             json['loggingEnabled'] = config.loggingEnabled;

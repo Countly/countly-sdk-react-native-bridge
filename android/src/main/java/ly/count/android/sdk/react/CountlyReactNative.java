@@ -49,6 +49,7 @@ import ly.count.android.sdk.messaging.CountlyConfigPush;
 import ly.count.android.sdk.messaging.CountlyPush;
 
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import ly.count.android.sdk.ModuleFeedback.*;
@@ -205,7 +206,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             Countly.sharedInstance().apm().triggerForeground();
         }
 
-        Countly.sharedInstance().apm().setAppIsLoaded();
         promise.resolve("Success");
     }
 
@@ -236,8 +236,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             }
 
             if (_config.has("consents")) {
-                // String[] consents = _config.getJSONArray("consents");
-                // giveConsentInit(_config.getJSONArray("consents"));
+                JSONArray arr = _config.getJSONArray("consents");
+                String[] newArray = new String[arr.length()];
+                for (int i = 0; i < arr.length(); i++){
+                    newArray[i] = arr.getString(i);
+                }
+                config.setConsentEnabled(newArray);
             }
             if (_config.has("starRatingTextTitle")) {
                 config.setStarRatingTextTitle(_config.getString("starRatingTextTitle"));
@@ -255,21 +259,40 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 config.enableCrashReporting();
             }
             if (_config.has("pushNotification")) {
-                // pushTokenType(_config.getJSONArray("pushNotification"));
-                // config.pushTokenType(_config.getJSONArray("pushNotification"));
+                JSONArray arr = _config.getJSONArray("pushNotification");
+                int messagingMode = Integer.parseInt(arr.getString(0));
+                channelName = arr.getString(1);
+                channelDescription = arr.getString(2);
+                log("pushTokenType [" + messagingMode + "][" + channelName + "][" + channelDescription + "]", LogLevel.INFO);
+
+                if (messagingMode == 0) {
+                    CountlyReactNative.messagingMode = Countly.CountlyMessagingMode.PRODUCTION;
+                } else {
+                    CountlyReactNative.messagingMode = Countly.CountlyMessagingMode.TEST;
+                }
             }
             if (_config.has("attributionID")) {
-                // config.recordAttributionID([_config.getString("attributionID")]);
+                log("recordAttributionID: Not implemented for Android", LogLevel.DEBUG);
             }
             if (_config.has("enableAttribution")) {
                 config.setEnableAttribution(true);
             }
-            // if (_config.has("allowedIntentClassNames")) {
-            //     configPush.setAllowedIntentClassNames(allowedIntentClassNames);
-            // }
-            // if (_config.has("allowedIntentPackageNames")) {
-            //     configPush.setAllowedIntentPackageNames(allowedIntentPackageNames);
-            // }
+            if (_config.has("allowedIntentClassNames")) {
+                JSONArray arr = _config.getJSONArray("allowedIntentClassNames");
+                String[] newArray = new String[arr.length()];
+                for (int i = 0; i < arr.length(); i++){
+                    newArray[i] = arr.getString(i);
+                }
+                allowedIntentClassNames = Arrays.asList(newArray);
+            }
+            if (_config.has("allowedIntentPackageNames")) {
+                JSONArray arr = _config.getJSONArray("allowedIntentPackageNames");
+                String[] newArray = new String[arr.length()];
+                for (int i = 0; i < arr.length(); i++){
+                    newArray[i] = arr.getString(i);
+                }
+                allowedIntentPackageNames = Arrays.asList(newArray);
+            }
             String countryCode = null;
             String city = null;
             String gpsCoordinates = null;
