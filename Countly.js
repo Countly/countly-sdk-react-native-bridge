@@ -40,39 +40,26 @@ if (Platform.OS.match('android')) {
     Countly.messagingMode.DEVELOPMENT = '2';
 }
 
-// countly initialization
-Countly.init = async function (serverUrl, appKey, deviceId) {
-    if (deviceId == '') {
-        deviceId = null;
-        Countly.logError('init', "Device Id during init can't be empty string");
-    }
-    Countly.serverUrl = serverUrl;
-    Countly.appKey = appKey;
-    const args = [];
-    args.push(serverUrl);
-    args.push(appKey);
-    args.push(deviceId);
-    await CountlyReactNative.init(args);
-    _isInitialized = true;
-};
-
 // countly initialization with config
-Countly.initWithConfig = async function (countlyConfig) {
+Countly.init = async function (countlyConfig) {
+    if (countlyConfig.deviceID == '') {
+        Countly.logError('init', "Device ID during init can't be an empty string");
+    }
     if (countlyConfig.serverURL == '') {
-        Countly.logError('initWithConfig', "Server URL during init can't be an empty string");
+        Countly.logError('init', "Server URL during init can't be an empty string");
     }
     if (countlyConfig.appKey == '') {
-        Countly.logError('initWithConfig', "App Key during init can't be an empty string");
+        Countly.logError('init', "App Key during init can't be an empty string");
     }
     if (_isInitialized) {
-        Countly.logError('initWithConfig', 'SDK is already initialized');
+        Countly.logError('init', 'SDK is already initialized');
     }
 
     const args = [];
     const argsMap = _configToJson(countlyConfig);
     const argsString = JSON.stringify(argsMap);
     args.push(argsString);
-    await CountlyReactNative.initWithConfig(args);
+    await CountlyReactNative.init(args);
     _isInitialized = true;
 };
 
@@ -81,6 +68,7 @@ _configToJson = function (config) {
     try {
         json['serverURL'] = config.serverURL;
         json['appKey'] = config.appKey;
+        json['deviceID'] = config.deviceID;
 
         if (config.loggingEnabled) {
             json['loggingEnabled'] = config.loggingEnabled;
@@ -113,7 +101,11 @@ _configToJson = function (config) {
             json['enableApm'] = config.enableApm;
         }
         if (config.tokenType) {
-            json['pushNotification'] = [config.tokenType, config.channelName, config.channelDescription];
+            const pushNotification = {};
+            pushNotification['tokenType'] = config.tokenType;
+            pushNotification['channelName'] = config.channelName;
+            pushNotification['channelDescription'] = config.channelDescription;
+            json['pushNotification'] = pushNotification;
         }
         if (config.attributionID) {
             json['attributionID'] = config.attributionID;

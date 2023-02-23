@@ -9,6 +9,21 @@
         this.appKey = appKey;
     }
 
+    setServerURL(serverURL) {
+        this.serverURL = serverURL;
+        return this;
+    }
+
+    setAppKey(appKey) {
+        this.appKey = appKey;
+        return this;
+    }
+
+    setDeviceID(deviceID) {
+        this.deviceID = deviceID;
+        return this;
+    }
+
     setLoggingEnabled(loggingEnabled) {
         this.loggingEnabled = loggingEnabled;
         return this;
@@ -24,12 +39,12 @@
         return this;
     }
 
-    giveConsentInit(consents) {
+    giveConsent(consents) {
         this.consents = consents;
         return this;
     }
 
-    setLocationInit(locationCountryCode, locationCity, locationGpsCoordinates, locationIpAddress) {
+    setLocation(locationCountryCode, locationCity, locationGpsCoordinates, locationIpAddress) {
         this.locationCountryCode = locationCountryCode;
         this.locationCity = locationCity;
         this.locationGpsCoordinates = locationGpsCoordinates;

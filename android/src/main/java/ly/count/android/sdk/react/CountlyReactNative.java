@@ -142,43 +142,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
     @ReactMethod
     public void init(ReadableArray args, Promise promise){
-        log("Initializing...", LogLevel.DEBUG);
-        String serverUrl = args.getString(0);
-        String appKey = args.getString(1);
-        String deviceId = args.getString(2);
-        config.setServerURL(serverUrl);
-        config.setAppKey(appKey);
-
-        Countly.sharedInstance().COUNTLY_SDK_NAME = COUNTLY_RN_SDK_NAME;
-        Countly.sharedInstance().COUNTLY_SDK_VERSION_STRING = COUNTLY_RN_SDK_VERSION_STRING;
-
-        config.setContext(_reactContext);
-        Activity activity = getActivity();
-        if (activity != null) {
-            config.setApplication(activity.getApplication());
-        }
-        else {
-            log("init, Activity is null, some features will not work", LogLevel.WARNING);
-        }
-        if(deviceId == null || "".equals(deviceId)){
-        }else{
-            if(deviceId.equals("TemporaryDeviceID")){
-                config.enableTemporaryDeviceIdMode();
-            }else{
-                config.setDeviceId(deviceId);
-            }
-        }
-        Countly.sharedInstance().init(config);
-        if(isOnResumeBeforeInit) {
-            isOnResumeBeforeInit = false;
-            Countly.sharedInstance().apm().triggerForeground();
-        }
-        promise.resolve("Success");
-    }
-
-    @ReactMethod
-    public void initWithConfig(ReadableArray args, Promise promise){
-        loggingEnabled = true;
+        // loggingEnabled = true;
         try {
             log("Initializing...", LogLevel.DEBUG);
 
@@ -236,10 +200,10 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             }
 
             if (_config.has("consents")) {
-                JSONArray arr = _config.getJSONArray("consents");
-                String[] newArray = new String[arr.length()];
-                for (int i = 0; i < arr.length(); i++){
-                    newArray[i] = arr.getString(i);
+                JSONArray consentsArr = _config.getJSONArray("consents");
+                String[] newArray = new String[consentsArr.length()];
+                for (int i = 0; i < consentsArr.length(); i++){
+                    newArray[i] = consentsArr.getString(i);
                 }
                 config.setConsentEnabled(newArray);
             }
@@ -259,11 +223,10 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 config.enableCrashReporting();
             }
             if (_config.has("pushNotification")) {
-                JSONArray arr = _config.getJSONArray("pushNotification");
-                int messagingMode = Integer.parseInt(arr.getString(0));
-                channelName = arr.getString(1);
-                channelDescription = arr.getString(2);
-                log("pushTokenType [" + messagingMode + "][" + channelName + "][" + channelDescription + "]", LogLevel.INFO);
+                JSONObject pushObject = _config.getJSONObject("pushNotification");
+                int messagingMode = Integer.parseInt(pushObject.getString("tokenType"));
+                channelName = pushObject.getString("channelName");
+                channelDescription = pushObject.getString("channelDescription");
 
                 if (messagingMode == 0) {
                     CountlyReactNative.messagingMode = Countly.CountlyMessagingMode.PRODUCTION;
@@ -278,18 +241,18 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 config.setEnableAttribution(true);
             }
             if (_config.has("allowedIntentClassNames")) {
-                JSONArray arr = _config.getJSONArray("allowedIntentClassNames");
-                String[] newArray = new String[arr.length()];
-                for (int i = 0; i < arr.length(); i++){
-                    newArray[i] = arr.getString(i);
+                JSONArray intentArr = _config.getJSONArray("allowedIntentClassNames");
+                String[] newArray = new String[intentArr.length()];
+                for (int i = 0; i < intentArr.length(); i++){
+                    newArray[i] = intentArr.getString(i);
                 }
                 allowedIntentClassNames = Arrays.asList(newArray);
             }
             if (_config.has("allowedIntentPackageNames")) {
-                JSONArray arr = _config.getJSONArray("allowedIntentPackageNames");
-                String[] newArray = new String[arr.length()];
-                for (int i = 0; i < arr.length(); i++){
-                    newArray[i] = arr.getString(i);
+                JSONArray packageArr = _config.getJSONArray("allowedIntentPackageNames");
+                String[] newArray = new String[packageArr.length()];
+                for (int i = 0; i < packageArr.length(); i++){
+                    newArray[i] = packageArr.getString(i);
                 }
                 allowedIntentPackageNames = Arrays.asList(newArray);
             }
