@@ -76,19 +76,12 @@ RCT_EXPORT_MODULE();
 
 RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      NSString *serverurl = [arguments objectAtIndex:0];
-      NSString *appkey = [arguments objectAtIndex:1];
-      NSString *deviceID = [arguments objectAtIndex:2];
-
-      if (config == nil) {
-          config = CountlyConfig.new;
-      }
-
-      if (deviceID != nil && deviceID != (NSString *)[NSNull null] && ![deviceID isEqual:@""]) {
-          config.deviceID = deviceID;
-      }
-      config.appKey = appkey;
-      config.host = serverurl;
+        // NSLog(@"[CountlyReactNativePlugin] %@", @"Hello world");
+        NSString *args = [arguments objectAtIndex:0];
+        NSData *data = [args dataUsingEncoding:NSUTF8StringEncoding];
+        id jsonOutput = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+        
+        [self populateConfig:jsonOutput];
 
       CountlyCommon.sharedInstance.SDKName = kCountlyReactNativeSDKName;
       CountlyCommon.sharedInstance.SDKVersion = kCountlyReactNativeSDKVersion;
@@ -98,7 +91,7 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
           [self addCountlyFeature:CLYPushNotifications];
       }
 #endif
-      if (serverurl != nil && [serverurl length] > 0) {
+      if (config.host != nil && [config.host length] > 0) {
           dispatch_async(dispatch_get_main_queue(), ^{
             [[Countly sharedInstance] startWithConfig:config];
 #ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
@@ -108,6 +101,115 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
           });
       }
     });
+}
+
+- (void) populateConfig:(id) json {
+    // NSLog(@"%@",json[@"serverURL"]);
+    if (config == nil) {
+      config = CountlyConfig.new;
+    }
+
+    NSString *serverurl = json[@"serverURL"];
+    NSString *appkey = json[@"appKey"];
+    NSString *deviceID = json[@"deviceID"];
+    if (deviceID != nil && deviceID != (NSString *)[NSNull null] && ![deviceID isEqual:@""]) {
+      config.deviceID = deviceID;
+    }
+    config.appKey = appkey;
+    config.host = serverurl;
+
+    if (json[@"loggingEnabled"]) {
+        config.enableDebug = YES;
+        config.internalLogLevel = CLYInternalLogLevelVerbose;
+    } else {
+        config.enableDebug = NO;
+    }
+
+    if (json[@"shouldRequireConsent"]) {
+        config.requiresConsent = YES;
+    }
+
+    if (json[@"tamperingProtectionSalt"]) {
+        config.secretSalt = json[@"tamperingProtectionSalt"];
+    }
+
+    if (json[@"consents"]) {
+        config.consents = json[@"consents"];
+    }
+
+    if (json[@"starRatingTextMessage"]) {
+        config.starRatingMessage = json[@"starRatingTextMessage"];
+    }
+    // parameter not found: starRatingTextTitle
+    // parameter not found: starRatingTextDismiss
+
+    if (json[@"enableApm"]) {
+        config.enablePerformanceMonitoring = YES;
+    }
+
+    if (json[@"crashReporting"]) {
+        [self addCountlyFeature:CLYCrashReporting];
+    }
+
+#ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
+    if (json[@"pushNotification"]) {
+        config.sendPushTokenAlways = YES;
+        config.pushTestMode = CLYPushTestModeProduction;
+        NSString *tokenType = json[@"tokenType"];
+        if ([tokenType isEqualToString:@"1"]) {
+            config.pushTestMode = CLYPushTestModeDevelopment;
+        } else if ([tokenType isEqualToString:@"2"]) {
+            config.pushTestMode = CLYPushTestModeTestFlightOrAdHoc;
+        }
+
+        CountlyPushNotifications.sharedInstance.pushTestMode = config.pushTestMode;
+        // parameter not found: channelName
+        // parameter not found: channelDescription
+    }
+#endif
+
+    if (json[@"attributionID"]) {
+          NSString *attributionID = json[@"attributionID"];
+          if (CountlyCommon.sharedInstance.hasStarted) {
+              [Countly.sharedInstance recordAttributionID:attributionID];
+          } else {
+              config.attributionID = attributionID;
+          }
+    }
+    // parameter not found: enableAttribution
+    // parameter not found: allowedIntentClassNames
+    // parameter not found: allowedIntentPackageNames
+
+    if (json[@"locationCountryCode"]) {
+        NSString *countryCode = json[@"locationCountryCode"];
+        NSString *city = json[@"locationCity"];
+        NSString *locationString = json[@"locationGpsCoordinates"];
+        NSString *ipAddress = json[@"locationIpAddress"];
+
+        if (locationString != nil && ![locationString isEqualToString:@"null"] && [locationString containsString:@","]) {
+            @try {
+                NSArray *locationArray = [locationString componentsSeparatedByString:@","];
+                NSString *latitudeString = [locationArray objectAtIndex:0];
+                NSString *longitudeString = [locationArray objectAtIndex:1];
+
+                double latitudeDouble = [latitudeString doubleValue];
+                double longitudeDouble = [longitudeString doubleValue];
+                config.location = (CLLocationCoordinate2D){latitudeDouble, longitudeDouble};
+            } @catch (NSException *exception) {
+                COUNTLY_RN_LOG(@"Invalid location: %@", locationString);
+            }
+        }
+        if (city != nil && ![city isEqualToString:@"null"]) {
+            config.city = city;
+        }
+        if (countryCode != nil && ![countryCode isEqualToString:@"null"]) {
+            config.ISOCountryCode = countryCode;
+        }
+        if (ipAddress != nil && ![ipAddress isEqualToString:@"null"]) {
+            config.IP = ipAddress;
+        }
+    }
+    // parameter not found: campaignType
 }
 
 RCT_EXPORT_METHOD(event : (NSArray *)arguments) {

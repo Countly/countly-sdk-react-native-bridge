@@ -142,7 +142,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
     @ReactMethod
     public void init(ReadableArray args, Promise promise){
-        // loggingEnabled = true;
         try {
             log("Initializing...", LogLevel.DEBUG);
 
