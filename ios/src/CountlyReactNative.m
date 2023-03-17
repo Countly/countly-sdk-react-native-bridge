@@ -186,18 +186,9 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
         NSString *locationString = json[@"locationGpsCoordinates"];
         NSString *ipAddress = json[@"locationIpAddress"];
 
-        if (locationString != nil && ![locationString isEqualToString:@"null"] && [locationString containsString:@","]) {
-            @try {
-                NSArray *locationArray = [locationString componentsSeparatedByString:@","];
-                NSString *latitudeString = [locationArray objectAtIndex:0];
-                NSString *longitudeString = [locationArray objectAtIndex:1];
-
-                double latitudeDouble = [latitudeString doubleValue];
-                double longitudeDouble = [longitudeString doubleValue];
-                config.location = (CLLocationCoordinate2D){latitudeDouble, longitudeDouble};
-            } @catch (NSException *exception) {
-                COUNTLY_RN_LOG(@"Invalid location: %@", locationString);
-            }
+        if (locationString != nil && ![locationString isEqualToString:@"null"]) {
+            CLLocationCoordinate2D locationCoordinate = [self getCoordinate:gpsCoordinate];
+            config.location = locationCoordinate;
         }
         if (city != nil && ![city isEqualToString:@"null"]) {
             config.city = city;

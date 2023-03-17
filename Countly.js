@@ -7,6 +7,7 @@
 
 import { Platform, NativeModules, NativeEventEmitter } from 'react-native';
 import parseErrorStackLib from '../react-native/Libraries/Core/Devtools/parseErrorStack.js';
+import CountlyConfig from './CountlyConfig.js';
 
 const { CountlyReactNative } = NativeModules;
 const eventEmitter = new NativeEventEmitter(CountlyReactNative);
@@ -40,19 +41,40 @@ if (Platform.OS.match('android')) {
     Countly.messagingMode.DEVELOPMENT = '2';
 }
 
+/**
+ * Initilize Countly
+ *
+ * @deprecated in 20.06.5
+ *
+ * @function Countly.init should be used to initialize countly
+ */
 // countly initialization with config
-Countly.init = async function (countlyConfig) {
+Countly.init = async function (serverUrl, appKey, deviceId) {
+    Countly.logError('init is deprecated, use initWithConfig instead');
+    const countlyConfig = new CountlyConfig(serverUrl, appKey).setDeviceId(deviceId);
+    Countly.initWithConfig(countlyConfig);
+};
+
+/**
+ * Initilize Countly
+ *
+ * @function Countly.initWithConfig should be used to initialize countly with config
+ */
+Countly.initWithConfig = async function (countlyConfig) {
+    if (_isInitialized) {
+       Countly.logError('init', 'SDK is already initialized');
+       return;
+    }
     if (countlyConfig.deviceID == '') {
         Countly.logError('init', "Device ID during init can't be an empty string");
     }
     if (countlyConfig.serverURL == '') {
         Countly.logError('init', "Server URL during init can't be an empty string");
+        return;
     }
     if (countlyConfig.appKey == '') {
         Countly.logError('init', "App Key during init can't be an empty string");
-    }
-    if (_isInitialized) {
-        Countly.logError('init', 'SDK is already initialized');
+        return;
     }
 
     const args = [];
