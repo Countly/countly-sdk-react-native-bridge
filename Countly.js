@@ -1,4 +1,3 @@
-/* eslint-disable */
 /**
  * Countly SDK React Native Bridge
  * https://github.com/Countly/countly-sdk-react-native-bridge

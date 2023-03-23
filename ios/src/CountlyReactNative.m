@@ -104,7 +104,6 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
 }
 
 - (void) populateConfig:(id) json {
-    // NSLog(@"%@",json[@"serverURL"]);
     if (config == nil) {
       config = CountlyConfig.new;
     }
@@ -140,8 +139,6 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
     if (json[@"starRatingTextMessage"]) {
         config.starRatingMessage = json[@"starRatingTextMessage"];
     }
-    // parameter not found: starRatingTextTitle
-    // parameter not found: starRatingTextDismiss
 
     if (json[@"enableApm"]) {
         config.enablePerformanceMonitoring = YES;
@@ -163,8 +160,6 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
         }
 
         CountlyPushNotifications.sharedInstance.pushTestMode = config.pushTestMode;
-        // parameter not found: channelName
-        // parameter not found: channelDescription
     }
 #endif
 
@@ -176,9 +171,6 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
               config.attributionID = attributionID;
           }
     }
-    // parameter not found: enableAttribution
-    // parameter not found: allowedIntentClassNames
-    // parameter not found: allowedIntentPackageNames
 
     if (json[@"locationCountryCode"]) {
         NSString *countryCode = json[@"locationCountryCode"];
@@ -200,7 +192,6 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
             config.IP = ipAddress;
         }
     }
-    // parameter not found: campaignType
 }
 
 RCT_EXPORT_METHOD(event : (NSArray *)arguments) {
