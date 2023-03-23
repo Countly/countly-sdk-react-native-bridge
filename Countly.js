@@ -14,8 +14,8 @@ const eventEmitter = new NativeEventEmitter(CountlyReactNative);
 const Countly = {};
 Countly.serverUrl = '';
 Countly.appKey = '';
-_isInitialized = false;
-_isPushInitialized = false;
+let _isInitialized = false;
+let _isPushInitialized = false;
 /*
  * Listener for rating widget callback, when callback recieve we will remove the callback using listener.
  */
@@ -61,11 +61,12 @@ Countly.init = async function (serverUrl, appKey, deviceId) {
  */
 Countly.initWithConfig = async function (countlyConfig) {
     if (_isInitialized) {
-       Countly.logError('init', 'SDK is already initialized');
-       return;
+        Countly.logError('init', 'SDK is already initialized');
+        return;
     }
     if (countlyConfig.deviceID == '') {
         Countly.logError('init', "Device ID during init can't be an empty string");
+        countlyConfig.deviceId = null;
     }
     if (countlyConfig.serverURL == '') {
         Countly.logError('init', "Server URL during init can't be an empty string");
