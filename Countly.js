@@ -41,7 +41,7 @@ if (Platform.OS.match('android')) {
 }
 
 /**
- * Initilize Countly
+ * Initialize Countly
  *
  * @deprecated in 20.06.5
  *
@@ -55,7 +55,7 @@ Countly.init = async function (serverUrl, appKey, deviceId) {
 };
 
 /**
- * Initilize Countly
+ * Initialize Countly
  *
  * @function Countly.initWithConfig should be used to initialize countly with config
  */
