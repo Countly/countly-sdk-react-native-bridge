@@ -47,7 +47,7 @@ if (Platform.OS.match('android')) {
  *
  * @function Countly.init should be used to initialize countly
  */
-// countly initialization with config
+// countly initialization
 Countly.init = async function (serverUrl, appKey, deviceId) {
     Countly.logError('init is deprecated, use initWithConfig instead');
     const countlyConfig = new CountlyConfig(serverUrl, appKey).setDeviceId(deviceId);
@@ -59,6 +59,7 @@ Countly.init = async function (serverUrl, appKey, deviceId) {
  *
  * @function Countly.initWithConfig should be used to initialize countly with config
  */
+// countly initialization with config
 Countly.initWithConfig = async function (countlyConfig) {
     if (_isInitialized) {
         Countly.logError('init', 'SDK is already initialized');

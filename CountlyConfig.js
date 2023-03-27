@@ -48,7 +48,7 @@
     }
 
     /**
-    * Method to enable countly logging to the console.
+    * Method to enable countly internal debugging logs
     *
     * @param {bool} loggingEnabled enable
     * if true, countly sdk would log to console.
@@ -59,7 +59,7 @@
     }
 
     /**
-    * Method to enable unhandled crash reporting
+    * Method to enable crash reporting to report unhandled crashes to Countly
     */
     enableCrashReporting() {
         this.crashReporting = true;
@@ -80,9 +80,11 @@
     }
 
     /**
-    * Method to give consent
+    * Method to give consent for specific features before init
     *
-    * @param {array of String} consents consents
+    * @param {array of String} consents consents e.g ['location', 'sessions', 
+    * 'attribution', 'push', 'events', 'views', 'crashes', 'users', 'push', 
+    * 'star-rating', 'apm', 'feedback', 'remote-config']
     */
     giveConsent(consents) {
         this.consents = consents;
@@ -90,7 +92,7 @@
     }
 
     /**
-    * Method to set the location
+    * Method to set the user initial location
     *
     * @param {String} locationCountryCode country code
     * @param {String} locationCity city
@@ -106,7 +108,9 @@
     }
 
     /**
-    * Method to enable tamper protection
+    * Method to enable tamper protection. This sets the optional salt to be 
+    * used for calculating the checksum of requested data which will be sent 
+    * with each request
     *
     * @param {String} tamperingProtectionSalt salt
     */
@@ -116,7 +120,7 @@
     }
 
     /**
-    * Method to set enable apm
+    * Method to enable application performance monitoring which includes the recording of app start time.
     */
     enableApm() {
         this.enableApm = true;
@@ -138,7 +142,8 @@
     }
 
     /**
-    * Method to set attribution id
+    * Method to set attribution id to measure your marketing campaign 
+    * performance by attributing installs from specific campaigns.
     *
     * @param {String} attributionID attribution id
     */
@@ -148,7 +153,8 @@
     }
 
     /**
-    * Method to enable attribution
+    * Method to enable attribution to measure your marketing campaign 
+    * performance by attributing installs from specific campaigns.
     */
     enableAttribution() {
         this.enableAttribution = true;
