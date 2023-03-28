@@ -96,7 +96,7 @@
     *
     * @param {String} locationCountryCode country code e.g 'TR'
     * @param {String} locationCity city e.g 'Istanbul'
-    * @param {String} locationGpsCoordinates gps coordinates e.g 'TR', '41.0082,28.9784', '10.2.33.12'
+    * @param {String} locationGpsCoordinates gps coordinates e.g '41.0082,28.9784'
     * @param {String} locationIpAddress ip address e.g '10.2.33.12'
     */
     setLocation(locationCountryCode, locationCity, locationGpsCoordinates, locationIpAddress) {
