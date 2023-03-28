@@ -43,7 +43,7 @@ if (Platform.OS.match('android')) {
 /**
  * Initialize Countly
  *
- * @deprecated in 20.06.5
+ * @deprecated in 20.06.5. Use initWithConfig instead.
  *
  * @function Countly.init should be used to initialize countly
  */
