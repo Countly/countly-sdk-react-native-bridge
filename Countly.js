@@ -133,9 +133,6 @@ _configToJson = function (config) {
         if (config.attributionID) {
             json['attributionID'] = config.attributionID;
         }
-        if (config.enableAttribution) {
-            json['enableAttribution'] = true;
-        }
         if (config.allowedIntentClassNames) {
             json['allowedIntentClassNames'] = config.allowedIntentClassNames;
         }
@@ -281,6 +278,7 @@ Countly.disablePushNotifications = function () {
 };
 
 /**
+ * @deprecated in 20.06.5. Use Config Object.
  *
  * Set messaging mode for push notifications
  * Should be called before Countly init
@@ -333,6 +331,7 @@ Countly.registerForNotification = function (theListener) {
 };
 
 /**
+ * @deprecated in 20.06.5. Use Config Object.
  *
  * Configure intent redirection checks for push notification
  * Should be called before Countly "askForNotificationPermission"
@@ -440,6 +439,8 @@ Countly.setLoggingEnabled = function (enabled = true) {
 };
 
 /**
+ * @deprecated in 20.06.5. Use Config Object.
+ * 
  * Set user initial location
  * Should be called before init
  * @param {ISO Country code for the user's country} countryCode
@@ -526,6 +527,8 @@ Countly.setHttpPostForced = function (boolean = true) {
 
 Countly.isCrashReportingEnabled = false;
 /**
+ * @deprecated in 20.06.5. Use Config Object.
+ * 
  * Enable crash reporting to report unhandled crashes to Countly
  * Should be called before Countly init
  */
@@ -652,6 +655,7 @@ Countly.endSession = function () {
 };
 
 /**
+ * @deprecated in 20.06.5. Use Config Object.
  *
  * Set the optional salt to be used for calculating the checksum of requested data which will be sent with each request, using the &checksum field
  * Should be called before Countly init
@@ -1215,6 +1219,7 @@ Countly.userDataBulk.pullValue = async function (keyName, keyValue) {
 };
 
 /**
+ * @deprecated in 20.06.5. Use Config Object.
  *
  * Set that consent should be required for features to work.
  * Should be called before Countly init
@@ -1239,6 +1244,7 @@ Countly.giveConsent = function (args) {
 };
 
 /**
+ * @deprecated in 20.06.5. Use Config Object.
  *
  * Give consent for specific features before init.
  * Should be called after Countly init
@@ -1397,6 +1403,8 @@ Countly.remoteConfigClearValues = async function () {
     return result;
 };
 /**
+ * @deprecated in 20.06.5. Use Config Object.
+ * 
  * Set's the text's for the different fields in the star rating dialog. Set value null if for some field you want to keep the old value
  *
  * @param {String} starRatingTextTitle - dialog's title text (Only for Android)
@@ -1659,6 +1667,7 @@ Countly.recordNetworkTrace = function (networkTraceKey, responseCode, requestPay
 };
 
 /**
+ * @deprecated in 20.06.5. Use Config Object.
  *
  * Enable APM features, which includes the recording of app start time.
  * Should be called before Countly init
@@ -1669,6 +1678,7 @@ Countly.enableApm = function () {
 };
 
 /**
+ * @deprecated in 20.06.5. Use Config Object.
  *
  * Enable campaign attribution reporting to Countly.
  * For iOS use "recordAttributionID" instead of "enableAttribution"

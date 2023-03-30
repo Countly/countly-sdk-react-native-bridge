@@ -153,15 +153,6 @@
     }
 
     /**
-    * Method to enable attribution to measure your marketing campaign 
-    * performance by attributing installs from specific campaigns.
-    */
-    enableAttribution() {
-        this.enableAttribution = true;
-        return this;
-    }
-
-    /**
     * Method to configure intent redirection check
     *
     * @param {String} allowedIntentClassNames allowedIntentClassNames
