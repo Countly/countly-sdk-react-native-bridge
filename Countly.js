@@ -43,7 +43,7 @@ if (Platform.OS.match('android')) {
 /**
  * Initialize Countly
  *
- * @deprecated in 20.06.5. Use initWithConfig instead.
+ * @deprecated in 20.06.5 : use 'initWithConfig' intead of 'init'.
  *
  * @function Countly.init should be used to initialize countly
  */
@@ -278,7 +278,7 @@ Countly.disablePushNotifications = function () {
 };
 
 /**
- * @deprecated in 20.06.5. Use Config Object.
+ * @deprecated in 20.06.5 : use 'countlyConfig.pushTokenType' intead of 'pushTokenType'.
  *
  * Set messaging mode for push notifications
  * Should be called before Countly init
@@ -331,7 +331,7 @@ Countly.registerForNotification = function (theListener) {
 };
 
 /**
- * @deprecated in 20.06.5. Use Config Object.
+ * @deprecated in 20.06.5 : use 'countlyConfig.configureIntentRedirectionCheck' intead of 'configureIntentRedirectionCheck'.
  *
  * Configure intent redirection checks for push notification
  * Should be called before Countly "askForNotificationPermission"
@@ -439,7 +439,7 @@ Countly.setLoggingEnabled = function (enabled = true) {
 };
 
 /**
- * @deprecated in 20.06.5. Use Config Object.
+ * @deprecated in 20.06.5 : use 'countlyConfig.setLocation' intead of 'setLocationInit'.
  * 
  * Set user initial location
  * Should be called before init
@@ -527,7 +527,7 @@ Countly.setHttpPostForced = function (boolean = true) {
 
 Countly.isCrashReportingEnabled = false;
 /**
- * @deprecated in 20.06.5. Use Config Object.
+ * @deprecated in 20.06.5 : use 'countlyConfig.enableCrashReporting' intead of 'enableCrashReporting'.
  * 
  * Enable crash reporting to report unhandled crashes to Countly
  * Should be called before Countly init
@@ -655,7 +655,7 @@ Countly.endSession = function () {
 };
 
 /**
- * @deprecated in 20.06.5. Use Config Object.
+ * @deprecated in 20.06.5 : use 'countlyConfig.enableParameterTamperingProtection' intead of 'enableParameterTamperingProtection'.
  *
  * Set the optional salt to be used for calculating the checksum of requested data which will be sent with each request, using the &checksum field
  * Should be called before Countly init
@@ -1219,7 +1219,7 @@ Countly.userDataBulk.pullValue = async function (keyName, keyValue) {
 };
 
 /**
- * @deprecated in 20.06.5. Use Config Object.
+ * @deprecated in 20.06.5 : use 'countlyConfig.setRequiresConsent' intead of 'setRequiresConsent'.
  *
  * Set that consent should be required for features to work.
  * Should be called before Countly init
@@ -1244,7 +1244,7 @@ Countly.giveConsent = function (args) {
 };
 
 /**
- * @deprecated in 20.06.5. Use Config Object.
+ * @deprecated in 20.06.5 : use 'countlyConfig.giveConsent' intead of 'giveConsentInit'.
  *
  * Give consent for specific features before init.
  * Should be called after Countly init
@@ -1403,7 +1403,7 @@ Countly.remoteConfigClearValues = async function () {
     return result;
 };
 /**
- * @deprecated in 20.06.5. Use Config Object.
+ * @deprecated in 20.06.5 : use 'countlyConfig.setStarRatingDialogTexts' intead of 'setStarRatingDialogTexts'.
  * 
  * Set's the text's for the different fields in the star rating dialog. Set value null if for some field you want to keep the old value
  *
@@ -1667,7 +1667,7 @@ Countly.recordNetworkTrace = function (networkTraceKey, responseCode, requestPay
 };
 
 /**
- * @deprecated in 20.06.5. Use Config Object.
+ * @deprecated in 20.06.5 : use 'countlyConfig.enableApm' intead of 'enableApm'.
  *
  * Enable APM features, which includes the recording of app start time.
  * Should be called before Countly init
@@ -1678,7 +1678,7 @@ Countly.enableApm = function () {
 };
 
 /**
- * @deprecated in 20.06.5. Use Config Object.
+ * @deprecated in 20.06.5 : Do not use.
  *
  * Enable campaign attribution reporting to Countly.
  * For iOS use "recordAttributionID" instead of "enableAttribution"

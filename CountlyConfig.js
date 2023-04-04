@@ -178,6 +178,19 @@
         this.starRatingTextDismiss = starRatingTextDismiss;
         return this;
     }
+
+    /// Report direct user attribution
+    recordDirectAttribution(campaignType, campaignData) {
+      this.campaignType = campaignType;
+      this.campaignData = campaignData;
+      return this;
+    }
+  
+    /// Report indirect user attribution
+    recordIndirectAttribution(attributionValues) {
+      this.attributionValues = attributionValues;
+      return this;
+    }
 }
 
 export default CountlyConfig;
