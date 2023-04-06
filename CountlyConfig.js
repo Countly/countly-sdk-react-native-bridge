@@ -142,17 +142,6 @@
     }
 
     /**
-    * Method to set attribution id to measure your marketing campaign 
-    * performance by attributing installs from specific campaigns.
-    *
-    * @param {String} attributionID attribution id
-    */
-    recordAttributionID(attributionID) {
-        this.attributionID = attributionID;
-        return this;
-    }
-
-    /**
     * Method to configure intent redirection check
     *
     * @param {String} allowedIntentClassNames allowedIntentClassNames

@@ -1371,6 +1371,27 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     }
 
     @ReactMethod
+    public void recordIndirectAttribution(ReadableArray args){
+        JSONObject attributionValues = args.getJSONObject(0);
+        if (attributionValues != null && attributionValues.length() > 0) {
+            Map<String, String> attributionMap = toMapString(attributionValues);
+            Countly.sharedInstance().attribution().recordIndirectAttribution(attributionMap);
+            result.success("recordIndirectAttribution: success");
+        } else {
+            result.error("iaAttributionFailed", "recordIndirectAttribution: failure, no attribution values provided", null);
+        }
+    }
+
+    @ReactMethod
+    public void recordDirectAttribution(ReadableArray args){
+        String campaignType = args.getString(0);
+        String campaignData = args.getString(1);
+
+        Countly.sharedInstance().attribution().recordDirectAttribution(campaignType, campaignData);
+        result.success("recordIndirectAttribution: success");
+    }
+
+    @ReactMethod
     public void appLoadingFinished(){
         Countly.sharedInstance().apm().setAppIsLoaded();
     }

@@ -1699,6 +1699,8 @@ Countly.enableAttribution = async function (attributionID = '') {
 
 /**
  *
+ * @deprecated in 20.06.5 : use 'countlyConfig.recordAttributionID' intead of 'recordAttributionID'.
+ * 
  * set attribution Id for campaign attribution reporting.
  * Currently implemented for iOS only
  * For Android just call the enableAttribution to enable campaign attribution.
@@ -1723,6 +1725,28 @@ Countly.replaceAllAppKeysInQueueWithCurrentAppKey = function () {
         return message;
     }
     CountlyReactNative.replaceAllAppKeysInQueueWithCurrentAppKey();
+};
+/**
+ * set direct attribution Id for campaign attribution reporting.
+ */
+Countly.recordDirectAttribution = function () {
+    if (!_isInitialized) {
+        const message = "'init' must be called before 'recordDirectAttribution'";
+        Countly.logError('recordDirectAttribution', message);
+        return message;
+    }
+    CountlyReactNative.recordDirectAttribution();
+};
+/**
+ * set indirect attribution Id for campaign attribution reporting.
+ */
+Countly.recordIndirectAttribution = function () {
+    if (!_isInitialized) {
+        const message = "'init' must be called before 'recordIndirectAttribution'";
+        Countly.logError('recordIndirectAttribution', message);
+        return message;
+    }
+    CountlyReactNative.recordIndirectAttribution();
 };
 /**
  * Removes all requests with a different app key in request queue.
