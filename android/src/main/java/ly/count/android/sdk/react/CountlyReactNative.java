@@ -281,6 +281,16 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 String campaignData = _config.getString("campaignData");
                 config.setDirectAttribution(campaignType, campaignData);
             }
+            if (_config.has("attributionValues")) {
+                JSONObject attributionValues = args.getJSONObject(0);
+                if (attributionValues != null && attributionValues.length() > 0) {
+                    Map<String, String> attributionMap = toMapString(attributionValues);
+                    Countly.sharedInstance().attribution().recordIndirectAttribution(attributionMap);
+                    result.success("recordIndirectAttribution: success");
+                } else {
+                    result.error("iaAttributionFailed", "recordIndirectAttribution: failure, no attribution values provided", null);
+                }
+            }
         } catch (Exception e) {
             log(e.toString(), LogLevel.DEBUG);
         }
@@ -1388,7 +1398,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         String campaignData = args.getString(1);
 
         Countly.sharedInstance().attribution().recordDirectAttribution(campaignType, campaignData);
-        result.success("recordIndirectAttribution: success");
+        result.success("recordDirectAttribution: success");
     }
 
     @ReactMethod

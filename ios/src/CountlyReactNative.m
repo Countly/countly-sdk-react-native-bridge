@@ -179,7 +179,7 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
         NSString *ipAddress = json[@"locationIpAddress"];
 
         if (locationString != nil && ![locationString isEqualToString:@"null"]) {
-            CLLocationCoordinate2D locationCoordinate = [self getCoordinate:gpsCoordinate];
+            CLLocationCoordinate2D locationCoordinate = [self getCoordinate:locationString];
             config.location = locationCoordinate;
         }
         if (city != nil && ![city isEqualToString:@"null"]) {
@@ -191,6 +191,15 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
         if (ipAddress != nil && ![ipAddress isEqualToString:@"null"]) {
             config.IP = ipAddress;
         }
+    }
+
+    if (json[@"campaignType"]) {
+        config.campaignType = json[@"campaignType"];
+        config.campaignData = json[@"campaignData"];
+    }
+
+    if (json[@"attributionValues"]) {
+        config.indirectAttribution = json[@"attributionValues"];
     }
 }
 
@@ -887,6 +896,30 @@ RCT_EXPORT_METHOD(giveConsentInit : (NSArray *)arguments) {
           config = CountlyConfig.new;
       }
       config.consents = arguments;
+    });
+}
+
+RCT_EXPORT_METHOD(recordDirectAttribution : (NSArray *)arguments) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSString *campaignType = [arguments objectAtIndex:0];
+        NSString *campaignData = [arguments objectAtIndex:1];
+        if (CountlyCommon.sharedInstance.hasStarted) {
+            [Countly.sharedInstance recordDirectAttributionWithCampaignType:campaignType andCampaignData:campaignData];
+        } else {
+            config.campaignType = campaignType;
+            config.campaignData = campaignData;
+        }
+    });
+}
+
+RCT_EXPORT_METHOD(recordIndirectAttribution : (NSArray *)arguments) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSDictionary *attributionValues = [arguments objectAtIndex:0];
+        if (CountlyCommon.sharedInstance.hasStarted) {
+            [Countly.sharedInstance recordIndirectAttribution:attributionValues];
+        } else {
+            config.indirectAttribution = attributionValues;
+        }
     });
 }
 

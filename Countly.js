@@ -130,9 +130,6 @@ _configToJson = function (config) {
             pushNotification['channelDescription'] = config.channelDescription;
             json['pushNotification'] = pushNotification;
         }
-        if (config.attributionID) {
-            json['attributionID'] = config.attributionID;
-        }
         if (config.allowedIntentClassNames) {
             json['allowedIntentClassNames'] = config.allowedIntentClassNames;
         }
@@ -147,6 +144,13 @@ _configToJson = function (config) {
         }
         if (config.starRatingTextDismiss) {
             json['starRatingTextDismiss'] = config.starRatingTextDismiss;
+        }
+        if (config.campaignType) {
+            json['campaignType'] = config.campaignType;
+            json['campaignData'] = config.campaignData;
+        }
+        if (config.attributionValues) {
+            json['attributionValues'] = config.attributionValues;
         }
     } catch (err) {
         Countly.logError('_configToJson', 'Exception occured during converting config to json.' + err.toString());
@@ -1678,7 +1682,7 @@ Countly.enableApm = function () {
 };
 
 /**
- * @deprecated in 20.06.5 : Do not use.
+ * @deprecated in 20.06.5 : use 'Countly.recordIndirectAttribution' intead of 'Countly'.
  *
  * Enable campaign attribution reporting to Countly.
  * For iOS use "recordAttributionID" instead of "enableAttribution"
@@ -1699,7 +1703,7 @@ Countly.enableAttribution = async function (attributionID = '') {
 
 /**
  *
- * @deprecated in 20.06.5 : use 'countlyConfig.recordAttributionID' intead of 'recordAttributionID'.
+ * @deprecated in 20.06.5 : use 'Countly.recordIndirectAttribution' intead of 'recordAttributionID'.
  * 
  * set attribution Id for campaign attribution reporting.
  * Currently implemented for iOS only
@@ -1729,24 +1733,29 @@ Countly.replaceAllAppKeysInQueueWithCurrentAppKey = function () {
 /**
  * set direct attribution Id for campaign attribution reporting.
  */
-Countly.recordDirectAttribution = function () {
+Countly.recordDirectAttribution = function (campaignType, campaignData) {
     if (!_isInitialized) {
         const message = "'init' must be called before 'recordDirectAttribution'";
         Countly.logError('recordDirectAttribution', message);
         return message;
     }
-    CountlyReactNative.recordDirectAttribution();
+    const args = [];
+    args.push(campaignType);
+    args.push(campaignData);
+    CountlyReactNative.recordDirectAttribution(args);
 };
 /**
  * set indirect attribution Id for campaign attribution reporting.
  */
-Countly.recordIndirectAttribution = function () {
+Countly.recordIndirectAttribution = function (attributionValues) {
     if (!_isInitialized) {
         const message = "'init' must be called before 'recordIndirectAttribution'";
         Countly.logError('recordIndirectAttribution', message);
         return message;
     }
-    CountlyReactNative.recordIndirectAttribution();
+    const args = [];
+    args.push(attributionValues);
+    CountlyReactNative.recordIndirectAttribution(args);
 };
 /**
  * Removes all requests with a different app key in request queue.
