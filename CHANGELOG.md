@@ -1,3 +1,10 @@
+## 22.06.6
+* Added initWithConfig and countly config object.
+* Added 'recordDirectAttribution' and 'recordIndirectAttribution' calls.
+* Depreciated init and all initializations calls done on countly sdk.
+* Underlying android SDK version is 22.06.3
+* Underlying iOS SDK version is 22.06.3
+
 ## 22.06.5
 * Added COUNTLY_EXCLUDE_PUSHNOTIFICATIONS flag in iOS React Native side to disable push notifications altogether.
 * Forwarding push callbacks to appDelegate if CountlyRNPushNotifications.m is acting as push notification delegate.
