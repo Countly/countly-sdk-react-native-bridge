@@ -76,7 +76,6 @@ RCT_EXPORT_MODULE();
 
 RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
-        // NSLog(@"[CountlyReactNativePlugin] %@", @"Hello world");
         NSString *args = [arguments objectAtIndex:0];
         NSData *data = [args dataUsingEncoding:NSUTF8StringEncoding];
         id jsonOutput = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
