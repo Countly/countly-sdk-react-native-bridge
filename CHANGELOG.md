@@ -1,4 +1,4 @@
-## XX.XX.XX
+## 23.02.0
 * Added a new SDK initialization call 'initWithConfig', and a configuration object to configure it.
 * Added 'recordDirectAttribution' and 'recordIndirectAttribution' calls.
 * Deprecated the following SDK calls:
