@@ -149,7 +149,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             JSONObject argsObject = new JSONObject(argsMap);
             populateConfig(argsObject);
         } catch (Exception e) {
-            log(e.toString(), LogLevel.DEBUG);
+            log("Failed to init Countly. [" + e.toString() + "]", LogLevel.DEBUG);
         }
 
         Countly.sharedInstance().COUNTLY_SDK_NAME = COUNTLY_RN_SDK_NAME;
