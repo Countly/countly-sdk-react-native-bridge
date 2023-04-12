@@ -15,7 +15,7 @@
  - 'enableAttribution'
  - 'recordAttributionID' 
  
-* Underlying android SDK version is 22.09.3
+* Underlying Android SDK version is 22.09.3
 * Underlying iOS SDK version is 22.06.2
 
 ## 22.06.5
