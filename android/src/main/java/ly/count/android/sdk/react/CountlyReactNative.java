@@ -1,7 +1,6 @@
 package ly.count.android.sdk.react;
 
 import android.app.Activity;
-import android.content.ContentResolver;
 import android.media.AudioAttributes;
 import android.net.Uri;
 import android.util.Log;
@@ -28,7 +27,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -36,6 +34,7 @@ import java.util.HashSet;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Iterator;
 
 //Push Plugin
 import android.os.Build;
@@ -51,6 +50,7 @@ import ly.count.android.sdk.messaging.CountlyPush;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.json.JSONException;
 
 import ly.count.android.sdk.ModuleFeedback.*;
 import com.facebook.react.bridge.WritableArray;
@@ -282,18 +282,34 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 config.setDirectAttribution(campaignType, campaignData);
             }
             if (_config.has("attributionValues")) {
-                JSONObject attributionValues = args.getJSONObject(0);
+                JSONObject attributionValues = _config.getJSONObject("attributionValues");
                 if (attributionValues != null && attributionValues.length() > 0) {
                     Map<String, String> attributionMap = toMapString(attributionValues);
-                    Countly.sharedInstance().attribution().recordIndirectAttribution(attributionMap);
-                    result.success("recordIndirectAttribution: success");
+                    config.setIndirectAttribution(attributionMap);
                 } else {
-                    result.error("iaAttributionFailed", "recordIndirectAttribution: failure, no attribution values provided", null);
+                    log("RecordIndirectAttribution: failure, no attribution values provided", LogLevel.DEBUG);
                 }
             }
         } catch (Exception e) {
             log(e.toString(), LogLevel.DEBUG);
         }
+    }
+
+    public static Map<String, String> toMapString(JSONObject jsonobj) {
+        Map<String, String> map = new HashMap<>();
+        try {
+            Iterator<String> keys = jsonobj.keys();
+            while (keys.hasNext()) {
+                String key = keys.next();
+                Object value = jsonobj.get(key);
+                if (value instanceof String) {
+                    map.put(key, (String) value);
+                }
+            }
+        } catch (JSONException e) {
+            log("Exception occurred at 'toMapString' method: ", e, LogLevel.ERROR);
+        }
+        return map;
     }
 
     @ReactMethod
@@ -1382,13 +1398,19 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
     @ReactMethod
     public void recordIndirectAttribution(ReadableArray args){
-        JSONObject attributionValues = args.getJSONObject(0);
-        if (attributionValues != null && attributionValues.length() > 0) {
-            Map<String, String> attributionMap = toMapString(attributionValues);
-            Countly.sharedInstance().attribution().recordIndirectAttribution(attributionMap);
-            result.success("recordIndirectAttribution: success");
+        ReadableMap values = args.getMap(0);
+        Map<String, Object> objectMap = values.toHashMap();
+        if (values != null) {
+            Map<String,String> map =new HashMap<String,String>();
+            for (Map.Entry<String, Object> entry : objectMap.entrySet()) {
+                if(entry.getValue() instanceof String){
+                    map.put(entry.getKey(), (String) entry.getValue());
+                }
+            }
+
+            Countly.sharedInstance().attribution().recordIndirectAttribution(map);
         } else {
-            result.error("iaAttributionFailed", "recordIndirectAttribution: failure, no attribution values provided", null);
+            log("RecordIndirectAttribution: failure, no attribution values provided", LogLevel.DEBUG);
         }
     }
 
@@ -1398,7 +1420,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         String campaignData = args.getString(1);
 
         Countly.sharedInstance().attribution().recordDirectAttribution(campaignType, campaignData);
-        result.success("recordDirectAttribution: success");
     }
 
     @ReactMethod
