@@ -189,7 +189,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 }
             }
             if (_config.has("loggingEnabled")) {
-                config.setLoggingEnabled(_config.getBoolean("loggingEnabled"));
+                boolean isEnabled = _config.getBoolean("loggingEnabled");
+                loggingEnabled = isEnabled;
+                config.setLoggingEnabled(isEnabled);
             }
             if (_config.has("shouldRequireConsent")) {
                 config.setRequiresConsent(_config.getBoolean("shouldRequireConsent"));

@@ -11,7 +11,9 @@
  * @param {String} serverURL server url
  * @param {String} appKey application key
  */
- class CountlyConfig {
+import CountlyInternal from './Countly.js';
+
+class CountlyConfig {
     constructor(serverURL, appKey) {
         this.serverURL = serverURL;
         this.appKey = appKey;
@@ -55,6 +57,7 @@
     */
     setLoggingEnabled(loggingEnabled) {
         this.loggingEnabled = loggingEnabled;
+        CountlyInternal.setLoggingEnabled(loggingEnabled);
         return this;
     }
 
