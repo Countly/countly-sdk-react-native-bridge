@@ -15,6 +15,11 @@ Countly.serverUrl = '';
 Countly.appKey = '';
 _isInitialized = false;
 _isPushInitialized = false;
+const DeviceIdType = {
+    DEVELOPER_SUPPLIED: 'DEVELOPER_SUPPLIED',
+    SDK_GENERATED: 'SDK_GENERATED',
+    TEMPORARY_ID: 'TEMPORARY_ID'
+};
 /*
  * Listener for rating widget callback, when callback recieve we will remove the callback using listener.
  */
@@ -389,6 +394,39 @@ Countly.getCurrentDeviceId = async function () {
     }
     const result = await CountlyReactNative.getCurrentDeviceId();
     return result;
+};
+
+_getDeviceIdType = function (deviceIdType) {
+    let result = DeviceIdType.SDK_GENERATED;
+    switch (deviceIdType) {
+      case 'DS':
+        result = DeviceIdType.DEVELOPER_SUPPLIED;
+        break;
+      case 'TID':
+        result = DeviceIdType.TEMPORARY_ID;
+        break;
+    }
+    return result;
+};
+/**
+ *
+ * Get currently used device Id type.
+ * Should be called after Countly init
+ * */
+Countly.getDeviceIDType = async function () {
+    console.log('Calling "getDeviceIDType"');
+    if (!_isInitialized) {
+        const message = "'init' must be called before 'getDeviceIDType'";
+        Countly.logError('getDeviceIDType', message);
+        return null;
+    }
+    const result = await CountlyReactNative.getDeviceIDType();
+    if (result == null) {
+        const message = "'getDeviceIDType' unexpected null value from native side";
+        Countly.logError('getDeviceIDType', message);
+        return null;
+    }
+    return _getDeviceIdType(result);
 };
 
 Countly.changeDeviceId = async function (newDeviceID, onServer) {

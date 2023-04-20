@@ -284,15 +284,20 @@ RCT_REMAP_METHOD(getCurrentDeviceId, getCurrentDeviceIdWithResolver : (RCTPromis
     });
 }
 
-RCT_EXPORT_METHOD(getDeviceIdAuthor : (NSArray *)arguments callback : (RCTResponseSenderBlock)callback) {
+RCT_REMAP_METHOD(getDeviceIDType, getDeviceIDTypeWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      id value = [Countly.sharedInstance deviceIDType];
-      if (value) {
-          callback(@[ value ]);
-      } else {
-          NSString *value = @"deviceIDAuthorNotFound";
-          callback(@[ value ]);
-      }
+        CLYDeviceIDType deviceIDType = [Countly.sharedInstance deviceIDType];
+        NSString *deviceIDTypeString = NULL;
+        if ([deviceIDType isEqualToString:CLYDeviceIDTypeCustom]) {
+            deviceIDTypeString = @"DS";
+        } else if ([deviceIDType isEqualToString:CLYDeviceIDTypeIDFV]) {
+            deviceIDTypeString = @"SG";
+        } else if ([deviceIDType isEqualToString:CLYDeviceIDTypeTemporary]) {
+            deviceIDTypeString = @"TID";
+        } else {
+            deviceIDTypeString = @"SG";
+        }
+        resolve(deviceIDTypeString);
     });
 }
 
