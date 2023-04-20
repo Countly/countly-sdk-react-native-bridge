@@ -414,7 +414,6 @@ _getDeviceIdType = function (deviceIdType) {
  * Should be called after Countly init
  * */
 Countly.getDeviceIDType = async function () {
-    console.log('Calling "getDeviceIDType"');
     if (!_isInitialized) {
         const message = "'init' must be called before 'getDeviceIDType'";
         Countly.logError('getDeviceIDType', message);
