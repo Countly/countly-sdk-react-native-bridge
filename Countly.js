@@ -410,7 +410,7 @@ _getDeviceIdType = function (deviceIdType) {
             break;
     }
     if (result == null) {
-        const message = "'_getDeviceIdType' unexpected deviceIdType [" + deviceIdType.toString() + "] from native side";
+        const message = "unexpected deviceIdType [" + deviceIdType.toString() + "] from native side";
         Countly.logError('_getDeviceIdType', message);
         return null;
     }
