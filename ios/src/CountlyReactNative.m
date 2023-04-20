@@ -295,7 +295,7 @@ RCT_REMAP_METHOD(getDeviceIDType, getDeviceIDTypeWithResolver : (RCTPromiseResol
         } else if ([deviceIDType isEqualToString:CLYDeviceIDTypeTemporary]) {
             deviceIDTypeString = @"TID";
         } else {
-            deviceIDTypeString = @"SG";
+            deviceIDTypeString = @"";
         }
         resolve(deviceIDTypeString);
     });

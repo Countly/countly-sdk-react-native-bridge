@@ -217,7 +217,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     @ReactMethod
     public void getDeviceIDType(Promise promise){
         DeviceIdType deviceIDType = Countly.sharedInstance().deviceId().getType();
-        String deviceIDTypeString = "";
+        String deviceIDTypeString = null;
         switch (deviceIDType) {
             case DEVELOPER_SUPPLIED:
                 deviceIDTypeString = "DS";
@@ -227,8 +227,10 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 break;
             case OPEN_UDID:
             case ADVERTISING_ID:
-            default:
                 deviceIDTypeString = "SG";
+                break;
+            default:
+                deviceIDTypeString = "";
                 break;
         }
         promise.resolve(deviceIDTypeString);

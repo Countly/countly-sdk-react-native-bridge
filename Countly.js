@@ -18,7 +18,7 @@ _isPushInitialized = false;
 const DeviceIdType = {
     DEVELOPER_SUPPLIED: 'DEVELOPER_SUPPLIED',
     SDK_GENERATED: 'SDK_GENERATED',
-    TEMPORARY_ID: 'TEMPORARY_ID'
+    TEMPORARY_ID: 'TEMPORARY_ID',
 };
 /*
  * Listener for rating widget callback, when callback recieve we will remove the callback using listener.
@@ -397,19 +397,26 @@ Countly.getCurrentDeviceId = async function () {
 };
 
 _getDeviceIdType = function (deviceIdType) {
-    let result = DeviceIdType.SDK_GENERATED;
+    let result = null;
     switch (deviceIdType) {
-      case 'DS':
-        result = DeviceIdType.DEVELOPER_SUPPLIED;
-        break;
-      case 'TID':
-        result = DeviceIdType.TEMPORARY_ID;
-        break;
+        case 'DS':
+            result = DeviceIdType.DEVELOPER_SUPPLIED;
+            break;
+        case 'TID':
+            result = DeviceIdType.TEMPORARY_ID;
+            break;
+        case 'SG':
+            result = DeviceIdType.SDK_GENERATED;
+            break;
+    }
+    if (result == null) {
+        const message = "'_getDeviceIdType' unexpected deviceIdType [" + deviceIdType.toString() + "] from native side";
+        Countly.logError('_getDeviceIdType', message);
+        return null;
     }
     return result;
 };
 /**
- *
  * Get currently used device Id type.
  * Should be called after Countly init
  * */
@@ -420,7 +427,7 @@ Countly.getDeviceIDType = async function () {
         return null;
     }
     const result = await CountlyReactNative.getDeviceIDType();
-    if (result == null) {
+    if (result == null || result == "") {
         const message = "'getDeviceIDType' unexpected null value from native side";
         Countly.logError('getDeviceIDType', message);
         return null;
