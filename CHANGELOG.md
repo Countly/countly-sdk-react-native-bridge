@@ -1,3 +1,9 @@
+## XX.XX.X
+* Added getDeviceIDType call to fetch the device ID type.
+* Fixed a bug in IOS SDK that failed to correctly process temporary device id.
+* Underlying android SDK version is XX.XX.X
+* Underlying iOS SDK version is XX.XX.X
+
 ## 22.06.5
 * Added COUNTLY_EXCLUDE_PUSHNOTIFICATIONS flag in iOS React Native side to disable push notifications altogether.
 * Forwarding push callbacks to appDelegate if CountlyRNPushNotifications.m is acting as push notification delegate.
