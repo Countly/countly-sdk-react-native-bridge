@@ -85,7 +85,11 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
       }
 
       if (deviceID != nil && deviceID != (NSString *)[NSNull null] && ![deviceID isEqual:@""]) {
-          config.deviceID = deviceID;
+        if ([deviceID isEqual:@"TemporaryDeviceID"]) {
+            config.deviceID = CLYTemporaryDeviceID;
+        } else {
+            config.deviceID = deviceID;
+        }
       }
       config.appKey = appkey;
       config.host = serverurl;
