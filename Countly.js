@@ -6,6 +6,7 @@
 
 import { Platform, NativeModules, NativeEventEmitter } from 'react-native';
 import parseErrorStackLib from '../react-native/Libraries/Core/Devtools/parseErrorStack.js';
+import CountlyConfig from './CountlyConfig.js';
 
 const { CountlyReactNative } = NativeModules;
 const eventEmitter = new NativeEventEmitter(CountlyReactNative);
@@ -13,8 +14,8 @@ const eventEmitter = new NativeEventEmitter(CountlyReactNative);
 const Countly = {};
 Countly.serverUrl = '';
 Countly.appKey = '';
-_isInitialized = false;
-_isPushInitialized = false;
+let _isInitialized = false;
+let _isPushInitialized = false;
 /*
  * Listener for rating widget callback, when callback recieve we will remove the callback using listener.
  */
@@ -39,20 +40,122 @@ if (Platform.OS.match('android')) {
     Countly.messagingMode.DEVELOPMENT = '2';
 }
 
+/**
+ * Initialize Countly
+ *
+ * @deprecated in 23.02.0 : use 'initWithConfig' intead of 'init'.
+ *
+ * @function Countly.init should be used to initialize countly
+ */
 // countly initialization
 Countly.init = async function (serverUrl, appKey, deviceId) {
-    if (deviceId == '') {
-        deviceId = null;
-        Countly.logError('init', "Device Id during init can't be empty string");
+    Countly.logError('init is deprecated, use initWithConfig instead');
+    const countlyConfig = new CountlyConfig(serverUrl, appKey).setDeviceId(deviceId);
+    Countly.initWithConfig(countlyConfig);
+};
+
+/**
+ * Initialize Countly
+ *
+ * @function Countly.initWithConfig should be used to initialize countly with config
+ */
+// countly initialization with config
+Countly.initWithConfig = async function (countlyConfig) {
+    if (_isInitialized) {
+        Countly.logError('init', 'SDK is already initialized');
+        return;
     }
-    Countly.serverUrl = serverUrl;
-    Countly.appKey = appKey;
+    if (countlyConfig.deviceID == '') {
+        Countly.logError('init', "Device ID during init can't be an empty string. Value will be ignored.");
+        countlyConfig.deviceId = null;
+    }
+    if (countlyConfig.serverURL == '') {
+        Countly.logError('init', "Server URL during init can't be an empty string");
+        return;
+    }
+    if (countlyConfig.appKey == '') {
+        Countly.logError('init', "App Key during init can't be an empty string");
+        return;
+    }
+
     const args = [];
-    args.push(serverUrl);
-    args.push(appKey);
-    args.push(deviceId);
+    const argsMap = _configToJson(countlyConfig);
+    const argsString = JSON.stringify(argsMap);
+    args.push(argsString);
     await CountlyReactNative.init(args);
     _isInitialized = true;
+};
+
+_configToJson = function (config) {
+    const json = {};
+    try {
+        json['serverURL'] = config.serverURL;
+        json['appKey'] = config.appKey;
+        json['deviceID'] = config.deviceID;
+
+        if (config.loggingEnabled) {
+            json['loggingEnabled'] = config.loggingEnabled;
+        }
+        if (config.crashReporting) {
+            json['crashReporting'] = config.crashReporting;
+        }
+        if (config.shouldRequireConsent) {
+            json['shouldRequireConsent'] = config.shouldRequireConsent;
+        }
+        if (config.consents) {
+            json['consents'] = config.consents;
+        }
+        if (config.locationCountryCode) {
+            json['locationCountryCode'] = config.locationCountryCode;
+        }
+        if (config.locationCity) {
+            json['locationCity'] = config.locationCity;
+        }
+        if (config.locationGpsCoordinates) {
+            json['locationGpsCoordinates'] = config.locationGpsCoordinates;
+        }
+        if (config.locationIpAddress) {
+            json['locationIpAddress'] = config.locationIpAddress;
+        }
+        if (config.tamperingProtectionSalt) {
+            json['tamperingProtectionSalt'] = config.tamperingProtectionSalt;
+        }
+        if (config.enableApm) {
+            json['enableApm'] = config.enableApm;
+        }
+        if (config.tokenType) {
+            const pushNotification = {};
+            pushNotification['tokenType'] = config.tokenType;
+            pushNotification['channelName'] = config.channelName;
+            pushNotification['channelDescription'] = config.channelDescription;
+            json['pushNotification'] = pushNotification;
+        }
+        if (config.allowedIntentClassNames) {
+            json['allowedIntentClassNames'] = config.allowedIntentClassNames;
+        }
+        if (config.allowedIntentClassNames) {
+            json['allowedIntentPackageNames'] = config.allowedIntentPackageNames;
+        }
+        if (config.starRatingTextTitle) {
+            json['starRatingTextTitle'] = config.starRatingTextTitle;
+        }
+        if (config.starRatingTextMessage) {
+            json['starRatingTextMessage'] = config.starRatingTextMessage;
+        }
+        if (config.starRatingTextDismiss) {
+            json['starRatingTextDismiss'] = config.starRatingTextDismiss;
+        }
+        if (config.campaignType) {
+            json['campaignType'] = config.campaignType;
+            json['campaignData'] = config.campaignData;
+        }
+        if (config.attributionValues) {
+            json['attributionValues'] = config.attributionValues;
+        }
+    } catch (err) {
+        Countly.logError('_configToJson', 'Exception occured during converting config to json.' + err.toString());
+    }
+    return json;
 };
 
 Countly.isInitialized = async function () {
@@ -179,6 +282,7 @@ Countly.disablePushNotifications = function () {
 };
 
 /**
+ * @deprecated in 23.02.0 : use 'countlyConfig.pushTokenType' intead of 'pushTokenType'.
  *
  * Set messaging mode for push notifications
  * Should be called before Countly init
@@ -231,6 +335,7 @@ Countly.registerForNotification = function (theListener) {
 };
 
 /**
+ * @deprecated in 23.02.0 : use 'countlyConfig.configureIntentRedirectionCheck' intead of 'configureIntentRedirectionCheck'.
  *
  * Configure intent redirection checks for push notification
  * Should be called before Countly "askForNotificationPermission"
@@ -338,6 +443,8 @@ Countly.setLoggingEnabled = function (enabled = true) {
 };
 
 /**
+ * @deprecated in 23.02.0 : use 'countlyConfig.setLocation' intead of 'setLocationInit'.
+ * 
  * Set user initial location
  * Should be called before init
  * @param {ISO Country code for the user's country} countryCode
@@ -424,6 +531,8 @@ Countly.setHttpPostForced = function (boolean = true) {
 
 Countly.isCrashReportingEnabled = false;
 /**
+ * @deprecated in 23.02.0 : use 'countlyConfig.enableCrashReporting' intead of 'enableCrashReporting'.
+ * 
  * Enable crash reporting to report unhandled crashes to Countly
  * Should be called before Countly init
  */
@@ -550,6 +659,7 @@ Countly.endSession = function () {
 };
 
 /**
+ * @deprecated in 23.02.0 : use 'countlyConfig.enableParameterTamperingProtection' intead of 'enableParameterTamperingProtection'.
  *
  * Set the optional salt to be used for calculating the checksum of requested data which will be sent with each request, using the &checksum field
  * Should be called before Countly init
@@ -1113,6 +1223,7 @@ Countly.userDataBulk.pullValue = async function (keyName, keyValue) {
 };
 
 /**
+ * @deprecated in 23.02.0 : use 'countlyConfig.setRequiresConsent' intead of 'setRequiresConsent'.
  *
  * Set that consent should be required for features to work.
  * Should be called before Countly init
@@ -1137,6 +1248,7 @@ Countly.giveConsent = function (args) {
 };
 
 /**
+ * @deprecated in 23.02.0 : use 'countlyConfig.giveConsent' intead of 'giveConsentInit'.
  *
  * Give consent for specific features before init.
  * Should be called after Countly init
@@ -1295,6 +1407,8 @@ Countly.remoteConfigClearValues = async function () {
     return result;
 };
 /**
+ * @deprecated in 23.02.0 : use 'countlyConfig.setStarRatingDialogTexts' intead of 'setStarRatingDialogTexts'.
+ * 
  * Set's the text's for the different fields in the star rating dialog. Set value null if for some field you want to keep the old value
  *
  * @param {String} starRatingTextTitle - dialog's title text (Only for Android)
@@ -1557,6 +1671,7 @@ Countly.recordNetworkTrace = function (networkTraceKey, responseCode, requestPay
 };
 
 /**
+ * @deprecated in 23.02.0 : use 'countlyConfig.enableApm' intead of 'enableApm'.
  *
  * Enable APM features, which includes the recording of app start time.
  * Should be called before Countly init
@@ -1567,6 +1682,7 @@ Countly.enableApm = function () {
 };
 
 /**
+ * @deprecated in 23.02.0 : use 'Countly.recordIndirectAttribution' intead of 'Countly'.
  *
  * Enable campaign attribution reporting to Countly.
  * For iOS use "recordAttributionID" instead of "enableAttribution"
@@ -1587,6 +1703,8 @@ Countly.enableAttribution = async function (attributionID = '') {
 
 /**
  *
+ * @deprecated in 23.02.0 : use 'Countly.recordIndirectAttribution' intead of 'recordAttributionID'.
+ * 
  * set attribution Id for campaign attribution reporting.
  * Currently implemented for iOS only
  * For Android just call the enableAttribution to enable campaign attribution.
@@ -1611,6 +1729,33 @@ Countly.replaceAllAppKeysInQueueWithCurrentAppKey = function () {
         return message;
     }
     CountlyReactNative.replaceAllAppKeysInQueueWithCurrentAppKey();
+};
+/**
+ * set direct attribution Id for campaign attribution reporting.
+ */
+Countly.recordDirectAttribution = function (campaignType, campaignData) {
+    if (!_isInitialized) {
+        const message = "'init' must be called before 'recordDirectAttribution'";
+        Countly.logError('recordDirectAttribution', message);
+        return message;
+    }
+    const args = [];
+    args.push(campaignType);
+    args.push(campaignData);
+    CountlyReactNative.recordDirectAttribution(args);
+};
+/**
+ * set indirect attribution Id for campaign attribution reporting.
+ */
+Countly.recordIndirectAttribution = function (attributionValues) {
+    if (!_isInitialized) {
+        const message = "'init' must be called before 'recordIndirectAttribution'";
+        Countly.logError('recordIndirectAttribution', message);
+        return message;
+    }
+    const args = [];
+    args.push(attributionValues);
+    CountlyReactNative.recordIndirectAttribution(args);
 };
 /**
  * Removes all requests with a different app key in request queue.
