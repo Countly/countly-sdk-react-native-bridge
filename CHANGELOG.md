@@ -1,8 +1,24 @@
-## XX.XX.X
+## 23.02.0
+* Added a new SDK initialization call 'initWithConfig', and a configuration object to configure it.
+* Added 'recordDirectAttribution' and 'recordIndirectAttribution' calls.
 * Added getDeviceIDType call to fetch the device ID type.
 * Fixed a bug in IOS SDK that failed to correctly process temporary device id.
-* Underlying android SDK version is XX.XX.X
-* Underlying iOS SDK version is XX.XX.X
+* Deprecated the following SDK calls:
+ - 'init'
+ - 'pushTokenType'
+ - 'configureIntentRedirectionCheck'
+ - 'setLocationInit'
+ - 'enableCrashReporting'
+ - 'enableParameterTamperingProtection'
+ - 'setRequiresConsent'
+ - 'giveConsentInit'
+ - 'setStarRatingDialogTexts'
+ - 'enableApm'
+ - 'enableAttribution'
+ - 'recordAttributionID' 
+ 
+* Underlying Android SDK version is 22.09.3
+* Underlying iOS SDK version is 22.06.2
 
 ## 22.06.5
 * Added COUNTLY_EXCLUDE_PUSHNOTIFICATIONS flag in iOS React Native side to disable push notifications altogether.
