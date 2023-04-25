@@ -15,7 +15,6 @@ import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.JavaScriptModule;
 
-
 import android.content.Context;
 
 import ly.count.android.sdk.Countly;
@@ -48,7 +47,6 @@ import ly.count.android.sdk.StarRatingCallback;
 import ly.count.android.sdk.messaging.CountlyConfigPush;
 import ly.count.android.sdk.messaging.CountlyPush;
 
-
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONException;
@@ -64,7 +62,6 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.messaging.FirebaseMessaging;
-
 
 class CountlyReactException extends Exception {
     private final String jsError;
@@ -100,7 +97,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     private boolean isOnResumeBeforeInit = false;
     private Boolean isSessionStarted_ = false;
 
-
     private List<String> allowedIntentClassNames = new ArrayList<>();
     private List<String> allowedIntentPackageNames = new ArrayList<>();
     private boolean useAdditionalIntentRedirectionChecks = true;
@@ -113,18 +109,18 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     private static String pushNotificationCallbackName = "pushNotificationCallback";
 
     private final Set<String> validConsentFeatureNames = new HashSet<>(Arrays.asList(
-            Countly.CountlyFeatureNames.sessions,
-            Countly.CountlyFeatureNames.events,
-            Countly.CountlyFeatureNames.views,
-            Countly.CountlyFeatureNames.location,
-            Countly.CountlyFeatureNames.crashes,
-            Countly.CountlyFeatureNames.attribution,
-            Countly.CountlyFeatureNames.users,
-            Countly.CountlyFeatureNames.push,
-            Countly.CountlyFeatureNames.starRating,
-            Countly.CountlyFeatureNames.apm,
-            Countly.CountlyFeatureNames.feedback,
-            Countly.CountlyFeatureNames.remoteConfig
+        Countly.CountlyFeatureNames.sessions,
+        Countly.CountlyFeatureNames.events,
+        Countly.CountlyFeatureNames.views,
+        Countly.CountlyFeatureNames.location,
+        Countly.CountlyFeatureNames.crashes,
+        Countly.CountlyFeatureNames.attribution,
+        Countly.CountlyFeatureNames.users,
+        Countly.CountlyFeatureNames.push,
+        Countly.CountlyFeatureNames.starRating,
+        Countly.CountlyFeatureNames.apm,
+        Countly.CountlyFeatureNames.feedback,
+        Countly.CountlyFeatureNames.remoteConfig
     ));
 
     public CountlyReactNative(ReactApplicationContext reactContext) {
@@ -414,14 +410,14 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         BufferedReader reader = null;
         try {
             reader = new BufferedReader(
-                    new InputStreamReader(this._reactContext.getAssets().open(certificateName)));
+                new InputStreamReader(this._reactContext.getAssets().open(certificateName)));
 
             // do reading, usually loop until end of file reading
             String mLine;
             while ((mLine = reader.readLine()) != null) {
                 certificateString.append(mLine);
             }
-            return new String[]{certificateString.toString()};
+            return new String[] { certificateString.toString() };
         } catch (IOException e) {
             //log the exception
         } finally {
@@ -434,7 +430,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             }
         }
         log("Certificate failed.", LogLevel.INFO);
-        return new String[]{};
+        return new String[] {};
     }
 
     @ReactMethod
@@ -627,7 +623,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             segmentation.put(args.getString(i), args.getString(i + 1));
         }
         Countly.sharedInstance().views().recordView(viewName, segmentation);
-
     }
 
     @ReactMethod
@@ -696,8 +691,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             public void callback(String result) {
                 log("registerForNotification callback result [" + result + "]", LogLevel.WARNING);
                 ((ReactApplicationContext) _reactContext)
-                        .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                        .emit(pushNotificationCallbackName, result);
+                    .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                    .emit(pushNotificationCallbackName, result);
             }
         };
         log("registerForNotification theCallback", LogLevel.INFO);
@@ -725,9 +720,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 if (!"null".equals(soundPath) && !soundPath.isEmpty()) {
                     log("askForNotificationPermission, Custom Sound provided for push notifications : " + soundPath, LogLevel.INFO);
                     AudioAttributes audioAttributes = new AudioAttributes.Builder()
-                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-                            .build();
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                        .build();
 
                     try {
                         Uri soundUri = Uri.parse(soundPath);
@@ -735,7 +730,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                     } catch (Exception exception) {
                         log("askForNotificationPermission, Uri.parse failed with exception : ", exception, LogLevel.WARNING);
                     }
-
                 }
 
                 notificationManager.createNotificationChannel(channel);
@@ -1093,7 +1087,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         Countly.sharedInstance().consent().removeConsentAll();
     }
 
-
     @ReactMethod
     public void remoteConfigUpdate(ReadableArray args, final Callback myCallback) {
         Countly.sharedInstance().remoteConfig().update(new RemoteConfigCallback() {
@@ -1131,7 +1124,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             }
         });
     }
-
 
     @ReactMethod
     public void updateRemoteConfigExceptKeys(ReadableArray args, final Callback myCallback) {
@@ -1213,7 +1205,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 callback.invoke("User canceled");
             }
         });
-
     }
 
     @ReactMethod
@@ -1230,8 +1221,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             @Override
             public void callback(String error) {
                 ((ReactApplicationContext) _reactContext)
-                        .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                        .emit(ratingWidgetCallbackName, error);
+                    .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                    .emit(ratingWidgetCallbackName, error);
             }
         });
     }
@@ -1301,8 +1292,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 } else {
                     promise.resolve("presentFeedbackWidget success");
                     ((ReactApplicationContext) _reactContext)
-                            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                            .emit(widgetShownCallbackName, null);
+                        .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                        .emit(widgetShownCallbackName, null);
                 }
             }
 
@@ -1310,12 +1301,11 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             public void onClosed() {
                 promise.resolve("presentFeedbackWidget success");
                 ((ReactApplicationContext) _reactContext)
-                        .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                        .emit(widgetClosedCallbackName, null);
+                    .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                    .emit(widgetClosedCallbackName, null);
             }
         });
     }
-
 
     @ReactMethod
     public void replaceAllAppKeysInQueueWithCurrentAppKey() {
@@ -1506,5 +1496,4 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     public void onHostDestroy() {
 
     }
-
 }
