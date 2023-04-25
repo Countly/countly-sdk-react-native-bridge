@@ -70,7 +70,7 @@ class CountlyConfig {
     }
 
     /**
-    * Method to set if consent is required.
+    * Method to set if the consent feature is enabled.
     * 
     * If set to true, no feature will work without consent being given.
     *
@@ -164,7 +164,6 @@ class CountlyConfig {
     * @param {String} starRatingTextDismiss dismiss
     */
     setStarRatingDialogTexts(starRatingTextTitle, starRatingTextMessage, starRatingTextDismiss) {
-        this.hasSetStarRatingDialogTexts = true;
         this.starRatingTextTitle = starRatingTextTitle;
         this.starRatingTextMessage = starRatingTextMessage;
         this.starRatingTextDismiss = starRatingTextDismiss;
