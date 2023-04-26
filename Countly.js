@@ -16,7 +16,6 @@ Countly.serverUrl = '';
 Countly.appKey = '';
 let _isInitialized = false;
 let _isPushInitialized = false;
-const TemporaryDeviceIDString = 'TemporaryDeviceID';
 const DeviceIdType = {
     DEVELOPER_SUPPLIED: 'DEVELOPER_SUPPLIED',
     SDK_GENERATED: 'SDK_GENERATED',
@@ -46,6 +45,7 @@ Countly.messagingMode = { 'DEVELOPMENT': '1', 'PRODUCTION': '0', 'ADHOC': '2' };
 if (Platform.OS.match('android')) {
     Countly.messagingMode.DEVELOPMENT = '2';
 }
+Countly.TemporaryDeviceIDString = 'TemporaryDeviceID';
 
 /**
  * Initialize Countly
