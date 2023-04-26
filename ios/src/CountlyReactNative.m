@@ -78,13 +78,6 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
     dispatch_async(dispatch_get_main_queue(), ^{
         COUNTLY_RN_LOG(@"Initializing...");
 
-      if (deviceID != nil && deviceID != (NSString *)[NSNull null] && ![deviceID isEqual:@""]) {
-        if ([deviceID isEqual:@"TemporaryDeviceID"]) {
-            config.deviceID = CLYTemporaryDeviceID;
-        } else {
-            config.deviceID = deviceID;
-        }
-      }
         NSString *args = [arguments objectAtIndex:0];
         NSData *data = [args dataUsingEncoding:NSUTF8StringEncoding];
         id jsonOutput = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
@@ -119,11 +112,16 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
     NSString *serverurl = json[@"serverURL"];
     NSString *appkey = json[@"appKey"];
     NSString *deviceID = json[@"deviceID"];
-    if (deviceID != nil && deviceID != (NSString *)[NSNull null] && ![deviceID isEqual:@""]) {
-      config.deviceID = deviceID;
-    }
     config.appKey = appkey;
     config.host = serverurl;
+
+    if (deviceID != nil && deviceID != (NSString *)[NSNull null] && ![deviceID isEqual:@""]) {
+        if ([deviceID isEqual:@"TemporaryDeviceID"]) {
+            config.deviceID = CLYTemporaryDeviceID;
+        } else {
+            config.deviceID = deviceID;
+        }
+    }
 
     if (json[@"loggingEnabled"]) {
         config.enableDebug = YES;
@@ -404,13 +402,17 @@ RCT_REMAP_METHOD(getDeviceIDType, getDeviceIDTypeWithResolver : (RCTPromiseResol
 
 RCT_EXPORT_METHOD(changeDeviceId : (NSArray *)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      NSString *newDeviceID = [arguments objectAtIndex:0];
-      NSString *onServerString = [arguments objectAtIndex:1];
-      if ([onServerString isEqual:@"1"]) {
-          [Countly.sharedInstance setNewDeviceID:newDeviceID onServer:YES];
-      } else {
-          [Countly.sharedInstance setNewDeviceID:newDeviceID onServer:NO];
-      }
+        NSString *newDeviceID = [arguments objectAtIndex:0];
+        if ([newDeviceID isEqual:@"TemporaryDeviceID"]) {
+            newDeviceID = CLYTemporaryDeviceID;
+        }
+
+        NSString *onServerString = [arguments objectAtIndex:1];
+        if ([onServerString isEqual:@"1"]) {
+            [Countly.sharedInstance setNewDeviceID:newDeviceID onServer:YES];
+        } else {
+            [Countly.sharedInstance setNewDeviceID:newDeviceID onServer:NO];
+        }
     });
 }
 
