@@ -16,6 +16,7 @@ Countly.serverUrl = '';
 Countly.appKey = '';
 let _isInitialized = false;
 let _isPushInitialized = false;
+const TemporaryDeviceIDString = 'TemporaryDeviceID';
 const DeviceIdType = {
     DEVELOPER_SUPPLIED: 'DEVELOPER_SUPPLIED',
     SDK_GENERATED: 'SDK_GENERATED',
