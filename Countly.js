@@ -816,13 +816,16 @@ Countly.setUserData = async function (userData) {
         Countly.logError('setUserData', msg);
         return msg;
     }
+    let message = null;
     if (!userData) {
+        message = 'User profile data should not be null or undefined';
         Countly.logError('setUserData', message);
-        return 'User profile data should not be null or undefined';
+        return message;
     }
     if (typeof userData !== 'object') {
+        message = `unsupported data type of user data '${typeof userData}'`;
         Countly.logWarning('setUserData', message);
-        return `unsupported data type of user data '${typeof userData}'`;
+        return message;
     }
     const args = [];
     for (const key in userData) {
