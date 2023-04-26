@@ -1,6 +1,8 @@
 ## 23.02.0
 * Added a new SDK initialization call 'initWithConfig', and a configuration object to configure it.
 * Added 'recordDirectAttribution' and 'recordIndirectAttribution' calls.
+* Added 'getDeviceIDType' call to fetch the device ID type.
+* Fixed a bug in IOS SDK that failed to correctly process temporary device id.
 * Deprecated the following SDK calls:
  - 'init'
  - 'pushTokenType'

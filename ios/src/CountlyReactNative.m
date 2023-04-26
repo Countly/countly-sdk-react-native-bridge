@@ -112,11 +112,16 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
     NSString *serverurl = json[@"serverURL"];
     NSString *appkey = json[@"appKey"];
     NSString *deviceID = json[@"deviceID"];
-    if (deviceID != nil && deviceID != (NSString *)[NSNull null] && ![deviceID isEqual:@""]) {
-      config.deviceID = deviceID;
-    }
     config.appKey = appkey;
     config.host = serverurl;
+
+    if (deviceID != nil && deviceID != (NSString *)[NSNull null] && ![deviceID isEqual:@""]) {
+        if ([deviceID isEqual:@"TemporaryDeviceID"]) {
+            config.deviceID = CLYTemporaryDeviceID;
+        } else {
+            config.deviceID = deviceID;
+        }
+    }
 
     if (json[@"loggingEnabled"]) {
         config.enableDebug = YES;
@@ -378,27 +383,36 @@ RCT_REMAP_METHOD(getCurrentDeviceId, getCurrentDeviceIdWithResolver : (RCTPromis
     });
 }
 
-RCT_EXPORT_METHOD(getDeviceIdAuthor : (NSArray *)arguments callback : (RCTResponseSenderBlock)callback) {
+RCT_REMAP_METHOD(getDeviceIDType, getDeviceIDTypeWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      id value = [Countly.sharedInstance deviceIDType];
-      if (value) {
-          callback(@[ value ]);
-      } else {
-          NSString *value = @"deviceIDAuthorNotFound";
-          callback(@[ value ]);
-      }
+        CLYDeviceIDType deviceIDType = [Countly.sharedInstance deviceIDType];
+        NSString *deviceIDTypeString = NULL;
+        if ([deviceIDType isEqualToString:CLYDeviceIDTypeCustom]) {
+            deviceIDTypeString = @"DS";
+        } else if ([deviceIDType isEqualToString:CLYDeviceIDTypeIDFV]) {
+            deviceIDTypeString = @"SG";
+        } else if ([deviceIDType isEqualToString:CLYDeviceIDTypeTemporary]) {
+            deviceIDTypeString = @"TID";
+        } else {
+            deviceIDTypeString = @"";
+        }
+        resolve(deviceIDTypeString);
     });
 }
 
 RCT_EXPORT_METHOD(changeDeviceId : (NSArray *)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      NSString *newDeviceID = [arguments objectAtIndex:0];
-      NSString *onServerString = [arguments objectAtIndex:1];
-      if ([onServerString isEqual:@"1"]) {
-          [Countly.sharedInstance setNewDeviceID:newDeviceID onServer:YES];
-      } else {
-          [Countly.sharedInstance setNewDeviceID:newDeviceID onServer:NO];
-      }
+        NSString *newDeviceID = [arguments objectAtIndex:0];
+        if ([newDeviceID isEqual:@"TemporaryDeviceID"]) {
+            newDeviceID = CLYTemporaryDeviceID;
+        }
+
+        NSString *onServerString = [arguments objectAtIndex:1];
+        if ([onServerString isEqual:@"1"]) {
+            [Countly.sharedInstance setNewDeviceID:newDeviceID onServer:YES];
+        } else {
+            [Countly.sharedInstance setNewDeviceID:newDeviceID onServer:NO];
+        }
     });
 }
 

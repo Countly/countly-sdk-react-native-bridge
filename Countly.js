@@ -16,6 +16,12 @@ Countly.serverUrl = '';
 Countly.appKey = '';
 let _isInitialized = false;
 let _isPushInitialized = false;
+const DeviceIdType = {
+    DEVELOPER_SUPPLIED: 'DEVELOPER_SUPPLIED',
+    SDK_GENERATED: 'SDK_GENERATED',
+    TEMPORARY_ID: 'TEMPORARY_ID',
+};
+
 /*
  * Listener for rating widget callback, when callback recieve we will remove the callback using listener.
  */
@@ -39,6 +45,7 @@ Countly.messagingMode = { 'DEVELOPMENT': '1', 'PRODUCTION': '0', 'ADHOC': '2' };
 if (Platform.OS.match('android')) {
     Countly.messagingMode.DEVELOPMENT = '2';
 }
+Countly.TemporaryDeviceIDString = 'TemporaryDeviceID';
 
 /**
  * Initialize Countly
@@ -355,19 +362,16 @@ Countly.configureIntentRedirectionCheck = function (allowedIntentClassNames = []
         return message;
     }
     if (!Array.isArray(allowedIntentClassNames)) {
-        var message = `Ignoring, unsupported data type '${typeof allowedIntentClassNames}' 'allowedIntentClassNames' should be an array of String`;
-        Countly.logWarning('configureIntentRedirectionCheck', message);
+        Countly.logWarning('configureIntentRedirectionCheck', `Ignoring, unsupported data type '${typeof allowedIntentClassNames}' 'allowedIntentClassNames' should be an array of String`);
         allowedIntentClassNames = [];
     }
     if (!Array.isArray(allowedIntentPackageNames)) {
-        var message = `Ignoring, unsupported data type '${typeof allowedIntentPackageNames}' 'allowedIntentPackageNames' should be an array of String`;
-        Countly.logWarning('configureIntentRedirectionCheck', message);
+        Countly.logWarning('configureIntentRedirectionCheck', `Ignoring, unsupported data type '${typeof allowedIntentPackageNames}' 'allowedIntentPackageNames' should be an array of String`);
         allowedIntentPackageNames = [];
     }
 
     if (typeof useAdditionalIntentRedirectionChecks !== 'boolean') {
-        var message = `Ignoring, unsupported data type '${typeof useAdditionalIntentRedirectionChecks}' 'useAdditionalIntentRedirectionChecks' should be a boolean`;
-        Countly.logWarning('configureIntentRedirectionCheck', message);
+        Countly.logWarning('configureIntentRedirectionCheck', `Ignoring, unsupported data type '${typeof useAdditionalIntentRedirectionChecks}' 'useAdditionalIntentRedirectionChecks' should be a boolean`);
         useAdditionalIntentRedirectionChecks = true;
     }
 
@@ -496,6 +500,42 @@ Countly.getCurrentDeviceId = async function () {
     }
     const result = await CountlyReactNative.getCurrentDeviceId();
     return result;
+};
+
+_getDeviceIdType = function (deviceIdType) {
+    let result = null;
+    switch (deviceIdType) {
+        case 'DS':
+            result = DeviceIdType.DEVELOPER_SUPPLIED;
+            break;
+        case 'TID':
+            result = DeviceIdType.TEMPORARY_ID;
+            break;
+        case 'SG':
+            result = DeviceIdType.SDK_GENERATED;
+            break;
+    }
+    if (result == null) {
+        Countly.logError('_getDeviceIdType', "unexpected deviceIdType [" + deviceIdType.toString() + "] from native side");
+        return null;
+    }
+    return result;
+};
+/**
+ * Get currently used device Id type.
+ * Should be called after Countly init
+ * */
+Countly.getDeviceIDType = async function () {
+    if (!_isInitialized) {
+        Countly.logError('getDeviceIDType', "'init' must be called before 'getDeviceIDType'");
+        return null;
+    }
+    const result = await CountlyReactNative.getDeviceIDType();
+    if (result == null || result == "") {
+        Countly.logError('getDeviceIDType', "'getDeviceIDType' unexpected null value from native side");
+        return null;
+    }
+    return _getDeviceIdType(result);
 };
 
 Countly.changeDeviceId = async function (newDeviceID, onServer) {
@@ -790,8 +830,7 @@ Countly.setUserData = async function (userData) {
     const args = [];
     for (const key in userData) {
         if (typeof userData[key] !== 'string' && key.toString() != 'byear') {
-            message = `skipping value for key '${key.toString()}', due to unsupported data type '${typeof userData[key]}', its data type should be 'string'`;
-            Countly.logWarning('setUserData', message);
+            Countly.logWarning('setUserData', `skipping value for key '${key.toString()}', due to unsupported data type '${typeof userData[key]}', its data type should be 'string'`);
         }
     }
 
@@ -1014,8 +1053,7 @@ Countly.userDataBulk.setUserProperties = async function (customAndPredefined) {
     }
     for (const key in customAndPredefined) {
         if (typeof customAndPredefined[key] !== 'string' && key.toString() != 'byear') {
-            message = `skipping value for key '${key.toString()}', due to unsupported data type '${typeof customAndPredefined[key]}', its data type should be 'string'`;
-            Countly.logWarning('setUserProperties', message);
+            Countly.logWarning('setUserProperties', `skipping value for key '${key.toString()}', due to unsupported data type '${typeof customAndPredefined[key]}', its data type should be 'string'`);
         }
     }
 
@@ -1260,8 +1298,7 @@ Countly.giveConsentInit = async function (args) {
     } else if (Array.isArray(args)) {
         features = args;
     } else {
-        const message = `unsupported data type '${typeof args}'`;
-        Countly.logWarning('giveConsentInit', message);
+        Countly.logWarning('giveConsentInit', `unsupported data type '${typeof args}'`);
     }
     await CountlyReactNative.giveConsentInit(features);
 };
@@ -1838,8 +1875,7 @@ Countly.validateUserDataValue = async (stringValue, stringName, functionName) =>
     }
 
     // validating that value should be parceable to int.
-    message = await Countly.validateParseInt(stringValue, stringName, functionName);
-    return message;
+    return await Countly.validateParseInt(stringValue, stringName, functionName);
 };
 
 /**
@@ -1856,8 +1892,7 @@ Countly.validateUserDataType = async (stringValue, stringName, functionName) => 
         return null;
     }
     if (typeof stringValue === 'string') {
-        message = `unsupported data type '${typeof stringValue}', its data type should be 'number'`;
-        Countly.logWarning(functionName, message);
+        Countly.logWarning(functionName, `unsupported data type '${typeof stringValue}', its data type should be 'number'`);
         return null;
     }
 

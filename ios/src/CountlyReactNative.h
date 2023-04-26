@@ -16,7 +16,6 @@ typedef void (^Result)(id _Nullable result);
 - (void)enableCrashReporting;
 - (void)addCrashLog:(NSArray *_Nullable)arguments;
 
-- (void)getDeviceIdAuthor:(NSArray *_Nullable)arguments callback:(RCTResponseSenderBlock _Nullable)callback;
 - (void)changeDeviceId:(NSArray *_Nullable)arguments;
 - (void)enableParameterTamperingProtection:(NSArray *_Nullable)arguments;
 - (void)pinnedCertificates:(NSArray *_Nullable)arguments;
