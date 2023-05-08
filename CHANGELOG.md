@@ -1,3 +1,8 @@
+## 23.2.1
+* Removed leading zeros from version number.
+* Underlying Android SDK version is 22.09.4
+* Underlying iOS SDK version is 23.02.2
+
 ## 23.02.0
 * Added a new SDK initialization call 'initWithConfig', and a configuration object to configure it.
 * Added 'recordDirectAttribution' and 'recordIndirectAttribution' calls.
