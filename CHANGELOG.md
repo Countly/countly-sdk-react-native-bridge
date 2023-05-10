@@ -1,6 +1,6 @@
 ## 23.2.1
-* Updated Underlying Android SDK version to 22.09.4
-* Updated Underlying iOS SDK version to 23.02.2
+* Updated underlying Android SDK version to 22.09.4
+* Updated underlying iOS SDK version to 23.02.2
 
 ## 23.02.0
 * Added a new SDK initialization call 'initWithConfig', and a configuration object to configure it.
