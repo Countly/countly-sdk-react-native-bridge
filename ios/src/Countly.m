@@ -14,6 +14,8 @@
 @end
 
 long long appLoadStartTime;
+// It holds the event id of previous recorded custom event.
+NSString* previousEventID;
 
 @implementation Countly
 
@@ -84,7 +86,12 @@ long long appLoadStartTime;
     if (!config.host.length || [config.host isEqualToString:@"https://YOUR_COUNTLY_SERVER"])
         [NSException raise:@"CountlyHostNotSetException" format:@"host property on CountlyConfig object is not set"];
 
-    CLY_LOG_I(@"Initializing with %@ SDK v%@", CountlyCommon.sharedInstance.SDKName, CountlyCommon.sharedInstance.SDKVersion);
+    CLY_LOG_I(@"Initializing with %@ SDK v%@ on %@ with %@ %@",
+        CountlyCommon.sharedInstance.SDKName,
+        CountlyCommon.sharedInstance.SDKVersion,
+        CountlyDeviceInfo.device,
+        CountlyDeviceInfo.osName,
+        CountlyDeviceInfo.osVersion);
 
     if (!CountlyDeviceInfo.sharedInstance.deviceID || config.resetStoredDeviceID)
     {
@@ -110,6 +117,14 @@ long long appLoadStartTime;
     CountlyDeviceInfo.sharedInstance.customMetrics = [config.customMetrics cly_truncated:@"Custom metric"];
 
     [Countly.user save];
+    
+    CountlyCommon.sharedInstance.enableServerConfiguration = config.enableServerConfiguration;
+    
+    // Fetch server configs if 'enableServerConfiguration' is true.
+    if(config.enableServerConfiguration)
+    {
+        [CountlyServerConfig.sharedInstance fetchServerConfig];
+    }
 
 #if (TARGET_OS_IOS)
     CountlyFeedbacks.sharedInstance.message = config.starRatingMessage;
@@ -598,23 +613,13 @@ long long appLoadStartTime;
 {
     CLY_LOG_I(@"%s %@ %@ %lu %f %f", __FUNCTION__, key, segmentation, (unsigned long)count, sum, duration);
 
-    NSDictionary <NSString *, NSNumber *>* reservedEvents =
-    @{
-        kCountlyReservedEventOrientation: @(CountlyConsentManager.sharedInstance.consentForUserDetails),
-        kCountlyReservedEventStarRating: @(CountlyConsentManager.sharedInstance.consentForFeedback),
-        kCountlyReservedEventSurvey: @(CountlyConsentManager.sharedInstance.consentForFeedback),
-        kCountlyReservedEventNPS: @(CountlyConsentManager.sharedInstance.consentForFeedback),
-        kCountlyReservedEventPushAction: @(CountlyConsentManager.sharedInstance.consentForPushNotifications),
-        kCountlyReservedEventView: @(CountlyConsentManager.sharedInstance.consentForViewTracking),
-    };
+    BOOL isReservedEvent = [self isReservedEvent:key];
 
-    NSNumber* aReservedEvent = reservedEvents[key];
-
-    if (aReservedEvent)
+    if (isReservedEvent)
     {
         CLY_LOG_V(@"A reserved event detected: %@", key);
 
-        if (!aReservedEvent.boolValue)
+        if (!isReservedEvent)
         {
             CLY_LOG_W(@"Specific consent not given for the reserved event! So, it will not be recorded.");
             return;
@@ -628,30 +633,60 @@ long long appLoadStartTime;
         return;
     }
 
-    [self recordEvent:key segmentation:segmentation count:count sum:sum duration:duration timestamp:CountlyCommon.sharedInstance.uniqueTimestamp];
+    [self recordEvent:key segmentation:segmentation count:count sum:sum duration:duration ID:nil timestamp:CountlyCommon.sharedInstance.uniqueTimestamp];
 }
 
 #pragma mark -
 
 - (void)recordReservedEvent:(NSString *)key segmentation:(NSDictionary *)segmentation
 {
-    [self recordEvent:key segmentation:segmentation count:1 sum:0 duration:0 timestamp:CountlyCommon.sharedInstance.uniqueTimestamp];
+    [self recordEvent:key segmentation:segmentation count:1 sum:0 duration:0 ID:nil timestamp:CountlyCommon.sharedInstance.uniqueTimestamp];
 }
 
-- (void)recordReservedEvent:(NSString *)key segmentation:(NSDictionary *)segmentation count:(NSUInteger)count sum:(double)sum duration:(NSTimeInterval)duration timestamp:(NSTimeInterval)timestamp
+- (void)recordReservedEvent:(NSString *)key segmentation:(NSDictionary *)segmentation ID:(NSString *)ID
 {
-    [self recordEvent:key segmentation:segmentation count:count sum:sum duration:duration timestamp:timestamp];
+    [self recordEvent:key segmentation:segmentation count:1 sum:0 duration:0 ID:ID timestamp:CountlyCommon.sharedInstance.uniqueTimestamp];
+}
+
+- (void)recordReservedEvent:(NSString *)key segmentation:(NSDictionary *)segmentation count:(NSUInteger)count sum:(double)sum duration:(NSTimeInterval)duration ID:(NSString *)ID timestamp:(NSTimeInterval)timestamp
+{
+    [self recordEvent:key segmentation:segmentation count:count sum:sum duration:duration ID:ID timestamp:timestamp];
 }
 
 #pragma mark -
 
-- (void)recordEvent:(NSString *)key segmentation:(NSDictionary *)segmentation count:(NSUInteger)count sum:(double)sum duration:(NSTimeInterval)duration timestamp:(NSTimeInterval)timestamp
+- (void)recordEvent:(NSString *)key segmentation:(NSDictionary *)segmentation count:(NSUInteger)count sum:(double)sum duration:(NSTimeInterval)duration ID:(NSString *)ID timestamp:(NSTimeInterval)timestamp
 {
     if (key.length == 0)
         return;
 
     CountlyEvent *event = CountlyEvent.new;
     event.key = key;
+    event.ID = ID;
+    if (!event.ID.length)
+    {
+        event.ID = CountlyCommon.sharedInstance.randomEventID;
+    }
+
+    if ([key isEqualToString:kCountlyReservedEventView])
+    {
+        event.PVID = CountlyViewTracking.sharedInstance.previousViewID ?: @"";
+    }
+    else
+    {
+        event.CVID = CountlyViewTracking.sharedInstance.currentViewID ?: @"";
+    }
+
+    // Check if the event is a reserved event
+    BOOL isReservedEvent = [self isReservedEvent:key];
+
+    // If the event is not reserved, assign the previous event ID to the current event's PEID property, or an empty string if previousEventID is nil. Then, update previousEventID to the current event's ID.
+    if(!isReservedEvent)
+    {
+        event.PEID = previousEventID ?: @"";
+        previousEventID = event.ID;
+    }
+    
     event.segmentation = segmentation;
     event.count = MAX(count, 1);
     event.sum = sum;
@@ -661,6 +696,22 @@ long long appLoadStartTime;
     event.duration = duration;
 
     [CountlyPersistency.sharedInstance recordEvent:event];
+}
+
+- (BOOL)isReservedEvent:(NSString *)key
+{
+    NSDictionary <NSString *, NSNumber *>* reservedEvents =
+    @{
+        kCountlyReservedEventOrientation: @(CountlyConsentManager.sharedInstance.consentForUserDetails),
+        kCountlyReservedEventStarRating: @(CountlyConsentManager.sharedInstance.consentForFeedback),
+        kCountlyReservedEventSurvey: @(CountlyConsentManager.sharedInstance.consentForFeedback),
+        kCountlyReservedEventNPS: @(CountlyConsentManager.sharedInstance.consentForFeedback),
+        kCountlyReservedEventPushAction: @(CountlyConsentManager.sharedInstance.consentForPushNotifications),
+        kCountlyReservedEventView: @(CountlyConsentManager.sharedInstance.consentForViewTracking),
+    };
+    
+    NSNumber* aReservedEvent = reservedEvents[key];
+    return aReservedEvent.boolValue;
 }
 
 #pragma mark -
@@ -791,25 +842,60 @@ long long appLoadStartTime;
 
 #pragma mark - Crash Reporting
 
+- (void)recordException:(NSException *)exception
+{
+    CLY_LOG_I(@"%s %@", __FUNCTION__, exception);
+
+    [CountlyCrashReporter.sharedInstance recordException:exception isFatal:NO stackTrace:nil segmentation:nil];
+}
+
+- (void)recordException:(NSException *)exception isFatal:(BOOL)isFatal
+{
+    CLY_LOG_I(@"%s %@ %d", __FUNCTION__, exception, isFatal);
+
+    [CountlyCrashReporter.sharedInstance recordException:exception isFatal:isFatal stackTrace:nil segmentation:nil];
+}
+
+- (void)recordException:(NSException *)exception isFatal:(BOOL)isFatal stackTrace:(NSArray *)stackTrace segmentation:(NSDictionary<NSString *, NSString *> *)segmentation
+{
+    CLY_LOG_I(@"%s %@ %d %@ %@", __FUNCTION__, exception, isFatal, stackTrace, segmentation);
+
+    [CountlyCrashReporter.sharedInstance recordException:exception isFatal:isFatal stackTrace:stackTrace segmentation:segmentation];
+}
+
+- (void)recordError:(NSString *)errorName stackTrace:(NSArray * _Nullable)stackTrace
+{
+    CLY_LOG_I(@"%s %@ %@", __FUNCTION__, errorName, stackTrace);
+
+    [CountlyCrashReporter.sharedInstance recordError:errorName isFatal:NO stackTrace:stackTrace segmentation:nil];
+}
+
+- (void)recordError:(NSString *)errorName isFatal:(BOOL)isFatal stackTrace:(NSArray * _Nullable)stackTrace segmentation:(NSDictionary<NSString *, NSString *> * _Nullable)segmentation
+{
+    CLY_LOG_I(@"%s %@ %d %@ %@", __FUNCTION__, errorName, isFatal, stackTrace, segmentation);
+
+    [CountlyCrashReporter.sharedInstance recordError:errorName isFatal:isFatal stackTrace:stackTrace segmentation:segmentation];
+}
+
 - (void)recordHandledException:(NSException *)exception
 {
     CLY_LOG_I(@"%s %@", __FUNCTION__, exception);
 
-    [CountlyCrashReporter.sharedInstance recordException:exception withStackTrace:nil isFatal:NO];
+    [CountlyCrashReporter.sharedInstance recordException:exception isFatal:NO stackTrace:nil segmentation:nil];
 }
 
 - (void)recordHandledException:(NSException *)exception withStackTrace:(NSArray *)stackTrace
 {
     CLY_LOG_I(@"%s %@ %@", __FUNCTION__, exception, stackTrace);
 
-    [CountlyCrashReporter.sharedInstance recordException:exception withStackTrace:stackTrace isFatal:NO];
+    [CountlyCrashReporter.sharedInstance recordException:exception isFatal:NO stackTrace:stackTrace segmentation:nil];
 }
 
 - (void)recordUnhandledException:(NSException *)exception withStackTrace:(NSArray * _Nullable)stackTrace
 {
     CLY_LOG_I(@"%s %@ %@", __FUNCTION__, exception, stackTrace);
 
-    [CountlyCrashReporter.sharedInstance recordException:exception withStackTrace:stackTrace isFatal:YES];
+    [CountlyCrashReporter.sharedInstance recordException:exception isFatal:YES stackTrace:stackTrace segmentation:nil];
 }
 
 - (void)recordCrashLog:(NSString *)log
@@ -884,24 +970,6 @@ long long appLoadStartTime;
 + (CountlyUserDetails *)user
 {
     return CountlyUserDetails.sharedInstance;
-}
-
-- (void)userLoggedIn:(NSString *)userID
-{
-    CLY_LOG_I(@"%s %@", __FUNCTION__, userID);
-
-    CLY_LOG_W(@"userLoggedIn: method is deprecated. Please directly use setNewDeviceID:onServer: method instead.");
-
-    [self setNewDeviceID:userID onServer:YES];
-}
-
-- (void)userLoggedOut
-{
-    CLY_LOG_I(@"%s", __FUNCTION__);
-
-    CLY_LOG_W(@"userLoggedOut method is deprecated. Please directly use setNewDeviceID:onServer: method instead.");
-
-    [self setNewDeviceID:CLYDefaultDeviceID onServer:NO];
 }
 
 

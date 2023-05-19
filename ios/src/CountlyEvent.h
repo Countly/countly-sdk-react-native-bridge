@@ -9,6 +9,10 @@
 @interface CountlyEvent : NSObject <NSCoding>
 
 @property (nonatomic, copy) NSString* key;
+@property (nonatomic, copy) NSString* ID;
+@property (nonatomic, copy) NSString* CVID;
+@property (nonatomic, copy) NSString* PVID;
+@property (nonatomic, copy) NSString* PEID;
 @property (nonatomic, copy) NSDictionary* segmentation;
 @property (nonatomic) NSUInteger count;
 @property (nonatomic) double sum;

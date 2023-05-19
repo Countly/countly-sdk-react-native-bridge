@@ -1,3 +1,11 @@
+## 23.2.1
+* Default max segmentation value count changed from 30 to 100
+* Fixed a bug on Android devices that prevented device ID to be changed when there is no consent given
+* Fixed a race condition bug by emptying event queue before sending user profile changes.
+
+* Updated underlying Android SDK version to 22.09.4
+* Updated underlying iOS SDK version to 23.02.2
+
 ## 23.02.0
 * Added a new SDK initialization call 'initWithConfig', and a configuration object to configure it.
 * Added 'recordDirectAttribution' and 'recordIndirectAttribution' calls.
@@ -17,7 +25,7 @@
  - 'enableAttribution'
  - 'recordAttributionID' 
  
-* Underlying Android SDK version is 22.09.3
+* Updated underlying Android SDK to version 22.09.3
 * Underlying iOS SDK version is 22.06.2
 
 ## 22.06.5
