@@ -57,7 +57,7 @@ Countly.TemporaryDeviceIDString = 'TemporaryDeviceID';
 // countly initialization
 Countly.init = async function (serverUrl, appKey, deviceId) {
     Countly.logError('init is deprecated, use initWithConfig instead');
-    const countlyConfig = new CountlyConfig(serverUrl, appKey).setDeviceId(deviceId);
+    const countlyConfig = new CountlyConfig(serverUrl, appKey).setDeviceID(deviceId);
     Countly.initWithConfig(countlyConfig);
 };
 
@@ -448,7 +448,7 @@ Countly.setLoggingEnabled = function (enabled = true) {
 
 /**
  * @deprecated in 23.02.0 : use 'countlyConfig.setLocation' intead of 'setLocationInit'.
- * 
+ *
  * Set user initial location
  * Should be called before init
  * @param {ISO Country code for the user's country} countryCode
@@ -572,7 +572,7 @@ Countly.setHttpPostForced = function (boolean = true) {
 Countly.isCrashReportingEnabled = false;
 /**
  * @deprecated in 23.02.0 : use 'countlyConfig.enableCrashReporting' intead of 'enableCrashReporting'.
- * 
+ *
  * Enable crash reporting to report unhandled crashes to Countly
  * Should be called before Countly init
  */
@@ -1445,7 +1445,7 @@ Countly.remoteConfigClearValues = async function () {
 };
 /**
  * @deprecated in 23.02.0 : use 'countlyConfig.setStarRatingDialogTexts' intead of 'setStarRatingDialogTexts'.
- * 
+ *
  * Set's the text's for the different fields in the star rating dialog. Set value null if for some field you want to keep the old value
  *
  * @param {String} starRatingTextTitle - dialog's title text (Only for Android)
@@ -1741,7 +1741,7 @@ Countly.enableAttribution = async function (attributionID = '') {
 /**
  *
  * @deprecated in 23.02.0 : use 'Countly.recordIndirectAttribution' intead of 'recordAttributionID'.
- * 
+ *
  * set attribution Id for campaign attribution reporting.
  * Currently implemented for iOS only
  * For Android just call the enableAttribution to enable campaign attribution.
