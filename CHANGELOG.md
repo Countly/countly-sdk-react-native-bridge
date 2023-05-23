@@ -1,3 +1,6 @@
+## 23.2.2
+* Fixed bug that caused an issue in the deprecated init call
+
 ## 23.2.1
 * Default max segmentation value count changed from 30 to 100
 * Fixed a bug on Android devices that prevented device ID to be changed when there is no consent given
@@ -12,18 +15,18 @@
 * Added 'getDeviceIDType' call to fetch the device ID type.
 * Fixed a bug in IOS SDK that failed to correctly process temporary device id.
 * Deprecated the following SDK calls:
- - 'init'
- - 'pushTokenType'
- - 'configureIntentRedirectionCheck'
- - 'setLocationInit'
- - 'enableCrashReporting'
- - 'enableParameterTamperingProtection'
- - 'setRequiresConsent'
- - 'giveConsentInit'
- - 'setStarRatingDialogTexts'
- - 'enableApm'
- - 'enableAttribution'
- - 'recordAttributionID' 
+  * 'init'
+  * 'pushTokenType'
+  * 'configureIntentRedirectionCheck'
+  * 'setLocationInit'
+  * 'enableCrashReporting'
+  * 'enableParameterTamperingProtection'
+  * 'setRequiresConsent'
+  * 'giveConsentInit'
+  * 'setStarRatingDialogTexts'
+  * 'enableApm'
+  * 'enableAttribution'
+  * 'recordAttributionID' 
  
 * Updated underlying Android SDK to version 22.09.3
 * Underlying iOS SDK version is 22.06.2
