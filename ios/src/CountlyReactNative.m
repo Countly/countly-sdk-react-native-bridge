@@ -155,7 +155,7 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
     }
 
 #ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
-    NSDictionary *pushJson = _config[@"pushNotification"];
+    NSDictionary *pushJson = json[@"pushNotification"];
     if (pushJson) {
         config.sendPushTokenAlways = YES;
         config.pushTestMode = CLYPushTestModeProduction;
