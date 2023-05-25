@@ -568,7 +568,7 @@ Countly.getDeviceIDType = async function () {
 /**
  * Change the current device id
  * @param {String} device id new device id
- * @param {String} onServer merge device id
+ * @param {boolean} onServer merge device id
  * */
 Countly.changeDeviceId = async function (newDeviceID, onServer) {
     if (!_isInitialized) {
