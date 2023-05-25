@@ -509,7 +509,7 @@ Countly.disableLocation = function () {
  *
  * Get currently used device Id.
  * Should be called after Countly init
- * @return {String} device id or error message
+ * @return {String} device id
  * */
 Countly.getCurrentDeviceId = async function () {
     if (!_isInitialized) {
