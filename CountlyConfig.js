@@ -147,8 +147,8 @@ class CountlyConfig {
     /**
     * Method to configure intent redirection check
     *
-    * @param {String[]} allowedIntentClassNames allowedIntentClassNames allowed intent class names
-    * @param {String[]} allowedIntentPackageNames allowedIntentClassNames allowed intent package name
+    * @param {String[]} allowedIntentClassNames allowed intent class names
+    * @param {String[]} allowedIntentPackageNames allowed intent package name
     */
     configureIntentRedirectionCheck(allowedIntentClassNames, allowedIntentPackageNames) {
         this.allowedIntentClassNames = allowedIntentClassNames;
