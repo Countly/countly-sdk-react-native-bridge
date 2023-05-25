@@ -85,7 +85,7 @@ class CountlyConfig {
     /**
     * Method to give consent for specific features before init
     *
-    * @param {array of String} consents consents e.g ['location', 'sessions', 
+    * @param {String[]} consents consents e.g ['location', 'sessions', 
     * 'attribution', 'push', 'events', 'views', 'crashes', 'users', 'push', 
     * 'star-rating', 'apm', 'feedback', 'remote-config']
     */
@@ -147,8 +147,8 @@ class CountlyConfig {
     /**
     * Method to configure intent redirection check
     *
-    * @param {String} allowedIntentClassNames allowedIntentClassNames
-    * @param {String} allowedIntentPackageNames allowedIntentPackageNames
+    * @param {String[]} allowedIntentClassNames allowed intent class names
+    * @param {String[]} allowedIntentPackageNames allowed intent package name
     */
     configureIntentRedirectionCheck(allowedIntentClassNames, allowedIntentPackageNames) {
         this.allowedIntentClassNames = allowedIntentClassNames;
@@ -170,14 +170,18 @@ class CountlyConfig {
         return this;
     }
 
-    /// Report direct user attribution
+    /**
+    * Report direct user attribution
+    */
     recordDirectAttribution(campaignType, campaignData) {
       this.campaignType = campaignType;
       this.campaignData = campaignData;
       return this;
     }
-  
-    /// Report indirect user attribution
+
+    /**
+    * Report indirect user attribution
+    */
     recordIndirectAttribution(attributionValues) {
       this.attributionValues = attributionValues;
       return this;

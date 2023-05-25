@@ -24,7 +24,7 @@
 + (CountlyFeedbackWidget *)createWithDictionary:(NSDictionary *)dictionary;
 @end
 
-NSString *const kCountlyReactNativeSDKVersion = @"23.2.2";
+NSString *const kCountlyReactNativeSDKVersion = @"23.2.3";
 NSString *const kCountlyReactNativeSDKName = @"js-rnb-ios";
 
 CLYPushTestMode const CLYPushTestModeProduction = @"CLYPushTestModeProduction";
@@ -155,10 +155,11 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
     }
 
 #ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
-    if (json[@"pushNotification"]) {
+    NSDictionary *pushJson = json[@"pushNotification"];
+    if (pushJson) {
         config.sendPushTokenAlways = YES;
         config.pushTestMode = CLYPushTestModeProduction;
-        NSString *tokenType = json[@"tokenType"];
+        NSString *tokenType = pushJson[@"tokenType"];
         if ([tokenType isEqualToString:@"1"]) {
             config.pushTestMode = CLYPushTestModeDevelopment;
         } else if ([tokenType isEqualToString:@"2"]) {
