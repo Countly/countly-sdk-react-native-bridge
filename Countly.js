@@ -53,8 +53,10 @@ Countly.TemporaryDeviceIDString = 'TemporaryDeviceID';
  * @deprecated in 23.02.0 : use 'initWithConfig' intead of 'init'.
  *
  * @function Countly.init should be used to initialize countly
+ * @param {String} serverURL server url
+ * @param {String} appKey application key
+ * @param {String} deviceId device ID
  */
-// countly initialization
 Countly.init = async function (serverUrl, appKey, deviceId) {
     Countly.logError('init is deprecated, use initWithConfig instead');
     const countlyConfig = new CountlyConfig(serverUrl, appKey).setDeviceID(deviceId);
@@ -65,8 +67,8 @@ Countly.init = async function (serverUrl, appKey, deviceId) {
  * Initialize Countly
  *
  * @function Countly.initWithConfig should be used to initialize countly with config
+ * @param {Object} countlyConfig countly config object
  */
-// countly initialization with config
 Countly.initWithConfig = async function (countlyConfig) {
     if (_isInitialized) {
         Countly.logError('init', 'SDK is already initialized');
@@ -93,6 +95,12 @@ Countly.initWithConfig = async function (countlyConfig) {
     _isInitialized = true;
 };
 
+/**
+ *
+ * Converts countly config object to JSON
+ *
+ * @param {Object} countlyConfig config
+ */
 _configToJson = function (config) {
     const json = {};
     try {
@@ -165,12 +173,24 @@ _configToJson = function (config) {
     return json;
 };
 
+/**
+ *
+ * Checks if the sdk is initialized;
+ *
+ * @return {bool} isInitialized whether countly sdk has been initialized
+ */
 Countly.isInitialized = async function () {
     // returns a promise
     _isInitialized = await CountlyReactNative.isInitialized();
     return _isInitialized;
 };
 
+/**
+ *
+ * Checks if the sdk is started;
+ *
+ * @return {bool} isInitialized whether countly sdk is started
+ */
 Countly.hasBeenCalledOnStart = function () {
     if (!_isInitialized) {
         const message = "'init' must be called before 'hasBeenCalledOnStart'";
@@ -180,7 +200,11 @@ Countly.hasBeenCalledOnStart = function () {
     return CountlyReactNative.hasBeenCalledOnStart();
 };
 
-// countly sending various types of events
+/**
+ *
+ * Used to send varilus types of event;
+ *
+ */
 Countly.sendEvent = function (options) {
     if (!_isInitialized) {
         const message = "'init' must be called before 'sendEvent'";
@@ -491,6 +515,7 @@ Countly.disableLocation = function () {
  *
  * Get currently used device Id.
  * Should be called after Countly init
+ * @return {String} device id or error message
  * */
 Countly.getCurrentDeviceId = async function () {
     if (!_isInitialized) {
@@ -521,9 +546,11 @@ _getDeviceIdType = function (deviceIdType) {
     }
     return result;
 };
+
 /**
  * Get currently used device Id type.
  * Should be called after Countly init
+ * @return {String} device id type or error message
  * */
 Countly.getDeviceIDType = async function () {
     if (!_isInitialized) {
@@ -538,6 +565,11 @@ Countly.getDeviceIDType = async function () {
     return _getDeviceIdType(result);
 };
 
+/**
+ * Change the current device id
+ * @param {String} device id new device id
+ * @param {String} onServer merge device id
+ * */
 Countly.changeDeviceId = async function (newDeviceID, onServer) {
     if (!_isInitialized) {
         const msg = "'init' must be called before 'changeDeviceId'";
