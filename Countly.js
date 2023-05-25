@@ -96,7 +96,6 @@ Countly.initWithConfig = async function (countlyConfig) {
 };
 
 /**
- *
  * Converts countly config object to JSON
  *
  * @param {Object} countlyConfig config
@@ -174,7 +173,6 @@ _configToJson = function (config) {
 };
 
 /**
- *
  * Checks if the sdk is initialized;
  *
  * @return {bool} whether countly sdk has been initialized
