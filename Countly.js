@@ -185,12 +185,6 @@ Countly.isInitialized = async function () {
     return _isInitialized;
 };
 
-/**
- *
- * Checks if the sdk is started;
- *
- * @return {bool} isInitialized whether countly sdk is started
- */
 Countly.hasBeenCalledOnStart = function () {
     if (!_isInitialized) {
         const message = "'init' must be called before 'hasBeenCalledOnStart'";
