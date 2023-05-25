@@ -173,7 +173,7 @@ class CountlyConfig {
     /**
     * Report direct user attribution
     *
-    * @param {String{}} campaignType campaign type
+    * @param {String} campaignType campaign type
     * @param {String{}} campaignData campaign data
     */
     recordDirectAttribution(campaignType, campaignData) {
