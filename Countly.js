@@ -177,7 +177,7 @@ _configToJson = function (config) {
  *
  * Checks if the sdk is initialized;
  *
- * @return {bool} isInitialized whether countly sdk has been initialized
+ * @return {bool} whether countly sdk has been initialized
  */
 Countly.isInitialized = async function () {
     // returns a promise
@@ -544,7 +544,7 @@ _getDeviceIdType = function (deviceIdType) {
 /**
  * Get currently used device Id type.
  * Should be called after Countly init
- * @return {String} device id type or error message
+ * @return {String} device id type
  * */
 Countly.getDeviceIDType = async function () {
     if (!_isInitialized) {
