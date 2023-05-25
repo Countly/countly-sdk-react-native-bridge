@@ -193,9 +193,7 @@ Countly.hasBeenCalledOnStart = function () {
 };
 
 /**
- *
  * Used to send events
- *
  */
 Countly.sendEvent = function (options) {
     if (!_isInitialized) {
