@@ -1,6 +1,5 @@
 ## 23.2.3
 * Fixed bug that caused an issue with push notifications.
-* Updated function documentation.
 
 ## 23.2.2
 * Fixed bug that caused an issue in the deprecated init call
