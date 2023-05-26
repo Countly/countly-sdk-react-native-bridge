@@ -100,6 +100,7 @@ Countly.initWithConfig = async function (countlyConfig) {
  * Converts countly config object to JSON
  *
  * @param {Object} countlyConfig config
+ * @return {JSON} json
  */
 _configToJson = function (config) {
     const json = {};
@@ -177,7 +178,7 @@ _configToJson = function (config) {
  *
  * Checks if the sdk is initialized;
  *
- * @return {bool} isInitialized whether countly sdk has been initialized
+ * @return {bool} if true, countly sdk has been initialized
  */
 Countly.isInitialized = async function () {
     // returns a promise
@@ -189,7 +190,7 @@ Countly.isInitialized = async function () {
  *
  * Checks if the sdk is started;
  *
- * @return {bool} isInitialized whether countly sdk is started
+ * @return {bool} if true, countly sdk has started
  */
 Countly.hasBeenCalledOnStart = function () {
     if (!_isInitialized) {
@@ -202,8 +203,10 @@ Countly.hasBeenCalledOnStart = function () {
 
 /**
  *
- * Used to send varilus types of event;
- *
+ * Used to send various types of event;
+ * 
+ * @param {Object} options event
+ * @return {String || null} error message or null
  */
 Countly.sendEvent = function (options) {
     if (!_isInitialized) {
@@ -276,6 +279,7 @@ Countly.setViewTracking = async function (boolean) {
  * @param {string} recordView - name of the view
  * @param {Map} segments - allows to add optional segmentation,
  * Supported data type for segments values are String, int, double and bool
+ * @return {String || null} error message or null
  */
 Countly.recordView = async function (recordView, segments) {
     if (!_isInitialized) {
@@ -304,6 +308,8 @@ Countly.recordView = async function (recordView, segments) {
  * Disable push notifications feature, by default it is enabled.
  * Currently implemented for iOS only
  * Should be called before Countly init
+ * 
+ * @return {String || null} error message or null
  */
 Countly.disablePushNotifications = function () {
     if (!Platform.OS.match('ios')) {
@@ -317,6 +323,8 @@ Countly.disablePushNotifications = function () {
  *
  * Set messaging mode for push notifications
  * Should be called before Countly init
+ * 
+ * @return {String || null} error message or null
  */
 Countly.pushTokenType = async function (tokenType, channelName, channelDescription) {
     const message = await Countly.validateString(tokenType, 'tokenType', 'pushTokenType');
@@ -358,6 +366,7 @@ Countly.askForNotificationPermission = function (customSoundPath = 'null') {
  *
  * Set callback to receive push notifications
  * @param {callback listener } theListener
+ * @return {NativeEventEmitter} event
  */
 Countly.registerForNotification = function (theListener) {
     const event = eventEmitter.addListener(pushNotificationCallbackName, theListener);
@@ -372,8 +381,9 @@ Countly.registerForNotification = function (theListener) {
  * Should be called before Countly "askForNotificationPermission"
  *
  * @param {array of allowed class names } allowedIntentClassNames set allowed intent class names
- * @param {array of allowed package names } allowedIntentClassNames set allowed intent package names
+ * @param {array of allowed package names } allowedIntentPackageNames set allowed intent package names
  * @param {bool to check additional intent checks} useAdditionalIntentRedirectionChecks by default its true
+ * @return {String || null} error message or null
  */
 Countly.configureIntentRedirectionCheck = function (allowedIntentClassNames = [], allowedIntentPackageNames = [], useAdditionalIntentRedirectionChecks = true) {
     if (Platform.OS.match('ios')) {
@@ -418,7 +428,12 @@ Countly.configureIntentRedirectionCheck = function (allowedIntentClassNames = []
     CountlyReactNative.configureIntentRedirectionCheck(_allowedIntentClassNames, _allowedIntentPackageNames, useAdditionalIntentRedirectionChecks);
 };
 
-// countly start for android
+/**
+ *
+ * Countly start for android
+ *
+ * @return {String || null} error message or null
+ */
 Countly.start = function () {
     if (!_isInitialized) {
         const message = "'init' must be called before 'start'";
@@ -428,7 +443,12 @@ Countly.start = function () {
     CountlyReactNative.start();
 };
 
-// countly stop for android
+/**
+ *
+ * Countly stop for android
+ *
+ * @return {String || null} error message or null
+ */
 Countly.stop = function () {
     if (!_isInitialized) {
         const message = "'init' must be called before 'stop'";
@@ -465,6 +485,8 @@ Countly.disableLogging = function () {
 /**
  * Set to true if you want to enable countly internal debugging logs
  * Should be called before Countly init
+ * 
+ * @param {[bool = true]} enabled server url
  */
 Countly.setLoggingEnabled = function (enabled = true) {
     CountlyReactNative.setLoggingEnabled([enabled]);
@@ -480,7 +502,6 @@ Countly.setLoggingEnabled = function (enabled = true) {
  * @param {comma separate lat and lng values. For example, "56.42345,123.45325"} location
  * @param {IP address of user's} ipAddress
  * */
-
 Countly.setLocationInit = function (countryCode, city, location, ipAddress) {
     const args = [];
     args.push(countryCode || 'null');
@@ -490,6 +511,14 @@ Countly.setLocationInit = function (countryCode, city, location, ipAddress) {
     CountlyReactNative.setLocationInit(args);
 };
 
+/**
+ *
+ * Set user location
+ * @param {ISO Country code for the user's country} countryCode
+ * @param {Name of the user's city} city
+ * @param {comma separate lat and lng values. For example, "56.42345,123.45325"} location
+ * @param {IP address of user's} ipAddress
+ * */
 Countly.setLocation = function (countryCode, city, location, ipAddress) {
     if (!_isInitialized) {
         const message = "'init' must be called before 'setLocation'";
@@ -503,6 +532,13 @@ Countly.setLocation = function (countryCode, city, location, ipAddress) {
     args.push(ipAddress || 'null');
     CountlyReactNative.setLocation(args);
 };
+
+/**
+ *
+ * Disable user location
+ *
+ * @return {String || null} error message or null
+ */
 Countly.disableLocation = function () {
     if (!_isInitialized) {
         const message = "'init' must be called before 'disableLocation'";
@@ -511,12 +547,14 @@ Countly.disableLocation = function () {
     }
     CountlyReactNative.disableLocation();
 };
+
 /**
  *
  * Get currently used device Id.
  * Should be called after Countly init
+ * 
  * @return {String} device id or error message
- * */
+ */
 Countly.getCurrentDeviceId = async function () {
     if (!_isInitialized) {
         const message = "'init' must be called before 'getCurrentDeviceId'";
@@ -527,6 +565,12 @@ Countly.getCurrentDeviceId = async function () {
     return result;
 };
 
+/**
+ *
+ * internal countly function that converts String to DeviceIdType.
+ * 
+ * @return {DeviceIdType || null} deviceIdType e.g DeviceIdType.DEVELOPER_SUPPLIED, DeviceIdType.TEMPORARY_ID, DeviceIdType.SDK_GENERATED.
+ */
 _getDeviceIdType = function (deviceIdType) {
     let result = null;
     switch (deviceIdType) {
@@ -550,7 +594,8 @@ _getDeviceIdType = function (deviceIdType) {
 /**
  * Get currently used device Id type.
  * Should be called after Countly init
- * @return {String} device id type or error message
+ * 
+ * @return {DeviceIdType || null} deviceIdType or null
  * */
 Countly.getDeviceIDType = async function () {
     if (!_isInitialized) {
@@ -567,8 +612,10 @@ Countly.getDeviceIDType = async function () {
 
 /**
  * Change the current device id
+ * 
  * @param {String} device id new device id
  * @param {String} onServer merge device id
+ * @return {String || null} error message or null
  * */
 Countly.changeDeviceId = async function (newDeviceID, onServer) {
     if (!_isInitialized) {
@@ -594,6 +641,7 @@ Countly.changeDeviceId = async function (newDeviceID, onServer) {
  *
  * Set to "true" if you want HTTP POST to be used for all requests
  * Should be called before Countly init
+ * @param {bool} forceHttp force http post for all requests.
  */
 Countly.setHttpPostForced = function (boolean = true) {
     const args = [];
@@ -652,6 +700,13 @@ Countly.enableCrashReporting = async function () {
     Countly.isCrashReportingEnabled = true;
 };
 
+/**
+ *
+ * Get stack track for Countly
+ *
+ * @param {any} e exception
+ * @return {StackTrace || null} stack trace or null
+ */
 Countly.getStackTrace = (e) => {
     let jsStackTrace = null;
     try {
@@ -676,6 +731,13 @@ Countly.getStackTrace = (e) => {
     return jsStackTrace;
 };
 
+/**
+ *
+ * Add crash log for Countly
+ *
+ * @param {String} crashLog crash log
+ * @return {String || null} error message or null
+ */
 Countly.addCrashLog = function (crashLog) {
     if (!_isInitialized) {
         const message = "'init' must be called before 'addCrashLog'";
@@ -685,6 +747,15 @@ Countly.addCrashLog = function (crashLog) {
     CountlyReactNative.addCrashLog([crashLog]);
 };
 
+/**
+ *
+ * Log exception for Countly
+ *
+ * @param {String} exception exception
+ * @param {bool} nonfatal nonfatal
+ * @param {Map} segments segments
+ * @return {String || null} error message or null
+ */
 Countly.logException = function (exception, nonfatal, segments) {
     if (!_isInitialized) {
         const message = "'init' must be called before 'logException'";
@@ -705,6 +776,13 @@ Countly.logException = function (exception, nonfatal, segments) {
     }
     CountlyReactNative.logException(args);
 };
+
+/**
+ *
+ * Set custom crash segment for Countly
+ *
+ * @param {Map} segments segments
+ */
 Countly.setCustomCrashSegments = function (segments) {
     const args = [];
     for (const key in segments) {
@@ -713,6 +791,13 @@ Countly.setCustomCrashSegments = function (segments) {
     }
     CountlyReactNative.setCustomCrashSegments(args);
 };
+
+/**
+ *
+ * Start session tracking
+ *
+ * @return {String || null} error message or null
+ */
 Countly.startSession = function () {
     if (!_isInitialized) {
         const message = "'init' must be called before 'startSession'";
@@ -721,6 +806,13 @@ Countly.startSession = function () {
     }
     CountlyReactNative.startSession();
 };
+
+/**
+ *
+ * End session tracking
+ *
+ * @return {String || null} error message or null
+ */
 Countly.endSession = function () {
     if (!_isInitialized) {
         const message = "'init' must be called before 'endSession'";
@@ -735,6 +827,9 @@ Countly.endSession = function () {
  *
  * Set the optional salt to be used for calculating the checksum of requested data which will be sent with each request, using the &checksum field
  * Should be called before Countly init
+ * 
+ * @param {String} salt salt
+ * @return {String || null} error message or null
  */
 Countly.enableParameterTamperingProtection = async function (salt) {
     const message = await Countly.validateString(salt, 'salt', 'enableParameterTamperingProtection');
@@ -749,6 +844,8 @@ Countly.enableParameterTamperingProtection = async function (salt) {
  *
  * It will ensure that connection is made with one of the public keys specified
  * Should be called before Countly init
+ * 
+ * @return {String || null} error message or null
  */
 Countly.pinnedCertificates = async function (certificateName) {
     const message = await Countly.validateString(certificateName, 'certificateName', 'pinnedCertificates');
@@ -758,6 +855,14 @@ Countly.pinnedCertificates = async function (certificateName) {
 
     CountlyReactNative.pinnedCertificates([certificateName]);
 };
+
+/**
+ *
+ * Start Event
+ *
+ * @param {String} eventName name of event
+ * @return {String || null} error message or null
+ */
 Countly.startEvent = async function (eventName) {
     if (!_isInitialized) {
         const msg = "'init' must be called before 'startEvent'";
@@ -771,6 +876,14 @@ Countly.startEvent = async function (eventName) {
 
     CountlyReactNative.startEvent([eventName.toString()]);
 };
+
+/**
+ *
+ * Cancel Event
+ *
+ * @param {String} eventName name of event
+ * @return {String || null} error message or null
+ */
 Countly.cancelEvent = async function (eventName) {
     if (!_isInitialized) {
         const msg = "'init' must be called before 'cancelEvent'";
@@ -784,6 +897,14 @@ Countly.cancelEvent = async function (eventName) {
 
     CountlyReactNative.cancelEvent([eventName.toString()]);
 };
+
+/**
+ *
+ * End Event
+ *
+ * @param {String || Object} options event options
+ * @return {String || null} error message or null
+ */
 Countly.endEvent = function (options) {
     if (!_isInitialized) {
         const message = "'init' must be called before 'endEvent'";
@@ -841,7 +962,13 @@ Countly.endEvent = function (options) {
     CountlyReactNative.endEvent(args);
 };
 
-// countly sending user data
+/**
+ *
+ * Usedd to send user data
+ *
+ * @param {Object} userData user data
+ * @return {String || null} error message or null
+ */
 Countly.setUserData = async function (userData) {
     if (!_isInitialized) {
         const msg = "'init' must be called before 'setUserData'";
@@ -1297,11 +1424,21 @@ Countly.userDataBulk.pullValue = async function (keyName, keyValue) {
  *
  * Set that consent should be required for features to work.
  * Should be called before Countly init
+ * 
+ * @param {bool} flag if true, consent is required for features to work.
  */
 Countly.setRequiresConsent = function (flag) {
     CountlyReactNative.setRequiresConsent([flag]);
 };
 
+/**
+ *
+ * Give consent for some features
+ * Should be called after Countly init
+ * 
+ * @param {String[]} args list of consents
+ * @return {String || null} error message or null
+ */
 Countly.giveConsent = function (args) {
     if (!_isInitialized) {
         const message = "'init' must be called before 'giveConsent'";
@@ -1322,6 +1459,8 @@ Countly.giveConsent = function (args) {
  *
  * Give consent for specific features before init.
  * Should be called after Countly init
+ * 
+ * @param {String[]} args list of consents
  */
 Countly.giveConsentInit = async function (args) {
     let features = [];
@@ -1335,6 +1474,14 @@ Countly.giveConsentInit = async function (args) {
     await CountlyReactNative.giveConsentInit(features);
 };
 
+/**
+ *
+ * Remove consent for some features
+ * Should be called after Countly init
+ * 
+ * @param {String[]} args list of consents
+ * @return {String || null} error message or null
+ */
 Countly.removeConsent = function (args) {
     if (!_isInitialized) {
         const message = "'init' must be called before 'removeConsent'";
@@ -1354,6 +1501,8 @@ Countly.removeConsent = function (args) {
  *
  * Give consent for all features
  * Should be called after Countly init
+ * 
+ * @return {String || null} error message or null
  */
 Countly.giveAllConsent = function () {
     if (!_isInitialized) {
@@ -1364,6 +1513,13 @@ Countly.giveAllConsent = function () {
     CountlyReactNative.giveAllConsent();
 };
 
+/**
+ *
+ * Remove consent for all features
+ * Should be called after Countly init
+ * 
+ * @return {String || null} error message or null
+ */
 Countly.removeAllConsent = function () {
     if (!_isInitialized) {
         const message = "'init' must be called before 'removeAllConsent'";
@@ -1483,6 +1639,7 @@ Countly.remoteConfigClearValues = async function () {
  * @param {String} starRatingTextTitle - dialog's title text (Only for Android)
  * @param {String} starRatingTextMessage - dialog's message text
  * @param {String} starRatingTextDismiss - dialog's dismiss buttons text (Only for Android)
+ * @return {String || null} error message or null
  */
 Countly.setStarRatingDialogTexts = function (starRatingTextTitle, starRatingTextMessage, starRatingTextDismiss) {
     const args = [];
@@ -1509,6 +1666,7 @@ Countly.showStarRating = function (callback) {
  *
  * @param {String} widgetId - id of rating widget to present
  * @param {String} closeButtonText - text for cancel/close button
+ * @return {String || null} error message or null
  * @deprecated use 'presentRatingWidgetWithID' intead of 'showFeedbackPopup'.
  */
 Countly.showFeedbackPopup = function (widgetId, closeButtonText) {
@@ -1555,6 +1713,7 @@ Countly.presentRatingWidgetWithID = function (widgetId, closeButtonText, ratingW
 /**
  * Get a list of available feedback widgets as array of object to handle multiple widgets of same type.
  * @param {callback listener} onFinished - returns (retrievedWidgets, error)
+ * @return {String || null} error message or null
  */
 Countly.getFeedbackWidgets = async function (onFinished) {
     if (!_isInitialized) {
@@ -1581,6 +1740,8 @@ Countly.getFeedbackWidgets = async function (onFinished) {
  * Using the old function it will not be possible to see all the available feedback widgets.
  * In case there are multiple ones for the same type, only the last one will be returned due to their id being overwritten in the type field.
  * The newer function allow also to see the widgets 'name' field which can be further used to filter and identify specific widgets.
+ * 
+ * @return {String || null} error message or null
  */
 Countly.getAvailableFeedbackWidgets = async function () {
     if (!_isInitialized) {
@@ -1599,6 +1760,8 @@ Countly.getAvailableFeedbackWidgets = async function () {
  * @param {String} closeButtonText - text for cancel/close button
  * @param {callback listener} widgetShownCallback - Callback to be executed when feedback widget is displayed
  * @param {callback listener} widgetClosedCallback - Callback to be executed when feedback widget is closed
+ * 
+ * @return {String || null} error message or null
  */
 Countly.presentFeedbackWidgetObject = async function (feedbackWidget, closeButtonText, widgetShownCallback, widgetClosedCallback) {
     if (!_isInitialized) {
@@ -1651,6 +1814,7 @@ Countly.presentFeedbackWidgetObject = async function (feedbackWidget, closeButto
  * @param {String} widgetType - type of widget : "nps" or "survey"
  * @param {String} widgetId - id of widget to present
  * @param {String} closeButtonText - text for cancel/close button
+ * @return {String || null} error message or null
  * @deprecated in 20.11.1 : use 'presentFeedbackWidgetObject' intead of 'presentFeedbackWidget'.
  */
 Countly.presentFeedbackWidget = function (widgetType, widgetId, closeButtonText) {
