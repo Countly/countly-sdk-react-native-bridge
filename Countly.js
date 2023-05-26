@@ -585,7 +585,7 @@ _getDeviceIdType = function (deviceIdType) {
             break;
     }
     if (result == null) {
-        Countly.logError('_getDeviceIdType', "unexpected deviceIdType [" + deviceIdType.toString() + "] from native side");
+        Countly.logError('_getDeviceIdType', 'unexpected deviceIdType [' + deviceIdType.toString() + '] from native side');
         return null;
     }
     return result;
@@ -603,7 +603,7 @@ Countly.getDeviceIDType = async function () {
         return null;
     }
     const result = await CountlyReactNative.getDeviceIDType();
-    if (result == null || result == "") {
+    if (result == null || result == '') {
         Countly.logError('getDeviceIDType', "'getDeviceIDType' unexpected null value from native side");
         return null;
     }

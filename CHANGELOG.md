@@ -1,5 +1,5 @@
 ## 23.2.3
-* Fixed bug that caused an issue with push notifications.
+* Fixed bug where the push notification type was not correctly set during init
 
 ## 23.2.2
 * Fixed bug that caused an issue in the deprecated init call
