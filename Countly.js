@@ -142,6 +142,7 @@ _configToJson = function (config) {
             pushNotification['tokenType'] = config.tokenType;
             pushNotification['channelName'] = config.channelName;
             pushNotification['channelDescription'] = config.channelDescription;
+            pushNotification['accentColor'] = config.accentColor;
             json['pushNotification'] = pushNotification;
         }
         if (config.allowedIntentClassNames) {

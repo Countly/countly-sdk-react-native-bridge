@@ -136,11 +136,13 @@ class CountlyConfig {
     * @param {TokenType} tokenType token type
     * @param {String} channelName channel name
     * @param {String} channelDescription channel description
+    * @param {String} accentColor notification accent color
     */
-    pushTokenType(tokenType, channelName, channelDescription) {
+    pushTokenType(tokenType, channelName, channelDescription, accentColor) {
         this.tokenType = tokenType;
         this.channelName = channelName;
         this.channelDescription = channelDescription;
+        this.accentColor = accentColor;
         return this;
     }
 
