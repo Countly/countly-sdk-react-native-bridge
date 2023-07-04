@@ -132,6 +132,7 @@ class CountlyConfig {
 
     /**
     * Method to set the push token type
+    * @deprecated
     *
     * @param {TokenType} tokenType token type
     * @param {String} channelName channel name
@@ -141,6 +142,39 @@ class CountlyConfig {
         this.tokenType = tokenType;
         this.channelName = channelName;
         this.channelDescription = channelDescription;
+        return this;
+    }
+
+    /**
+    * Method to set the push token type
+    *
+    * @param {TokenType} tokenType token type
+    */
+    setPushTokenType(tokenType) {
+        this.tokenType = tokenType;
+        return this;
+    }
+
+    /**
+    * Method to set the push channel name and description
+    *
+    * @param {String} name channel name
+    * @param {String} description channel description
+    */
+    setPushNotificationChannel(name, description) {
+        this.channelName = name;
+        this.channelDescription = description;
+        return this;
+    }
+
+    /**
+    * Method to set the push notification accent color
+    * NB: ONLY WORKS ON ANDROID
+    *
+    * @param {String} accentColor notification accent color
+    */
+    setPushNotificationAccentColor(accentColor) {
+        this.accentColor = accentColor;
         return this;
     }
 
