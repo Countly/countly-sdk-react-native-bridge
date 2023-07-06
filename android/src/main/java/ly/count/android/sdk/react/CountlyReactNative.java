@@ -301,6 +301,19 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     }
 
     private void setHexNotificationAccentColor(final String hex) {
+        if (hex == null) {
+            log("setHexNotificationAccentColor: invalid HEX color value. 'null' is not a valid color.", LogLevel.ERROR);
+            return;
+        }
+        if (hex.isEmpty() || hex.charAt(0) != '#') {
+            log("setHexNotificationAccentColor: invalid HEX color value. Valid colors should start with '#': " + hex, LogLevel.ERROR);
+            return;
+        }
+        if (hex.length() != 7 && hex.length() != 9) {
+            log("setHexNotificationAccentColor: invalid HEX color value, unexpected size. Hex color should be 7 or 9 in lenght: " + hex, LogLevel.ERROR);
+            return;
+        }
+
         try {
             int color = Color.parseColor(hex);
             CountlyPush.setNotificationAccentColor(
@@ -310,7 +323,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 Color.blue(color)
             );
         } catch (IllegalArgumentException e) {
-            log("setHexNotificationAccentColor: invalid HEX color value: " + hex + " Error: " + e, LogLevel.DEBUG);
+            log("setHexNotificationAccentColor: invalid HEX color value: " + hex + " Error: " + e, LogLevel.ERROR);
         }
     }
 
