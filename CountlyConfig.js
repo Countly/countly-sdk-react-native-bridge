@@ -132,6 +132,9 @@ class CountlyConfig {
 
     /**
     * Method to set the push token type
+    * @deprecated
+    * Use setPushTokenType() instead to set pushToken
+    * Use setPushNotificationChannelInformation() instead to set channel information
     *
     * @param {TokenType} tokenType token type
     * @param {String} channelName channel name
@@ -141,6 +144,43 @@ class CountlyConfig {
         this.tokenType = tokenType;
         this.channelName = channelName;
         this.channelDescription = channelDescription;
+        return this;
+    }
+
+    /**
+    * Method to set the push token type
+    * NB: ONLY FOR iOS
+    *
+    * @param {Countly.messagingMode} tokenType token type
+    * Possible values include 'DEVELOPMENT', 'PRODUCTION', 'ADHOC'.
+    */
+    setPushTokenType(tokenType) {
+        this.tokenType = tokenType;
+        return this;
+    }
+
+    /**
+    * Method to set the push channel name and description
+    * NB: ONLY FOR ANDROID
+    *
+    * @param {String} name channel name
+    * @param {String} description channel description
+    */
+    setPushNotificationChannelInformation(name, description) {
+        this.channelName = name;
+        this.channelDescription = description;
+        return this;
+    }
+
+    /**
+    * Method to set the push notification accent color
+    * NB: ONLY FOR ANDROID
+    *
+    * @param {String} accentColor notification accent color
+    * example '#000000'
+    */
+    setPushNotificationAccentColor(accentColor) {
+        this.accentColor = accentColor;
         return this;
     }
 
