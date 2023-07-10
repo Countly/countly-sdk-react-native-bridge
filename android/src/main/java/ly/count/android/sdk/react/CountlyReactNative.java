@@ -1,6 +1,7 @@
 package ly.count.android.sdk.react;
 
 import android.app.Activity;
+import android.graphics.Color;
 import android.media.AudioAttributes;
 import android.net.Uri;
 import android.util.Log;
@@ -83,7 +84,7 @@ class CountlyReactException extends Exception {
 public class CountlyReactNative extends ReactContextBaseJavaModule implements LifecycleEventListener {
 
     public static final String TAG = "CountlyRNPlugin";
-    private String COUNTLY_RN_SDK_VERSION_STRING = "23.2.3";
+    private String COUNTLY_RN_SDK_VERSION_STRING = "23.2.4";
     private String COUNTLY_RN_SDK_NAME = "js-rnb-android";
 
     private static final CountlyConfig config = new CountlyConfig();
@@ -228,6 +229,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 int messagingMode = Integer.parseInt(pushObject.getString("tokenType"));
                 channelName = pushObject.getString("channelName");
                 channelDescription = pushObject.getString("channelDescription");
+                if (pushObject.has("accentColor")) {
+                    setHexNotificationAccentColor(pushObject.getString("accentColor"));
+                }
 
                 if (messagingMode == 0) {
                     CountlyReactNative.messagingMode = Countly.CountlyMessagingMode.PRODUCTION;
@@ -294,6 +298,33 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             }
         } catch (Exception e) {
             log(e.toString(), LogLevel.DEBUG);
+        }
+    }
+
+    private void setHexNotificationAccentColor(final String hex) {
+        if (hex == null) {
+            log("setHexNotificationAccentColor: invalid HEX color value. 'null' is not a valid color.", LogLevel.ERROR);
+            return;
+        }
+        if (hex.isEmpty() || hex.charAt(0) != '#') {
+            log("setHexNotificationAccentColor: invalid HEX color value. Valid colors should start with '#': " + hex, LogLevel.ERROR);
+            return;
+        }
+        if (hex.length() != 7 && hex.length() != 9) {
+            log("setHexNotificationAccentColor: invalid HEX color value, unexpected size. Hex color should be 7 or 9 in lenght: " + hex, LogLevel.ERROR);
+            return;
+        }
+
+        try {
+            int color = Color.parseColor(hex);
+            CountlyPush.setNotificationAccentColor(
+                Color.alpha(color),
+                Color.red(color),
+                Color.green(color),
+                Color.blue(color)
+            );
+        } catch (IllegalArgumentException e) {
+            log("setHexNotificationAccentColor: invalid HEX color value: " + hex + " Error: " + e, LogLevel.ERROR);
         }
     }
 
