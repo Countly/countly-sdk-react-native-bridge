@@ -228,7 +228,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 JSONObject pushObject = _config.getJSONObject("pushNotification");
                 int messagingMode = Integer.parseInt(pushObject.getString("tokenType"));
                 channelName = pushObject.getString("channelName");
-                channelDescription = pushObject.getString("channelDescription");if (pushObject.has("accentColor")) {
+                channelDescription = pushObject.getString("channelDescription");
+                if (pushObject.has("accentColor")) {
                     setHexNotificationAccentColor(pushObject.getString("accentColor"));
                 }
 
