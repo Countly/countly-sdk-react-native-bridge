@@ -1,3 +1,9 @@
+## 23.2.4
+* Added 'setPushNotificationAccentColor' to set notification accent color
+* Added 'setPushTokenType' and 'setPushNotificationChannel' calls to replace deprecated calls.
+* Deprecated the following SDK calls:
+  * 'pushTokenType'
+
 ## 23.2.3
 * Fixed bug where the push notification type was not correctly set during init
 
