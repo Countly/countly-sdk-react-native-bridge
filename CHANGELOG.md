@@ -1,6 +1,6 @@
 ## 23.2.4
-* Added new method 'setPushNotificationAccentColor' to set notification accent color
-* Added 'setPushTokenType' and 'setPushNotificationChannel' calls to replace deprecated calls on Countly Config Object.
+* Added new method to the Countly Config Object 'setPushNotificationAccentColor' to set notification accent color.
+* Added 'setPushTokenType' and 'setPushNotificationChannel' calls to replace deprecated calls to the Countly Config Object.
 * Deprecated this SDK call: 'CountlyConfig.pushTokenType'
 
 ## 23.2.3
