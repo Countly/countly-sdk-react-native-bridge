@@ -139,13 +139,20 @@ _configToJson = function (config) {
         if (config.enableApm) {
             json['enableApm'] = config.enableApm;
         }
+        const pushNotification = {};
         if (config.tokenType) {
-            const pushNotification = {};
             pushNotification['tokenType'] = config.tokenType;
-            pushNotification['channelName'] = config.channelName;
-            pushNotification['channelDescription'] = config.channelDescription;
-            json['pushNotification'] = pushNotification;
         }
+        if (config.channelName) {
+            pushNotification['channelName'] = config.channelName;
+        }
+        if (config.channelDescription) {
+            pushNotification['channelDescription'] = config.channelDescription;
+        }
+        if (config.accentColor) {
+            pushNotification['accentColor'] = config.accentColor;
+        }
+        json['pushNotification'] = pushNotification;
         if (config.allowedIntentClassNames) {
             json['allowedIntentClassNames'] = config.allowedIntentClassNames;
         }
