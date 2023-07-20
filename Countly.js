@@ -197,7 +197,8 @@ Countly.isInitialized = async function () {
  *
  * Checks if the sdk is started;
  *
- * @return {bool} if true, countly sdk has started
+ * @return {bool || String} bool or error message
+ * if true, countly sdk has started
  */
 Countly.hasBeenCalledOnStart = function () {
     if (!_isInitialized) {
