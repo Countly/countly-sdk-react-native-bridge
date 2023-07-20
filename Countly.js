@@ -213,7 +213,7 @@ Countly.hasBeenCalledOnStart = function () {
  * Used to send various types of event;
  * 
  * @param {Object} options event
- * @return {String || null} error message or null
+ * @return {String || void} error message or void
  */
 Countly.sendEvent = function (options) {
     if (!_isInitialized) {
@@ -286,7 +286,7 @@ Countly.setViewTracking = async function (boolean) {
  * @param {string} recordView - name of the view
  * @param {Map} segments - allows to add optional segmentation,
  * Supported data type for segments values are String, int, double and bool
- * @return {String || null} error message or null
+ * @return {String || void} error message or void
  */
 Countly.recordView = async function (recordView, segments) {
     if (!_isInitialized) {
@@ -316,7 +316,7 @@ Countly.recordView = async function (recordView, segments) {
  * Currently implemented for iOS only
  * Should be called before Countly init
  * 
- * @return {String || null} error message or null
+ * @return {String || void} error message or void
  */
 Countly.disablePushNotifications = function () {
     if (!Platform.OS.match('ios')) {
@@ -331,7 +331,7 @@ Countly.disablePushNotifications = function () {
  * Set messaging mode for push notifications
  * Should be called before Countly init
  * 
- * @return {String || null} error message or null
+ * @return {String || void} error message or void
  */
 Countly.pushTokenType = async function (tokenType, channelName, channelDescription) {
     const message = await Countly.validateString(tokenType, 'tokenType', 'pushTokenType');
@@ -345,6 +345,7 @@ Countly.pushTokenType = async function (tokenType, channelName, channelDescripti
     args.push(channelDescription || '');
     CountlyReactNative.pushTokenType(args);
 };
+
 Countly.sendPushToken = function (options) {
     const args = [];
     args.push(options.token || '');
@@ -390,7 +391,7 @@ Countly.registerForNotification = function (theListener) {
  * @param {array of allowed class names } allowedIntentClassNames set allowed intent class names
  * @param {array of allowed package names } allowedIntentPackageNames set allowed intent package names
  * @param {bool to check additional intent checks} useAdditionalIntentRedirectionChecks by default its true
- * @return {String || null} error message or null
+ * @return {String || void} error message or void
  */
 Countly.configureIntentRedirectionCheck = function (allowedIntentClassNames = [], allowedIntentPackageNames = [], useAdditionalIntentRedirectionChecks = true) {
     if (Platform.OS.match('ios')) {
@@ -439,7 +440,7 @@ Countly.configureIntentRedirectionCheck = function (allowedIntentClassNames = []
  *
  * Countly start for android
  *
- * @return {String || null} error message or null
+ * @return {String || void} error message or void
  */
 Countly.start = function () {
     if (!_isInitialized) {
@@ -454,7 +455,7 @@ Countly.start = function () {
  *
  * Countly stop for android
  *
- * @return {String || null} error message or null
+ * @return {String || void} error message or void
  */
 Countly.stop = function () {
     if (!_isInitialized) {
@@ -544,7 +545,7 @@ Countly.setLocation = function (countryCode, city, location, ipAddress) {
  *
  * Disable user location
  *
- * @return {String || null} error message or null
+ * @return {String || void} error message or void
  */
 Countly.disableLocation = function () {
     if (!_isInitialized) {
@@ -622,7 +623,7 @@ Countly.getDeviceIDType = async function () {
  * 
  * @param {String} device id new device id
  * @param {String} onServer merge device id
- * @return {String || null} error message or null
+ * @return {String || void} error message or void
  * */
 Countly.changeDeviceId = async function (newDeviceID, onServer) {
     if (!_isInitialized) {
@@ -743,7 +744,7 @@ Countly.getStackTrace = (e) => {
  * Add crash log for Countly
  *
  * @param {String} crashLog crash log
- * @return {String || null} error message or null
+ * @return {String || void} error message or void
  */
 Countly.addCrashLog = function (crashLog) {
     if (!_isInitialized) {
@@ -761,7 +762,7 @@ Countly.addCrashLog = function (crashLog) {
  * @param {String} exception exception
  * @param {bool} nonfatal nonfatal
  * @param {Map} segments segments
- * @return {String || null} error message or null
+ * @return {String || void} error message or void
  */
 Countly.logException = function (exception, nonfatal, segments) {
     if (!_isInitialized) {
@@ -803,7 +804,7 @@ Countly.setCustomCrashSegments = function (segments) {
  *
  * Start session tracking
  *
- * @return {String || null} error message or null
+ * @return {String || void} error message or void
  */
 Countly.startSession = function () {
     if (!_isInitialized) {
@@ -818,7 +819,7 @@ Countly.startSession = function () {
  *
  * End session tracking
  *
- * @return {String || null} error message or null
+ * @return {String || void} error message or void
  */
 Countly.endSession = function () {
     if (!_isInitialized) {
@@ -836,7 +837,7 @@ Countly.endSession = function () {
  * Should be called before Countly init
  * 
  * @param {String} salt salt
- * @return {String || null} error message or null
+ * @return {String || void} error message or void
  */
 Countly.enableParameterTamperingProtection = async function (salt) {
     const message = await Countly.validateString(salt, 'salt', 'enableParameterTamperingProtection');
@@ -852,7 +853,7 @@ Countly.enableParameterTamperingProtection = async function (salt) {
  * It will ensure that connection is made with one of the public keys specified
  * Should be called before Countly init
  * 
- * @return {String || null} error message or null
+ * @return {String || void} error message or void
  */
 Countly.pinnedCertificates = async function (certificateName) {
     const message = await Countly.validateString(certificateName, 'certificateName', 'pinnedCertificates');
@@ -868,7 +869,7 @@ Countly.pinnedCertificates = async function (certificateName) {
  * Start Event
  *
  * @param {String} eventName name of event
- * @return {String || null} error message or null
+ * @return {String || void} error message or void
  */
 Countly.startEvent = async function (eventName) {
     if (!_isInitialized) {
@@ -889,7 +890,7 @@ Countly.startEvent = async function (eventName) {
  * Cancel Event
  *
  * @param {String} eventName name of event
- * @return {String || null} error message or null
+ * @return {String || void} error message or void
  */
 Countly.cancelEvent = async function (eventName) {
     if (!_isInitialized) {
@@ -910,7 +911,7 @@ Countly.cancelEvent = async function (eventName) {
  * End Event
  *
  * @param {String || Object} options event options
- * @return {String || null} error message or null
+ * @return {String || void} error message or void
  */
 Countly.endEvent = function (options) {
     if (!_isInitialized) {
@@ -974,7 +975,7 @@ Countly.endEvent = function (options) {
  * Usedd to send user data
  *
  * @param {Object} userData user data
- * @return {String || null} error message or null
+ * @return {String || void} error message or void
  */
 Countly.setUserData = async function (userData) {
     if (!_isInitialized) {
@@ -1444,7 +1445,7 @@ Countly.setRequiresConsent = function (flag) {
  * Should be called after Countly init
  * 
  * @param {String[]} args list of consents
- * @return {String || null} error message or null
+ * @return {String || void} error message or void
  */
 Countly.giveConsent = function (args) {
     if (!_isInitialized) {
@@ -1487,7 +1488,7 @@ Countly.giveConsentInit = async function (args) {
  * Should be called after Countly init
  * 
  * @param {String[]} args list of consents
- * @return {String || null} error message or null
+ * @return {String || void} error message or void
  */
 Countly.removeConsent = function (args) {
     if (!_isInitialized) {
@@ -1509,7 +1510,7 @@ Countly.removeConsent = function (args) {
  * Give consent for all features
  * Should be called after Countly init
  * 
- * @return {String || null} error message or null
+ * @return {String || void} error message or void
  */
 Countly.giveAllConsent = function () {
     if (!_isInitialized) {
@@ -1525,7 +1526,7 @@ Countly.giveAllConsent = function () {
  * Remove consent for all features
  * Should be called after Countly init
  * 
- * @return {String || null} error message or null
+ * @return {String || void} error message or void
  */
 Countly.removeAllConsent = function () {
     if (!_isInitialized) {
@@ -1646,7 +1647,7 @@ Countly.remoteConfigClearValues = async function () {
  * @param {String} starRatingTextTitle - dialog's title text (Only for Android)
  * @param {String} starRatingTextMessage - dialog's message text
  * @param {String} starRatingTextDismiss - dialog's dismiss buttons text (Only for Android)
- * @return {String || null} error message or null
+ * @return {String || void} error message or void
  */
 Countly.setStarRatingDialogTexts = function (starRatingTextTitle, starRatingTextMessage, starRatingTextDismiss) {
     const args = [];
@@ -1673,7 +1674,7 @@ Countly.showStarRating = function (callback) {
  *
  * @param {String} widgetId - id of rating widget to present
  * @param {String} closeButtonText - text for cancel/close button
- * @return {String || null} error message or null
+ * @return {String || void} error message or void
  * @deprecated use 'presentRatingWidgetWithID' intead of 'showFeedbackPopup'.
  */
 Countly.showFeedbackPopup = function (widgetId, closeButtonText) {
@@ -1720,7 +1721,7 @@ Countly.presentRatingWidgetWithID = function (widgetId, closeButtonText, ratingW
 /**
  * Get a list of available feedback widgets as array of object to handle multiple widgets of same type.
  * @param {callback listener} onFinished - returns (retrievedWidgets, error)
- * @return {String || null} error message or null
+ * @return {String || []} error message or []
  */
 Countly.getFeedbackWidgets = async function (onFinished) {
     if (!_isInitialized) {
@@ -1748,7 +1749,7 @@ Countly.getFeedbackWidgets = async function (onFinished) {
  * In case there are multiple ones for the same type, only the last one will be returned due to their id being overwritten in the type field.
  * The newer function allow also to see the widgets 'name' field which can be further used to filter and identify specific widgets.
  * 
- * @return {String || null} error message or null
+ * @return {String || void} error message or void
  */
 Countly.getAvailableFeedbackWidgets = async function () {
     if (!_isInitialized) {
@@ -1768,7 +1769,7 @@ Countly.getAvailableFeedbackWidgets = async function () {
  * @param {callback listener} widgetShownCallback - Callback to be executed when feedback widget is displayed
  * @param {callback listener} widgetClosedCallback - Callback to be executed when feedback widget is closed
  * 
- * @return {String || null} error message or null
+ * @return {String || void} error message or void
  */
 Countly.presentFeedbackWidgetObject = async function (feedbackWidget, closeButtonText, widgetShownCallback, widgetClosedCallback) {
     if (!_isInitialized) {
@@ -1821,7 +1822,7 @@ Countly.presentFeedbackWidgetObject = async function (feedbackWidget, closeButto
  * @param {String} widgetType - type of widget : "nps" or "survey"
  * @param {String} widgetId - id of widget to present
  * @param {String} closeButtonText - text for cancel/close button
- * @return {String || null} error message or null
+ * @return {String || void} error message or void
  * @deprecated in 20.11.1 : use 'presentFeedbackWidgetObject' intead of 'presentFeedbackWidget'.
  */
 Countly.presentFeedbackWidget = function (widgetType, widgetId, closeButtonText) {
