@@ -100,7 +100,7 @@ Countly.initWithConfig = async function (countlyConfig) {
  * Converts countly config object to JSON
  *
  * @param {Object} countlyConfig config
- * @return {JSON} json
+ * @return {Object} json
  */
 _configToJson = function (config) {
     const json = {};
