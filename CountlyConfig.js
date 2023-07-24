@@ -212,6 +212,9 @@ class CountlyConfig {
 
     /**
     * Report direct user attribution
+    *
+    * @param {String} campaignType campaign type
+    * @param {Object} campaignData campaign data
     */
     recordDirectAttribution(campaignType, campaignData) {
       this.campaignType = campaignType;
@@ -221,6 +224,8 @@ class CountlyConfig {
 
     /**
     * Report indirect user attribution
+    *
+    * @param {Object} attributionValues attribution values
     */
     recordIndirectAttribution(attributionValues) {
       this.attributionValues = attributionValues;
