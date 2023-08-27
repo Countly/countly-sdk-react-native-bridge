@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name = 'CountlyReactNative'
-  s.version = '23.2.4'
+  s.version = '23.6.0'
   s.license = {
     :type => 'COMMUNITY',
     :text => <<-LICENSE
