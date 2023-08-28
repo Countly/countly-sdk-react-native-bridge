@@ -1162,7 +1162,7 @@ RCT_REMAP_METHOD(hasBeenCalledOnStart, hasBeenCalledOnStartWithResolver : (RCTPr
 
 RCT_EXPORT_METHOD(remoteConfigClearValues : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      [CountlyRemoteConfig.sharedInstance clearCachedRemoteConfig];
+      [Countly.sharedInstance.remoteConfig clearAll];
       resolve(@"Remote Config Cleared.");
     });
 }
