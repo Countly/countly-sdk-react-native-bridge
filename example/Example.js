@@ -63,8 +63,6 @@ class Example extends Component {
 
             if (Platform.OS.match('ios')) {
                 Countly.recordAttributionID('ADVERTISING_ID');
-            } else {
-                Countly.enableAttribution(); // Enable to measure your marketing campaign performance by attributing installs from specific campaigns.
             }
 
             Countly.configureIntentRedirectionCheck(['MainActivity'], ['com.countly.demo']);

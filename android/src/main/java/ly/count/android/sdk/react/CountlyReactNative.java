@@ -242,9 +242,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             if (_config.has("attributionID")) {
                 log("recordAttributionID: Not implemented for Android", LogLevel.DEBUG);
             }
-            if (_config.has("enableAttribution")) {
-                log("enableAttribution is deprecated, use recordIndirectAttribution instead", LogLevel.WARNING);
-            }
             if (_config.has("allowedIntentClassNames")) {
                 JSONArray intentArr = _config.getJSONArray("allowedIntentClassNames");
                 String[] newArray = new String[intentArr.length()];
@@ -1407,11 +1404,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     @ReactMethod
     public void enableApm(ReadableArray args) {
         config.setRecordAppStartTime(true);
-    }
-
-    @ReactMethod
-    public void enableAttribution() {
-        log("enableAttribution: Not implemented for Android", LogLevel.DEBUG);
     }
 
     @ReactMethod
