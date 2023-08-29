@@ -243,7 +243,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 log("recordAttributionID: Not implemented for Android", LogLevel.DEBUG);
             }
             if (_config.has("enableAttribution")) {
-                config.setEnableAttribution(true);
+                log("enableAttribution is deprecated, use recordIndirectAttribution instead", LogLevel.WARNING);
             }
             if (_config.has("allowedIntentClassNames")) {
                 JSONArray intentArr = _config.getJSONArray("allowedIntentClassNames");
@@ -395,11 +395,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 deviceIDTypeString = "TID";
                 break;
             case OPEN_UDID:
-            case ADVERTISING_ID:
-                deviceIDTypeString = "SG";
-                break;
             default:
-                deviceIDTypeString = "";
+                deviceIDTypeString = "SG";
                 break;
         }
         promise.resolve(deviceIDTypeString);
@@ -1414,7 +1411,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
     @ReactMethod
     public void enableAttribution() {
-        config.setEnableAttribution(true);
+        log("enableAttribution: Not implemented for Android", LogLevel.DEBUG);
     }
 
     @ReactMethod

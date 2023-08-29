@@ -2,6 +2,7 @@
 - !! Major breaking change !! Automatically downloaded remote config values will no longer be automatically enrolled in their AB tests.
 * ! Minor breaking change ! Remote config will now return previously downloaded values when remote-config consent is not given
 
+* Deprecated `enableAttribution` in config
 * Fixed bug in Android where recording views would force send all stored events
 * Fixed bug in Android where exiting temporary ID mode would create unintended requests
 
