@@ -84,7 +84,7 @@ class CountlyReactException extends Exception {
 public class CountlyReactNative extends ReactContextBaseJavaModule implements LifecycleEventListener {
 
     public static final String TAG = "CountlyRNPlugin";
-    private String COUNTLY_RN_SDK_VERSION_STRING = "23.2.4";
+    private String COUNTLY_RN_SDK_VERSION_STRING = "23.6.0";
     private String COUNTLY_RN_SDK_NAME = "js-rnb-android";
 
     private static final CountlyConfig config = new CountlyConfig();
@@ -242,9 +242,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             if (_config.has("attributionID")) {
                 log("recordAttributionID: Not implemented for Android", LogLevel.DEBUG);
             }
-            if (_config.has("enableAttribution")) {
-                config.setEnableAttribution(true);
-            }
             if (_config.has("allowedIntentClassNames")) {
                 JSONArray intentArr = _config.getJSONArray("allowedIntentClassNames");
                 String[] newArray = new String[intentArr.length()];
@@ -395,11 +392,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 deviceIDTypeString = "TID";
                 break;
             case OPEN_UDID:
-            case ADVERTISING_ID:
-                deviceIDTypeString = "SG";
-                break;
             default:
-                deviceIDTypeString = "";
+                deviceIDTypeString = "SG";
                 break;
         }
         promise.resolve(deviceIDTypeString);
@@ -1410,11 +1404,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     @ReactMethod
     public void enableApm(ReadableArray args) {
         config.setRecordAppStartTime(true);
-    }
-
-    @ReactMethod
-    public void enableAttribution() {
-        config.setEnableAttribution(true);
     }
 
     @ReactMethod

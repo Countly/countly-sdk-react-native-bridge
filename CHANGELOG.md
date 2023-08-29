@@ -1,3 +1,14 @@
+## 23.6.0
+- !! Major breaking change !! Automatically downloaded remote config values will no longer be automatically enrolled in their AB tests.
+* ! Minor breaking change ! Remote config will now return previously downloaded values when remote-config consent is not given
+
+* Deprecated `enableAttribution` in config
+* Fixed bug in Android where recording views would force send all stored events
+* Fixed bug in Android where exiting temporary ID mode would create unintended requests
+
+* Updated underlying Android SDK version to 23.6.0
+* Updated underlying iOS SDK version to 23.6.1
+
 ## 23.2.4
 * Added new method to the Countly Config Object 'setPushNotificationAccentColor' to set notification accent color.
 * Added 'setPushTokenType' and 'setPushNotificationChannel' calls to replace deprecated calls to the Countly Config Object.

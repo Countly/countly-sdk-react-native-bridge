@@ -1939,7 +1939,9 @@ Countly.enableAttribution = async function (attributionID = '') {
         }
         Countly.recordAttributionID(attributionID);
     } else {
-        CountlyReactNative.enableAttribution();
+        const message = "This method does nothing for android";
+        Countly.logError('enableAttribution', message);
+        return message;
     }
 };
 
@@ -1949,7 +1951,6 @@ Countly.enableAttribution = async function (attributionID = '') {
  *
  * set attribution Id for campaign attribution reporting.
  * Currently implemented for iOS only
- * For Android just call the enableAttribution to enable campaign attribution.
  */
 Countly.recordAttributionID = function (attributionID) {
     if (!Platform.OS.match('ios')) {
