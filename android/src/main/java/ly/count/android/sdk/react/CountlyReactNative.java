@@ -767,7 +767,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             }
         }
         CountlyPush.useAdditionalIntentRedirectionChecks = useAdditionalIntentRedirectionChecks;
-        CountlyConfigPush configPush = new CountlyConfigPush(activity.getApplication(), messagingMode);
+        CountlyConfigPush configPush = new CountlyConfigPush(activity.getApplication());
         if (allowedIntentClassNames.size() > 0) {
             configPush.setAllowedIntentClassNames(allowedIntentClassNames);
         }
