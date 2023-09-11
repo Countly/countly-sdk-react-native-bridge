@@ -32,17 +32,12 @@ public class CountlyMessagingService extends FirebaseMessagingService {
         }
 
         if(!Countly.sharedInstance().isInitialized()) {
-            int mode = CountlyPush.getLastMessagingMethod(this);
             Application application = getApplication();
             if(application == null){
                 Log.d(Countly.TAG, "[CountlyMessagingService] getApplication() returns null: application must be non-null to init CountlyPush");
             }
             else {
-                if(mode == 0) {
-                    CountlyPush.init(application, Countly.CountlyMessagingMode.TEST);
-                } else if(mode == 1) {
-                    CountlyPush.init(application, Countly.CountlyMessagingMode.PRODUCTION);
-                }
+                CountlyPush.init(application, Countly.CountlyMessagingMode.TEST);
             }
         }
 

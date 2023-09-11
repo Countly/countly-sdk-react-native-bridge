@@ -1206,7 +1206,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
     @ReactMethod
     public void remoteConfigClearValues(Promise promise) {
-        Countly.sharedInstance().remoteConfig().clearStoredValues();
+        Countly.sharedInstance().remoteConfig().clearAll();
         promise.resolve("Remote Config Cleared.");
     }
 
