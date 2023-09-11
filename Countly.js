@@ -196,6 +196,8 @@ Countly.isInitialized = async function () {
 /**
  *
  * Checks if the sdk is started;
+ * 
+ * @deprecated in 23.6.0. This will be removed.
  *
  * @return {bool || String} bool or error message
  * if true, countly sdk has started

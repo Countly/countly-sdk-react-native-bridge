@@ -1,4 +1,5 @@
 ## 23.8.0
+* Updated underlying Android SDK version to 23.8.0
 * Updated underlying iOS SDK version to 23.8.1
 
 ## 23.6.0
