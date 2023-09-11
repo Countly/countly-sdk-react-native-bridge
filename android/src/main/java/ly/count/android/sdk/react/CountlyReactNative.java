@@ -653,7 +653,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         for (int i = 1, il = args.size(); i < il; i += 2) {
             segmentation.put(args.getString(i), args.getString(i + 1));
         }
-        Countly.sharedInstance().views().recordView(viewName, segmentation);
+        Countly.sharedInstance().views().startAutoStoppedView(viewName, segmentation);
     }
 
     @ReactMethod
@@ -767,7 +767,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             }
         }
         CountlyPush.useAdditionalIntentRedirectionChecks = useAdditionalIntentRedirectionChecks;
-        CountlyConfigPush configPush = new CountlyConfigPush(activity.getApplication(), messagingMode);
+        CountlyConfigPush configPush = new CountlyConfigPush(activity.getApplication());
         if (allowedIntentClassNames.size() > 0) {
             configPush.setAllowedIntentClassNames(allowedIntentClassNames);
         }
@@ -1120,7 +1120,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
     @ReactMethod
     public void remoteConfigUpdate(ReadableArray args, final Callback myCallback) {
-        Countly.sharedInstance().remoteConfig().update(new RemoteConfigCallback() {
+        Countly.sharedInstance().remoteConfig().downloadAllKeys(new RemoteConfigCallback() {
             String resultString = "";
 
             @Override
@@ -1141,7 +1141,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         for (int cnt = 0; cnt < args.size(); cnt++) {
             newArray[cnt] = args.getString(cnt);
         }
-        Countly.sharedInstance().remoteConfig().updateForKeysOnly(newArray, new RemoteConfigCallback() {
+        Countly.sharedInstance().remoteConfig().downloadSpecificKeys(newArray, new RemoteConfigCallback() {
             String resultString = "";
 
             @Override
@@ -1162,7 +1162,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         for (int cnt = 0; cnt < args.size(); cnt++) {
             newArray[cnt] = args.getString(cnt);
         }
-        Countly.sharedInstance().remoteConfig().updateExceptKeys(newArray, new RemoteConfigCallback() {
+        Countly.sharedInstance().remoteConfig().downloadOmittingKeys(newArray, new RemoteConfigCallback() {
             String resultString = "";
 
             @Override
@@ -1180,7 +1180,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     @ReactMethod
     public void getRemoteConfigValueForKey(ReadableArray args, final Callback myCallback) {
         String keyName = args.getString(0);
-        Object keyValue = Countly.sharedInstance().remoteConfig().getValueForKey(keyName);
+        Object keyValue = Countly.sharedInstance().remoteConfig().getValue(keyName);
         if (keyValue == null) {
             log("getRemoteConfigValueForKey, [" + keyName + "]: ConfigKeyNotFound", LogLevel.DEBUG);
             myCallback.invoke("ConfigKeyNotFound");
@@ -1193,7 +1193,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
     @ReactMethod
     public void getRemoteConfigValueForKeyP(String keyName, Promise promise) {
-        Object keyValue = Countly.sharedInstance().remoteConfig().getValueForKey(keyName);
+        Object keyValue = Countly.sharedInstance().remoteConfig().getValue(keyName);
         if (keyValue == null) {
             log("getRemoteConfigValueForKeyP, [" + keyName + "]: ConfigKeyNotFound", LogLevel.DEBUG);
             promise.reject("ConfigKeyNotFound", null, null, null);
@@ -1206,7 +1206,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
     @ReactMethod
     public void remoteConfigClearValues(Promise promise) {
-        Countly.sharedInstance().remoteConfig().clearStoredValues();
+        Countly.sharedInstance().remoteConfig().clearAll();
         promise.resolve("Remote Config Cleared.");
     }
 
