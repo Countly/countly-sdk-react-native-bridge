@@ -1,3 +1,6 @@
+## 23.8.0
+* Updated underlying iOS SDK version to 23.8.1
+
 ## 23.6.0
 - !! Major breaking change !! Automatically downloaded remote config values will no longer be automatically enrolled in their AB tests.
 * ! Minor breaking change ! Remote config will now return previously downloaded values when remote-config consent is not given

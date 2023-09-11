@@ -1075,6 +1075,7 @@ RCT_REMAP_METHOD(getFeedbackWidgets, getFeedbackWidgetsWithResolver : (RCTPromis
                 feedbackWidget[@"id"] = retrievedWidget.ID;
                 feedbackWidget[@"type"] = retrievedWidget.type;
                 feedbackWidget[@"name"] = retrievedWidget.name;
+                feedbackWidget[@"tg"] = retrievedWidget.tags;
                 [feedbackWidgetsArray addObject:feedbackWidget];
             }
             resolve(feedbackWidgetsArray);
