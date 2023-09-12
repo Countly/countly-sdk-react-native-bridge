@@ -189,6 +189,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                     config.setDeviceId(deviceID);
                 }
             }
+            config.enrollABOnRCDownload();
             if (_config.has("loggingEnabled")) {
                 boolean isEnabled = _config.getBoolean("loggingEnabled");
                 loggingEnabled = isEnabled;
