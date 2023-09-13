@@ -1,3 +1,48 @@
+## 23.8.2
+- Fixed rating feedback widget event key for widget closed event
+
+## 23.8.1
+- Expanded feedback widget functionality. Added ability to use rating widgets.
+- Added functionality to access tags for feedback widgets.
+- Fixed SPM public header issues of `CountlyViewTracking.h` 
+
+## 23.8.0
+- Added `CountlyViewTracking:` interface with new view methods:
+    - `setGlobalViewSegmentation:`
+    - `updateGlobalViewSegmentation:`
+    - `startView:`
+    - `startView:segmentation`
+    - `startAutoStoppedView:`
+    - `startAutoStoppedView:segmentation`
+    - `stopViewWithName:`
+    - `stopViewWithName:segmentation`
+    - `stopViewWithID:`
+    - `stopViewWithID:segmentation`
+    - `pauseViewWithID:`
+    - `pauseViewWithID:`
+    - `stopAllViews:`
+- Added `enableAllConsents` initial config property to give all consents at init time
+- Added `giveAllConsents` method to give all consents
+- Added `enableAutomaticViewTracking` config for automatic track views
+- Added `automaticViewTrackingExclusionList` config for automatic view tracking exclusion list
+- Added `globalViewSegmentation` config to add set global view segmentation.
+- Added `enrollABOnRCDownload` config method to auto enroll users to AB tests when downloading RC values.
+- Added `enableManualSessionControlHybridMode` config. With this mode 'updateSession' calls will automatically be handled by SDK for manual session handling.
+- Deprecated `giveConsentForAllFeatures` method
+- Deprecated `CLYAutoViewTracking` in config
+- Deprecated existing view tracking methods and variables:  
+    - `recordView:`
+    - `recordView:segmentation`
+    - `addExceptionForAutoViewTracking:`
+    - `removeExceptionForAutoViewTracking:`
+    - `isAutoViewTrackingActive`
+    
+
+## 23.6.2
+- Fixed bug where init time provided global Remote config download callbacks were ignored
+- Remote config values are now not erased anymore when removing remote config consent
+- Added remaining request count 'rr' parameter when sending queued request.
+
 ## 23.6.1
 - Fixed SPM public header issues of `CountlyRCData.h` and `CountlyRemoteConfig.h` 
 

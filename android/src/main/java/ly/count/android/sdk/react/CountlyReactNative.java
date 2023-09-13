@@ -21,6 +21,8 @@ import android.content.Context;
 import ly.count.android.sdk.Countly;
 import ly.count.android.sdk.CountlyConfig;
 import ly.count.android.sdk.DeviceIdType;
+import ly.count.android.sdk.RCData;
+import ly.count.android.sdk.RCDownloadCallback;
 import ly.count.android.sdk.RemoteConfigCallback;
 import ly.count.android.sdk.FeedbackRatingCallback;
 
@@ -44,6 +46,7 @@ import android.app.NotificationChannel;
 
 import androidx.annotation.NonNull;
 
+import ly.count.android.sdk.RequestResult;
 import ly.count.android.sdk.StarRatingCallback;
 import ly.count.android.sdk.messaging.CountlyConfigPush;
 import ly.count.android.sdk.messaging.CountlyPush;
@@ -1121,11 +1124,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
     @ReactMethod
     public void remoteConfigUpdate(ReadableArray args, final Callback myCallback) {
-        Countly.sharedInstance().remoteConfig().downloadAllKeys(new RemoteConfigCallback() {
-            String resultString = "";
-
-            @Override
-            public void callback(String error) {
+        Countly.sharedInstance().remoteConfig().downloadAllKeys(new RCDownloadCallback() {
+            @Override public void callback(RequestResult downloadResult, String error, boolean fullValueUpdate, Map<String, RCData> downloadedValues) {
+                String resultString = "";
                 if (error == null) {
                     resultString = "Remote Config is updated and ready to use!";
                 } else {
@@ -1142,11 +1143,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         for (int cnt = 0; cnt < args.size(); cnt++) {
             newArray[cnt] = args.getString(cnt);
         }
-        Countly.sharedInstance().remoteConfig().downloadSpecificKeys(newArray, new RemoteConfigCallback() {
-            String resultString = "";
-
-            @Override
-            public void callback(String error) {
+        Countly.sharedInstance().remoteConfig().downloadSpecificKeys(newArray, new RCDownloadCallback() {
+            @Override public void callback(RequestResult downloadResult, String error, boolean fullValueUpdate, Map<String, RCData> downloadedValues) {
+                String resultString = "";
                 if (error == null) {
                     resultString = "Remote Config is updated only for given keys and ready to use!";
                 } else {
@@ -1163,11 +1162,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         for (int cnt = 0; cnt < args.size(); cnt++) {
             newArray[cnt] = args.getString(cnt);
         }
-        Countly.sharedInstance().remoteConfig().downloadOmittingKeys(newArray, new RemoteConfigCallback() {
-            String resultString = "";
-
-            @Override
-            public void callback(String error) {
+        Countly.sharedInstance().remoteConfig().downloadOmittingKeys(newArray, new RCDownloadCallback() {
+            @Override public void callback(RequestResult downloadResult, String error, boolean fullValueUpdate, Map<String, RCData> downloadedValues) {
+                String resultString = "";
                 if (error == null) {
                     resultString = "Remote Config is updated except for given keys and ready to use !";
                 } else {
