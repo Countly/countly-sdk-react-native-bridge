@@ -114,6 +114,7 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
     NSString *deviceID = json[@"deviceID"];
     config.appKey = appkey;
     config.host = serverurl;
+    config.enrollABOnRCDownload = true;
 
     if (deviceID != nil && deviceID != (NSString *)[NSNull null] && ![deviceID isEqual:@""]) {
         if ([deviceID isEqual:@"TemporaryDeviceID"]) {
