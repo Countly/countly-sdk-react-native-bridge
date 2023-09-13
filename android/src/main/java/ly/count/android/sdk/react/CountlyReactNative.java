@@ -1271,6 +1271,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                     feedbackWidget.putString("id", presentableFeedback.widgetId);
                     feedbackWidget.putString("type", presentableFeedback.type.name());
                     feedbackWidget.putString("name", presentableFeedback.name);
+                    feedbackWidget.putString("tags", Arrays.toString(presentableFeedback.tags));
                     retrievedWidgetsArray.pushMap(feedbackWidget);
                 }
                 promise.resolve(retrievedWidgetsArray);
