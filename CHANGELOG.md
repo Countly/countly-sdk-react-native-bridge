@@ -1,4 +1,7 @@
 ## 23.8.0
+* The feedback widget API now can interract with Rating widgets
+* When getting the feedback widget list, now the "tag" field (accessed with the "tg" key) is also returned 
+
 * Updated underlying Android SDK version to 23.8.0
 * Updated underlying iOS SDK version to 23.8.1
 
