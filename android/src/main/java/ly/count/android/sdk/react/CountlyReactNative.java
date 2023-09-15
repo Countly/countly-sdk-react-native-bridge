@@ -87,7 +87,7 @@ class CountlyReactException extends Exception {
 public class CountlyReactNative extends ReactContextBaseJavaModule implements LifecycleEventListener {
 
     public static final String TAG = "CountlyRNPlugin";
-    private String COUNTLY_RN_SDK_VERSION_STRING = "23.8.0";
+    private String COUNTLY_RN_SDK_VERSION_STRING = "23.6.0";
     private String COUNTLY_RN_SDK_NAME = "js-rnb-android";
 
     private static final CountlyConfig config = new CountlyConfig();
@@ -1478,18 +1478,15 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
     @Override
     public void onHostResume() {
-        log("onHostResume", LogLevel.INFO);
     }
 
     @Override
     public void onHostPause() {
-        log("onHostPause", LogLevel.INFO);
         
     }
 
     @Override
     public void onHostDestroy() {
-        log("onHostDestroy", LogLevel.INFO);
 
     }
 }
