@@ -821,16 +821,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     }
 
     @ReactMethod
-    public void start() {
-        log("onStart", LogLevel.INFO);
-    }
-
-    @ReactMethod
-    public void stop() {
-        log("onStop", LogLevel.INFO);
-    }
-
-    @ReactMethod
     public void userData_setProperty(ReadableArray args, Promise promise) {
         Countly.sharedInstance();
         String keyName = args.getString(0);

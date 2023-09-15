@@ -440,33 +440,25 @@ Countly.configureIntentRedirectionCheck = function (allowedIntentClassNames = []
 };
 
 /**
+ * @deprecated Automatic sessions are handled by underlying SDK, this function will do nothing.
  *
  * Countly start for android
  *
  * @return {String || void} error message or void
  */
 Countly.start = function () {
-    if (!_isInitialized) {
-        const message = "'init' must be called before 'start'";
-        Countly.logError('start', message);
-        return message;
-    }
-    CountlyReactNative.start();
+    Countly.logWarning('start', "Automatic sessions are handled by underlying SDK, this function will do nothing.");
 };
 
 /**
+ * @deprecated Automatic sessions are handled by underlying SDK, this function will do nothing.
  *
  * Countly stop for android
  *
  * @return {String || void} error message or void
  */
 Countly.stop = function () {
-    if (!_isInitialized) {
-        const message = "'init' must be called before 'stop'";
-        Countly.logError('stop', message);
-        return message;
-    }
-    CountlyReactNative.stop();
+    Countly.logWarning('stop', "Automatic sessions are handled by underlying SDK, this function will do nothing.");
 };
 
 /**
