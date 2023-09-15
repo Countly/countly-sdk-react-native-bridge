@@ -1,19 +1,17 @@
 ## 23.6.0
 * ! Minor breaking change ! Remote config will now return previously downloaded values when remote-config consent is not given
-* ! Minor breaking change ! Manual view recording calls are now ignored when in automatic view recording mode.
-* ! Minor breaking change ! If a manual session is already started, it will not be possible to call "BeginSession" without stopping the previous one for android only.
-* ! Minor breaking change ! If a manual session has not been started, it will not be possible to call "UpdateSession" for android only.
-* ! Minor breaking change ! If a manual session has not been started, it will not be possible to call "EndSession" for android only.
+* ! Minor breaking change ! If a manual session is already started, it will not be possible to call "BeginSession" without stopping the previous one. Android only.
+* ! Minor breaking change ! If a manual session has not been started, it will not be possible to call "UpdateSession". Android only.
+* ! Minor breaking change ! If a manual session has not been started, it will not be possible to call "EndSession". Android only.
 
-* Expanded feedback widget functionality. Added ability to use rating widgets.
-* Added functionality to access tags for feedback widgets.
-* Deprecated `enableAttribution` in config
+* The feedback widget API now can interract with Rating widgets
+* When getting the feedback widget list, now the "tag" field (accessed with the "tg" key) is also returned 
 * Adding remaining request queue size information to every request
 * Adding SDK health check requests after init
-* View duration moved from segmentation to the event body
+
+* Deprecated `enableAttribution` in config
 
 * Fixed bug in Android where recording views would force send all stored events
-* Fixed bug in Android where exiting temporary ID mode would create unintended requests
 
 * Updated underlying Android SDK version to 23.8.0
 * Updated underlying iOS SDK version to 23.8.2
