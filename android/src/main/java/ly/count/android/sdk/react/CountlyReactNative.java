@@ -98,9 +98,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     private static String lastStoredNotification = null;
     protected static boolean loggingEnabled = false;
 
-    private boolean isOnResumeBeforeInit = false;
-    private Boolean isSessionStarted_ = false;
-
     private List<String> allowedIntentClassNames = new ArrayList<>();
     private List<String> allowedIntentPackageNames = new ArrayList<>();
     private boolean useAdditionalIntentRedirectionChecks = true;
@@ -131,7 +128,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         super(reactContext);
         _reactContext = reactContext;
         config.enableManualAppLoadedTrigger();
-        config.enableManualForegroundBackgroundTriggerAPM();
         reactContext.addLifecycleEventListener(this);
     }
 
@@ -168,10 +164,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             log("init, Activity is null, some features will not work", LogLevel.WARNING);
         }
         Countly.sharedInstance().init(config);
-        if (isOnResumeBeforeInit) {
-            isOnResumeBeforeInit = false;
-            Countly.sharedInstance().apm().triggerForeground();
-        }
 
         promise.resolve("Success");
     }
@@ -830,26 +822,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
     @ReactMethod
     public void start() {
-        if (isSessionStarted_) {
-            log("session already started", LogLevel.INFO);
-            return;
-        }
-        Activity activity = this.getActivity();
-        if (activity == null) {
-            log("While calling 'start', Activity is null", LogLevel.WARNING);
-        }
-        Countly.sharedInstance().onStart(activity);
-        isSessionStarted_ = true;
+        log("onStart", LogLevel.INFO);
     }
 
     @ReactMethod
     public void stop() {
-        if (!isSessionStarted_) {
-            log("must call Start before Stop", LogLevel.INFO);
-            return;
-        }
-        Countly.sharedInstance().onStop();
-        isSessionStarted_ = false;
+        log("onStop", LogLevel.INFO);
     }
 
     @ReactMethod
@@ -1500,25 +1478,11 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
     @Override
     public void onHostResume() {
-        if (Countly.sharedInstance().isInitialized()) {
-            if (isSessionStarted_) {
-                Activity activity = getActivity();
-                Countly.sharedInstance().onStart(activity);
-            }
-            Countly.sharedInstance().apm().triggerForeground();
-        } else {
-            isOnResumeBeforeInit = true;
-        }
     }
 
     @Override
     public void onHostPause() {
-        if (Countly.sharedInstance().isInitialized()) {
-            if (isSessionStarted_) {
-                Countly.sharedInstance().onStop();
-            }
-            Countly.sharedInstance().apm().triggerBackground();
-        }
+        
     }
 
     @Override
