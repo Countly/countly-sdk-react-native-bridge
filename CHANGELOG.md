@@ -1,20 +1,16 @@
-## 23.8.0
-* The feedback widget API now can interract with Rating widgets
-* When getting the feedback widget list, now the "tag" field (accessed with the "tg" key) is also returned 
-
-* Updated underlying Android SDK version to 23.8.0
-* Updated underlying iOS SDK version to 23.8.1
-
 ## 23.6.0
 - !! Major breaking change !! Automatically downloaded remote config values will no longer be automatically enrolled in their AB tests.
 * ! Minor breaking change ! Remote config will now return previously downloaded values when remote-config consent is not given
+
+* The feedback widget API now can interract with Rating widgets
+* When getting the feedback widget list, now the "tag" field (accessed with the "tg" key) is also returned 
 
 * Deprecated `enableAttribution` in config
 * Fixed bug in Android where recording views would force send all stored events
 * Fixed bug in Android where exiting temporary ID mode would create unintended requests
 
-* Updated underlying Android SDK version to 23.6.0
-* Updated underlying iOS SDK version to 23.6.1
+* Updated underlying Android SDK version to 23.8.0
+* Updated underlying iOS SDK version to 23.8.1
 
 ## 23.2.4
 * Added new method to the Countly Config Object 'setPushNotificationAccentColor' to set notification accent color.
