@@ -1,4 +1,5 @@
 ## 23.6.0
+* !! Major breaking change !! 'start' and 'stop' calls have been deprecated. They will do nothing. The SDK will now automatically track sessions based on the app's time in the foreground.
 * ! Minor breaking change ! Remote config will now return previously downloaded values when remote-config consent is not given
 * ! Minor breaking change ! If a manual session is already started, it will not be possible to call "BeginSession" without stopping the previous one. Android only.
 * ! Minor breaking change ! If a manual session has not been started, it will not be possible to call "UpdateSession". Android only.
