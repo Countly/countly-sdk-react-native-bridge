@@ -11,6 +11,8 @@
 * Adding SDK health check requests after init
 
 * Deprecated `enableAttribution` in config
+* Deprecated `start` method
+* Deprecated `stop` method
 
 * Fixed bug in Android where recording views would force send all stored events
 

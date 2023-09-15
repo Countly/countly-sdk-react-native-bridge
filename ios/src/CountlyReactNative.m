@@ -365,13 +365,6 @@ RCT_EXPORT_METHOD(registerForNotification : (NSArray *)arguments) {
         COUNTLY_RN_LOG(theMessage);
     }
 }
-RCT_EXPORT_METHOD(start) {
-    // [Countly.sharedInstance resume];
-}
-
-RCT_EXPORT_METHOD(stop) {
-    // [Countly.sharedInstance suspend];
-}
 
 RCT_REMAP_METHOD(getCurrentDeviceId, getCurrentDeviceIdWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{

@@ -6,8 +6,6 @@ typedef void (^Result)(id _Nullable result);
 - (void)event:(NSArray *_Nullable)arguments;
 - (void)setLoggingEnabled:(NSArray *_Nullable)arguments;
 
-- (void)start;
-- (void)stop;
 - (void)recordView:(NSArray *_Nullable)arguments;
 
 - (void)setHttpPostForced:(NSArray *_Nullable)arguments;
