@@ -447,7 +447,7 @@ Countly.configureIntentRedirectionCheck = function (allowedIntentClassNames = []
  * @return {String || void} error message or void
  */
 Countly.start = function () {
-    Countly.logError('start', "Automatic sessions are handled by underlying SDK, this function will do nothing.");
+    Countly.logWarning('start', "Automatic sessions are handled by underlying SDK, this function will do nothing.");
 };
 
 /**
