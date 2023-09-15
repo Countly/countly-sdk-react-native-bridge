@@ -1,27 +1,40 @@
 ## 23.6.0
-- !! Major breaking change !! Automatically downloaded remote config values will no longer be automatically enrolled in their AB tests.
 * ! Minor breaking change ! Remote config will now return previously downloaded values when remote-config consent is not given
+* ! Minor breaking change ! If a manual session is already started, it will not be possible to call "BeginSession" without stopping the previous one. Android only.
+* ! Minor breaking change ! If a manual session has not been started, it will not be possible to call "UpdateSession". Android only.
+* ! Minor breaking change ! If a manual session has not been started, it will not be possible to call "EndSession". Android only.
 
 * The feedback widget API now can interract with Rating widgets
 * When getting the feedback widget list, now the "tag" field (accessed with the "tg" key) is also returned 
+* Adding remaining request queue size information to every request
+* Adding SDK health check requests after init
 
 * Deprecated `enableAttribution` in config
+
 * Fixed bug in Android where recording views would force send all stored events
-* Fixed bug in Android where exiting temporary ID mode would create unintended requests
 
 * Updated underlying Android SDK version to 23.8.0
-* Updated underlying iOS SDK version to 23.8.1
+* Updated underlying iOS SDK version to 23.8.2
 
 ## 23.2.4
 * Added new method to the Countly Config Object 'setPushNotificationAccentColor' to set notification accent color.
 * Added 'setPushTokenType' and 'setPushNotificationChannel' calls to replace deprecated calls to the Countly Config Object.
 * Deprecated the following SDK call: 'CountlyConfig.pushTokenType'
 
+* Underlying Android SDK version to 22.09.4
+* Underlying iOS SDK version to 23.02.2
+
 ## 23.2.3
 * Fixed bug where the push notification type was not correctly set during init
 
+* Underlying Android SDK version to 22.09.4
+* Underlying iOS SDK version to 23.02.2
+
 ## 23.2.2
 * Fixed bug that caused an issue in the deprecated init call
+
+* Underlying Android SDK version to 22.09.4
+* Underlying iOS SDK version to 23.02.2
 
 ## 23.2.1
 * Default max segmentation value count changed from 30 to 100
