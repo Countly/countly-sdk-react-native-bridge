@@ -447,9 +447,7 @@ Countly.configureIntentRedirectionCheck = function (allowedIntentClassNames = []
  * @return {String || void} error message or void
  */
 Countly.start = function () {
-    const message = "Automatic sessions are handled by underlying SDK, this function will do nothing.";
-    Countly.logError('start', message);
-    return message;
+    Countly.logError('start', "Automatic sessions are handled by underlying SDK, this function will do nothing.");
 };
 
 /**
@@ -460,9 +458,7 @@ Countly.start = function () {
  * @return {String || void} error message or void
  */
 Countly.stop = function () {
-    const message = "Automatic sessions are handled by underlying SDK, this function will do nothing.";
-    Countly.logError('stop', message);
-    return message;
+    Countly.logWarning('stop', "Automatic sessions are handled by underlying SDK, this function will do nothing.");
 };
 
 /**
