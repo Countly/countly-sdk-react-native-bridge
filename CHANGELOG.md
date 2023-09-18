@@ -14,7 +14,7 @@
 
 * Fixed bug in Android where recording views would force send all stored events
 
-* Updated underlying Android SDK version to 23.8.0
+* Updated underlying Android SDK version to 23.8.2
 * Updated underlying iOS SDK version to 23.8.2
 
 ## 23.2.4
