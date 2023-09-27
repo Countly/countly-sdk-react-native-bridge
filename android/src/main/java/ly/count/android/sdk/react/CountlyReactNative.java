@@ -377,7 +377,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     }
 
     @ReactMethod
-    public void getDeviceIDType(Promise promise){
+    public void getDeviceIDType(Promise promise) {
         DeviceIdType deviceIDType = Countly.sharedInstance().deviceId().getType();
         String deviceIDTypeString = null;
         switch (deviceIDType) {
@@ -1146,12 +1146,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     @ReactMethod
     public void getRemoteConfigValueForKey(ReadableArray args, final Callback myCallback) {
         String keyName = args.getString(0);
-        Object keyValue = Countly.sharedInstance().remoteConfig().getValue(keyName);
-        if (keyValue == null) {
+        RCData keyValue = Countly.sharedInstance().remoteConfig().getValue(keyName);
+        if (keyValue.value == null) {
             log("getRemoteConfigValueForKey, [" + keyName + "]: ConfigKeyNotFound", LogLevel.DEBUG);
             myCallback.invoke("ConfigKeyNotFound");
         } else {
-            String resultString = (keyValue).toString();
+            String resultString = (keyValue.value).toString();
             log("getRemoteConfigValueForKey, [" + keyName + "]: " + resultString, LogLevel.DEBUG);
             myCallback.invoke(resultString);
         }
@@ -1159,9 +1159,9 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
     @ReactMethod
     public void getRemoteConfigValueForKeyP(String keyName, Promise promise) {
-        Object keyValue = Countly.sharedInstance().remoteConfig().getValue(keyName);
-        if (keyValue == null) {
-            log("getRemoteConfigValueForKeyP, [" + keyName + "]: ConfigKeyNotFound", LogLevel.DEBUG);
+        RCData keyValue = Countly.sharedInstance().remoteConfig().getValue(keyName);
+        if (keyValue.value == null) {
+            log("getRemoteConfigValueForKey, [" + keyName + "]: ConfigKeyNotFound", LogLevel.DEBUG);
             promise.reject("ConfigKeyNotFound", null, null, null);
         } else {
             String resultString = (keyValue).toString();
@@ -1472,7 +1472,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
     @Override
     public void onHostPause() {
-        
+
     }
 
     @Override
