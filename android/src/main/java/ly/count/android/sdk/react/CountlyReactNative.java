@@ -87,7 +87,7 @@ class CountlyReactException extends Exception {
 public class CountlyReactNative extends ReactContextBaseJavaModule implements LifecycleEventListener {
 
     public static final String TAG = "CountlyRNPlugin";
-    private String COUNTLY_RN_SDK_VERSION_STRING = "23.6.0";
+    private String COUNTLY_RN_SDK_VERSION_STRING = "23.6.1";
     private String COUNTLY_RN_SDK_NAME = "js-rnb-android";
 
     private static final CountlyConfig config = new CountlyConfig();
@@ -377,7 +377,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     }
 
     @ReactMethod
-    public void getDeviceIDType(Promise promise){
+    public void getDeviceIDType(Promise promise) {
         DeviceIdType deviceIDType = Countly.sharedInstance().deviceId().getType();
         String deviceIDTypeString = null;
         switch (deviceIDType) {
@@ -1146,12 +1146,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     @ReactMethod
     public void getRemoteConfigValueForKey(ReadableArray args, final Callback myCallback) {
         String keyName = args.getString(0);
-        Object keyValue = Countly.sharedInstance().remoteConfig().getValue(keyName);
-        if (keyValue == null) {
+        RCData keyValue = Countly.sharedInstance().remoteConfig().getValue(keyName);
+        if (keyValue.value == null) {
             log("getRemoteConfigValueForKey, [" + keyName + "]: ConfigKeyNotFound", LogLevel.DEBUG);
             myCallback.invoke("ConfigKeyNotFound");
         } else {
-            String resultString = (keyValue).toString();
+            String resultString = (keyValue.value).toString();
             log("getRemoteConfigValueForKey, [" + keyName + "]: " + resultString, LogLevel.DEBUG);
             myCallback.invoke(resultString);
         }
@@ -1159,12 +1159,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
     @ReactMethod
     public void getRemoteConfigValueForKeyP(String keyName, Promise promise) {
-        Object keyValue = Countly.sharedInstance().remoteConfig().getValue(keyName);
-        if (keyValue == null) {
+        RCData keyValue = Countly.sharedInstance().remoteConfig().getValue(keyName);
+        if (keyValue.value == null) {
             log("getRemoteConfigValueForKeyP, [" + keyName + "]: ConfigKeyNotFound", LogLevel.DEBUG);
             promise.reject("ConfigKeyNotFound", null, null, null);
         } else {
-            String resultString = (keyValue).toString();
+            String resultString = (keyValue.value).toString();
             log("getRemoteConfigValueForKeyP, [" + keyName + "]: " + resultString, LogLevel.DEBUG);
             promise.resolve(resultString);
         }
@@ -1472,7 +1472,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
     @Override
     public void onHostPause() {
-        
+
     }
 
     @Override
