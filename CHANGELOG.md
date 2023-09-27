@@ -1,5 +1,5 @@
 ## 23.6.1
-* Fixed bug in Android where getRemoteConfigValueForKey method returned RCData.
+* Fixed bug for Android devices where "getRemoteConfigValueForKey" and "getRemoteConfigValueForKeyP" methods would return the RCData object.
 
 * Underlying Android SDK version is 23.8.2
 * Underlying iOS SDK version is 23.8.2
