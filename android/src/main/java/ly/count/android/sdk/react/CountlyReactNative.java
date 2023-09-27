@@ -1164,7 +1164,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             log("getRemoteConfigValueForKeyP, [" + keyName + "]: ConfigKeyNotFound", LogLevel.DEBUG);
             promise.reject("ConfigKeyNotFound", null, null, null);
         } else {
-            String resultString = (keyValue).toString();
+            String resultString = (keyValue.value).toString();
             log("getRemoteConfigValueForKeyP, [" + keyName + "]: " + resultString, LogLevel.DEBUG);
             promise.resolve(resultString);
         }
