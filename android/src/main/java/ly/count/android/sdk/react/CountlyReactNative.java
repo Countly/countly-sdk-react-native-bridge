@@ -1161,7 +1161,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     public void getRemoteConfigValueForKeyP(String keyName, Promise promise) {
         RCData keyValue = Countly.sharedInstance().remoteConfig().getValue(keyName);
         if (keyValue.value == null) {
-            log("getRemoteConfigValueForKey, [" + keyName + "]: ConfigKeyNotFound", LogLevel.DEBUG);
+            log("getRemoteConfigValueForKeyP, [" + keyName + "]: ConfigKeyNotFound", LogLevel.DEBUG);
             promise.reject("ConfigKeyNotFound", null, null, null);
         } else {
             String resultString = (keyValue).toString();
