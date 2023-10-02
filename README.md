@@ -1,7 +1,7 @@
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/0eef77bbd1014102b1f4e1630179ddac)](https://www.codacy.com/gh/Countly/countly-sdk-react-native-bridge/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Countly/countly-sdk-react-native-bridge&amp;utm_campaign=Badge_Grade)
 
 # Countly React Native Bridge SDK
-This repository contains the Countly React Native Bridge SDK, which can be integrated into React Native mobile applications. The Countly React Native Bridge SDK is intended to be used with [Countly Community Edition](https://github.com/Countly/countly-server) or [Countly Enterprise Edition](https://count.ly/product).
+This repository contains the Countly React Native Bridge SDK, which can be integrated into React Native mobile applications. The Countly React Native Bridge SDK is intended to be used with [Countly Lite](https://countly.com/lite) or [Countly Enterprise](https://count.ly/product).
 
 ## What is Countly?
 [Countly](https://count.ly) is a product analytics solution and innovation enabler that helps teams track product performance and customer journey and behavior across [mobile](https://count.ly/mobile-analytics), [web](http://count.ly/web-analytics),
@@ -10,7 +10,7 @@ and [desktop](https://count.ly/desktop-analytics) applications. [Ensuring privac
 Track, measure, and take action - all without leaving Countly.
 
 * **Questions or feature requests?** [Join the Countly Community on Discord](https://discord.gg/countly)
-* **Looking for the Countly Server?** [Countly Community Edition repository](https://github.com/Countly/countly-server)
+* **Looking for the Countly Server?** [Countly Lite repository](https://github.com/Countly/countly-server)
 * **Looking for other Countly SDKs?** [An overview of all Countly SDKs for mobile, web and desktop](https://support.count.ly/hc/en-us/articles/360037236571-Downloading-and-Installing-SDKs#officially-supported-sdks)
 
 ## Integrating Countly SDK in your projects
