@@ -18,6 +18,7 @@ import com.facebook.react.bridge.JavaScriptModule;
 
 import android.content.Context;
 
+import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import ly.count.android.sdk.Countly;
 import ly.count.android.sdk.CountlyConfig;
 import ly.count.android.sdk.DeviceIdType;
@@ -108,6 +109,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     private static String widgetClosedCallbackName = "widgetClosedCallback";
     private static String ratingWidgetCallbackName = "ratingWidgetCallback";
     private static String pushNotificationCallbackName = "pushNotificationCallback";
+    private List<CountlyFeedbackWidget> retrievedWidgetList = null;
 
     private final Set<String> validConsentFeatureNames = new HashSet<>(Arrays.asList(
         Countly.CountlyFeatureNames.sessions,
@@ -338,6 +340,163 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         return map;
     }
 
+    public static WritableMap toWritableMap(JSONObject jsonObject) {
+        WritableMap map = new WritableNativeMap();
+        try {
+            Iterator<String> iterator = jsonObject.keys();
+            while (iterator.hasNext()) {
+                String key = iterator.next();
+                Object value = jsonObject.get(key);
+                if (value instanceof JSONObject) {
+                    map.putMap(key, toWritableMap((JSONObject) value));
+                } else if (value instanceof JSONArray) {
+                    map.putArray(key, toWritableArray((JSONArray) value));
+                } else if (value instanceof Boolean) {
+                    map.putBoolean(key, (Boolean) value);
+                } else if (value instanceof Integer) {
+                    map.putInt(key, (Integer) value);
+                } else if (value instanceof Double) {
+                    map.putDouble(key, (Double) value);
+                } else if (value instanceof String) {
+                    map.putString(key, (String) value);
+                } else {
+                    map.putString(key, value.toString());
+                }
+            }
+        } catch (JSONException e) {
+            log("Exception occurred at 'toWritableMap' method: ", e, LogLevel.ERROR);
+        }
+        return map;
+    }
+
+    public static WritableArray toWritableArray(JSONArray jsonArray) {
+        WritableArray array = new WritableNativeArray();
+        try {
+            for (int i = 0; i < jsonArray.length(); i++) {
+                Object value = jsonArray.get(i);
+                if (value instanceof JSONObject) {
+                    array.pushMap(toWritableMap((JSONObject) value));
+                } else if (value instanceof JSONArray) {
+                    array.pushArray(toWritableArray((JSONArray) value));
+                } else if (value instanceof Boolean) {
+                    array.pushBoolean((Boolean) value);
+                } else if (value instanceof Integer) {
+                    array.pushInt((Integer) value);
+                } else if (value instanceof Double) {
+                    array.pushDouble((Double) value);
+                } else if (value instanceof String) {
+                    array.pushString((String) value);
+                } else {
+                    array.pushString(value.toString());
+                }
+            }
+        } catch (JSONException e) {
+            log("Exception occurred at 'toWritableArray' method: ", e, LogLevel.ERROR);
+        }
+        return array;
+    }
+
+    public static Map<String, Object> toMap(JSONObject jsonobj) {
+        Map<String, Object> map = new HashMap<>();
+        try {
+            Iterator<String> keys = jsonobj.keys();
+            while (keys.hasNext()) {
+                String key = keys.next();
+                Object value = jsonobj.get(key);
+                if (value instanceof JSONArray) {
+                    value = toList((JSONArray) value);
+                } else if (value instanceof JSONObject) {
+                    value = toMap((JSONObject) value);
+                }
+                map.put(key, value);
+            }
+        } catch (JSONException e) {
+            log("Exception occurred at 'toMap' method: ", e, LogLevel.ERROR);
+        }
+        return map;
+    }
+
+    public static List<Object> toList(JSONArray array) {
+        List<Object> list = new ArrayList<>();
+        try {
+            for (int i = 0; i < array.length(); i++) {
+                Object value = array.get(i);
+                if (value instanceof JSONArray) {
+                    value = toList((JSONArray) value);
+                } else if (value instanceof JSONObject) {
+                    value = toMap((JSONObject) value);
+                }
+                list.add(value);
+            }
+        } catch (JSONException e) {
+            log("Exception occurred at 'toList' method: ", e, LogLevel.ERROR);
+        }
+        return list;
+    }
+
+    public JSONObject toJSONObject(ReadableMap readableMap) {
+        JSONObject object = new JSONObject();
+        try {
+            ReadableMapKeySetIterator iterator = readableMap.keySetIterator();
+            while (iterator.hasNextKey()) {
+                String key = iterator.nextKey();
+                switch (readableMap.getType(key)) {
+                    case Null:
+                        object.put(key, JSONObject.NULL);
+                        break;
+                    case Boolean:
+                        object.put(key, readableMap.getBoolean(key));
+                        break;
+                    case Number:
+                        object.put(key, readableMap.getInt(key));
+                        break;
+                    case String:
+                        object.put(key, readableMap.getString(key));
+                        break;
+                    case Map:
+                        object.put(key, toJSONObject(readableMap.getMap(key)));
+                        break;
+                    case Array:
+                        object.put(key, toJSONArray(readableMap.getArray(key)));
+                        break;
+                }
+            }
+        } catch (JSONException e) {
+            log("Exception occurred at 'toJSONObject' method: ", e, LogLevel.ERROR);
+        }
+        return object;
+    }
+
+    public JSONArray toJSONArray(ReadableArray readableArray) {
+        JSONArray array = new JSONArray();
+        try {
+            for (int i = 0; i < readableArray.size(); i++) {
+                switch (readableArray.getType(i)) {
+                    case Null:
+                        break;
+                    case Boolean:
+                        array.put(readableArray.getBoolean(i));
+                        break;
+                    case Number:
+                        array.put(readableArray.getDouble(i));
+                        break;
+                    case String:
+                        array.put(readableArray.getString(i));
+                        break;
+                    case Map:
+                        array.put(toJSONObject(readableArray.getMap(i)));
+                        break;
+                    case Array:
+                        array.put(toJSONArray(readableArray.getArray(i)));
+                        break;
+                }
+            }
+        } catch (JSONException e) {
+            log("Exception occurred at 'toJSONArray' method: ", e, LogLevel.ERROR);
+        }
+        return array;
+    }
+
     @ReactMethod
     public void setLoggingEnabled(ReadableArray args) {
         boolean enabled = args.getBoolean(0);
@@ -377,7 +536,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     }
 
     @ReactMethod
-    public void getDeviceIDType(Promise promise){
+    public void getDeviceIDType(Promise promise) {
         DeviceIdType deviceIDType = Countly.sharedInstance().deviceId().getType();
         String deviceIDTypeString = null;
         switch (deviceIDType) {
@@ -1246,9 +1405,69 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                     feedbackWidget.putArray("tags", tags);
                     retrievedWidgetsArray.pushMap(feedbackWidget);
                 }
+                retrievedWidgetList = new ArrayList(retrievedWidgets);
                 promise.resolve(retrievedWidgetsArray);
             }
         });
+    }
+
+    @ReactMethod
+    public CountlyFeedbackWidget getFeedbackWidget(String widgetId) {
+        if (retrievedWidgetList == null) {
+            return null;
+        }
+        for (CountlyFeedbackWidget feedbackWidget : retrievedWidgetList) {
+            if (feedbackWidget.widgetId.equals(widgetId)) {
+                return feedbackWidget;
+            }
+        }
+        return null;
+    }
+
+    @ReactMethod
+    public void getFeedbackWidgetData(ReadableArray args, final Promise promise) {
+        String widgetId = args.getString(0);
+        CountlyFeedbackWidget feedbackWidget = getFeedbackWidget(widgetId);
+        if (feedbackWidget == null) {
+            String errorMessage = "No feedbackWidget is found against widget id : '" + widgetId + "' , always call 'getFeedbackWidgets' to get updated list of feedback widgets.";
+            promise.reject("getFeedbackWidgetData_failure", errorMessage);
+        } else {
+            Countly.sharedInstance().feedback().getFeedbackWidgetData(feedbackWidget, new RetrieveFeedbackWidgetData() {
+                @Override
+                public void onFinished(JSONObject retrievedWidgetData, String error) {
+                    if (error != null) {
+                        promise.reject("getFeedbackWidgetData_failure", error);
+                    } else {
+                        promise.resolve(toWritableMap(retrievedWidgetData));
+                    }
+                }
+            });
+        }
+    }
+
+    @ReactMethod
+    public void reportFeedbackWidgetManually(ReadableArray args, final Promise promise) {
+        try {
+            ReadableArray widgetInfo = args.getArray(0);
+            ReadableMap widgetData = args.getMap(1);
+            ReadableMap widgetResult = args.getMap(2);
+            Map<String, Object> widgetResultMap = widgetResult.toHashMap();
+
+            if (widgetResultMap.containsKey("rating") && widgetResultMap.get("rating") instanceof Double) {
+                widgetResultMap.put("rating", ((Number) widgetResultMap.get("rating")).intValue());
+            }
+            String widgetId = widgetInfo.getString(0);
+            CountlyFeedbackWidget feedbackWidget = getFeedbackWidget(widgetId);
+            if (feedbackWidget == null) {
+                String errorMessage = "No feedbackWidget is found against widget id : '" + widgetId + "' , always call 'getFeedbackWidgets' to get updated list of feedback widgets.";
+                promise.reject("reportFeedbackWidgetManually_failure", errorMessage);
+            } else {
+                Countly.sharedInstance().feedback().reportFeedbackWidgetManually(feedbackWidget, toJSONObject(widgetData), widgetResultMap);
+                promise.resolve("reportFeedbackWidgetManually success");
+            }
+        } catch (Exception e) {
+            log("Failed to parse Config Object. [" + e.toString() + "]", LogLevel.DEBUG);
+        }
     }
 
     @ReactMethod
@@ -1472,7 +1691,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
     @Override
     public void onHostPause() {
-        
+
     }
 
     @Override

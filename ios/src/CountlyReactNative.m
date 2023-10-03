@@ -31,6 +31,7 @@ CLYPushTestMode const CLYPushTestModeProduction = @"CLYPushTestModeProduction";
 
 CountlyConfig *config = nil; // alloc here
 NSMutableArray<CLYFeature> *countlyFeatures = nil;
+NSArray<CountlyFeedbackWidget *> *feedbackWidgetList = nil;
 BOOL enablePushNotifications = true;
 
 NSString *const NAME_KEY = @"name";
@@ -1063,6 +1064,7 @@ RCT_REMAP_METHOD(getFeedbackWidgets, getFeedbackWidgetsWithResolver : (RCTPromis
             NSString *errorStr = error.localizedDescription;
             reject(@"getFeedbackWidgets_failure", errorStr, nil);
         } else {
+            feedbackWidgetList = [NSArray arrayWithArray:feedbackWidgets];
             NSMutableArray *feedbackWidgetsArray = [NSMutableArray arrayWithCapacity:feedbackWidgets.count];
             for (CountlyFeedbackWidget *retrievedWidget in feedbackWidgets) {
                 NSMutableDictionary *feedbackWidget = [NSMutableDictionary dictionaryWithCapacity:3];
@@ -1087,6 +1089,57 @@ RCT_REMAP_METHOD(getAvailableFeedbackWidgets, getAvailableFeedbackWidgetsWithRes
         }
         resolve(feedbackWidgetsDict);
       }];
+    });
+}
+
+- (CountlyFeedbackWidget *)getFeedbackWidget:(NSString *)widgetId {
+    if (feedbackWidgetList == nil) {
+        return nil;
+    }
+    for (CountlyFeedbackWidget *feedbackWidget in feedbackWidgetList) {
+        if ([feedbackWidget.ID isEqual:widgetId]) {
+            return feedbackWidget;
+        }
+    }
+    return nil;
+}
+
+RCT_REMAP_METHOD(getFeedbackWidgetData, params : (NSArray *)arguments getFeedbackWidgetDataWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSString *widgetId = [arguments objectAtIndex:0];
+        CountlyFeedbackWidget *feedbackWidget = [self getFeedbackWidget:widgetId];
+        if (feedbackWidget == nil) {
+            NSString *errorMessage = [NSString stringWithFormat:@"No feedbackWidget is found against widget Id : '%@', always call 'getFeedbackWidgets' to get updated list of feedback widgets.", widgetId];
+            CountlyRNInternalLog(errorMessage);
+            reject(@"getFeedbackWidgetData_failure", errorMessage, nil);
+        } else {
+            [feedbackWidget getWidgetData:^(NSDictionary *_Nullable widgetData, NSError *_Nullable error) {
+                if (error) {
+                    NSString *theError = [@"getFeedbackWidgetData failed: " stringByAppendingString:error.localizedDescription];
+                    reject(@"getFeedbackWidgetData_failure", theError, nil);
+                } else {
+                    resolve(widgetData);
+                }
+            }];
+        }
+    });
+}
+
+RCT_REMAP_METHOD(reportFeedbackWidgetManually, params : (NSArray *)arguments reportFeedbackWidgetManuallyWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSArray *widgetInfo = [arguments objectAtIndex:0];
+        NSDictionary *widgetResult = [arguments objectAtIndex:2];
+        NSString *widgetId = [widgetInfo objectAtIndex:0];
+
+        CountlyFeedbackWidget *feedbackWidget = [self getFeedbackWidget:widgetId];
+        if (feedbackWidget == nil) {
+            NSString *errorMessage = [NSString stringWithFormat:@"No feedbackWidget is found against widget Id : '%@', always call 'getFeedbackWidgets' to get updated list of feedback widgets.", widgetId];
+            CountlyRNInternalLog(errorMessage);
+            reject(@"reportFeedbackWidgetManually_failure", errorMessage, nil);
+        } else {
+            [feedbackWidget recordResult:widgetResult];
+            resolve(@"reportFeedbackWidgetManually success");
+        }
     });
 }
 

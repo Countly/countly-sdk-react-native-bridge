@@ -278,9 +278,7 @@ Countly.sendEvent = function (options) {
  *
  */
 Countly.setViewTracking = async function (boolean) {
-    if (await CountlyReactNative.isLoggingEnabled()) {
-        console.log('[CountlyReactNative] setViewTracking is deprecated.');
-    }
+    Countly.logWarning('setViewTracking', 'setViewTracking is deprecated.');
 };
 
 /**
@@ -662,9 +660,7 @@ Countly.isCrashReportingEnabled = false;
 Countly.enableCrashReporting = async function () {
     CountlyReactNative.enableCrashReporting();
     if (ErrorUtils && !Countly.isCrashReportingEnabled) {
-        if (await CountlyReactNative.isLoggingEnabled()) {
-            console.log('[CountlyReactNative] Adding Countly JS error handler.');
-        }
+        Countly.logInfo('enableCrashReporting', 'Adding Countly JS error handler.');
         const previousHandler = ErrorUtils.getGlobalHandler();
         ErrorUtils.setGlobalHandler((error, isFatal) => {
             const jsStackTrace = Countly.getStackTrace(error);
@@ -729,7 +725,7 @@ Countly.getStackTrace = (e) => {
             jsStackTrace = parseErrorStackLib(e);
         }
     } catch (e) {
-        // console.log(e.message);
+        // Countly.logError('getStackTrace', e.message);
     }
     return jsStackTrace;
 };
@@ -1592,7 +1588,7 @@ Countly.getRemoteConfigValueForKey = function (keyName, callback) {
             try {
                 value = JSON.parse(value);
             } catch (e) {
-                // console.log(e.message);
+                // Countly.logError('getRemoteConfigValueForKey', e.message);
                 // noop. value will remain string if not JSON parsable and returned as string
             }
         }
@@ -1616,7 +1612,7 @@ Countly.getRemoteConfigValueForKeyP = function (keyName) {
             try {
                 value = JSON.parse(value);
             } catch (e) {
-                // console.log(e.message);
+                // Countly.logError('getRemoteConfigValueForKeyP', e.message);
                 // noop. value will remain string if not JSON parsable and returned as string
             }
         }
@@ -1735,6 +1731,71 @@ Countly.getFeedbackWidgets = async function (onFinished) {
         onFinished(result, error);
     }
     return result;
+};
+
+/**
+ * Get a list of available feedback widgets as array of object to handle multiple widgets of same type.
+ * @param {Object} widgetInfo - identifies the specific widget for which the feedback is filled out
+ * @param {callback listener} onFinished - returns (Object retrievedWidgetData, error)
+ * @return {String || []} error message or Object retrievedWidgetData
+ */
+Countly.getFeedbackWidgetData = async function (widgetInfo, onFinished) {
+    if (!_isInitialized) {
+        const message = "'initWithConfig' must be called before 'getFeedbackWidgetData'";
+        Countly.logError('getFeedbackWidgetData', message);
+        onFinished(null, message);
+        return message;
+    }
+    const widgetId = widgetInfo.id;
+    const widgetType = widgetInfo.type;
+    Countly.logInfo('getFeedbackWidgetData', 'Calling "getFeedbackWidgetData" with Type:[' + widgetType + ']');
+    const args = [];
+    args.push(widgetId);
+    args.push(widgetType);
+    args.push(widgetInfo.name);
+    let result = null;
+    let error = null;
+    try {
+        result = await CountlyReactNative.getFeedbackWidgetData(args);
+    } catch (e) {
+        error = e.message;
+    }
+    if (onFinished) {
+        onFinished(result, error);
+    }
+    return result;
+};
+
+/**
+ * Get a list of available feedback widgets as array of object to handle multiple widgets of same type.
+ * @param {Object} widgetInfo - identifies the specific widget for which the feedback is filled out
+ * @param {Object} widgetData - widget data for this specific widget
+ * @param {Object} widgetResult - segmentation of the filled out feedback. If this segmentation is null, it will be assumed that the survey was closed before completion and mark it appropriately
+ */
+Countly.reportFeedbackWidgetManually = async function (widgetInfo, widgetData, widgetResult) {
+    if (!_isInitialized) {
+        const message = "'initWithConfig' must be called before 'reportFeedbackWidgetManually'";
+        Countly.logError('reportFeedbackWidgetManually', message);
+        return message;
+    }
+    const widgetId = widgetInfo.id;
+    const widgetType = widgetInfo.type;
+    Countly.logInfo('reportFeedbackWidgetManually', 'Calling "reportFeedbackWidgetManually" with Type:[' + widgetType + ']');
+    const widgetInfoList = [];
+    widgetInfoList.push(widgetId);
+    widgetInfoList.push(widgetType);
+    widgetInfoList.push(widgetInfo.name);
+
+    const args = [];
+    args.push(widgetInfoList);
+    args.push(widgetData);
+    args.push(widgetResult);
+
+    try {
+        return await CountlyReactNative.reportFeedbackWidgetManually(args);
+    } catch (e) {
+        return e.message;
+    }
 };
 
 /**
@@ -2157,6 +2218,28 @@ Countly.validateString = async (stringValue, stringName, functionName) => {
         Countly.logError(functionName, message);
     }
     return message;
+};
+
+/**
+ * Print debug message if logging is enabled
+ * @param {String} functionName : name of function from where value is validating.
+ * @param {String} message : debug message
+ */
+Countly.logDebug = async (functionName, message) => {
+    if (await CountlyReactNative.isLoggingEnabled()) {
+        console.debug(`[CountlyReactNative] ${functionName}, ${message}`);
+    }
+};
+
+/**
+ * Print info messages if logging is enabled
+ * @param {String} functionName : name of function from where value is validating.
+ * @param {String} message : info message
+ */
+Countly.logInfo = async (functionName, message) => {
+    if (await CountlyReactNative.isLoggingEnabled()) {
+        console.info(`[CountlyReactNative] ${functionName}, ${message}`);
+    }
 };
 
 /**
