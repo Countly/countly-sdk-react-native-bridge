@@ -396,44 +396,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         return array;
     }
 
-    public static Map<String, Object> toMap(JSONObject jsonobj) {
-        Map<String, Object> map = new HashMap<>();
-        try {
-            Iterator<String> keys = jsonobj.keys();
-            while (keys.hasNext()) {
-                String key = keys.next();
-                Object value = jsonobj.get(key);
-                if (value instanceof JSONArray) {
-                    value = toList((JSONArray) value);
-                } else if (value instanceof JSONObject) {
-                    value = toMap((JSONObject) value);
-                }
-                map.put(key, value);
-            }
-        } catch (JSONException e) {
-            log("Exception occurred at 'toMap' method: ", e, LogLevel.ERROR);
-        }
-        return map;
-    }
-
-    public static List<Object> toList(JSONArray array) {
-        List<Object> list = new ArrayList<>();
-        try {
-            for (int i = 0; i < array.length(); i++) {
-                Object value = array.get(i);
-                if (value instanceof JSONArray) {
-                    value = toList((JSONArray) value);
-                } else if (value instanceof JSONObject) {
-                    value = toMap((JSONObject) value);
-                }
-                list.add(value);
-            }
-        } catch (JSONException e) {
-            log("Exception occurred at 'toList' method: ", e, LogLevel.ERROR);
-        }
-        return list;
-    }
-
     public JSONObject toJSONObject(ReadableMap readableMap) {
         JSONObject object = new JSONObject();
         try {
