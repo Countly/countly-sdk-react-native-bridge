@@ -1,3 +1,9 @@
+## 23.6.1
+* Fixed bug for Android devices where "getRemoteConfigValueForKey" and "getRemoteConfigValueForKeyP" methods would return the RCData object.
+
+* Underlying Android SDK version is 23.8.2
+* Underlying iOS SDK version is 23.8.2
+
 ## 23.6.0
 * !! Major breaking change !! 'start' and 'stop' calls have been deprecated. They will do nothing. The SDK will now automatically track sessions based on the app's time in the foreground.
 * ! Minor breaking change ! Remote config will now return previously downloaded values when remote-config consent is not given
@@ -22,20 +28,20 @@
 * Added 'setPushTokenType' and 'setPushNotificationChannel' calls to replace deprecated calls to the Countly Config Object.
 * Deprecated the following SDK call: 'CountlyConfig.pushTokenType'
 
-* Underlying Android SDK version to 22.09.4
-* Underlying iOS SDK version to 23.02.2
+* Underlying Android SDK version is 22.09.4
+* Underlying iOS SDK version is 23.02.2
 
 ## 23.2.3
 * Fixed bug where the push notification type was not correctly set during init
 
-* Underlying Android SDK version to 22.09.4
-* Underlying iOS SDK version to 23.02.2
+* Underlying Android SDK version is 22.09.4
+* Underlying iOS SDK version is 23.02.2
 
 ## 23.2.2
 * Fixed bug that caused an issue in the deprecated init call
 
-* Underlying Android SDK version to 22.09.4
-* Underlying iOS SDK version to 23.02.2
+* Underlying Android SDK version is 22.09.4
+* Underlying iOS SDK version is 23.02.2
 
 ## 23.2.1
 * Default max segmentation value count changed from 30 to 100
