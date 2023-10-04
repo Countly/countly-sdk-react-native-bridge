@@ -7,20 +7,32 @@
 import { Platform, NativeModules, NativeEventEmitter } from 'react-native';
 import parseErrorStackLib from '../react-native/Libraries/Core/Devtools/parseErrorStack.js';
 import CountlyConfig from './CountlyConfig.js';
+import { CountlyState } from './CountlyState.js';
+import { Feedback } from './feedback.js';
 
-const { CountlyReactNative } = NativeModules;
+const { default as CountlyReactNative } = NativeModules;
 const eventEmitter = new NativeEventEmitter(CountlyReactNative);
 
 const Countly = {};
 Countly.serverUrl = '';
 Countly.appKey = '';
 let _isInitialized = false;
+Countly.state = CountlyState;
+Countly.feedback = Feedback;
 let _isPushInitialized = false;
 const DeviceIdType = {
     DEVELOPER_SUPPLIED: 'DEVELOPER_SUPPLIED',
     SDK_GENERATED: 'SDK_GENERATED',
     TEMPORARY_ID: 'TEMPORARY_ID',
 };
+
+Countly.test = async function() {
+    this.feedback.getAvailableFeedbackWidgets();
+    console.log(this.state.isInitialized);
+    this.state.isInitialized = true;
+    this.feedback.getAvailableFeedbackWidgets();
+    console.log(this.state.isInitialized);
+}
 
 /*
  * Listener for rating widget callback, when callback recieve we will remove the callback using listener.
@@ -2157,6 +2169,28 @@ Countly.validateString = async (stringValue, stringName, functionName) => {
         Countly.logError(functionName, message);
     }
     return message;
+};
+
+/**
+ * Print debug message if logging is enabled
+ * @param {String} functionName : name of function from where value is validating.
+ * @param {String} message : debug message
+ */
+Countly.logDebug = async (functionName, message) => {
+    if (await CountlyReactNative.isLoggingEnabled()) {
+        console.debug(`[CountlyReactNative] ${functionName}, ${message}`);
+    }
+};
+
+/**
+ * Print info messages if logging is enabled
+ * @param {String} functionName : name of function from where value is validating.
+ * @param {String} message : info message
+ */
+Countly.logInfo = async (functionName, message) => {
+    if (await CountlyReactNative.isLoggingEnabled()) {
+        console.info(`[CountlyReactNative] ${functionName}, ${message}`);
+    }
 };
 
 /**
