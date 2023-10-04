@@ -8,7 +8,7 @@ import { Platform, NativeModules, NativeEventEmitter } from 'react-native';
 import parseErrorStackLib from '../react-native/Libraries/Core/Devtools/parseErrorStack.js';
 import CountlyConfig from './CountlyConfig.js';
 import { CountlyState } from './CountlyState.js';
-import { Feedback } from './feedback.js';
+import Feedback from './feedback.js';
 
 const { CountlyReactNative } = NativeModules;
 const eventEmitter = new NativeEventEmitter(CountlyReactNative);
