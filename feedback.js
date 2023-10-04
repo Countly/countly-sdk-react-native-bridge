@@ -1,20 +1,29 @@
-import Countly from "./Countly.js";
 
+
+const Feedback = {};
+let state;
+let instance;
+// console.log("Feedback.js/inst", Feedback);
+// console.log("Feedback.js/countly:", Countly);
 /**
  * Get a list of available feedback widgets as array of object to handle multiple widgets of same type.
  * @param {callback listener} onFinished - returns (retrievedWidgets, error)
  * @return {String || []} error message or []
  */
-async function getAvailableFeedbackWidgets(onFinished) {
-  if (!_isInitialized) {
+ async function getAvailableFeedbackWidgets(onFinished) {
+// return;
+  if (!Feedback.state.isInitialized) {
       const message = "'init' must be called before 'getFeedbackWidgets'";
-      Countly.logError('getFeedbackWidgets', message);
+      // Feedback.instance.logError('getFeedbackWidgets', message);
       return message;
   }
+  // console.log('Feedback.js/inst', Feedback.instance);
+
   let result = [];
   let error = null;
+  // return;
   try {
-      result = await CountlyReactNative.getFeedbackWidgets();
+      result = await Feedback.state.CountlyReactNative.getFeedbackWidgets();
   } catch (e) {
       error = e.message;
   }
@@ -35,7 +44,7 @@ async function getAvailableFeedbackWidgets(onFinished) {
  * @return {String || void} error message or void
  */
 function presentFeedbackWidget(feedbackWidget, closeButtonText, widgetShownCallback, widgetClosedCallback) {
-  if (!_isInitialized) {
+  if (!Feedback.state.isInitialized) {
       const msg = "'init' must be called before 'presentFeedbackWidgetObject'";
       Countly.logError('presentFeedbackWidgetObject', msg);
       return msg;
@@ -86,7 +95,7 @@ function presentFeedbackWidget(feedbackWidget, closeButtonText, widgetShownCallb
   * @return {String || []} error message or Object retrievedWidgetData
   */
 async function getFeedbackWidgetData() {
-  if (!_isInitialized) {
+  if (!Feedback.state.isInitialized) {
     const message = "'initWithConfig' must be called before 'getFeedbackWidgetData'";
     Countly.logError('getFeedbackWidgetData', message);
     onFinished(null, message);
@@ -118,15 +127,15 @@ async function getFeedbackWidgetData() {
   * @param {Object} widgetData - widget data for this specific widget
   * @param {Object} widgetResult - segmentation of the filled out feedback. If this segmentation is null, it will be assumed that the survey was closed before completion and mark it appropriately
   */
-async function reportFeedbackWidgetManually() {
-  if (!_isInitialized) {
+async function reportFeedbackWidgetManually(widgetInfo, widgetData, widgetResult) {
+  if (!Feedback.state.isInitialized) {
     const message = "'initWithConfig' must be called before 'reportFeedbackWidgetManually'";
-    Countly.logError('reportFeedbackWidgetManually', message);
+    Feedback.instance.logError('reportFeedbackWidgetManually', message);
     return message;
   }
   const widgetId = widgetInfo.id;
   const widgetType = widgetInfo.type;
-  Countly.logInfo('reportFeedbackWidgetManually', 'Calling "reportFeedbackWidgetManually" with Type:[' + widgetType + ']');
+  // Feedback.instance.logInfo('reportFeedbackWidgetManually', 'Calling "reportFeedbackWidgetManually" with Type:[' + widgetType + ']');
   const widgetInfoList = [];
   widgetInfoList.push(widgetId);
   widgetInfoList.push(widgetType);
@@ -138,17 +147,18 @@ async function reportFeedbackWidgetManually() {
   args.push(widgetResult);
 
   try {
-    return await CountlyReactNative.reportFeedbackWidgetManually(args);
+    return await Feedback.instance.CountlyReactNative.reportFeedbackWidgetManually(args);
   } catch (e) {
     return e.message;
   }
 }
 
-const Feedback = {};
+
 
 Feedback.getAvailableFeedbackWidgets = getAvailableFeedbackWidgets;
 Feedback.presentFeedbackWidget = presentFeedbackWidget;
 Feedback.getFeedbackWidgetData = getFeedbackWidgetData;
 Feedback.reportFeedbackWidgetManually = reportFeedbackWidgetManually;
+Feedback.state = state;
 
 export default Feedback;
