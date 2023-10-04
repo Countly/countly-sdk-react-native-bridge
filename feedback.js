@@ -1,4 +1,3 @@
-import {NativeModules, NativeEventEmitter} from 'react-native';
 import Countly from "./Countly.js";
 
 /**
@@ -28,7 +27,7 @@ async function getAvailableFeedbackWidgets(onFinished) {
 /**
  * Present a chosen feedback widget
  *
- * @param {Object} feedbackWidget - feeback Widget with id, type and name
+ * @param {Object} feedbackWidget - feedback Widget with id, type and name
  * @param {String} closeButtonText - text for cancel/close button
  * @param {callback listener} widgetShownCallback - Callback to be executed when feedback widget is displayed
  * @param {callback listener} widgetClosedCallback - Callback to be executed when feedback widget is closed
@@ -79,13 +78,14 @@ function presentFeedbackWidget(feedbackWidget, closeButtonText, widgetShownCallb
   closeButtonText = closeButtonText || '';
   CountlyReactNative.presentFeedbackWidget([feedbackWidget.id, feedbackWidget.type, feedbackWidget.name, closeButtonText]);
 }
+
 /**
   * Get a list of available feedback widgets as array of object to handle multiple widgets of same type.
   * @param {Object} widgetInfo - identifies the specific widget for which the feedback is filled out
   * @param {callback listener} onFinished - returns (Object retrievedWidgetData, error)
   * @return {String || []} error message or Object retrievedWidgetData
   */
-function getFeedbackWidgetData() {
+async function getFeedbackWidgetData() {
   if (!_isInitialized) {
     const message = "'initWithConfig' must be called before 'getFeedbackWidgetData'";
     Countly.logError('getFeedbackWidgetData', message);
@@ -118,7 +118,7 @@ function getFeedbackWidgetData() {
   * @param {Object} widgetData - widget data for this specific widget
   * @param {Object} widgetResult - segmentation of the filled out feedback. If this segmentation is null, it will be assumed that the survey was closed before completion and mark it appropriately
   */
-function reportFeedbackWidgetManually() {
+async function reportFeedbackWidgetManually() {
   if (!_isInitialized) {
     const message = "'initWithConfig' must be called before 'reportFeedbackWidgetManually'";
     Countly.logError('reportFeedbackWidgetManually', message);

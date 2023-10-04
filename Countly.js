@@ -10,7 +10,7 @@ import CountlyConfig from './CountlyConfig.js';
 import { CountlyState } from './CountlyState.js';
 import { Feedback } from './feedback.js';
 
-const { default as CountlyReactNative } = NativeModules;
+const { CountlyReactNative } = NativeModules;
 const eventEmitter = new NativeEventEmitter(CountlyReactNative);
 
 const Countly = {};
