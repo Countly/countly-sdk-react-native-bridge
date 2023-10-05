@@ -58,7 +58,7 @@ Countly.TemporaryDeviceIDString = 'TemporaryDeviceID';
 /**
  * Initialize Countly
  *
- * @deprecated in 23.02.0 : use 'initWithConfig' intead of 'init'.
+ * @deprecated in 23.02.0 : use 'initWithConfig' instead of 'init'.
  *
  * @function Countly.init should be used to initialize countly
  * @param {String} serverURL server url
@@ -335,7 +335,7 @@ Countly.disablePushNotifications = function () {
 };
 
 /**
- * @deprecated in 23.02.0 : use 'countlyConfig.pushTokenType' intead of 'pushTokenType'.
+ * @deprecated in 23.02.0 : use 'countlyConfig.pushTokenType' instead of 'pushTokenType'.
  *
  * Set messaging mode for push notifications
  * Should be called before Countly init
@@ -392,7 +392,7 @@ Countly.registerForNotification = function (theListener) {
 };
 
 /**
- * @deprecated in 23.02.0 : use 'countlyConfig.configureIntentRedirectionCheck' intead of 'configureIntentRedirectionCheck'.
+ * @deprecated in 23.02.0 : use 'countlyConfig.configureIntentRedirectionCheck' instead of 'configureIntentRedirectionCheck'.
  *
  * Configure intent redirection checks for push notification
  * Should be called before Countly "askForNotificationPermission"
@@ -502,7 +502,7 @@ Countly.setLoggingEnabled = function (enabled = true) {
 };
 
 /**
- * @deprecated in 23.02.0 : use 'countlyConfig.setLocation' intead of 'setLocationInit'.
+ * @deprecated in 23.02.0 : use 'countlyConfig.setLocation' instead of 'setLocationInit'.
  *
  * Set user initial location
  * Should be called before init
@@ -660,7 +660,7 @@ Countly.setHttpPostForced = function (boolean = true) {
 
 Countly.isCrashReportingEnabled = false;
 /**
- * @deprecated in 23.02.0 : use 'countlyConfig.enableCrashReporting' intead of 'enableCrashReporting'.
+ * @deprecated in 23.02.0 : use 'countlyConfig.enableCrashReporting' instead of 'enableCrashReporting'.
  *
  * Enable crash reporting to report unhandled crashes to Countly
  * Should be called before Countly init
@@ -830,7 +830,7 @@ Countly.endSession = function () {
 };
 
 /**
- * @deprecated in 23.02.0 : use 'countlyConfig.enableParameterTamperingProtection' intead of 'enableParameterTamperingProtection'.
+ * @deprecated in 23.02.0 : use 'countlyConfig.enableParameterTamperingProtection' instead of 'enableParameterTamperingProtection'.
  *
  * Set the optional salt to be used for calculating the checksum of requested data which will be sent with each request, using the &checksum field
  * Should be called before Countly init
@@ -1427,7 +1427,7 @@ Countly.userDataBulk.pullValue = async function (keyName, keyValue) {
 };
 
 /**
- * @deprecated in 23.02.0 : use 'countlyConfig.setRequiresConsent' intead of 'setRequiresConsent'.
+ * @deprecated in 23.02.0 : use 'countlyConfig.setRequiresConsent' instead of 'setRequiresConsent'.
  *
  * Set that consent should be required for features to work.
  * Should be called before Countly init
@@ -1462,7 +1462,7 @@ Countly.giveConsent = function (args) {
 };
 
 /**
- * @deprecated in 23.02.0 : use 'countlyConfig.giveConsent' intead of 'giveConsentInit'.
+ * @deprecated in 23.02.0 : use 'countlyConfig.giveConsent' instead of 'giveConsentInit'.
  *
  * Give consent for specific features before init.
  * Should be called after Countly init
@@ -1639,7 +1639,7 @@ Countly.remoteConfigClearValues = async function () {
     return result;
 };
 /**
- * @deprecated in 23.02.0 : use 'countlyConfig.setStarRatingDialogTexts' intead of 'setStarRatingDialogTexts'.
+ * @deprecated in 23.02.0 : use 'countlyConfig.setStarRatingDialogTexts' instead of 'setStarRatingDialogTexts'.
  *
  * Set's the text's for the different fields in the star rating dialog. Set value null if for some field you want to keep the old value
  *
@@ -1674,7 +1674,7 @@ Countly.showStarRating = function (callback) {
  * @param {String} widgetId - id of rating widget to present
  * @param {String} closeButtonText - text for cancel/close button
  * @return {String || void} error message or void
- * @deprecated use 'presentRatingWidgetWithID' intead of 'showFeedbackPopup'.
+ * @deprecated use 'presentRatingWidgetWithID' instead of 'showFeedbackPopup'.
  */
 Countly.showFeedbackPopup = function (widgetId, closeButtonText) {
     if (!_state.isInitialized) {
@@ -1719,6 +1719,7 @@ Countly.presentRatingWidgetWithID = function (widgetId, closeButtonText, ratingW
 
 /**
  * Get a list of available feedback widgets as array of object to handle multiple widgets of same type.
+ * @deprecated in 23.8.0 : use 'Countly.feedback.getAvailableFeedbackWidgets' instead of 'getFeedbackWidgets'.
  * @param {callback listener} onFinished - returns (retrievedWidgets, error)
  * @return {String || []} error message or []
  */
@@ -1743,7 +1744,7 @@ Countly.getFeedbackWidgets = async function (onFinished) {
 
 /**
  * Get a list of available feedback widgets for this device ID
- * @deprecated in 20.11.1 : use 'getFeedbackWidgets' intead of 'getAvailableFeedbackWidgets'.
+ * @deprecated in 20.11.1 : use 'Countly.feedback.getAvailableFeedbackWidgets' instead of 'getAvailableFeedbackWidgets'.
  * Using the old function it will not be possible to see all the available feedback widgets.
  * In case there are multiple ones for the same type, only the last one will be returned due to their id being overwritten in the type field.
  * The newer function allow also to see the widgets 'name' field which can be further used to filter and identify specific widgets.
@@ -1763,6 +1764,7 @@ Countly.getAvailableFeedbackWidgets = async function () {
 /**
  * Present a chosen feedback widget
  *
+ * @deprecated in 23.8.0 : use 'Countly.feedback.presentFeedbackWidget' instead of 'presentFeedbackWidgetObject'.
  * @param {Object} feedbackWidget - feeback Widget with id, type and name
  * @param {String} closeButtonText - text for cancel/close button
  * @param {callback listener} widgetShownCallback - Callback to be executed when feedback widget is displayed
@@ -1822,7 +1824,7 @@ Countly.presentFeedbackWidgetObject = async function (feedbackWidget, closeButto
  * @param {String} widgetId - id of widget to present
  * @param {String} closeButtonText - text for cancel/close button
  * @return {String || void} error message or void
- * @deprecated in 20.11.1 : use 'presentFeedbackWidgetObject' intead of 'presentFeedbackWidget'.
+ * @deprecated in 20.11.1 : use 'Countly.feedback.presentFeedbackWidget' instead of 'presentFeedbackWidget'.
  */
 Countly.presentFeedbackWidget = function (widgetType, widgetId, closeButtonText) {
     if (!_state.isInitialized) {
@@ -1911,7 +1913,7 @@ Countly.recordNetworkTrace = function (networkTraceKey, responseCode, requestPay
 };
 
 /**
- * @deprecated in 23.02.0 : use 'countlyConfig.enableApm' intead of 'enableApm'.
+ * @deprecated in 23.02.0 : use 'countlyConfig.enableApm' instead of 'enableApm'.
  *
  * Enable APM features, which includes the recording of app start time.
  * Should be called before Countly init
@@ -1922,7 +1924,7 @@ Countly.enableApm = function () {
 };
 
 /**
- * @deprecated in 23.02.0 : use 'Countly.recordIndirectAttribution' intead of 'Countly'.
+ * @deprecated in 23.02.0 : use 'Countly.recordIndirectAttribution' instead of 'Countly'.
  *
  * Enable campaign attribution reporting to Countly.
  * For iOS use "recordAttributionID" instead of "enableAttribution"
@@ -1945,7 +1947,7 @@ Countly.enableAttribution = async function (attributionID = '') {
 
 /**
  *
- * @deprecated in 23.02.0 : use 'Countly.recordIndirectAttribution' intead of 'recordAttributionID'.
+ * @deprecated in 23.02.0 : use 'Countly.recordIndirectAttribution' instead of 'recordAttributionID'.
  *
  * set attribution Id for campaign attribution reporting.
  * Currently implemented for iOS only
