@@ -2,7 +2,7 @@ const Feedback = {};
 /**
  * Get a list of available feedback widgets as array of object to handle multiple widgets of same type.
  * @param {callback listener} onFinished - returns (retrievedWidgets, error)
- * @return {Object} Object {error: String, result: []}
+ * @return {Object} Object {error: String, values: []}
  */
 async function getAvailableFeedbackWidgets(onFinished) {
     if (!Feedback.state.isInitialized) {
@@ -21,7 +21,7 @@ async function getAvailableFeedbackWidgets(onFinished) {
     if (onFinished) {
         onFinished(result, error);
     }
-    return { result: result };
+    return { error: error, result: result };
 }
 
 /**
