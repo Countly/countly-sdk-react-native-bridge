@@ -1621,6 +1621,8 @@ Countly.getRemoteConfigValueForKeyP = function (keyName) {
             }
         }
         return value;
+    }).catch((e) => {
+        Countly.logError('getRemoteConfigValueForKeyP, Catch Error:', e);
     });
 };
 
