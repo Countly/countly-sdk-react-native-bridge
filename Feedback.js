@@ -1,17 +1,17 @@
 const Feedback = {};
 /**
- * Get a list of available feedback widgets as array of object to handle multiple widgets of same type.
+ * Get a list of available feedback widgets as an array of objects.
  * @param {callback listener} onFinished - returns (retrievedWidgets, error)
- * @return {Object} Object {error: String, values: []}
+ * @return {Object} Object {error: String or Null, values: [] }
  */
 async function getAvailableFeedbackWidgets(onFinished) {
     if (!Feedback.state.isInitialized) {
         const message = "'init' must be called before 'getAvailableFeedbackWidgets'";
         Feedback.instance.logError('getAvailableFeedbackWidgets', message);
-        return { error: message };
+        return { error: message, values: null };
     }
 
-    let result = [];
+    let result = null;
     let error = null;
     try {
         result = await Feedback.state.CountlyReactNative.getFeedbackWidgets();
@@ -21,7 +21,7 @@ async function getAvailableFeedbackWidgets(onFinished) {
     if (onFinished) {
         onFinished(result, error);
     }
-    return { error: error, result: result };
+    return { error: error, values: result };
 }
 
 /**
@@ -32,7 +32,7 @@ async function getAvailableFeedbackWidgets(onFinished) {
  * @param {callback listener} widgetShownCallback - Callback to be executed when feedback widget is displayed
  * @param {callback listener} widgetClosedCallback - Callback to be executed when feedback widget is closed
  *
- * @return {Object} Object {error: String}
+ * @return {Object} Object {error: String or null}
  */
 function presentFeedbackWidget(feedbackWidget, closeButtonText, widgetShownCallback, widgetClosedCallback) {
     if (!Feedback.state.isInitialized) {
@@ -81,17 +81,17 @@ function presentFeedbackWidget(feedbackWidget, closeButtonText, widgetShownCallb
 }
 
 /**
- * Get a list of available feedback widgets as array of object to handle multiple widgets of same type.
- * @param {Object} widgetInfo - identifies the specific widget for which the feedback is filled out
+ * Get a feedback widget's data as an Object.
+ * @param {Object} widgetInfo - widget to get data for. You should get this from 'getAvailableFeedbackWidgets' method.
  * @param {callback listener} onFinished - returns (Object retrievedWidgetData, error)
- * @return {Object} Object {error: String, result: []}
+ * @return {Object} Object {error: String, data: Object or null}
  */
 async function getFeedbackWidgetData(widgetInfo, onFinished) {
     if (!Feedback.state.isInitialized) {
         const message = "'initWithConfig' must be called before 'getFeedbackWidgetData'";
         Feedback.instance.logError('getFeedbackWidgetData', message);
         onFinished(null, message);
-        return { error: message };
+        return { error: message, data: null };
     }
     const widgetId = widgetInfo.id;
     const widgetType = widgetInfo.type;
@@ -110,14 +110,14 @@ async function getFeedbackWidgetData(widgetInfo, onFinished) {
     if (onFinished) {
         onFinished(result, error);
     }
-    return { error: error, result: result };
+    return { error: error, data: result };
 }
 
 /**
- * Get a list of available feedback widgets as array of object to handle multiple widgets of same type.
- * @param {Object} widgetInfo - identifies the specific widget for which the feedback is filled out
- * @param {Object} widgetData - widget data for this specific widget
- * @param {Object} widgetResult - segmentation of the filled out feedback. If this segmentation is null, it will be assumed that the survey was closed before completion and mark it appropriately
+ * Report manually for a feedback widget.
+ * @param {Object} widgetInfo -  the widget you are targeting. You should get this from 'getAvailableFeedbackWidgets' method.
+ * @param {Object} widgetData - data of that widget. You should get this from 'getFeedbackWidgetData' method.
+ * @param {Object} widgetResult - Information you want to report.
  * @return {Object} Object {error: String}
  */
 function reportFeedbackWidgetManually(widgetInfo, widgetData, widgetResult) {
