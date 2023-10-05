@@ -1,3 +1,10 @@
+## xx.x.x
+* Added new Feedback interface (`Countly.feedback`) on the SDK interface that exposes the calls for feedback widgets.
+* Fixed bug on Android devices for unhandled promise rejection on `getRemoteConfigValueForKeyP`.
+
+* Underlying Android SDK version is 23.8.2
+* Underlying iOS SDK version is 23.8.2
+
 ## 23.6.1
 * Fixed bug for Android devices where "getRemoteConfigValueForKey" and "getRemoteConfigValueForKeyP" methods would return the RCData object.
 
