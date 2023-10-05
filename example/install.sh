@@ -11,7 +11,7 @@ rm App.js
 curl https://raw.githubusercontent.com/Countly/countly-sdk-react-native-bridge/master/example/App.js --output App.js
 curl https://raw.githubusercontent.com/Countly/countly-sdk-react-native-bridge/master/example/Example.js --output Example.js
 
-yarn add countly-sdk-react-native-bridge@23.6.1
+yarn add countly-sdk-react-native-bridge@23.8.0
 
 cd ./ios
 pod install
