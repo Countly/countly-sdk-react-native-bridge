@@ -2,13 +2,13 @@ const Feedback = {};
 /**
  * Get a list of available feedback widgets as an array of objects.
  * @param {callback listener} onFinished - returns (retrievedWidgets, error)
- * @return {Object} Object {error: String or Null, values: Array or null }
+ * @return {Object} Object {error: String or Null, data: Array or null }
  */
 async function getAvailableFeedbackWidgets(onFinished) {
     if (!Feedback.state.isInitialized) {
         const message = "'init' must be called before 'getAvailableFeedbackWidgets'";
         Feedback.instance.logError('getAvailableFeedbackWidgets', message);
-        return { error: message, values: null };
+        return { error: message, data: null };
     }
 
     let result = null;
@@ -21,7 +21,7 @@ async function getAvailableFeedbackWidgets(onFinished) {
     if (onFinished) {
         onFinished(result, error);
     }
-    return { error: error, values: result };
+    return { error: error, data: result };
 }
 
 /**
