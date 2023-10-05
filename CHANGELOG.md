@@ -1,4 +1,4 @@
-## xx.x.x
+## 23.8.0
 * Added new Feedback interface (`Countly.feedback`) on the SDK interface that exposes the calls for feedback widgets.
 * Fixed bug on Android devices for unhandled promise rejection on `getRemoteConfigValueForKeyP`.
 
