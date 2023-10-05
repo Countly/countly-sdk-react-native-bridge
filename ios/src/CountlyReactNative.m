@@ -24,7 +24,7 @@
 + (CountlyFeedbackWidget *)createWithDictionary:(NSDictionary *)dictionary;
 @end
 
-NSString *const kCountlyReactNativeSDKVersion = @"23.6.1";
+NSString *const kCountlyReactNativeSDKVersion = @"23.8.0";
 NSString *const kCountlyReactNativeSDKName = @"js-rnb-ios";
 
 CLYPushTestMode const CLYPushTestModeProduction = @"CLYPushTestModeProduction";
