@@ -1,5 +1,9 @@
 ## 23.8.0
 * Added new Feedback interface (`Countly.feedback`) on the SDK interface that exposes the calls for feedback widgets.
+* Added Manual Reporting feature for the Feedback Widgets. This includes two new methods under the new Feedback interface:
+  * 'getFeedbackWidgetData'
+  * 'reportFeedbackWidgetManually'
+
 * Fixed bug on Android devices for unhandled promise rejection on `getRemoteConfigValueForKeyP`.
 
 * Underlying Android SDK version is 23.8.2
