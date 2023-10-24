@@ -18,6 +18,7 @@ Countly.serverUrl = '';
 Countly.appKey = '';
 let _state = CountlyState;
 CountlyState.CountlyReactNative = CountlyReactNative;
+CountlyState.eventEmitter = eventEmitter;
 
 Countly.feedback = Feedback;
 Countly.feedback.state = CountlyState;

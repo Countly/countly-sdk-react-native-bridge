@@ -1,4 +1,15 @@
 const Feedback = {};
+/*
+ * Callback to be executed when feedback widget is displayed
+ */
+let _widgetShownCallback;
+/*
+ * Callback to be executed when feedback widget is closed
+ */
+let _widgetClosedCallback;
+const widgetShownCallbackName = 'widgetShownCallback';
+const widgetClosedCallbackName = 'widgetClosedCallback';
+
 /**
  * Get a list of available feedback widgets as an array of objects.
  * @param {callback listener} onFinished - returns (retrievedWidgets, error)
@@ -62,13 +73,13 @@ function presentFeedbackWidget(feedbackWidget, closeButtonText, widgetShownCallb
     }
 
     if (widgetShownCallback) {
-        _widgetShownCallback = eventEmitter.addListener(widgetShownCallbackName, () => {
+        _widgetShownCallback = Feedback.state.eventEmitter.addListener(widgetShownCallbackName, () => {
             widgetShownCallback();
             _widgetShownCallback.remove();
         });
     }
     if (widgetClosedCallback) {
-        _widgetClosedCallback = eventEmitter.addListener(widgetClosedCallbackName, () => {
+        _widgetClosedCallback = Feedback.state.eventEmitter.addListener(widgetClosedCallbackName, () => {
             widgetClosedCallback();
             _widgetClosedCallback.remove();
         });
