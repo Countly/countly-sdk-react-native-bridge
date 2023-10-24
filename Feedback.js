@@ -1,17 +1,17 @@
 const Feedback = {};
 /**
- * Get a list of available feedback widgets as an array of objects.
+ * Get a list of available feedback widgets as array of object to handle multiple widgets of same type.
  * @param {callback listener} onFinished - returns (retrievedWidgets, error)
- * @return {Object} Object {error: String or Null, data: Array or null }
+ * @return {String || []} error message or []
  */
 async function getAvailableFeedbackWidgets(onFinished) {
     if (!Feedback.state.isInitialized) {
-        const message = "'init' must be called before 'getAvailableFeedbackWidgets'";
-        Feedback.instance.logError('getAvailableFeedbackWidgets', message);
-        return { error: message, data: null };
+        const message = "'init' must be called before 'getFeedbackWidgets'";
+        Feedback.instance.logError('getFeedbackWidgets', message);
+        return message;
     }
 
-    let result = null;
+    let result = [];
     let error = null;
     try {
         result = await Feedback.state.CountlyReactNative.getFeedbackWidgets();
@@ -21,7 +21,7 @@ async function getAvailableFeedbackWidgets(onFinished) {
     if (onFinished) {
         onFinished(result, error);
     }
-    return { error: error, data: result };
+    return result;
 }
 
 /**
@@ -32,29 +32,29 @@ async function getAvailableFeedbackWidgets(onFinished) {
  * @param {callback listener} widgetShownCallback - Callback to be executed when feedback widget is displayed
  * @param {callback listener} widgetClosedCallback - Callback to be executed when feedback widget is closed
  *
- * @return {Object} Object {error: String or null}
+ * @return {String || void} error message or void
  */
 function presentFeedbackWidget(feedbackWidget, closeButtonText, widgetShownCallback, widgetClosedCallback) {
     if (!Feedback.state.isInitialized) {
         const message = "'init' must be called before 'presentFeedbackWidget'";
-        Feedback.instance.logError('presentFeedbackWidget', msg);
-        return { error: message };
+        Feedback.instance.logError('presentFeedbackWidget', message);
+        return message;
     }
     let message = null;
     if (!feedbackWidget) {
         message = 'feedbackWidget should not be null or undefined';
         Feedback.instance.logError('presentFeedbackWidget', message);
-        return { error: message };
+        return message;
     }
     if (!feedbackWidget.id) {
         message = 'FeedbackWidget id should not be null or empty';
         Feedback.instance.logError('presentFeedbackWidget', message);
-        return { error: message };
+        return message;
     }
     if (!feedbackWidget.type) {
         message = 'FeedbackWidget type should not be null or empty';
         Feedback.instance.logError('presentFeedbackWidget', message);
-        return { error: message };
+        return message;
     }
     if (typeof closeButtonText !== 'string') {
         closeButtonText = '';
@@ -77,21 +77,20 @@ function presentFeedbackWidget(feedbackWidget, closeButtonText, widgetShownCallb
     feedbackWidget.name = feedbackWidget.name || '';
     closeButtonText = closeButtonText || '';
     Feedback.state.CountlyReactNative.presentFeedbackWidget([feedbackWidget.id, feedbackWidget.type, feedbackWidget.name, closeButtonText]);
-    return { error: null };
 }
 
 /**
  * Get a feedback widget's data as an Object.
- * @param {Object} widgetInfo - widget to get data for. You should get this from 'getAvailableFeedbackWidgets' method.
+ * @param {Object} widgetInfo - identifies the specific widget for which the feedback is filled out
  * @param {callback listener} onFinished - returns (Object retrievedWidgetData, error)
- * @return {Object} Object {error: String, data: Object or null}
+ * @return {String || []} error message or Object retrievedWidgetData
  */
 async function getFeedbackWidgetData(widgetInfo, onFinished) {
     if (!Feedback.state.isInitialized) {
         const message = "'initWithConfig' must be called before 'getFeedbackWidgetData'";
         Feedback.instance.logError('getFeedbackWidgetData', message);
         onFinished(null, message);
-        return { error: message, data: null };
+        return message;
     }
     const widgetId = widgetInfo.id;
     const widgetType = widgetInfo.type;
@@ -110,21 +109,20 @@ async function getFeedbackWidgetData(widgetInfo, onFinished) {
     if (onFinished) {
         onFinished(result, error);
     }
-    return { error: error, data: result };
+    return result;
 }
 
 /**
  * Report manually for a feedback widget.
- * @param {Object} widgetInfo -  the widget you are targeting. You should get this from 'getAvailableFeedbackWidgets' method.
- * @param {Object} widgetData - data of that widget. You should get this from 'getFeedbackWidgetData' method.
- * @param {Object} widgetResult - Information you want to report.
- * @return {Object} Object {error: String}
+ * @param {Object} widgetInfo - identifies the specific widget for which the feedback is filled out
+ * @param {Object} widgetData - widget data for this specific widget
+ * @param {Object} widgetResult - segmentation of the filled out feedback. If this segmentation is null, it will be assumed that the survey was closed before completion and mark it appropriately
  */
-function reportFeedbackWidgetManually(widgetInfo, widgetData, widgetResult) {
+async function reportFeedbackWidgetManually(widgetInfo, widgetData, widgetResult) {
     if (!Feedback.state.isInitialized) {
         const message = "'initWithConfig' must be called before 'reportFeedbackWidgetManually'";
         Feedback.instance.logError('reportFeedbackWidgetManually', message);
-        return { error: message };
+        return message;
     }
     const widgetId = widgetInfo.id;
     const widgetType = widgetInfo.type;
@@ -139,13 +137,11 @@ function reportFeedbackWidgetManually(widgetInfo, widgetData, widgetResult) {
     args.push(widgetData);
     args.push(widgetResult);
 
-    let error = null;
     try {
-        Feedback.state.CountlyReactNative.reportFeedbackWidgetManually(args);
+        return await Feedback.state.CountlyReactNative.reportFeedbackWidgetManually(args);
     } catch (e) {
-      error = e.message;
+        return e.message;
     }
-    return { error: error };
 }
 
 Feedback.getAvailableFeedbackWidgets = getAvailableFeedbackWidgets;
