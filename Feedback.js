@@ -48,7 +48,7 @@ async function getAvailableFeedbackWidgets(onFinished) {
 function presentFeedbackWidget(feedbackWidget, closeButtonText, widgetShownCallback, widgetClosedCallback) {
     if (!Feedback.state.isInitialized) {
         const message = "'init' must be called before 'presentFeedbackWidget'";
-        Feedback.instance.logError('presentFeedbackWidget', msg);
+        Feedback.instance.logError('presentFeedbackWidget', message);
         return { error: message };
     }
     let message = null;
