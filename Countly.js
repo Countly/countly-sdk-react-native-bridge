@@ -35,18 +35,6 @@ const DeviceIdType = {
  * Listener for rating widget callback, when callback recieve we will remove the callback using listener.
  */
 let _ratingWidgetListener;
-/*
- * Callback to be executed when feedback widget is displayed
- */
-let _widgetShownCallback;
-
-/*
- * Callback to be executed when feedback widget is closed
- */
-let _widgetClosedCallback;
-
-const widgetShownCallbackName = 'widgetShownCallback';
-const widgetClosedCallbackName = 'widgetClosedCallback';
 const ratingWidgetCallbackName = 'ratingWidgetCallback';
 const pushNotificationCallbackName = 'pushNotificationCallback';
 
@@ -1803,15 +1791,15 @@ Countly.presentFeedbackWidgetObject = async function (feedbackWidget, closeButto
     }
 
     if (widgetShownCallback) {
-        _widgetShownCallback = eventEmitter.addListener(widgetShownCallbackName, () => {
+        _state.widgetShownCallback = eventEmitter.addListener(_state.widgetShownCallbackName, () => {
             widgetShownCallback();
-            _widgetShownCallback.remove();
+            _state.widgetShownCallback.remove();
         });
     }
     if (widgetClosedCallback) {
-        _widgetClosedCallback = eventEmitter.addListener(widgetClosedCallbackName, () => {
+        _state.widgetClosedCallback = eventEmitter.addListener(_state.widgetClosedCallbackName, () => {
             widgetClosedCallback();
-            _widgetClosedCallback.remove();
+            _state.widgetClosedCallback.remove();
         });
     }
 
@@ -1827,7 +1815,7 @@ Countly.presentFeedbackWidgetObject = async function (feedbackWidget, closeButto
  * @param {String} widgetId - id of widget to present
  * @param {String} closeButtonText - text for cancel/close button
  * @return {String || void} error message or void
- * @deprecated in 20.11.1 : use 'Countly.feedback.presentFeedbackWidget' instead of 'presentFeedbackWidget'.
+ * @deprecated in 20.11.1 : use 'Countly.feedback.presentFeedbackWidget' instead of 'presentFeedbackWidget'. NB. The new method require different parameters (feedbackWidget, closeButtonText, widgetShownCallback, widgetClosedCallback)
  */
 Countly.presentFeedbackWidget = function (widgetType, widgetId, closeButtonText) {
     if (!_state.isInitialized) {
