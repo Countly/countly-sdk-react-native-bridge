@@ -1,14 +1,4 @@
 const Feedback = {};
-/*
- * Callback to be executed when feedback widget is displayed
- */
-let _widgetShownCallback;
-/*
- * Callback to be executed when feedback widget is closed
- */
-let _widgetClosedCallback;
-const widgetShownCallbackName = 'widgetShownCallback';
-const widgetClosedCallbackName = 'widgetClosedCallback';
 
 /**
  * Get a list of available feedback widgets as an array of objects.
@@ -73,15 +63,15 @@ function presentFeedbackWidget(feedbackWidget, closeButtonText, widgetShownCallb
     }
 
     if (widgetShownCallback) {
-        _widgetShownCallback = Feedback.state.eventEmitter.addListener(widgetShownCallbackName, () => {
+        Feedback.state.widgetShownCallback = Feedback.state.eventEmitter.addListener(Feedback.state.widgetShownCallbackName, () => {
             widgetShownCallback();
-            _widgetShownCallback.remove();
+            Feedback.state.widgetShownCallback.remove();
         });
     }
     if (widgetClosedCallback) {
-        _widgetClosedCallback = Feedback.state.eventEmitter.addListener(widgetClosedCallbackName, () => {
+        Feedback.state.widgetClosedCallback = Feedback.state.eventEmitter.addListener(Feedback.state.widgetClosedCallbackName, () => {
             widgetClosedCallback();
-            _widgetClosedCallback.remove();
+            Feedback.state.widgetClosedCallback.remove();
         });
     }
 
@@ -131,7 +121,7 @@ async function getFeedbackWidgetData(widgetInfo, onFinished) {
  * @param {Object} widgetResult - Information you want to report.
  * @return {Object} Object {error: String}
  */
-function reportFeedbackWidgetManually(widgetInfo, widgetData, widgetResult) {
+async function reportFeedbackWidgetManually(widgetInfo, widgetData, widgetResult) {
     if (!Feedback.state.isInitialized) {
         const message = "'initWithConfig' must be called before 'reportFeedbackWidgetManually'";
         Feedback.instance.logError('reportFeedbackWidgetManually', message);
@@ -152,7 +142,7 @@ function reportFeedbackWidgetManually(widgetInfo, widgetData, widgetResult) {
 
     let error = null;
     try {
-        Feedback.state.CountlyReactNative.reportFeedbackWidgetManually(args);
+        await Feedback.state.CountlyReactNative.reportFeedbackWidgetManually(args);
     } catch (e) {
       error = e.message;
     }
