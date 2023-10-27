@@ -1681,7 +1681,7 @@ Countly.showFeedbackPopup = function (widgetId, closeButtonText) {
  *
  * @param {String} widgetId - id of rating widget to present
  * @param {String} closeButtonText - text for cancel/close button
- * @param {callback listener} ratingWidgetCallback
+ * @param {callback listener} [ratingWidgetCallback] This parameter is optional.
  */
 Countly.presentRatingWidgetWithID = function (widgetId, closeButtonText, ratingWidgetCallback) {
     if (!_state.isInitialized) {
@@ -1711,7 +1711,7 @@ Countly.presentRatingWidgetWithID = function (widgetId, closeButtonText, ratingW
 /**
  * Get a list of available feedback widgets as array of object to handle multiple widgets of same type.
  * @deprecated in 23.8.0 : use 'Countly.feedback.getAvailableFeedbackWidgets' instead of 'getFeedbackWidgets'.
- * @param {callback listener} onFinished - returns (retrievedWidgets, error)
+ * @param {callback listener} [onFinished] - returns (retrievedWidgets, error). This parameter is optional.
  * @return {String || []} error message or []
  */
 Countly.getFeedbackWidgets = async function (onFinished) {
@@ -1758,8 +1758,8 @@ Countly.getAvailableFeedbackWidgets = async function () {
  * @deprecated in 23.8.0 : use 'Countly.feedback.presentFeedbackWidget' instead of 'presentFeedbackWidgetObject'.
  * @param {Object} feedbackWidget - feeback Widget with id, type and name
  * @param {String} closeButtonText - text for cancel/close button
- * @param {callback listener} widgetShownCallback - Callback to be executed when feedback widget is displayed
- * @param {callback listener} widgetClosedCallback - Callback to be executed when feedback widget is closed
+ * @param {callback listener} [widgetShownCallback] - Callback to be executed when feedback widget is displayed. This parameter is optional.
+ * @param {callback listener} [widgetClosedCallback] - Callback to be executed when feedback widget is closed. This parameter is optional.
  * 
  * @return {String || void} error message or void
  */

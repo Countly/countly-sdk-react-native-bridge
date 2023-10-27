@@ -2,7 +2,7 @@ const Feedback = {};
 
 /**
  * Get a list of available feedback widgets as an array of objects.
- * @param {callback listener} onFinished - returns (retrievedWidgets, error)
+ * @param {callback} [onFinished] - returns (retrievedWidgets, error). This parameter is optional.
  * @return {Object} Object {error: String or Null, data: Array or null }
  */
 async function getAvailableFeedbackWidgets(onFinished) {
@@ -30,8 +30,8 @@ async function getAvailableFeedbackWidgets(onFinished) {
  *
  * @param {Object} feedbackWidget - feedback Widget with id, type and name
  * @param {String} closeButtonText - text for cancel/close button
- * @param {callback listener} widgetShownCallback - Callback to be executed when feedback widget is displayed
- * @param {callback listener} widgetClosedCallback - Callback to be executed when feedback widget is closed
+ * @param {callback} [widgetShownCallback] - Callback to be executed when feedback widget is displayed. This parameter is optional.
+ * @param {callback} [widgetClosedCallback] - Callback to be executed when feedback widget is closed. This parameter is optional.
  *
  * @return {Object} Object {error: String or null}
  */
@@ -84,7 +84,7 @@ function presentFeedbackWidget(feedbackWidget, closeButtonText, widgetShownCallb
 /**
  * Get a feedback widget's data as an Object.
  * @param {Object} widgetInfo - widget to get data for. You should get this from 'getAvailableFeedbackWidgets' method.
- * @param {callback listener} onFinished - returns (Object retrievedWidgetData, error)
+ * @param {callback} [onFinished] - returns (Object retrievedWidgetData, error). This parameter is optional.
  * @return {Object} Object {error: String, data: Object or null}
  */
 async function getFeedbackWidgetData(widgetInfo, onFinished) {
