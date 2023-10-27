@@ -1,4 +1,4 @@
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/0eef77bbd1014102b1f4e1630179ddac)](https://www.codacy.com/gh/Countly/countly-sdk-react-native-bridge/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Countly/countly-sdk-react-native-bridge&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/2d691b48780b440d915a0cfa059474b1)](https://app.codacy.com/gh/Countly/countly-sdk-react-native-bridge?utm_source=github.com&utm_medium=referral&utm_content=Countly/countly-sdk-react-native-bridge&utm_campaign=Badge_Grade)
 
 # Countly React Native Bridge SDK
 This repository contains the Countly React Native Bridge SDK, which can be integrated into React Native mobile applications. The Countly React Native Bridge SDK is intended to be used with [Countly Lite](https://countly.com/lite) or [Countly Enterprise](https://count.ly/product).
