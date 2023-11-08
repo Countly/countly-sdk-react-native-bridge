@@ -1,4 +1,50 @@
-# iOS Push Notification Documentation
+# Creating the Sample Countly RN App
+
+To run a React Native application you have to set up your environment correctly.
+Please refer to the React Native [documentation](https://reactnative.dev/docs/environment-setup) to check the latest information on this topic.
+
+## Automatic App Creation
+
+If you have setted up your environment correctly then you should be able to run the example app by running the create_app.py provided
+
+```bash
+python create_app.py
+```
+
+Then you can start the app by:
+
+```bash
+npx react-native run-android 
+# or npx react-native run-ios
+```
+
+## Manual App Creation
+
+If you want to set up the app manually instead, then you should run:
+
+```bash
+npx react-native@latest init AwesomeProject
+```
+
+Then copy the contents of CountlyRNExample into the AwesomeProject and let it replace the App.tsx there.
+
+Then add "countly-sdk-react-native-bridge" into dependencies in package.json:
+
+```bash
+npm install --save countly-sdk-react-native-bridge@latest
+# if you are on iOS then you should also:
+# cd ios
+# pod install
+```
+
+Finally you can run:
+
+```bash
+npx react-native run-android 
+# or npx react-native run-ios
+```
+
+## iOS Push Notification Documentation
 
 Note: This documentation assumes, that you have created necessary certficate, have proper app bundle id.
 
@@ -13,7 +59,7 @@ STEP 2: Add Capabilities
 
 STEP 3: Place below code in there respective files.
 
-## AppDelegate.m
+### AppDelegate.m
 
 Add header file 
 `#import "CountlyReactNative.h"`
@@ -40,7 +86,7 @@ Before `@end` add these method
   completionHandler(0);
 }
 
-## Rich Push Notification
+### Rich Push Notification
 
 STEP 1: Creating Notification Service Extension
         Editor -> Add Target -> 
@@ -82,3 +128,4 @@ STEP 3: Updating NotificationService file
         Note: Please make sure you check Deployment Target version of extension target is 10, not 10.3 (or whatever minor version Xcode set automatically). Otherwise users running iOS versions lower than Deployment Target value can not get rich push notifications.
 
         Note: To send push messages to applications that are Debug build use Countly.messagingMode.DEVELOPMENT, for App Store built ones use Countly.messagingMode.PRODUCTION, and for TestFlight/Ad Hoc builds use Countly.messagingMode.ADHOC.    
+
