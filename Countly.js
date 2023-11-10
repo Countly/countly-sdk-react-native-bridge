@@ -20,9 +20,7 @@ let _state = CountlyState;
 CountlyState.CountlyReactNative = CountlyReactNative;
 CountlyState.eventEmitter = eventEmitter;
 
-Countly.feedback = Feedback;
-Countly.feedback.state = CountlyState;
-Countly.feedback.instance = Countly;
+Countly.feedback = new Feedback(CountlyState, Countly);
 
 let _isPushInitialized = false;
 const DeviceIdType = {
