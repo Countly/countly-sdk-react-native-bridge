@@ -1,3 +1,4 @@
+import parseErrorStackLib from '../react-native/Libraries/Core/Devtools/parseErrorStack.js';
 import * as L from './Logger.js';
 
 const DeviceIdType = {

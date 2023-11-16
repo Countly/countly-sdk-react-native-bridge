@@ -1,4 +1,4 @@
-const countlyNamespace = '[CountlyReactNative]';
+const countlyNamespace = '[CountlyReactNative] ';
 let canLog = false;
 
 /**
