@@ -193,16 +193,6 @@ Countly.sendEvent = function (options) {
 };
 
 /**
- * Enable or disable automatic view tracking
- *
- * @deprecated in 20.04.6
- *
- */
-Countly.setViewTracking = async function (boolean) {
-    Countly.logWarning('setViewTracking', 'setViewTracking is deprecated.');
-};
-
-/**
  * Record custom view to Countly.
  *
  * @param {string} recordView - name of the view
@@ -244,6 +234,7 @@ Countly.recordView = async function (recordView, segments) {
 Countly.disablePushNotifications = function () {
     if (!/ios/.exec(Platform.OS)) {
         L.e('disablePushNotifications, ' + 'disablePushNotifications is not implemented for Android');
+
         return 'disablePushNotifications : To be implemented';
     }
     L.d('disablePushNotifications, Disabling push notifications');
@@ -324,6 +315,7 @@ Countly.registerForNotification = function (theListener) {
 Countly.configureIntentRedirectionCheck = function (allowedIntentClassNames = [], allowedIntentPackageNames = [], useAdditionalIntentRedirectionChecks = true) {
     if (/ios/.exec(Platform.OS)) {
         L.e('configureIntentRedirectionCheck, configureIntentRedirectionCheck is not required for iOS');
+      
         return 'configureIntentRedirectionCheck : not required for iOS';
     }
 
@@ -367,7 +359,7 @@ Countly.configureIntentRedirectionCheck = function (allowedIntentClassNames = []
 };
 
 /**
- * @deprecated Automatic sessions are handled by underlying SDK, this function will do nothing.
+ * @deprecated at 23.6.0 - Automatic sessions are handled by underlying SDK, this function will do nothing.
  *
  * Countly start for android
  *
@@ -378,7 +370,7 @@ Countly.start = function () {
 };
 
 /**
- * @deprecated Automatic sessions are handled by underlying SDK, this function will do nothing.
+ * @deprecated at 23.6.0 - Automatic sessions are handled by underlying SDK, this function will do nothing.
  *
  * Countly stop for android
  *
@@ -503,7 +495,7 @@ Countly.getCurrentDeviceId = async function () {
     return result;
 };
 
-/**
+ /**
  * Get currently used device Id type.
  * Should be called after Countly init
  *
@@ -1591,23 +1583,6 @@ Countly.showStarRating = function (callback) {
  *
  * @param {String} widgetId - id of rating widget to present
  * @param {String} closeButtonText - text for cancel/close button
- * @return {String || void} error message or void
- * @deprecated use 'presentRatingWidgetWithID' instead of 'showFeedbackPopup'.
- */
-Countly.showFeedbackPopup = function (widgetId, closeButtonText) {
-    if (!_state.isInitialized) {
-        const message = "'init' must be called before 'showFeedbackPopup'";
-        L.e(`showFeedbackPopup, ${message}`);
-        return message;
-    }
-    Countly.presentRatingWidgetWithID(widgetId, closeButtonText);
-};
-
-/**
- * Present a Rating Popup using rating widget Id
- *
- * @param {String} widgetId - id of rating widget to present
- * @param {String} closeButtonText - text for cancel/close button
  * @param {callback listener} [ratingWidgetCallback] This parameter is optional.
  */
 Countly.presentRatingWidgetWithID = function (widgetId, closeButtonText, ratingWidgetCallback) {
@@ -1657,26 +1632,6 @@ Countly.getFeedbackWidgets = async function (onFinished) {
     if (onFinished) {
         onFinished(result, error);
     }
-    return result;
-};
-
-/**
- * Get a list of available feedback widgets for this device ID
- * @deprecated in 20.11.1 : use 'Countly.feedback.getAvailableFeedbackWidgets' instead of 'getAvailableFeedbackWidgets'.
- * Using the old function it will not be possible to see all the available feedback widgets.
- * In case there are multiple ones for the same type, only the last one will be returned due to their id being overwritten in the type field.
- * The newer function allow also to see the widgets 'name' field which can be further used to filter and identify specific widgets.
- *
- * @return {String || void} error message or void
- */
-Countly.getAvailableFeedbackWidgets = async function () {
-    if (!_state.isInitialized) {
-        const message = "'init' must be called before 'getAvailableFeedbackWidgets'";
-        L.e(`getAvailableFeedbackWidgets, ${message}`);
-        return message;
-    }
-    L.w('getAvailableFeedbackWidgets, getAvailableFeedbackWidgets is deprecated, use Countly.feedback.getAvailableFeedbackWidgets instead.');
-    const result = await CountlyReactNative.getAvailableFeedbackWidgets();
     return result;
 };
 
@@ -1735,29 +1690,6 @@ Countly.presentFeedbackWidgetObject = async function (feedbackWidget, closeButto
     feedbackWidget.name = feedbackWidget.name || '';
     closeButtonText = closeButtonText || '';
     CountlyReactNative.presentFeedbackWidget([feedbackWidget.id, feedbackWidget.type, feedbackWidget.name, closeButtonText]);
-};
-
-/**
- * Present a chosen feedback widget
- *
- * @param {String} widgetType - type of widget : "nps" or "survey"
- * @param {String} widgetId - id of widget to present
- * @param {String} closeButtonText - text for cancel/close button
- * @return {String || void} error message or void
- * @deprecated in 20.11.1 : use 'Countly.feedback.presentFeedbackWidget' instead of 'presentFeedbackWidget'. NB. The new method require different parameters (feedbackWidget, closeButtonText, widgetShownCallback, widgetClosedCallback)
- */
-Countly.presentFeedbackWidget = function (widgetType, widgetId, closeButtonText) {
-    if (!_state.isInitialized) {
-        const message = "'init' must be called before 'presentFeedbackWidget'";
-        L.e(`presentFeedbackWidget, ${message}`);
-        return message;
-    }
-    L.w('presentFeedbackWidget, presentFeedbackWidget is deprecated, use Countly.feedback.presentFeedbackWidget instead.');
-    const feedbackWidget = {
-        'id': widgetId,
-        'type': widgetType,
-    };
-    Countly.presentFeedbackWidgetObject(feedbackWidget, closeButtonText);
 };
 
 /**

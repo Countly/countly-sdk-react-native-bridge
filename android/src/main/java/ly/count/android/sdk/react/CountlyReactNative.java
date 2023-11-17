@@ -648,7 +648,26 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         String exceptionString = args.getString(0);
         Exception exception = new Exception(exceptionString);
 
-        Countly.sharedInstance().crashes().recordHandledException(exception);
+        if (args.size() == 2 ) {
+            Countly.sharedInstance().crashes().recordHandledException(exception);
+            return;
+        }
+        
+        Map<String, Object> segmentationMap = new HashMap<>();
+
+        // TODO: refactor this tandem to iOS in the future
+        // starting from index 2 because we are skipping the exceptionString and the fatality
+        // from 2 onwards, the key-value pairs are coming in pairs
+        // we are keeping this weird structure for compatibility with iOS
+        for (int i = 2; i < args.size(); i += 2) {
+            if (i + 1 < args.size()) {
+                String key = args.getString(i);
+                String value = args.getString(i + 1);
+                segmentationMap.put(key, value);
+            }
+        }
+
+        Countly.sharedInstance().crashes().recordHandledException(exception, segmentationMap);
     }
 
     @ReactMethod
