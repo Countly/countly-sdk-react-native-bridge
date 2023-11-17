@@ -1,3 +1,12 @@
+## X.X.X
+* Removed the deprecated 'setViewTracking' method. (No replacement)
+* Removed the deprecated 'showFeedbackPopup' method. (replaced with 'presentRatingWidgetWithID')
+* Removed the deprecated 'getAvailableFeedbackWidgets' method. (replaced with 'feedback.getAvailableFeedbackWidgets')
+* Removed the deprecated 'presentFeedbackWidget' method. (replaced with 'feedback.presentFeedbackWidget')
+
+* Underlying Android SDK version is 23.8.2
+* Underlying iOS SDK version is 23.8.2
+
 ## 23.8.1
 * Fixed bug where "presentFeedbackWidget" method would fail with "Property 'eventEmitter' doesn't exist" if callbacks are provided.
 

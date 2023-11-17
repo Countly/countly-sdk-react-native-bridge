@@ -39,7 +39,7 @@ const ratingWidgetCallbackName = 'ratingWidgetCallback';
 const pushNotificationCallbackName = 'pushNotificationCallback';
 
 Countly.messagingMode = { 'DEVELOPMENT': '1', 'PRODUCTION': '0', 'ADHOC': '2' };
-if (Platform.OS.match('android')) {
+if (/android/.exec(Platform.OS)) {
     Countly.messagingMode.DEVELOPMENT = '2';
 }
 Countly.TemporaryDeviceIDString = 'TemporaryDeviceID';
@@ -193,7 +193,7 @@ Countly.isInitialized = async function () {
 /**
  *
  * Checks if the sdk is started;
- * 
+ *
  * @deprecated in 23.6.0. This will be removed.
  *
  * @return {bool || String} bool or error message
@@ -211,7 +211,7 @@ Countly.hasBeenCalledOnStart = function () {
 /**
  *
  * Used to send various types of event;
- * 
+ *
  * @param {Object} options event
  * @return {String || void} error message or void
  */
@@ -269,16 +269,6 @@ Countly.sendEvent = function (options) {
 };
 
 /**
- * Enable or disable automatic view tracking
- *
- * @deprecated in 20.04.6
- *
- */
-Countly.setViewTracking = async function (boolean) {
-    Countly.logWarning('setViewTracking', 'setViewTracking is deprecated.');
-};
-
-/**
  * Record custom view to Countly.
  *
  * @param {string} recordView - name of the view
@@ -313,11 +303,11 @@ Countly.recordView = async function (recordView, segments) {
  * Disable push notifications feature, by default it is enabled.
  * Currently implemented for iOS only
  * Should be called before Countly init
- * 
+ *
  * @return {String || void} error message or void
  */
 Countly.disablePushNotifications = function () {
-    if (!Platform.OS.match('ios')) {
+    if (!/ios/.exec(Platform.OS)) {
         return 'disablePushNotifications : To be implemented';
     }
     CountlyReactNative.disablePushNotifications();
@@ -328,7 +318,7 @@ Countly.disablePushNotifications = function () {
  *
  * Set messaging mode for push notifications
  * Should be called before Countly init
- * 
+ *
  * @return {String || void} error message or void
  */
 Countly.pushTokenType = async function (tokenType, channelName, channelDescription) {
@@ -392,7 +382,7 @@ Countly.registerForNotification = function (theListener) {
  * @return {String || void} error message or void
  */
 Countly.configureIntentRedirectionCheck = function (allowedIntentClassNames = [], allowedIntentPackageNames = [], useAdditionalIntentRedirectionChecks = true) {
-    if (Platform.OS.match('ios')) {
+    if (/ios/.exec(Platform.OS)) {
         return 'configureIntentRedirectionCheck : not required for iOS';
     }
 
@@ -435,25 +425,25 @@ Countly.configureIntentRedirectionCheck = function (allowedIntentClassNames = []
 };
 
 /**
- * @deprecated Automatic sessions are handled by underlying SDK, this function will do nothing.
+ * @deprecated at 23.6.0 - Automatic sessions are handled by underlying SDK, this function will do nothing.
  *
  * Countly start for android
  *
  * @return {String || void} error message or void
  */
 Countly.start = function () {
-    Countly.logWarning('start', "Automatic sessions are handled by underlying SDK, this function will do nothing.");
+    Countly.logWarning('start', 'Automatic sessions are handled by underlying SDK, this function will do nothing.');
 };
 
 /**
- * @deprecated Automatic sessions are handled by underlying SDK, this function will do nothing.
+ * @deprecated at 23.6.0 - Automatic sessions are handled by underlying SDK, this function will do nothing.
  *
  * Countly stop for android
  *
  * @return {String || void} error message or void
  */
 Countly.stop = function () {
-    Countly.logWarning('stop', "Automatic sessions are handled by underlying SDK, this function will do nothing.");
+    Countly.logWarning('stop', 'Automatic sessions are handled by underlying SDK, this function will do nothing.');
 };
 
 /**
@@ -483,7 +473,7 @@ Countly.disableLogging = function () {
 /**
  * Set to true if you want to enable countly internal debugging logs
  * Should be called before Countly init
- * 
+ *
  * @param {[bool = true]} enabled server url
  */
 Countly.setLoggingEnabled = function (enabled = true) {
@@ -550,7 +540,7 @@ Countly.disableLocation = function () {
  *
  * Get currently used device Id.
  * Should be called after Countly init
- * 
+ *
  * @return {String} device id or error message
  */
 Countly.getCurrentDeviceId = async function () {
@@ -566,7 +556,7 @@ Countly.getCurrentDeviceId = async function () {
 /**
  *
  * internal countly function that converts String to DeviceIdType.
- * 
+ *
  * @return {DeviceIdType || null} deviceIdType e.g DeviceIdType.DEVELOPER_SUPPLIED, DeviceIdType.TEMPORARY_ID, DeviceIdType.SDK_GENERATED.
  */
 _getDeviceIdType = function (deviceIdType) {
@@ -592,7 +582,7 @@ _getDeviceIdType = function (deviceIdType) {
 /**
  * Get currently used device Id type.
  * Should be called after Countly init
- * 
+ *
  * @return {DeviceIdType || null} deviceIdType or null
  * */
 Countly.getDeviceIDType = async function () {
@@ -610,7 +600,7 @@ Countly.getDeviceIDType = async function () {
 
 /**
  * Change the current device id
- * 
+ *
  * @param {String} device id new device id
  * @param {String} onServer merge device id
  * @return {String || void} error message or void
@@ -643,7 +633,7 @@ Countly.changeDeviceId = async function (newDeviceID, onServer) {
  */
 Countly.setHttpPostForced = function (boolean = true) {
     const args = [];
-    args.push(boolean == true ? '1' : '0');
+    args.push(boolean ? '1' : '0');
     CountlyReactNative.setHttpPostForced(args);
 };
 
@@ -823,7 +813,7 @@ Countly.endSession = function () {
  *
  * Set the optional salt to be used for calculating the checksum of requested data which will be sent with each request, using the &checksum field
  * Should be called before Countly init
- * 
+ *
  * @param {String} salt salt
  * @return {String || void} error message or void
  */
@@ -840,7 +830,7 @@ Countly.enableParameterTamperingProtection = async function (salt) {
  *
  * It will ensure that connection is made with one of the public keys specified
  * Should be called before Countly init
- * 
+ *
  * @return {String || void} error message or void
  */
 Countly.pinnedCertificates = async function (certificateName) {
@@ -1420,7 +1410,7 @@ Countly.userDataBulk.pullValue = async function (keyName, keyValue) {
  *
  * Set that consent should be required for features to work.
  * Should be called before Countly init
- * 
+ *
  * @param {bool} flag if true, consent is required for features to work.
  */
 Countly.setRequiresConsent = function (flag) {
@@ -1431,7 +1421,7 @@ Countly.setRequiresConsent = function (flag) {
  *
  * Give consent for some features
  * Should be called after Countly init
- * 
+ *
  * @param {String[]} args list of consents
  * @return {String || void} error message or void
  */
@@ -1455,7 +1445,7 @@ Countly.giveConsent = function (args) {
  *
  * Give consent for specific features before init.
  * Should be called after Countly init
- * 
+ *
  * @param {String[]} args list of consents
  */
 Countly.giveConsentInit = async function (args) {
@@ -1474,7 +1464,7 @@ Countly.giveConsentInit = async function (args) {
  *
  * Remove consent for some features
  * Should be called after Countly init
- * 
+ *
  * @param {String[]} args list of consents
  * @return {String || void} error message or void
  */
@@ -1497,7 +1487,7 @@ Countly.removeConsent = function (args) {
  *
  * Give consent for all features
  * Should be called after Countly init
- * 
+ *
  * @return {String || void} error message or void
  */
 Countly.giveAllConsent = function () {
@@ -1513,7 +1503,7 @@ Countly.giveAllConsent = function () {
  *
  * Remove consent for all features
  * Should be called after Countly init
- * 
+ *
  * @return {String || void} error message or void
  */
 Countly.removeAllConsent = function () {
@@ -1604,19 +1594,21 @@ Countly.getRemoteConfigValueForKeyP = function (keyName) {
         return 'To be implemented';
     }
     const promise = CountlyReactNative.getRemoteConfigValueForKeyP(keyName);
-    return promise.then((value) => {
-        if (Platform.OS == 'android') {
-            try {
-                value = JSON.parse(value);
-            } catch (e) {
-                // Countly.logError('getRemoteConfigValueForKeyP', e.message);
-                // noop. value will remain string if not JSON parsable and returned as string
+    return promise
+        .then((value) => {
+            if (Platform.OS == 'android') {
+                try {
+                    value = JSON.parse(value);
+                } catch (e) {
+                    // Countly.logError('getRemoteConfigValueForKeyP', e.message);
+                    // noop. value will remain string if not JSON parsable and returned as string
+                }
             }
-        }
-        return value;
-    }).catch((e) => {
-        Countly.logError('getRemoteConfigValueForKeyP, Catch Error:', e);
-    });
+            return value;
+        })
+        .catch((e) => {
+            Countly.logError('getRemoteConfigValueForKeyP, Catch Error:', e);
+        });
 };
 
 Countly.remoteConfigClearValues = async function () {
@@ -1657,23 +1649,6 @@ Countly.showStarRating = function (callback) {
         callback = function () {};
     }
     CountlyReactNative.showStarRating([], callback);
-};
-
-/**
- * Present a Rating Popup using rating widget Id
- *
- * @param {String} widgetId - id of rating widget to present
- * @param {String} closeButtonText - text for cancel/close button
- * @return {String || void} error message or void
- * @deprecated use 'presentRatingWidgetWithID' instead of 'showFeedbackPopup'.
- */
-Countly.showFeedbackPopup = function (widgetId, closeButtonText) {
-    if (!_state.isInitialized) {
-        const message = "'init' must be called before 'showFeedbackPopup'";
-        Countly.logError('showFeedbackPopup', message);
-        return message;
-    }
-    Countly.presentRatingWidgetWithID(widgetId, closeButtonText);
 };
 
 /**
@@ -1734,25 +1709,6 @@ Countly.getFeedbackWidgets = async function (onFinished) {
 };
 
 /**
- * Get a list of available feedback widgets for this device ID
- * @deprecated in 20.11.1 : use 'Countly.feedback.getAvailableFeedbackWidgets' instead of 'getAvailableFeedbackWidgets'.
- * Using the old function it will not be possible to see all the available feedback widgets.
- * In case there are multiple ones for the same type, only the last one will be returned due to their id being overwritten in the type field.
- * The newer function allow also to see the widgets 'name' field which can be further used to filter and identify specific widgets.
- * 
- * @return {String || void} error message or void
- */
-Countly.getAvailableFeedbackWidgets = async function () {
-    if (!_state.isInitialized) {
-        const message = "'init' must be called before 'getAvailableFeedbackWidgets'";
-        Countly.logError('getAvailableFeedbackWidgets', message);
-        return message;
-    }
-    const result = await CountlyReactNative.getAvailableFeedbackWidgets();
-    return result;
-};
-
-/**
  * Present a chosen feedback widget
  *
  * @deprecated in 23.8.0 : use 'Countly.feedback.presentFeedbackWidget' instead of 'presentFeedbackWidgetObject'.
@@ -1760,7 +1716,7 @@ Countly.getAvailableFeedbackWidgets = async function () {
  * @param {String} closeButtonText - text for cancel/close button
  * @param {callback listener} [widgetShownCallback] - Callback to be executed when feedback widget is displayed. This parameter is optional.
  * @param {callback listener} [widgetClosedCallback] - Callback to be executed when feedback widget is closed. This parameter is optional.
- * 
+ *
  * @return {String || void} error message or void
  */
 Countly.presentFeedbackWidgetObject = async function (feedbackWidget, closeButtonText, widgetShownCallback, widgetClosedCallback) {
@@ -1806,28 +1762,6 @@ Countly.presentFeedbackWidgetObject = async function (feedbackWidget, closeButto
     feedbackWidget.name = feedbackWidget.name || '';
     closeButtonText = closeButtonText || '';
     CountlyReactNative.presentFeedbackWidget([feedbackWidget.id, feedbackWidget.type, feedbackWidget.name, closeButtonText]);
-};
-
-/**
- * Present a chosen feedback widget
- *
- * @param {String} widgetType - type of widget : "nps" or "survey"
- * @param {String} widgetId - id of widget to present
- * @param {String} closeButtonText - text for cancel/close button
- * @return {String || void} error message or void
- * @deprecated in 20.11.1 : use 'Countly.feedback.presentFeedbackWidget' instead of 'presentFeedbackWidget'. NB. The new method require different parameters (feedbackWidget, closeButtonText, widgetShownCallback, widgetClosedCallback)
- */
-Countly.presentFeedbackWidget = function (widgetType, widgetId, closeButtonText) {
-    if (!_state.isInitialized) {
-        const message = "'init' must be called before 'presentFeedbackWidget'";
-        Countly.logError('presentFeedbackWidget', message);
-        return message;
-    }
-    const feedbackWidget = {
-        'id': widgetId,
-        'type': widgetType,
-    };
-    Countly.presentFeedbackWidgetObject(feedbackWidget, closeButtonText);
 };
 
 /**
@@ -1922,7 +1856,7 @@ Countly.enableApm = function () {
  * Should be called before Countly init
  */
 Countly.enableAttribution = async function (attributionID = '') {
-    if (Platform.OS.match('ios')) {
+    if (/ios/.exec(Platform.OS)) {
         if (attributionID == '') {
             const message = "attribution Id for iOS can't be empty string";
             Countly.logError('enableAttribution', message);
@@ -1930,7 +1864,7 @@ Countly.enableAttribution = async function (attributionID = '') {
         }
         Countly.recordAttributionID(attributionID);
     } else {
-        const message = "This method does nothing for android";
+        const message = 'This method does nothing for android';
         Countly.logError('enableAttribution', message);
         return message;
     }
@@ -1944,7 +1878,7 @@ Countly.enableAttribution = async function (attributionID = '') {
  * Currently implemented for iOS only
  */
 Countly.recordAttributionID = function (attributionID) {
-    if (!Platform.OS.match('ios')) {
+    if (!/ios/.exec(Platform.OS)) {
         return 'recordAttributionID : To be implemented';
     }
     const args = [];
