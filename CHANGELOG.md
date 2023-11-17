@@ -1,6 +1,6 @@
-## X.X.X
-
+## 23.10.0
 * Fixed a bug where segment provided to 'logException' was ignored in Android devices
+* Fixed a bug where bridged SDK logs were not printing
 
 * Removed the deprecated 'setViewTracking' method. (No replacement)
 * Removed the deprecated 'showFeedbackPopup' method. (replaced with 'presentRatingWidgetWithID')
