@@ -1,3 +1,6 @@
+## X.X.X
+* Fixed a bug where segment provided to 'logException' was ignored in Android devices
+
 ## 23.8.1
 * Fixed bug where "presentFeedbackWidget" method would fail with "Property 'eventEmitter' doesn't exist" if callbacks are provided.
 
