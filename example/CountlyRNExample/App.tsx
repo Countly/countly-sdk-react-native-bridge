@@ -13,8 +13,8 @@ import CountlyConfig from 'countly-sdk-react-native-bridge/CountlyConfig';
 
 const successCodes = [100, 101, 200, 201, 202, 205, 300, 301, 303, 305];
 const failureCodes = [400, 402, 405, 408, 500, 501, 502, 505];
-const COUNTLY_APP_KEY = '21cf5a730c3152bf1cb0d1ace048e25ac9d66b90';
-const COUNTLY_SERVER_KEY = 'https://master.count.ly';
+const COUNTLY_APP_KEY = 'YOUR_APP_KEY';
+const COUNTLY_SERVER_KEY = 'https://try.count.ly';
 
 class AttributionKey {
     static IDFA = 'idfa';
@@ -145,8 +145,8 @@ class Example extends Component {
          */
         Countly.registerForNotification((theNotification: string) => {
             const jsonString = JSON.stringify(JSON.parse(theNotification));
-            console.log('Just received this notification data: ' + jsonString);
-            Alert.alert('theNotification: ' + jsonString);
+            console.log(`Just received this notification data: ${jsonString}`);
+            Alert.alert(`theNotification: ${jsonString}`);
         }); // Set callback to receive push notifications
         Countly.askForNotificationPermission('android.resource://com.countly.demo/raw/notif_sample'); // This method will ask for permission, enables push notification and send push token to countly server.
     };
@@ -423,9 +423,9 @@ class Example extends Component {
     getAndPresentRating = () => {
         Countly.feedback.getAvailableFeedbackWidgets((retrivedWidgets, error) => {
             if (error != null) {
-                console.log('reportRatingManually Error : ' + error);
+                console.log(`reportRatingManually Error : ${error}`);
             } else {
-                console.log('reportRatingManually Success : ' + retrivedWidgets.length);
+                console.log(`reportRatingManually Success : ${retrivedWidgets.length}`);
                 const widget = retrivedWidgets.find((x) => x.type === 'rating');
                 if (widget) {
                     this.presentWidget(widget);
@@ -483,7 +483,7 @@ class Example extends Component {
         const latitude = '29.634933';
         const longitude = '-95.220255';
         const ipAddress = '103.238.105.167';
-        Countly.setLocation(countryCode, city, latitude + ',' + longitude, ipAddress);
+        Countly.setLocation(countryCode, city, `${latitude},${longitude}`, ipAddress);
     };
     disableLocation = () => {
         Countly.disableLocation();
@@ -516,7 +516,7 @@ class Example extends Component {
     presentRatingWidgetUsingEditBox = function () {
         Countly.presentRatingWidgetWithID(this.state.ratingId, 'Submit', (error) => {
             if (error != null) {
-                console.log('presentRatingWidgetUsingEditBox : ' + error);
+                console.log(`presentRatingWidgetUsingEditBox : ${error}`);
             }
         });
     };
@@ -524,9 +524,9 @@ class Example extends Component {
     showSurvey = () => {
         Countly.getFeedbackWidgets((retrivedWidgets, error) => {
             if (error != null) {
-                console.log('showSurvey Error : ' + error);
+                console.log(`showSurvey Error : ${error}`);
             } else {
-                console.log('showSurvey Success : ' + retrivedWidgets.length);
+                console.log(`showSurvey Success : ${retrivedWidgets.length}`);
                 const surveyWidget = retrivedWidgets.find((x) => x.type === 'survey');
                 if (surveyWidget) {
                     Countly.presentFeedbackWidgetObject(
@@ -547,9 +547,9 @@ class Example extends Component {
     showNPS = () => {
         Countly.getFeedbackWidgets((retrivedWidgets, error) => {
             if (error != null) {
-                console.log('showNPS Error : ' + error);
+                console.log(`showNPS Error : ${error}`);
             } else {
-                console.log('showNPS Success : ' + retrivedWidgets.length);
+                console.log(`showNPS Success : ${retrivedWidgets.length}`);
                 const npsWidget = retrivedWidgets.find((x) => x.type === 'nps');
                 if (npsWidget) {
                     Countly.presentFeedbackWidgetObject(
@@ -569,7 +569,7 @@ class Example extends Component {
 
     addCrashLog = () => {
         const timestamp = Math.floor(new Date().getTime() / 1000);
-        Countly.addCrashLog('My crash log in string. Time: ' + timestamp.toString());
+        Countly.addCrashLog(`My crash log in string. Time: ${timestamp.toString()}`);
     };
 
     recordException = () => {

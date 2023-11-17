@@ -5,10 +5,12 @@
  */
 
 import { Platform, NativeModules, NativeEventEmitter } from 'react-native';
-import parseErrorStackLib from '../react-native/Libraries/Core/Devtools/parseErrorStack.js';
+
 import CountlyConfig from './CountlyConfig.js';
 import CountlyState from './CountlyState.js';
 import Feedback from './Feedback.js';
+import * as L from './Logger.js';
+import * as Utils from './Utils.js';
 
 const { CountlyReactNative } = NativeModules;
 const eventEmitter = new NativeEventEmitter(CountlyReactNative);
@@ -24,12 +26,12 @@ Countly.feedback = Feedback;
 Countly.feedback.state = CountlyState;
 Countly.feedback.instance = Countly;
 
+let _isCrashReportingEnabled = false;
+
+Countly.userData = {}; // userData interface
+Countly.userDataBulk = {}; // userDataBulk interface
+
 let _isPushInitialized = false;
-const DeviceIdType = {
-    DEVELOPER_SUPPLIED: 'DEVELOPER_SUPPLIED',
-    SDK_GENERATED: 'SDK_GENERATED',
-    TEMPORARY_ID: 'TEMPORARY_ID',
-};
 
 /*
  * Listener for rating widget callback, when callback recieve we will remove the callback using listener.
@@ -55,7 +57,7 @@ Countly.TemporaryDeviceIDString = 'TemporaryDeviceID';
  * @param {String} deviceId device ID
  */
 Countly.init = async function (serverUrl, appKey, deviceId) {
-    Countly.logError('init is deprecated, use initWithConfig instead');
+    L.w('Countly.init is deprecated, use Countly.initWithConfig instead');
     const countlyConfig = new CountlyConfig(serverUrl, appKey).setDeviceID(deviceId);
     Countly.initWithConfig(countlyConfig);
 };
@@ -68,114 +70,28 @@ Countly.init = async function (serverUrl, appKey, deviceId) {
  */
 Countly.initWithConfig = async function (countlyConfig) {
     if (_state.isInitialized) {
-        Countly.logError('init', 'SDK is already initialized');
+        L.d('init, SDK is already initialized');
         return;
     }
     if (countlyConfig.deviceID == '') {
-        Countly.logError('init', "Device ID during init can't be an empty string. Value will be ignored.");
+        L.e("init, Device ID during init can't be an empty string. Value will be ignored.");
         countlyConfig.deviceId = null;
     }
     if (countlyConfig.serverURL == '') {
-        Countly.logError('init', "Server URL during init can't be an empty string");
+        L.e("init, Server URL during init can't be an empty string");
         return;
     }
     if (countlyConfig.appKey == '') {
-        Countly.logError('init', "App Key during init can't be an empty string");
+        L.e("init, App Key during init can't be an empty string");
         return;
     }
-
+    L.d('initWithConfig, Initializing Countly');
     const args = [];
-    const argsMap = _configToJson(countlyConfig);
+    const argsMap = Utils.configToJson(countlyConfig);
     const argsString = JSON.stringify(argsMap);
     args.push(argsString);
     await CountlyReactNative.init(args);
     _state.isInitialized = true;
-};
-
-/**
- *
- * Converts countly config object to JSON
- *
- * @param {Object} countlyConfig config
- * @return {Object} json
- */
-_configToJson = function (config) {
-    const json = {};
-    try {
-        json['serverURL'] = config.serverURL;
-        json['appKey'] = config.appKey;
-        json['deviceID'] = config.deviceID;
-
-        if (config.loggingEnabled) {
-            json['loggingEnabled'] = config.loggingEnabled;
-        }
-        if (config.crashReporting) {
-            json['crashReporting'] = config.crashReporting;
-        }
-        if (config.shouldRequireConsent) {
-            json['shouldRequireConsent'] = config.shouldRequireConsent;
-        }
-        if (config.consents) {
-            json['consents'] = config.consents;
-        }
-        if (config.locationCountryCode) {
-            json['locationCountryCode'] = config.locationCountryCode;
-        }
-        if (config.locationCity) {
-            json['locationCity'] = config.locationCity;
-        }
-        if (config.locationGpsCoordinates) {
-            json['locationGpsCoordinates'] = config.locationGpsCoordinates;
-        }
-        if (config.locationIpAddress) {
-            json['locationIpAddress'] = config.locationIpAddress;
-        }
-        if (config.tamperingProtectionSalt) {
-            json['tamperingProtectionSalt'] = config.tamperingProtectionSalt;
-        }
-        if (config.enableApm) {
-            json['enableApm'] = config.enableApm;
-        }
-        const pushNotification = {};
-        if (config.tokenType) {
-            pushNotification['tokenType'] = config.tokenType;
-        }
-        if (config.channelName) {
-            pushNotification['channelName'] = config.channelName;
-        }
-        if (config.channelDescription) {
-            pushNotification['channelDescription'] = config.channelDescription;
-        }
-        if (config.accentColor) {
-            pushNotification['accentColor'] = config.accentColor;
-        }
-        json['pushNotification'] = pushNotification;
-        if (config.allowedIntentClassNames) {
-            json['allowedIntentClassNames'] = config.allowedIntentClassNames;
-        }
-        if (config.allowedIntentClassNames) {
-            json['allowedIntentPackageNames'] = config.allowedIntentPackageNames;
-        }
-        if (config.starRatingTextTitle) {
-            json['starRatingTextTitle'] = config.starRatingTextTitle;
-        }
-        if (config.starRatingTextMessage) {
-            json['starRatingTextMessage'] = config.starRatingTextMessage;
-        }
-        if (config.starRatingTextDismiss) {
-            json['starRatingTextDismiss'] = config.starRatingTextDismiss;
-        }
-        if (config.campaignType) {
-            json['campaignType'] = config.campaignType;
-            json['campaignData'] = config.campaignData;
-        }
-        if (config.attributionValues) {
-            json['attributionValues'] = config.attributionValues;
-        }
-    } catch (err) {
-        Countly.logError('_configToJson', 'Exception occured during converting config to json.' + err.toString());
-    }
-    return json;
 };
 
 /**
@@ -185,26 +101,26 @@ _configToJson = function (config) {
  * @return {bool} if true, countly sdk has been initialized
  */
 Countly.isInitialized = async function () {
-    // returns a promise
     _state.isInitialized = await CountlyReactNative.isInitialized();
+    L.d(`isInitialized, isInitialized: [${_state.isInitialized}]`);
     return _state.isInitialized;
 };
 
 /**
  *
- * Checks if the sdk is started;
+ * Checks if the Countly SDK onStart function has been called
  *
  * @deprecated in 23.6.0. This will be removed.
  *
  * @return {bool || String} bool or error message
- * if true, countly sdk has started
  */
 Countly.hasBeenCalledOnStart = function () {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'hasBeenCalledOnStart'";
-        Countly.logError('hasBeenCalledOnStart', message);
+        L.e(`hasBeenCalledOnStart, ${message}`);
         return message;
     }
+    L.w('hasBeenCalledOnStart, This call is deprecated and will be removed with no replacement.');
     return CountlyReactNative.hasBeenCalledOnStart();
 };
 
@@ -218,9 +134,21 @@ Countly.hasBeenCalledOnStart = function () {
 Countly.sendEvent = function (options) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'sendEvent'";
-        Countly.logError('sendEvent', message);
+        L.e(`sendEvent, ${message}`);
         return message;
     }
+    if (!options) {
+        const message = 'sendEvent, no event object provided';
+        L.e(`sendEvent, ${message}`);
+        return message;
+    }
+    if (!options.eventName) {
+        const message = 'sendEvent, eventName is required';
+        L.e(`sendEvent, ${message}`);
+        return message;
+    }
+    L.d(`sendEvent, Sending event: ${JSON.stringify(options)}]`);
+
     const args = [];
     let eventType = 'event'; // event, eventWithSum, eventWithSegment, eventWithSumSegment
     let segments = {};
@@ -236,12 +164,8 @@ Countly.sendEvent = function (options) {
     }
 
     args.push(eventType);
+    args.push(options.eventName.toString());
 
-    if (options.eventName) {
-        args.push(options.eventName.toString());
-    } else {
-        args.push('');
-    }
     if (options.eventCount) {
         args.push(options.eventCount.toString());
     } else {
@@ -279,13 +203,14 @@ Countly.sendEvent = function (options) {
 Countly.recordView = async function (recordView, segments) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'recordView'";
-        Countly.logError('recordView', msg);
+        L.e(`recordView, ${msg}`);
         return msg;
     }
     const message = await Countly.validateString(recordView, 'view name', 'recordView');
     if (message) {
         return message;
     }
+    L.d(`recordView, Recording view: ${recordView}]`);
 
     const args = [];
     args.push(String(recordView));
@@ -308,8 +233,11 @@ Countly.recordView = async function (recordView, segments) {
  */
 Countly.disablePushNotifications = function () {
     if (!/ios/.exec(Platform.OS)) {
+        L.e('disablePushNotifications, ' + 'disablePushNotifications is not implemented for Android');
+
         return 'disablePushNotifications : To be implemented';
     }
+    L.d('disablePushNotifications, Disabling push notifications');
     CountlyReactNative.disablePushNotifications();
 };
 
@@ -326,7 +254,7 @@ Countly.pushTokenType = async function (tokenType, channelName, channelDescripti
     if (message) {
         return message;
     }
-
+    L.w('pushTokenType, pushTokenType is deprecated, use countlyConfig.pushTokenType instead');
     const args = [];
     args.push(tokenType);
     args.push(channelName || '');
@@ -335,6 +263,7 @@ Countly.pushTokenType = async function (tokenType, channelName, channelDescripti
 };
 
 Countly.sendPushToken = function (options) {
+    L.d(`sendPushToken, Sending push token: [${JSON.stringify(options)}]`);
     const args = [];
     args.push(options.token || '');
     CountlyReactNative.sendPushToken(args);
@@ -351,9 +280,10 @@ Countly.sendPushToken = function (options) {
 Countly.askForNotificationPermission = function (customSoundPath = 'null') {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'askForNotificationPermission'";
-        Countly.logError('askForNotificationPermission', message);
+        L.e(`askForNotificationPermission, ${message}`);
         return message;
     }
+    L.d(`askForNotificationPermission, Asking for notification permission at: [${customSoundPath}]`);
     CountlyReactNative.askForNotificationPermission([customSoundPath]);
     _isPushInitialized = true;
 };
@@ -365,6 +295,7 @@ Countly.askForNotificationPermission = function (customSoundPath = 'null') {
  * @return {NativeEventEmitter} event
  */
 Countly.registerForNotification = function (theListener) {
+    L.d('registerForNotification, Registering for notification');
     const event = eventEmitter.addListener(pushNotificationCallbackName, theListener);
     CountlyReactNative.registerForNotification([]);
     return event;
@@ -383,25 +314,28 @@ Countly.registerForNotification = function (theListener) {
  */
 Countly.configureIntentRedirectionCheck = function (allowedIntentClassNames = [], allowedIntentPackageNames = [], useAdditionalIntentRedirectionChecks = true) {
     if (/ios/.exec(Platform.OS)) {
+        L.e('configureIntentRedirectionCheck, configureIntentRedirectionCheck is not required for iOS');
+      
         return 'configureIntentRedirectionCheck : not required for iOS';
     }
 
     if (_isPushInitialized) {
         var message = "'configureIntentRedirectionCheck' must be called before 'askForNotificationPermission'";
-        Countly.logError('configureIntentRedirectionCheck', message);
+        L.e(`configureIntentRedirectionCheck, ${message}`);
         return message;
     }
+    L.w('configureIntentRedirectionCheck, configureIntentRedirectionCheck is deprecated, use countlyConfig.configureIntentRedirectionCheck instead');
     if (!Array.isArray(allowedIntentClassNames)) {
-        Countly.logWarning('configureIntentRedirectionCheck', `Ignoring, unsupported data type '${typeof allowedIntentClassNames}' 'allowedIntentClassNames' should be an array of String`);
+        L.w('configureIntentRedirectionCheck, ' + `Ignoring, unsupported data type '${typeof allowedIntentClassNames}' 'allowedIntentClassNames' should be an array of String`);
         allowedIntentClassNames = [];
     }
     if (!Array.isArray(allowedIntentPackageNames)) {
-        Countly.logWarning('configureIntentRedirectionCheck', `Ignoring, unsupported data type '${typeof allowedIntentPackageNames}' 'allowedIntentPackageNames' should be an array of String`);
+        L.w('configureIntentRedirectionCheck, ' + `Ignoring, unsupported data type '${typeof allowedIntentPackageNames}' 'allowedIntentPackageNames' should be an array of String`);
         allowedIntentPackageNames = [];
     }
 
     if (typeof useAdditionalIntentRedirectionChecks !== 'boolean') {
-        Countly.logWarning('configureIntentRedirectionCheck', `Ignoring, unsupported data type '${typeof useAdditionalIntentRedirectionChecks}' 'useAdditionalIntentRedirectionChecks' should be a boolean`);
+        L.w('configureIntentRedirectionCheck, ' + `Ignoring, unsupported data type '${typeof useAdditionalIntentRedirectionChecks}' 'useAdditionalIntentRedirectionChecks' should be a boolean`);
         useAdditionalIntentRedirectionChecks = true;
     }
 
@@ -432,7 +366,7 @@ Countly.configureIntentRedirectionCheck = function (allowedIntentClassNames = []
  * @return {String || void} error message or void
  */
 Countly.start = function () {
-    Countly.logWarning('start', 'Automatic sessions are handled by underlying SDK, this function will do nothing.');
+    L.w('start, Automatic sessions are handled by underlying SDK, this function will do nothing.');
 };
 
 /**
@@ -443,7 +377,7 @@ Countly.start = function () {
  * @return {String || void} error message or void
  */
 Countly.stop = function () {
-    Countly.logWarning('stop', 'Automatic sessions are handled by underlying SDK, this function will do nothing.');
+    L.w('stop, Automatic sessions are handled by underlying SDK, this function will do nothing.');
 };
 
 /**
@@ -456,6 +390,7 @@ Countly.stop = function () {
  */
 
 Countly.enableLogging = function () {
+    L.w('enableLogging, enableLogging is deprecated, use countlyConfig.enableLogging instead');
     CountlyReactNative.setLoggingEnabled([true]);
 };
 
@@ -467,6 +402,7 @@ Countly.enableLogging = function () {
  * @function Countly.setLoggingEnabled should be used to enable/disable countly internal debugging logs
  */
 Countly.disableLogging = function () {
+    L.w('disableLogging, disableLogging is deprecated, use countlyConfig.enableLogging instead');
     CountlyReactNative.setLoggingEnabled([false]);
 };
 
@@ -477,6 +413,8 @@ Countly.disableLogging = function () {
  * @param {[bool = true]} enabled server url
  */
 Countly.setLoggingEnabled = function (enabled = true) {
+    // TODO: init check
+    L.d(`setLoggingEnabled, Setting logging enabled to: [${enabled}]`);
     CountlyReactNative.setLoggingEnabled([enabled]);
 };
 
@@ -491,6 +429,7 @@ Countly.setLoggingEnabled = function (enabled = true) {
  * @param {IP address of user's} ipAddress
  * */
 Countly.setLocationInit = function (countryCode, city, location, ipAddress) {
+    L.w('setLocationInit, setLocationInit is deprecated, use countlyConfig.setLocation instead');
     const args = [];
     args.push(countryCode || 'null');
     args.push(city || 'null');
@@ -510,9 +449,10 @@ Countly.setLocationInit = function (countryCode, city, location, ipAddress) {
 Countly.setLocation = function (countryCode, city, location, ipAddress) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'setLocation'";
-        Countly.logError('setLocation', message);
+        L.e(`setLocation, ${message}`);
         return message;
     }
+    L.d(`setLocation, Setting location: [${countryCode}, ${city}, ${location}, ${ipAddress}]`);
     const args = [];
     args.push(countryCode || 'null');
     args.push(city || 'null');
@@ -530,9 +470,10 @@ Countly.setLocation = function (countryCode, city, location, ipAddress) {
 Countly.disableLocation = function () {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'disableLocation'";
-        Countly.logError('disableLocation', message);
+        L.e(`disableLocation, ${message}`);
         return message;
     }
+    L.d('disableLocation, Disabling location');
     CountlyReactNative.disableLocation();
 };
 
@@ -546,40 +487,15 @@ Countly.disableLocation = function () {
 Countly.getCurrentDeviceId = async function () {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'getCurrentDeviceId'";
-        Countly.logError('getCurrentDeviceId', message);
+        L.e(`getCurrentDeviceId, ${message}`);
         return message;
     }
+    L.d('getCurrentDeviceId, Getting current device id');
     const result = await CountlyReactNative.getCurrentDeviceId();
     return result;
 };
 
-/**
- *
- * internal countly function that converts String to DeviceIdType.
- *
- * @return {DeviceIdType || null} deviceIdType e.g DeviceIdType.DEVELOPER_SUPPLIED, DeviceIdType.TEMPORARY_ID, DeviceIdType.SDK_GENERATED.
- */
-_getDeviceIdType = function (deviceIdType) {
-    let result = null;
-    switch (deviceIdType) {
-        case 'DS':
-            result = DeviceIdType.DEVELOPER_SUPPLIED;
-            break;
-        case 'TID':
-            result = DeviceIdType.TEMPORARY_ID;
-            break;
-        case 'SG':
-            result = DeviceIdType.SDK_GENERATED;
-            break;
-    }
-    if (result == null) {
-        Countly.logError('_getDeviceIdType', 'unexpected deviceIdType [' + deviceIdType.toString() + '] from native side');
-        return null;
-    }
-    return result;
-};
-
-/**
+ /**
  * Get currently used device Id type.
  * Should be called after Countly init
  *
@@ -587,28 +503,29 @@ _getDeviceIdType = function (deviceIdType) {
  * */
 Countly.getDeviceIDType = async function () {
     if (!_state.isInitialized) {
-        Countly.logError('getDeviceIDType', "'init' must be called before 'getDeviceIDType'");
+        L.e("getDeviceIDType, 'init' must be called before 'getDeviceIDType'");
         return null;
     }
+    L.d('getDeviceIDType, Getting device id type');
     const result = await CountlyReactNative.getDeviceIDType();
     if (result == null || result == '') {
-        Countly.logError('getDeviceIDType', "'getDeviceIDType' unexpected null value from native side");
+        L.e('getDeviceIDType, unexpected null value from native side');
         return null;
     }
-    return _getDeviceIdType(result);
+    return Utils.stringToDeviceIDType(result);
 };
 
 /**
  * Change the current device id
  *
- * @param {String} device id new device id
- * @param {String} onServer merge device id
+ * @param {String} newDeviceID id new device id
+ * @param {Boolean} onServer merge device id
  * @return {String || void} error message or void
  * */
 Countly.changeDeviceId = async function (newDeviceID, onServer) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'changeDeviceId'";
-        Countly.logError('changeDeviceId', msg);
+        L.e(`changeDeviceId, ${msg}`);
         return msg;
     }
     const message = await Countly.validateString(newDeviceID, 'newDeviceID', 'changeDeviceId');
@@ -616,7 +533,8 @@ Countly.changeDeviceId = async function (newDeviceID, onServer) {
         return message;
     }
 
-    if (onServer === false) {
+    L.d(`changeDeviceId, Changing to new device id: [${newDeviceID}], with merge: [${onServer}]`);
+    if (!onServer) {
         onServer = '0';
     } else {
         onServer = '1';
@@ -632,12 +550,12 @@ Countly.changeDeviceId = async function (newDeviceID, onServer) {
  * @param {bool} forceHttp force http post for all requests.
  */
 Countly.setHttpPostForced = function (boolean = true) {
+    L.d(`setHttpPostForced, Setting http post forced to: [${boolean}]`);
     const args = [];
     args.push(boolean ? '1' : '0');
     CountlyReactNative.setHttpPostForced(args);
 };
 
-Countly.isCrashReportingEnabled = false;
 /**
  * @deprecated in 23.02.0 : use 'countlyConfig.enableCrashReporting' instead of 'enableCrashReporting'.
  *
@@ -645,12 +563,13 @@ Countly.isCrashReportingEnabled = false;
  * Should be called before Countly init
  */
 Countly.enableCrashReporting = async function () {
+    L.w('enableCrashReporting, enableCrashReporting is deprecated, use countlyConfig.enableCrashReporting instead');
     CountlyReactNative.enableCrashReporting();
-    if (ErrorUtils && !Countly.isCrashReportingEnabled) {
-        Countly.logInfo('enableCrashReporting', 'Adding Countly JS error handler.');
+    if (ErrorUtils && !_isCrashReportingEnabled) {
+        L.i('enableCrashReporting, Adding Countly JS error handler.');
         const previousHandler = ErrorUtils.getGlobalHandler();
         ErrorUtils.setGlobalHandler((error, isFatal) => {
-            const jsStackTrace = Countly.getStackTrace(error);
+            const jsStackTrace = Utils.getStackTrace(error);
             let errorTitle;
             let stackArr;
             if (jsStackTrace == null) {
@@ -683,38 +602,7 @@ Countly.enableCrashReporting = async function () {
             }
         });
     }
-    Countly.isCrashReportingEnabled = true;
-};
-
-/**
- *
- * Get stack track for Countly
- *
- * @param {any} e exception
- * @return {StackTrace || null} stack trace or null
- */
-Countly.getStackTrace = (e) => {
-    let jsStackTrace = null;
-    try {
-        if (Platform.hasOwnProperty('constants')) {
-            // RN version >= 0.63
-            if (Platform.constants.reactNativeVersion.minor >= 64) {
-                // RN version >= 0.64
-                jsStackTrace = parseErrorStackLib(e.stack);
-            }
-            // RN version == 0.63
-            else {
-                jsStackTrace = parseErrorStackLib(e);
-            }
-        }
-        // RN version < 0.63
-        else {
-            jsStackTrace = parseErrorStackLib(e);
-        }
-    } catch (e) {
-        // Countly.logError('getStackTrace', e.message);
-    }
-    return jsStackTrace;
+    _isCrashReportingEnabled = true;
 };
 
 /**
@@ -727,9 +615,10 @@ Countly.getStackTrace = (e) => {
 Countly.addCrashLog = function (crashLog) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'addCrashLog'";
-        Countly.logError('addCrashLog', message);
+        L.e(`addCrashLog, ${message}`);
         return message;
     }
+    L.d(`addCrashLog, Adding crash log: [${crashLog}]`);
     CountlyReactNative.addCrashLog([crashLog]);
 };
 
@@ -745,9 +634,10 @@ Countly.addCrashLog = function (crashLog) {
 Countly.logException = function (exception, nonfatal, segments) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'logException'";
-        Countly.logError('logException', message);
+        L.e(`logException, ${message}`);
         return message;
     }
+    L.d(`logException, Logging exception: [${exception}], with nonfatal: [${nonfatal}], with segments: [${JSON.stringify(segments)}]`);
     const exceptionArray = exception.split('\n');
     let exceptionString = '';
     for (let i = 0, il = exceptionArray.length; i < il; i++) {
@@ -770,6 +660,7 @@ Countly.logException = function (exception, nonfatal, segments) {
  * @param {Map} segments segments
  */
 Countly.setCustomCrashSegments = function (segments) {
+    L.d(`setCustomCrashSegments, Setting custom crash segments: [${JSON.stringify(segments)}]`);
     const args = [];
     for (const key in segments) {
         args.push(key.toString());
@@ -787,9 +678,10 @@ Countly.setCustomCrashSegments = function (segments) {
 Countly.startSession = function () {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'startSession'";
-        Countly.logError('startSession', message);
+        L.e(`startSession, ${message}`);
         return message;
     }
+    L.d('startSession, Starting session');
     CountlyReactNative.startSession();
 };
 
@@ -802,9 +694,10 @@ Countly.startSession = function () {
 Countly.endSession = function () {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'endSession'";
-        Countly.logError('endSession', message);
+        L.e(`endSession, ${message}`);
         return message;
     }
+    L.d('endSession, Ending session');
     CountlyReactNative.endSession();
 };
 
@@ -822,7 +715,7 @@ Countly.enableParameterTamperingProtection = async function (salt) {
     if (message) {
         return message;
     }
-
+    L.w(`enableParameterTamperingProtection, enableParameterTamperingProtection is deprecated, use countlyConfig.enableParameterTamperingProtection instead. Salt : [${salt}]`);
     CountlyReactNative.enableParameterTamperingProtection([salt.toString()]);
 };
 
@@ -838,7 +731,7 @@ Countly.pinnedCertificates = async function (certificateName) {
     if (message) {
         return message;
     }
-
+    L.d(`pinnedCertificates, Setting pinned certificates: [${certificateName}]`);
     CountlyReactNative.pinnedCertificates([certificateName]);
 };
 
@@ -852,14 +745,14 @@ Countly.pinnedCertificates = async function (certificateName) {
 Countly.startEvent = async function (eventName) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'startEvent'";
-        Countly.logError('startEvent', msg);
+        L.e(`startEvent, ${msg}`);
         return msg;
     }
     const message = await Countly.validateString(eventName, 'eventName', 'startEvent');
     if (message) {
         return message;
     }
-
+    L.d(`startEvent, Starting event: [${eventName}]`);
     CountlyReactNative.startEvent([eventName.toString()]);
 };
 
@@ -873,14 +766,14 @@ Countly.startEvent = async function (eventName) {
 Countly.cancelEvent = async function (eventName) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'cancelEvent'";
-        Countly.logError('cancelEvent', msg);
+        L.e(`cancelEvent, ${msg}`);
         return msg;
     }
     const message = await Countly.validateString(eventName, 'eventName', 'cancelEvent');
     if (message) {
         return message;
     }
-
+    L.d(`cancelEvent, Canceling event: [${eventName}]`);
     CountlyReactNative.cancelEvent([eventName.toString()]);
 };
 
@@ -894,9 +787,10 @@ Countly.cancelEvent = async function (eventName) {
 Countly.endEvent = function (options) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'endEvent'";
-        Countly.logError('endEvent', message);
+        L.e(`endEvent, ${message}`);
         return message;
     }
+    L.d(`endEvent, Ending event: [${JSON.stringify(options)}]`);
     if (typeof options === 'string') {
         options = { eventName: options };
     }
@@ -950,7 +844,7 @@ Countly.endEvent = function (options) {
 
 /**
  *
- * Usedd to send user data
+ * Used to send user data
  *
  * @param {Object} userData user data
  * @return {String || void} error message or void
@@ -958,24 +852,25 @@ Countly.endEvent = function (options) {
 Countly.setUserData = async function (userData) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'setUserData'";
-        Countly.logError('setUserData', msg);
+        L.e(`setUserData, ${msg}`);
         return msg;
     }
+    L.d(`setUserData, Setting user data: [${JSON.stringify(userData)}]`);
     let message = null;
     if (!userData) {
         message = 'User profile data should not be null or undefined';
-        Countly.logError('setUserData', message);
+        L.e(`setUserData, ${message}`);
         return message;
     }
     if (typeof userData !== 'object') {
         message = `unsupported data type of user data '${typeof userData}'`;
-        Countly.logWarning('setUserData', message);
+        L.w(`setUserData, ${message}`);
         return message;
     }
     const args = [];
     for (const key in userData) {
         if (typeof userData[key] !== 'string' && key.toString() != 'byear') {
-            Countly.logWarning('setUserData', `skipping value for key '${key.toString()}', due to unsupported data type '${typeof userData[key]}', its data type should be 'string'`);
+            L.w('setUserData, ' + `skipping value for key '${key.toString()}', due to unsupported data type '${typeof userData[key]}', its data type should be 'string'`);
         }
     }
 
@@ -993,13 +888,13 @@ Countly.setUserData = async function (userData) {
     await CountlyReactNative.setUserData(args);
 };
 
-Countly.userData = {};
 Countly.userData.setProperty = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'setProperty'";
-        Countly.logError('setProperty', msg);
+        L.e(`setProperty, ${msg}`);
         return msg;
     }
+    L.d(`setProperty, Setting user property: [${keyName}, ${keyValue}]`);
     let message = await Countly.validateString(keyName, 'key', 'setProperty');
     if (message) {
         return message;
@@ -1018,9 +913,10 @@ Countly.userData.setProperty = async function (keyName, keyValue) {
 Countly.userData.increment = async function (keyName) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'increment'";
-        Countly.logError('increment', msg);
+        L.e(`increment, ${msg}`);
         return msg;
     }
+    L.d(`increment, Incrementing user property: [${keyName}]`);
     const message = await Countly.validateString(keyName, 'key', 'setProperty');
     if (message) {
         return message;
@@ -1033,9 +929,10 @@ Countly.userData.increment = async function (keyName) {
 Countly.userData.incrementBy = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'incrementBy'";
-        Countly.logError('incrementBy', msg);
+        L.e(`incrementBy, ${msg}`);
         return msg;
     }
+    L.d(`incrementBy, Incrementing user property: [${keyName}, ${keyValue}]`);
     let message = await Countly.validateString(keyName, 'key', 'incrementBy');
     if (message) {
         return message;
@@ -1050,9 +947,10 @@ Countly.userData.incrementBy = async function (keyName, keyValue) {
 Countly.userData.multiply = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'multiply'";
-        Countly.logError('multiply', msg);
+        L.e(`multiply, ${msg}`);
         return msg;
     }
+    L.d(`multiply, Multiplying user property: [${keyName}, ${keyValue}]`);
     let message = await Countly.validateString(keyName, 'key', 'multiply');
     if (message) {
         return message;
@@ -1067,9 +965,10 @@ Countly.userData.multiply = async function (keyName, keyValue) {
 Countly.userData.saveMax = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'saveMax'";
-        Countly.logError('saveMax', msg);
+        L.e(`saveMax, ${msg}`);
         return msg;
     }
+    L.d(`saveMax, Saving max user property: [${keyName}, ${keyValue}]`);
     let message = await Countly.validateString(keyName, 'key', 'saveMax');
     if (message) {
         return message;
@@ -1084,9 +983,10 @@ Countly.userData.saveMax = async function (keyName, keyValue) {
 Countly.userData.saveMin = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'saveMin'";
-        Countly.logError('saveMin', msg);
+        L.e(`saveMin, ${msg}`);
         return msg;
     }
+    L.d(`saveMin, Saving min user property: [${keyName}, ${keyValue}]`);
     let message = await Countly.validateString(keyName, 'key', 'saveMin');
     if (message) {
         return message;
@@ -1101,9 +1001,10 @@ Countly.userData.saveMin = async function (keyName, keyValue) {
 Countly.userData.setOnce = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'setOnce'";
-        Countly.logError('setOnce', msg);
+        L.e(`setOnce, ${msg}`);
         return msg;
     }
+    L.d(`setOnce, Setting once user property: [${keyName}, ${keyValue}]`);
     let message = await Countly.validateString(keyName, 'key', 'setOnce');
     if (message) {
         return message;
@@ -1120,9 +1021,10 @@ Countly.userData.setOnce = async function (keyName, keyValue) {
 Countly.userData.pushUniqueValue = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'pushUniqueValue'";
-        Countly.logError('pushUniqueValue', msg);
+        L.e(`pushUniqueValue, ${msg}`);
         return msg;
     }
+    L.d(`pushUniqueValue, Pushing unique value to user property: [${keyName}, ${keyValue}]`);
     let message = await Countly.validateString(keyName, 'key', 'pushUniqueValue');
     if (message) {
         return message;
@@ -1139,9 +1041,10 @@ Countly.userData.pushUniqueValue = async function (keyName, keyValue) {
 Countly.userData.pushValue = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'pushValue'";
-        Countly.logError('pushValue', msg);
+        L.e(`pushValue, ${msg}`);
         return msg;
     }
+    L.d(`pushValue, Pushing value to user property: [${keyName}, ${keyValue}]`);
     let message = await Countly.validateString(keyName, 'key', 'pushValue');
     if (message) {
         return message;
@@ -1158,9 +1061,10 @@ Countly.userData.pushValue = async function (keyName, keyValue) {
 Countly.userData.pullValue = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'pullValue'";
-        Countly.logError('pullValue', msg);
+        L.e(`pullValue, ${msg}`);
         return msg;
     }
+    L.d(`pullValue, Pulling value from user property: [${keyName}, ${keyValue}]`);
     let message = await Countly.validateString(keyName, 'key', 'pullValue');
     if (message) {
         return message;
@@ -1175,30 +1079,29 @@ Countly.userData.pullValue = async function (keyName, keyValue) {
     }
 };
 
-// nothing is sent without calling save
-Countly.userDataBulk = {};
-
 // providing key/values with predefined and custom properties
 Countly.userDataBulk.setUserProperties = async function (customAndPredefined) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'setUserProperties'";
-        Countly.logError('setUserProperties', msg);
+        L.e(`setUserProperties, ${msg}`);
         return msg;
     }
+    L.d(`setUserProperties, Setting user properties: [${JSON.stringify(customAndPredefined)}]`);
+    L.w('setUserProperties, Countly.userDataBulk.save() must be called after setting user properties!');
     let message = null;
     if (!customAndPredefined) {
         message = 'User profile data should not be null or undefined';
-        Countly.logError('setUserProperties', message);
+        L.e(`setUserProperties, ${message}`);
         return message;
     }
     if (typeof customAndPredefined !== 'object') {
         message = `unsupported data type of user data '${typeof customAndPredefined}'`;
-        Countly.logWarning('setUserProperties', message);
+        L.w(`setUserProperties, ${message}`);
         return message;
     }
     for (const key in customAndPredefined) {
         if (typeof customAndPredefined[key] !== 'string' && key.toString() != 'byear') {
-            Countly.logWarning('setUserProperties', `skipping value for key '${key.toString()}', due to unsupported data type '${typeof customAndPredefined[key]}', its data type should be 'string'`);
+            L.w('setUserProperties, ' + `skipping value for key '${key.toString()}', due to unsupported data type '${typeof customAndPredefined[key]}', its data type should be 'string'`);
         }
     }
 
@@ -1218,18 +1121,20 @@ Countly.userDataBulk.setUserProperties = async function (customAndPredefined) {
 Countly.userDataBulk.save = async function () {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'save'";
-        Countly.logError('save', msg);
+        L.e(`save, ${msg}`);
         return msg;
     }
+    L.d('save, Saving user data');
     await CountlyReactNative.userDataBulk_save([]);
 };
 
 Countly.userDataBulk.setProperty = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'setProperty'";
-        Countly.logError('setProperty', msg);
+        L.e(`setProperty, ${msg}`);
         return msg;
     }
+    L.d(`setProperty, Setting user property: [${keyName}, ${keyValue}]`);
     let message = await Countly.validateString(keyName, 'key', 'setProperty');
     if (message) {
         return message;
@@ -1248,9 +1153,10 @@ Countly.userDataBulk.setProperty = async function (keyName, keyValue) {
 Countly.userDataBulk.increment = async function (keyName) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'increment'";
-        Countly.logError('increment', msg);
+        L.e(`increment, ${msg}`);
         return msg;
     }
+    L.d(`increment, Incrementing user property: [${keyName}]`);
     const message = await Countly.validateString(keyName, 'key', 'setProperty');
     if (message) {
         return message;
@@ -1263,9 +1169,10 @@ Countly.userDataBulk.increment = async function (keyName) {
 Countly.userDataBulk.incrementBy = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'incrementBy'";
-        Countly.logError('incrementBy', msg);
+        L.e(`incrementBy, ${msg}`);
         return msg;
     }
+    L.d(`incrementBy, Incrementing user property: [${keyName}, ${keyValue}]`);
     let message = await Countly.validateString(keyName, 'key', 'incrementBy');
     if (message) {
         return message;
@@ -1280,9 +1187,10 @@ Countly.userDataBulk.incrementBy = async function (keyName, keyValue) {
 Countly.userDataBulk.multiply = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'multiply'";
-        Countly.logError('multiply', msg);
+        L.e(`multiply, ${msg}`);
         return msg;
     }
+    L.d(`multiply, Multiplying user property: [${keyName}, ${keyValue}]`);
     let message = await Countly.validateString(keyName, 'key', 'multiply');
     if (message) {
         return message;
@@ -1297,9 +1205,10 @@ Countly.userDataBulk.multiply = async function (keyName, keyValue) {
 Countly.userDataBulk.saveMax = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'saveMax'";
-        Countly.logError('saveMax', msg);
+        L.e(`saveMax, ${msg}`);
         return msg;
     }
+    L.d(`saveMax, Saving max user property: [${keyName}, ${keyValue}]`);
     let message = await Countly.validateString(keyName, 'key', 'saveMax');
     if (message) {
         return message;
@@ -1314,9 +1223,10 @@ Countly.userDataBulk.saveMax = async function (keyName, keyValue) {
 Countly.userDataBulk.saveMin = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'saveMin'";
-        Countly.logError('saveMin', msg);
+        L.e(`saveMin, ${msg}`);
         return msg;
     }
+    L.d(`saveMin, Saving min user property: [${keyName}, ${keyValue}]`);
     let message = await Countly.validateString(keyName, 'key', 'saveMin');
     if (message) {
         return message;
@@ -1331,9 +1241,10 @@ Countly.userDataBulk.saveMin = async function (keyName, keyValue) {
 Countly.userDataBulk.setOnce = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'setOnce'";
-        Countly.logError('setOnce', msg);
+        L.e(`setOnce, ${msg}`);
         return msg;
     }
+    L.d(`setOnce, Setting once user property: [${keyName}, ${keyValue}]`);
     let message = await Countly.validateString(keyName, 'key', 'setOnce');
     if (message) {
         return message;
@@ -1350,9 +1261,10 @@ Countly.userDataBulk.setOnce = async function (keyName, keyValue) {
 Countly.userDataBulk.pushUniqueValue = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'pushUniqueValue'";
-        Countly.logError('pushUniqueValue', msg);
+        L.e(`pushUniqueValue, ${msg}`);
         return msg;
     }
+    L.d(`pushUniqueValue, Pushing unique value to user property: [${keyName}, ${keyValue}]`);
     let message = await Countly.validateString(keyName, 'key', 'pushUniqueValue');
     if (message) {
         return message;
@@ -1369,9 +1281,10 @@ Countly.userDataBulk.pushUniqueValue = async function (keyName, keyValue) {
 Countly.userDataBulk.pushValue = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'pushValue'";
-        Countly.logError('pushValue', msg);
+        L.e(`pushValue, ${msg}`);
         return msg;
     }
+    L.d(`pushValue, Pushing value to user property: [${keyName}, ${keyValue}]`);
     let message = await Countly.validateString(keyName, 'key', 'pushValue');
     if (message) {
         return message;
@@ -1388,9 +1301,10 @@ Countly.userDataBulk.pushValue = async function (keyName, keyValue) {
 Countly.userDataBulk.pullValue = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'pullValue'";
-        Countly.logError('pullValue', msg);
+        L.e(`pullValue, ${msg}`);
         return msg;
     }
+    L.d(`pullValue, Pulling value from user property: [${keyName}, ${keyValue}]`);
     let message = await Countly.validateString(keyName, 'key', 'pullValue');
     if (message) {
         return message;
@@ -1414,6 +1328,7 @@ Countly.userDataBulk.pullValue = async function (keyName, keyValue) {
  * @param {bool} flag if true, consent is required for features to work.
  */
 Countly.setRequiresConsent = function (flag) {
+    L.w(`setRequiresConsent, setRequiresConsent is deprecated, use countlyConfig.setRequiresConsent instead. Flag : [${flag}]`);
     CountlyReactNative.setRequiresConsent([flag]);
 };
 
@@ -1428,9 +1343,10 @@ Countly.setRequiresConsent = function (flag) {
 Countly.giveConsent = function (args) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'giveConsent'";
-        Countly.logError('giveConsent', message);
+        L.e(`giveConsent ${message}`);
         return message;
     }
+    L.d(`giveConsent, Giving consent for features: [${args}]`);
     let features = [];
     if (typeof args === 'string') {
         features.push(args);
@@ -1449,13 +1365,14 @@ Countly.giveConsent = function (args) {
  * @param {String[]} args list of consents
  */
 Countly.giveConsentInit = async function (args) {
+    L.w('giveConsentInit, giveConsentInit is deprecated, use countlyConfig.giveConsent instead.');
     let features = [];
     if (typeof args === 'string') {
         features.push(args);
     } else if (Array.isArray(args)) {
         features = args;
     } else {
-        Countly.logWarning('giveConsentInit', `unsupported data type '${typeof args}'`);
+        L.w('giveConsentInit ' + `unsupported data type '${typeof args}'`);
     }
     await CountlyReactNative.giveConsentInit(features);
 };
@@ -1471,9 +1388,10 @@ Countly.giveConsentInit = async function (args) {
 Countly.removeConsent = function (args) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'removeConsent'";
-        Countly.logError('removeConsent', message);
+        L.e(`removeConsent${message}`);
         return message;
     }
+    L.d(`removeConsent, Removing consent for features: [${args}]`);
     let features = [];
     if (typeof args === 'string') {
         features.push(args);
@@ -1493,9 +1411,10 @@ Countly.removeConsent = function (args) {
 Countly.giveAllConsent = function () {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'giveAllConsent'";
-        Countly.logError('giveAllConsent', message);
+        L.e(`giveAllConsent, ${message}`);
         return message;
     }
+    L.d('giveAllConsent, Giving consent for all features');
     CountlyReactNative.giveAllConsent();
 };
 
@@ -1509,19 +1428,21 @@ Countly.giveAllConsent = function () {
 Countly.removeAllConsent = function () {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'removeAllConsent'";
-        Countly.logError('removeAllConsent', message);
+        L.e(`removeAllConsent, ${message}`);
         return message;
     }
+    L.d('removeAllConsent, Removing consent for all features');
     CountlyReactNative.removeAllConsent();
 };
 
 Countly.remoteConfigUpdate = function (callback) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'remoteConfigUpdate'";
-        Countly.logError('remoteConfigUpdate', message);
+        L.e(`remoteConfigUpdate, ${message}`);
         callback(message);
         return message;
     }
+    L.d('remoteConfigUpdate, Updating remote config');
     CountlyReactNative.remoteConfigUpdate([], (stringItem) => {
         callback(stringItem);
     });
@@ -1530,10 +1451,11 @@ Countly.remoteConfigUpdate = function (callback) {
 Countly.updateRemoteConfigForKeysOnly = function (keyNames, callback) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'updateRemoteConfigForKeysOnly'";
-        Countly.logError('updateRemoteConfigForKeysOnly', message);
+        L.e(`updateRemoteConfigForKeysOnly, ${message}`);
         callback(message);
         return message;
     }
+    L.d(`updateRemoteConfigForKeysOnly, Updating remote config for keys: [${keyNames}]`);
     const args = [];
     if (keyNames.length) {
         for (let i = 0, il = keyNames.length; i < il; i++) {
@@ -1548,10 +1470,11 @@ Countly.updateRemoteConfigForKeysOnly = function (keyNames, callback) {
 Countly.updateRemoteConfigExceptKeys = function (keyNames, callback) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'updateRemoteConfigExceptKeys'";
-        Countly.logError('updateRemoteConfigExceptKeys', message);
+        L.e(`updateRemoteConfigExceptKeys, ${message}`);
         callback(message);
         return message;
     }
+    L.d(`updateRemoteConfigExceptKeys, Updating remote config except keys: [${keyNames}]`);
     const args = [];
     if (keyNames.length) {
         for (let i = 0, il = keyNames.length; i < il; i++) {
@@ -1566,7 +1489,7 @@ Countly.updateRemoteConfigExceptKeys = function (keyNames, callback) {
 Countly.getRemoteConfigValueForKey = function (keyName, callback) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'getRemoteConfigValueForKey'";
-        Countly.logError('getRemoteConfigValueForKey', message);
+        L.e(`getRemoteConfigValueForKey ${message}`);
         callback(message);
         return message;
     }
@@ -1575,7 +1498,7 @@ Countly.getRemoteConfigValueForKey = function (keyName, callback) {
             try {
                 value = JSON.parse(value);
             } catch (e) {
-                // Countly.logError('getRemoteConfigValueForKey', e.message);
+                // L.e('getRemoteConfigValueForKey', e.message);
                 // noop. value will remain string if not JSON parsable and returned as string
             }
         }
@@ -1586,10 +1509,11 @@ Countly.getRemoteConfigValueForKey = function (keyName, callback) {
 Countly.getRemoteConfigValueForKeyP = function (keyName) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'getRemoteConfigValueForKeyP'";
-        Countly.logError('getRemoteConfigValueForKeyP', message);
+        L.e(`getRemoteConfigValueForKeyP, ${message}`);
         callback(message);
         return message;
     }
+    L.d(`getRemoteConfigValueForKeyP, Getting remote config value for key: [${keyName}]`);
     if (Platform.OS != 'android') {
         return 'To be implemented';
     }
@@ -1600,24 +1524,25 @@ Countly.getRemoteConfigValueForKeyP = function (keyName) {
                 try {
                     value = JSON.parse(value);
                 } catch (e) {
-                    // Countly.logError('getRemoteConfigValueForKeyP', e.message);
+                    // L.e('getRemoteConfigValueForKeyP', e.message);
                     // noop. value will remain string if not JSON parsable and returned as string
                 }
             }
             return value;
         })
         .catch((e) => {
-            Countly.logError('getRemoteConfigValueForKeyP, Catch Error:', e);
+            L.e('getRemoteConfigValueForKeyP, Catch Error:', e);
         });
 };
 
 Countly.remoteConfigClearValues = async function () {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'remoteConfigClearValues'";
-        Countly.logError('remoteConfigClearValues', message);
+        L.e(`remoteConfigClearValues, ${message}`);
         callback(message);
         return message;
     }
+    L.d('remoteConfigClearValues, Clearing remote config values');
     const result = await CountlyReactNative.remoteConfigClearValues();
     return result;
 };
@@ -1632,6 +1557,7 @@ Countly.remoteConfigClearValues = async function () {
  * @return {String || void} error message or void
  */
 Countly.setStarRatingDialogTexts = function (starRatingTextTitle, starRatingTextMessage, starRatingTextDismiss) {
+    L.w(`setStarRatingDialogTexts, setStarRatingDialogTexts is deprecated, use countlyConfig.setStarRatingDialogTexts instead. starRatingTextTitle : [${starRatingTextTitle}], starRatingTextMessage : [${starRatingTextMessage}], starRatingTextDismiss : [${starRatingTextDismiss}]`);
     const args = [];
     args.push(starRatingTextTitle);
     args.push(starRatingTextMessage);
@@ -1642,9 +1568,10 @@ Countly.setStarRatingDialogTexts = function (starRatingTextTitle, starRatingText
 Countly.showStarRating = function (callback) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'showStarRating'";
-        Countly.logError('showStarRating', message);
+        L.e(`showStarRating, ${message}`);
         return message;
     }
+    L.d('showStarRating, Showing star rating');
     if (!callback) {
         callback = function () {};
     }
@@ -1661,17 +1588,17 @@ Countly.showStarRating = function (callback) {
 Countly.presentRatingWidgetWithID = function (widgetId, closeButtonText, ratingWidgetCallback) {
     if (!_state.isInitialized) {
         var message = "'init' must be called before 'presentRatingWidgetWithID'";
-        Countly.logError('presentRatingWidgetWithID', message);
+        L.e(`presentRatingWidgetWithID, ${message}`);
         return message;
     }
     if (!widgetId) {
         message = 'Rating Widget id should not be null or empty';
-        Countly.logError('presentRatingWidgetWithID', message);
+        L.e(`presentRatingWidgetWithID, ${message}`);
         return message;
     }
     if (typeof closeButtonText !== 'string') {
         closeButtonText = '';
-        Countly.logWarning('presentRatingWidgetWithID', `unsupported data type of closeButtonText : '${typeof args}'`);
+        L.w('presentRatingWidgetWithID, ' + `unsupported data type of closeButtonText : '${typeof args}'`);
     }
     if (ratingWidgetCallback) {
         // eventEmitter.addListener('ratingWidgetCallback', ratingWidgetCallback);
@@ -1692,7 +1619,7 @@ Countly.presentRatingWidgetWithID = function (widgetId, closeButtonText, ratingW
 Countly.getFeedbackWidgets = async function (onFinished) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'getFeedbackWidgets'";
-        Countly.logError('getFeedbackWidgets', message);
+        L.e(`getFeedbackWidgets, ${message}`);
         return message;
     }
     let result = [];
@@ -1722,28 +1649,29 @@ Countly.getFeedbackWidgets = async function (onFinished) {
 Countly.presentFeedbackWidgetObject = async function (feedbackWidget, closeButtonText, widgetShownCallback, widgetClosedCallback) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'presentFeedbackWidgetObject'";
-        Countly.logError('presentFeedbackWidgetObject', msg);
+        L.e(`presentFeedbackWidgetObject, ${msg}`);
         return msg;
     }
+    L.w('presentFeedbackWidgetObject, presentFeedbackWidgetObject is deprecated, use Countly.feedback.presentFeedbackWidget instead.');
     let message = null;
     if (!feedbackWidget) {
         message = 'feedbackWidget should not be null or undefined';
-        Countly.logError('presentFeedbackWidgetObject', message);
+        L.e(`presentFeedbackWidgetObject, ${message}`);
         return message;
     }
     if (!feedbackWidget.id) {
         message = 'FeedbackWidget id should not be null or empty';
-        Countly.logError('presentFeedbackWidgetObject', message);
+        L.e(`presentFeedbackWidgetObject, ${message}`);
         return message;
     }
     if (!feedbackWidget.type) {
         message = 'FeedbackWidget type should not be null or empty';
-        Countly.logError('presentFeedbackWidgetObject', message);
+        L.e(`presentFeedbackWidgetObject, ${message}`);
         return message;
     }
     if (typeof closeButtonText !== 'string') {
         closeButtonText = '';
-        Countly.logWarning('presentFeedbackWidgetObject', `unsupported data type of closeButtonText : '${typeof args}'`);
+        L.w('presentFeedbackWidgetObject, ' + `unsupported data type of closeButtonText : '${typeof args}'`);
     }
 
     if (widgetShownCallback) {
@@ -1776,9 +1704,10 @@ Countly.setEventSendThreshold = function (size) {
 Countly.startTrace = function (traceKey) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'startTrace'";
-        Countly.logError('startTrace', message);
+        L.e(`startTrace, ${message}`);
         return message;
     }
+    L.d(`startTrace, Starting trace: [${traceKey}]`);
     const args = [];
     args.push(traceKey);
     CountlyReactNative.startTrace(args);
@@ -1787,9 +1716,10 @@ Countly.startTrace = function (traceKey) {
 Countly.cancelTrace = function (traceKey) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'cancelTrace'";
-        Countly.logError('cancelTrace', message);
+        L.e(`cancelTrace, ${message}`);
         return message;
     }
+    L.d(`cancelTrace, Canceling trace: [${traceKey}]`);
     const args = [];
     args.push(traceKey);
     CountlyReactNative.cancelTrace(args);
@@ -1798,9 +1728,10 @@ Countly.cancelTrace = function (traceKey) {
 Countly.clearAllTraces = function () {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'clearAllTraces'";
-        Countly.logError('clearAllTraces', message);
+        L.e(`clearAllTraces, ${message}`);
         return message;
     }
+    L.d('clearAllTraces, Clearing all traces');
     const args = [];
     CountlyReactNative.clearAllTraces(args);
 };
@@ -1808,9 +1739,10 @@ Countly.clearAllTraces = function () {
 Countly.endTrace = function (traceKey, customMetric) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'endTrace'";
-        Countly.logError('endTrace', message);
+        L.e(`endTrace, ${message}`);
         return message;
     }
+    L.d(`endTrace, Ending trace: [${traceKey}]`);
     const args = [];
     args.push(traceKey);
     customMetric = customMetric || {};
@@ -1824,9 +1756,10 @@ Countly.endTrace = function (traceKey, customMetric) {
 Countly.recordNetworkTrace = function (networkTraceKey, responseCode, requestPayloadSize, responsePayloadSize, startTime, endTime) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'recordNetworkTrace'";
-        Countly.logError('recordNetworkTrace', message);
+        L.e(`recordNetworkTrace, ${message}`);
         return message;
     }
+    L.d(`recordNetworkTrace, Recording network trace: [${networkTraceKey}]`);
     const args = [];
     args.push(networkTraceKey);
     args.push(responseCode.toString());
@@ -1844,6 +1777,7 @@ Countly.recordNetworkTrace = function (networkTraceKey, responseCode, requestPay
  * Should be called before Countly init
  */
 Countly.enableApm = function () {
+    L.w(`enableApm, enableApm is deprecated, use countlyConfig.enableApm instead.`);
     const args = [];
     CountlyReactNative.enableApm(args);
 };
@@ -1856,16 +1790,17 @@ Countly.enableApm = function () {
  * Should be called before Countly init
  */
 Countly.enableAttribution = async function (attributionID = '') {
+    L.w(`enableAttribution, enableAttribution is deprecated, use Countly.recordIndirectAttribution instead.`);
     if (/ios/.exec(Platform.OS)) {
         if (attributionID == '') {
             const message = "attribution Id for iOS can't be empty string";
-            Countly.logError('enableAttribution', message);
+            L.e(`enableAttribution ${message}`);
             return message;
         }
         Countly.recordAttributionID(attributionID);
     } else {
         const message = 'This method does nothing for android';
-        Countly.logError('enableAttribution', message);
+        L.e(`enableAttribution, ${message}`);
         return message;
     }
 };
@@ -1878,6 +1813,7 @@ Countly.enableAttribution = async function (attributionID = '') {
  * Currently implemented for iOS only
  */
 Countly.recordAttributionID = function (attributionID) {
+    L.w(`recordAttributionID, recordAttributionID is deprecated, use Countly.recordIndirectAttribution instead.`);
     if (!/ios/.exec(Platform.OS)) {
         return 'recordAttributionID : To be implemented';
     }
@@ -1893,9 +1829,10 @@ Countly.recordAttributionID = function (attributionID) {
 Countly.replaceAllAppKeysInQueueWithCurrentAppKey = function () {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'replaceAllAppKeysInQueueWithCurrentAppKey'";
-        Countly.logError('replaceAllAppKeysInQueueWithCurrentAppKey', message);
+        L.e(`replaceAllAppKeysInQueueWithCurrentAppKey, ${message}`);
         return message;
     }
+    L.d('replaceAllAppKeysInQueueWithCurrentAppKey, Replacing all app keys in queue with current app key');
     CountlyReactNative.replaceAllAppKeysInQueueWithCurrentAppKey();
 };
 /**
@@ -1904,9 +1841,10 @@ Countly.replaceAllAppKeysInQueueWithCurrentAppKey = function () {
 Countly.recordDirectAttribution = function (campaignType, campaignData) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'recordDirectAttribution'";
-        Countly.logError('recordDirectAttribution', message);
+        L.e(`recordDirectAttribution, ${message}`);
         return message;
     }
+    L.d(`recordDirectAttribution, Recording direct attribution: [${campaignType}, ${campaignData}]`);
     const args = [];
     args.push(campaignType);
     args.push(campaignData);
@@ -1918,9 +1856,10 @@ Countly.recordDirectAttribution = function (campaignType, campaignData) {
 Countly.recordIndirectAttribution = function (attributionValues) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'recordIndirectAttribution'";
-        Countly.logError('recordIndirectAttribution', message);
+        L.e(`recordIndirectAttribution, ${message}`);
         return message;
     }
+    L.d(`recordIndirectAttribution, Recording indirect attribution: [${attributionValues}]`);
     const args = [];
     args.push(attributionValues);
     CountlyReactNative.recordIndirectAttribution(args);
@@ -1933,9 +1872,10 @@ Countly.recordIndirectAttribution = function (attributionValues) {
 Countly.removeDifferentAppKeysFromQueue = function () {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'removeDifferentAppKeysFromQueue'";
-        Countly.logError('removeDifferentAppKeysFromQueue', message);
+        L.e(`removeDifferentAppKeysFromQueue, ${message}`);
         return message;
     }
+    L.d('removeDifferentAppKeysFromQueue, Removing all requests with a different app key in request queue');
     CountlyReactNative.removeDifferentAppKeysFromQueue();
 };
 
@@ -1946,9 +1886,10 @@ Countly.removeDifferentAppKeysFromQueue = function () {
 Countly.appLoadingFinished = async function () {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'appLoadingFinished'";
-        Countly.logError('appLoadingFinished', message);
+        L.e(`appLoadingFinished, ${message}`);
         return message;
     }
+    L.d('appLoadingFinished, App loading finished');
     CountlyReactNative.appLoadingFinished();
 };
 
@@ -1959,15 +1900,16 @@ Countly.appLoadingFinished = async function () {
  * Supported data type for customMetric values is String
  */
 Countly.setCustomMetrics = async function (customMetric) {
+    L.d(`setCustomMetrics, Setting custom metrics: [${JSON.stringify(customMetric)}]`);
     let message = null;
     if (!customMetric) {
         message = 'customMetric should not be null or undefined';
-        Countly.logError('setCustomMetrics', message);
+        L.e(`setCustomMetrics, ${message}`);
         return message;
     }
     if (typeof customMetric !== 'object') {
         message = `unsupported data type of customMetric '${typeof customMetric}'`;
-        Countly.logWarning('setCustomMetrics', message);
+        L.w(`setCustomMetrics, ${message}`);
         return message;
     }
     const args = [];
@@ -1976,7 +1918,7 @@ Countly.setCustomMetrics = async function (customMetric) {
             args.push(key.toString());
             args.push(customMetric[key].toString());
         } else {
-            Countly.logWarning('setCustomMetrics', `skipping value for key '${key.toString()}', due to unsupported data type '${typeof customMetric[key]}'`);
+            L.w('setCustomMetrics, ' + `skipping value for key '${key.toString()}', due to unsupported data type '${typeof customMetric[key]}'`);
         }
     }
     if (args.length != 0) {
@@ -1993,6 +1935,7 @@ Countly.setCustomMetrics = async function (customMetric) {
  * @returns
  */
 Countly.validateUserDataValue = async (stringValue, stringName, functionName) => {
+    L.d(`validateUserDataValue, Validating user data value: [${stringValue}], name: [${stringName}], function: [${functionName}]`);
     // validating that value should not be null or undefined
     let message = await Countly.validateValidUserData(stringValue, stringName, functionName);
     if (message) {
@@ -2018,17 +1961,18 @@ Countly.validateUserDataValue = async (stringValue, stringName, functionName) =>
  * @returns
  */
 Countly.validateUserDataType = async (stringValue, stringName, functionName) => {
+    L.d(`validateUserDataType, Validating user data type: [${stringValue}], name: [${stringName}], function: [${functionName}]`);
     let message = null;
     if (typeof stringValue === 'number') {
         return null;
     }
     if (typeof stringValue === 'string') {
-        Countly.logWarning(functionName, `unsupported data type '${typeof stringValue}', its data type should be 'number'`);
+        L.w(`${functionName} unsupported data type '${typeof stringValue}', its data type should be 'number'`);
         return null;
     }
 
     message = `skipping value for '${stringName.toString()}', due to unsupported data type '${typeof stringValue}', its data type should be 'number'`;
-    Countly.logError(functionName, message);
+    L.e(`${functionName}, ${message}`);
     return message;
 };
 
@@ -2041,12 +1985,13 @@ Countly.validateUserDataType = async (stringValue, stringName, functionName) => 
  * @returns
  */
 Countly.validateValidUserData = async (stringValue, stringName, functionName) => {
+    L.d(`validateValidUserData, Validating valid user data: [${stringValue}], name: [${stringName}], function: [${functionName}]`);
     if (stringValue || stringValue == '') {
         return null;
     }
 
     const message = `${stringName} should not be null or undefined`;
-    Countly.logError(functionName, message);
+    L.e(`${functionName}, ${message}`);
     return message;
 };
 
@@ -2059,13 +2004,14 @@ Countly.validateValidUserData = async (stringValue, stringName, functionName) =>
  * @returns
  */
 Countly.validateParseInt = async (stringValue, stringName, functionName) => {
+    L.d(`validateParseInt, Validating parse int: [${stringValue}], name: [${stringName}], function: [${functionName}]`);
     const intValue = parseInt(stringValue);
     if (!isNaN(intValue)) {
         return null;
     }
 
     const message = `skipping value for '${stringName.toString()}', due to unsupported data type '${typeof stringValue}', its data type should be 'number' or parseable to 'integer'`;
-    Countly.logError(functionName, message);
+    L.e(`${functionName}, ${message}`);
     return message;
 };
 
@@ -2078,6 +2024,7 @@ Countly.validateParseInt = async (stringValue, stringName, functionName) => {
  * @returns
  */
 Countly.validateString = async (stringValue, stringName, functionName) => {
+    L.d(`validateString, Validating string: [${stringValue}], name: [${stringName}], function: [${functionName}]`);
     let message = null;
     if (!stringValue) {
         message = `${stringName} should not be null, undefined or empty`;
@@ -2085,62 +2032,9 @@ Countly.validateString = async (stringValue, stringName, functionName) => {
         message = `skipping value for '${stringName.toString()}', due to unsupported data type '${typeof stringValue}', its data type should be 'string'`;
     }
     if (message) {
-        Countly.logError(functionName, message);
+        L.e(`${functionName}, ${message}`);
     }
     return message;
 };
-
-/**
- * Print debug message if logging is enabled
- * @param {String} functionName : name of function from where value is validating.
- * @param {String} message : debug message
- */
-Countly.logDebug = async (functionName, message) => {
-    if (await CountlyReactNative.isLoggingEnabled()) {
-        console.debug(`[CountlyReactNative] ${functionName}, ${message}`);
-    }
-};
-
-/**
- * Print info messages if logging is enabled
- * @param {String} functionName : name of function from where value is validating.
- * @param {String} message : info message
- */
-Countly.logInfo = async (functionName, message) => {
-    if (await CountlyReactNative.isLoggingEnabled()) {
-        console.info(`[CountlyReactNative] ${functionName}, ${message}`);
-    }
-};
-
-/**
- * Print error if logging is enabled
- * @param {String} functionName : name of function from where value is validating.
- * @param {String} error : error message
- */
-Countly.logError = async (functionName, error) => {
-    if (await CountlyReactNative.isLoggingEnabled()) {
-        console.error(`[CountlyReactNative] ${functionName}, ${error}`);
-    }
-};
-/**
- * Print warning if logging is enabled
- * @param {String} functionName : name of function from where value is validating.
- * @param {String} error : error message
- */
-Countly.logWarning = async (functionName, warning) => {
-    if (await CountlyReactNative.isLoggingEnabled()) {
-        console.warn(`[CountlyReactNative] ${functionName}, ${warning}`);
-    }
-};
-
-/*
-Countly.initNative = function(){
-    CountlyReactNative.initNative();
-}
-
-Countly.testCrash = function(){
-    CountlyReactNative.testCrash();
-}
-*/
 
 export default Countly;
