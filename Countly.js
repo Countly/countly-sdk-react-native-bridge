@@ -24,7 +24,6 @@ CountlyState.eventEmitter = eventEmitter;
 
 Countly.feedback = Feedback;
 Countly.feedback.state = CountlyState;
-Countly.feedback.instance = Countly;
 
 let _isCrashReportingEnabled = false;
 
@@ -315,7 +314,7 @@ Countly.registerForNotification = function (theListener) {
 Countly.configureIntentRedirectionCheck = function (allowedIntentClassNames = [], allowedIntentPackageNames = [], useAdditionalIntentRedirectionChecks = true) {
     if (/ios/.exec(Platform.OS)) {
         L.e('configureIntentRedirectionCheck, configureIntentRedirectionCheck is not required for iOS');
-      
+
         return 'configureIntentRedirectionCheck : not required for iOS';
     }
 
@@ -495,7 +494,7 @@ Countly.getCurrentDeviceId = async function () {
     return result;
 };
 
- /**
+/**
  * Get currently used device Id type.
  * Should be called after Countly init
  *
