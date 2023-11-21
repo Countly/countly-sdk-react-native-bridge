@@ -2,6 +2,13 @@ import shutil
 import os
 import platform
 
+# This script sets up a React Native app with the Countly SDK
+# It is meant to be run from the example folder
+# It will remove any existing AwesomeProject folder, and create a new one
+# It will then copy the contents of CountlyRNExample to AwesomeProject
+# It will then add countly-sdk-react-native-bridge to dependencies in package.json
+# If on iOS, it will run pod install
+
 def setup_react_native_app():
     print("Removing existing AwesomeProject folder...")
     
