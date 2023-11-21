@@ -1,9 +1,9 @@
+import * as L from './Logger.js';
+
 class Feedback {
     #state;
-    #instance;
-    constructor(state, instance) {
+    constructor(state) {
         this.#state = state;
-        this.#instance = instance;
     }
 
     /**
@@ -14,10 +14,11 @@ class Feedback {
     async getAvailableFeedbackWidgets(onFinished) {
         if (!this.#state.isInitialized) {
             const message = "'init' must be called before 'getAvailableFeedbackWidgets'";
-            this.#instance.logError('getAvailableFeedbackWidgets', message);
+            L.e(`getAvailableFeedbackWidgets, ${message}`);
             return { error: message, data: null };
         }
 
+        L.d('getAvailableFeedbackWidgets, getAvailableFeedbackWidgets');
         let result = null;
         let error = null;
         try {
@@ -44,30 +45,31 @@ class Feedback {
     presentFeedbackWidget(feedbackWidget, closeButtonText, widgetShownCallback, widgetClosedCallback) {
         if (!this.#state.isInitialized) {
             const message = "'init' must be called before 'presentFeedbackWidget'";
-            this.#instance.logError('presentFeedbackWidget', message);
+            L.e(`presentFeedbackWidget, ${message}`);
             return { error: message };
         }
         let message = null;
         if (!feedbackWidget) {
             message = 'feedbackWidget should not be null or undefined';
-            this.#instance.logError('presentFeedbackWidget', message);
+            L.e(`presentFeedbackWidget, ${message}`);
             return { error: message };
         }
         if (!feedbackWidget.id) {
             message = 'FeedbackWidget id should not be null or empty';
-            this.#instance.logError('presentFeedbackWidget', message);
+            L.e(`presentFeedbackWidget, ${message}`);
             return { error: message };
         }
         if (!feedbackWidget.type) {
             message = 'FeedbackWidget type should not be null or empty';
-            this.#instance.logError('presentFeedbackWidget', message);
+            L.e(`presentFeedbackWidget, ${message}`);
             return { error: message };
         }
         if (typeof closeButtonText !== 'string') {
             closeButtonText = '';
-            this.#instance.logWarning('presentFeedbackWidget', `unsupported data type of closeButtonText : '${typeof args}'`);
+            L.w(`presentFeedbackWidget, unsupported data type of closeButtonText : [${typeof args}]`);
         }
 
+        L.d(`presentFeedbackWidget, presentFeedbackWidget with widget:[${JSON.stringify(feedbackWidget)}]`);
         if (widgetShownCallback) {
             this.#state.widgetShownCallback = this.#state.eventEmitter.addListener(this.#state.widgetShownCallbackName, () => {
                 widgetShownCallback();
@@ -96,13 +98,12 @@ class Feedback {
     async getFeedbackWidgetData(widgetInfo, onFinished) {
         if (!this.#state.isInitialized) {
             const message = "'initWithConfig' must be called before 'getFeedbackWidgetData'";
-            this.#instance.logError('getFeedbackWidgetData', message);
-            onFinished(null, message);
+            L.e(`getFeedbackWidgetData, ${message}`);
             return { error: message, data: null };
         }
         const widgetId = widgetInfo.id;
         const widgetType = widgetInfo.type;
-        this.#instance.logInfo('getFeedbackWidgetData', 'Calling "getFeedbackWidgetData" with Type:[' + widgetType + ']');
+        L.d(`getFeedbackWidgetData, Calling "getFeedbackWidgetData" with Type:[${widgetType}]`);
         const args = [];
         args.push(widgetId);
         args.push(widgetType);
@@ -130,12 +131,12 @@ class Feedback {
     async reportFeedbackWidgetManually(widgetInfo, widgetData, widgetResult) {
         if (!this.#state.isInitialized) {
             const message = "'initWithConfig' must be called before 'reportFeedbackWidgetManually'";
-            this.#instance.logError('reportFeedbackWidgetManually', message);
+            L.e(`reportFeedbackWidgetManually, ${message}`);
             return { error: message };
         }
         const widgetId = widgetInfo.id;
         const widgetType = widgetInfo.type;
-        this.#instance.logInfo('reportFeedbackWidgetManually', 'Calling "reportFeedbackWidgetManually" with Type:[' + widgetType + ']');
+        L.d(`reportFeedbackWidgetManually, Calling "reportFeedbackWidgetManually" with Type:[${widgetType}]`);
         const widgetInfoList = [];
         widgetInfoList.push(widgetId);
         widgetInfoList.push(widgetType);
