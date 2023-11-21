@@ -1,3 +1,15 @@
+## 23.10.0
+* Fixed a bug where segment provided to 'logException' was ignored in Android devices
+* Fixed a bug where bridged SDK logs were not printing
+
+* Removed the deprecated 'setViewTracking' method. (No replacement)
+* Removed the deprecated 'showFeedbackPopup' method. (replaced with 'presentRatingWidgetWithID')
+* Removed the deprecated 'getAvailableFeedbackWidgets' method. (replaced with 'feedback.getAvailableFeedbackWidgets')
+* Removed the deprecated 'presentFeedbackWidget' method. (replaced with 'feedback.presentFeedbackWidget')
+
+* Underlying Android SDK version is 23.8.2
+* Underlying iOS SDK version is 23.8.2
+
 ## 23.8.1
 * Fixed bug where "presentFeedbackWidget" method would fail with "Property 'eventEmitter' doesn't exist" if callbacks are provided.
 

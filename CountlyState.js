@@ -1,6 +1,6 @@
 const CountlyState = {};
 
-CountlyState.isInitialized = false
+CountlyState.isInitialized = false;
 CountlyState.CountlyReactNative = null;
 CountlyState.eventEmitter = null;
 
