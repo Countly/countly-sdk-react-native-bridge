@@ -11,6 +11,7 @@ import CountlyState from './CountlyState.js';
 import Feedback from './Feedback.js';
 import * as L from './Logger.js';
 import * as Utils from './Utils.js';
+import * as Validate from './Validators.js';
 
 const { CountlyReactNative } = NativeModules;
 const eventEmitter = new NativeEventEmitter(CountlyReactNative);
@@ -199,13 +200,13 @@ Countly.sendEvent = function (options) {
  * Supported data type for segments values are String, int, double and bool
  * @return {String || void} error message or void
  */
-Countly.recordView = async function (recordView, segments) {
+Countly.recordView = function (recordView, segments) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'recordView'";
         L.e(`recordView, ${msg}`);
         return msg;
     }
-    const message = await Countly.validateString(recordView, 'view name', 'recordView');
+    const message = Validate.String(recordView, 'view name', 'recordView');
     if (message) {
         return message;
     }
@@ -248,8 +249,8 @@ Countly.disablePushNotifications = function () {
  *
  * @return {String || void} error message or void
  */
-Countly.pushTokenType = async function (tokenType, channelName, channelDescription) {
-    const message = await Countly.validateString(tokenType, 'tokenType', 'pushTokenType');
+Countly.pushTokenType = function (tokenType, channelName, channelDescription) {
+    const message = Validate.String(tokenType, 'tokenType', 'pushTokenType');
     if (message) {
         return message;
     }
@@ -340,7 +341,7 @@ Countly.configureIntentRedirectionCheck = function (allowedIntentClassNames = []
 
     const _allowedIntentClassNames = [];
     for (const className of allowedIntentClassNames) {
-        var message = Countly.validateString(className, 'class name', 'configureIntentRedirectionCheck');
+        var message = Validate.String(className, 'class name', 'configureIntentRedirectionCheck');
         if (message == null) {
             _allowedIntentClassNames.push(className);
         }
@@ -348,7 +349,7 @@ Countly.configureIntentRedirectionCheck = function (allowedIntentClassNames = []
 
     const _allowedIntentPackageNames = [];
     for (const packageName of allowedIntentPackageNames) {
-        var message = Countly.validateString(packageName, 'package name', 'configureIntentRedirectionCheck');
+        var message = Validate.String(packageName, 'package name', 'configureIntentRedirectionCheck');
         if (message == null) {
             _allowedIntentPackageNames.push(packageName);
         }
@@ -521,13 +522,13 @@ Countly.getDeviceIDType = async function () {
  * @param {Boolean} onServer merge device id
  * @return {String || void} error message or void
  * */
-Countly.changeDeviceId = async function (newDeviceID, onServer) {
+Countly.changeDeviceId = function (newDeviceID, onServer) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'changeDeviceId'";
         L.e(`changeDeviceId, ${msg}`);
         return msg;
     }
-    const message = await Countly.validateString(newDeviceID, 'newDeviceID', 'changeDeviceId');
+    const message = Validate.String(newDeviceID, 'newDeviceID', 'changeDeviceId');
     if (message) {
         return message;
     }
@@ -709,8 +710,8 @@ Countly.endSession = function () {
  * @param {String} salt salt
  * @return {String || void} error message or void
  */
-Countly.enableParameterTamperingProtection = async function (salt) {
-    const message = await Countly.validateString(salt, 'salt', 'enableParameterTamperingProtection');
+Countly.enableParameterTamperingProtection = function (salt) {
+    const message = Validate.String(salt, 'salt', 'enableParameterTamperingProtection');
     if (message) {
         return message;
     }
@@ -725,8 +726,8 @@ Countly.enableParameterTamperingProtection = async function (salt) {
  *
  * @return {String || void} error message or void
  */
-Countly.pinnedCertificates = async function (certificateName) {
-    const message = await Countly.validateString(certificateName, 'certificateName', 'pinnedCertificates');
+Countly.pinnedCertificates = function (certificateName) {
+    const message = Validate.String(certificateName, 'certificateName', 'pinnedCertificates');
     if (message) {
         return message;
     }
@@ -741,13 +742,13 @@ Countly.pinnedCertificates = async function (certificateName) {
  * @param {String} eventName name of event
  * @return {String || void} error message or void
  */
-Countly.startEvent = async function (eventName) {
+Countly.startEvent = function (eventName) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'startEvent'";
         L.e(`startEvent, ${msg}`);
         return msg;
     }
-    const message = await Countly.validateString(eventName, 'eventName', 'startEvent');
+    const message = Validate.String(eventName, 'eventName', 'startEvent');
     if (message) {
         return message;
     }
@@ -762,13 +763,13 @@ Countly.startEvent = async function (eventName) {
  * @param {String} eventName name of event
  * @return {String || void} error message or void
  */
-Countly.cancelEvent = async function (eventName) {
+Countly.cancelEvent = function (eventName) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'cancelEvent'";
         L.e(`cancelEvent, ${msg}`);
         return msg;
     }
-    const message = await Countly.validateString(eventName, 'eventName', 'cancelEvent');
+    const message = Validate.String(eventName, 'eventName', 'cancelEvent');
     if (message) {
         return message;
     }
@@ -879,7 +880,7 @@ Countly.setUserData = async function (userData) {
     }
 
     if (userData.byear) {
-        Countly.validateParseInt(userData.byear, 'key byear', 'setUserData');
+        Validate.ParseInt(userData.byear, 'key byear', 'setUserData');
         userData.byear = userData.byear.toString();
     }
     args.push(userData);
@@ -894,12 +895,12 @@ Countly.userData.setProperty = async function (keyName, keyValue) {
         return msg;
     }
     L.d(`setProperty, Setting user property: [${keyName}, ${keyValue}]`);
-    let message = await Countly.validateString(keyName, 'key', 'setProperty');
+    let message = Validate.String(keyName, 'key', 'setProperty');
     if (message) {
         return message;
     }
 
-    message = await Countly.validateValidUserData(keyValue, 'value', 'setProperty');
+    message = Validate.ValidUserData(keyValue, 'value', 'setProperty');
     if (message) {
         return message;
     }
@@ -916,7 +917,7 @@ Countly.userData.increment = async function (keyName) {
         return msg;
     }
     L.d(`increment, Incrementing user property: [${keyName}]`);
-    const message = await Countly.validateString(keyName, 'key', 'setProperty');
+    const message = Validate.String(keyName, 'key', 'setProperty');
     if (message) {
         return message;
     }
@@ -932,11 +933,11 @@ Countly.userData.incrementBy = async function (keyName, keyValue) {
         return msg;
     }
     L.d(`incrementBy, Incrementing user property: [${keyName}, ${keyValue}]`);
-    let message = await Countly.validateString(keyName, 'key', 'incrementBy');
+    let message = Validate.String(keyName, 'key', 'incrementBy');
     if (message) {
         return message;
     }
-    message = await Countly.validateUserDataValue(keyValue, 'value', 'incrementBy');
+    message = Validate.UserDataValue(keyValue, 'value', 'incrementBy');
     if (message) {
         return message;
     }
@@ -950,11 +951,11 @@ Countly.userData.multiply = async function (keyName, keyValue) {
         return msg;
     }
     L.d(`multiply, Multiplying user property: [${keyName}, ${keyValue}]`);
-    let message = await Countly.validateString(keyName, 'key', 'multiply');
+    let message = Validate.String(keyName, 'key', 'multiply');
     if (message) {
         return message;
     }
-    message = await Countly.validateUserDataValue(keyValue, 'value', 'multiply');
+    message = Validate.UserDataValue(keyValue, 'value', 'multiply');
     if (message) {
         return message;
     }
@@ -968,11 +969,11 @@ Countly.userData.saveMax = async function (keyName, keyValue) {
         return msg;
     }
     L.d(`saveMax, Saving max user property: [${keyName}, ${keyValue}]`);
-    let message = await Countly.validateString(keyName, 'key', 'saveMax');
+    let message = Validate.String(keyName, 'key', 'saveMax');
     if (message) {
         return message;
     }
-    message = await Countly.validateUserDataValue(keyValue, 'value', 'saveMax');
+    message = Validate.UserDataValue(keyValue, 'value', 'saveMax');
     if (message) {
         return message;
     }
@@ -986,11 +987,11 @@ Countly.userData.saveMin = async function (keyName, keyValue) {
         return msg;
     }
     L.d(`saveMin, Saving min user property: [${keyName}, ${keyValue}]`);
-    let message = await Countly.validateString(keyName, 'key', 'saveMin');
+    let message = Validate.String(keyName, 'key', 'saveMin');
     if (message) {
         return message;
     }
-    message = await Countly.validateUserDataValue(keyValue, 'value', 'saveMin');
+    message = Validate.UserDataValue(keyValue, 'value', 'saveMin');
     if (message) {
         return message;
     }
@@ -1004,11 +1005,11 @@ Countly.userData.setOnce = async function (keyName, keyValue) {
         return msg;
     }
     L.d(`setOnce, Setting once user property: [${keyName}, ${keyValue}]`);
-    let message = await Countly.validateString(keyName, 'key', 'setOnce');
+    let message = Validate.String(keyName, 'key', 'setOnce');
     if (message) {
         return message;
     }
-    message = await Countly.validateValidUserData(keyValue, 'value', 'setOnce');
+    message = Validate.ValidUserData(keyValue, 'value', 'setOnce');
     if (message) {
         return message;
     }
@@ -1024,11 +1025,11 @@ Countly.userData.pushUniqueValue = async function (keyName, keyValue) {
         return msg;
     }
     L.d(`pushUniqueValue, Pushing unique value to user property: [${keyName}, ${keyValue}]`);
-    let message = await Countly.validateString(keyName, 'key', 'pushUniqueValue');
+    let message = Validate.String(keyName, 'key', 'pushUniqueValue');
     if (message) {
         return message;
     }
-    message = await Countly.validateValidUserData(keyValue, 'value', 'pushUniqueValue');
+    message = Validate.ValidUserData(keyValue, 'value', 'pushUniqueValue');
     if (message) {
         return message;
     }
@@ -1044,11 +1045,11 @@ Countly.userData.pushValue = async function (keyName, keyValue) {
         return msg;
     }
     L.d(`pushValue, Pushing value to user property: [${keyName}, ${keyValue}]`);
-    let message = await Countly.validateString(keyName, 'key', 'pushValue');
+    let message = Validate.String(keyName, 'key', 'pushValue');
     if (message) {
         return message;
     }
-    message = await Countly.validateValidUserData(keyValue, 'value', 'pushValue');
+    message = Validate.ValidUserData(keyValue, 'value', 'pushValue');
     if (message) {
         return message;
     }
@@ -1064,11 +1065,11 @@ Countly.userData.pullValue = async function (keyName, keyValue) {
         return msg;
     }
     L.d(`pullValue, Pulling value from user property: [${keyName}, ${keyValue}]`);
-    let message = await Countly.validateString(keyName, 'key', 'pullValue');
+    let message = Validate.String(keyName, 'key', 'pullValue');
     if (message) {
         return message;
     }
-    message = await Countly.validateValidUserData(keyValue, 'value', 'pullValue');
+    message = Validate.ValidUserData(keyValue, 'value', 'pullValue');
     if (message) {
         return message;
     }
@@ -1110,7 +1111,7 @@ Countly.userDataBulk.setUserProperties = async function (customAndPredefined) {
     }
 
     if (customAndPredefined.byear) {
-        Countly.validateParseInt(customAndPredefined.byear, 'key byear', 'setUserProperties');
+        Validate.ParseInt(customAndPredefined.byear, 'key byear', 'setUserProperties');
         customAndPredefined.byear = customAndPredefined.byear.toString();
     }
 
@@ -1134,12 +1135,12 @@ Countly.userDataBulk.setProperty = async function (keyName, keyValue) {
         return msg;
     }
     L.d(`setProperty, Setting user property: [${keyName}, ${keyValue}]`);
-    let message = await Countly.validateString(keyName, 'key', 'setProperty');
+    let message = Validate.String(keyName, 'key', 'setProperty');
     if (message) {
         return message;
     }
 
-    message = await Countly.validateValidUserData(keyValue, 'value', 'setProperty');
+    message = Validate.ValidUserData(keyValue, 'value', 'setProperty');
     if (message) {
         return message;
     }
@@ -1156,7 +1157,7 @@ Countly.userDataBulk.increment = async function (keyName) {
         return msg;
     }
     L.d(`increment, Incrementing user property: [${keyName}]`);
-    const message = await Countly.validateString(keyName, 'key', 'setProperty');
+    const message = Validate.String(keyName, 'key', 'setProperty');
     if (message) {
         return message;
     }
@@ -1172,11 +1173,11 @@ Countly.userDataBulk.incrementBy = async function (keyName, keyValue) {
         return msg;
     }
     L.d(`incrementBy, Incrementing user property: [${keyName}, ${keyValue}]`);
-    let message = await Countly.validateString(keyName, 'key', 'incrementBy');
+    let message = Validate.String(keyName, 'key', 'incrementBy');
     if (message) {
         return message;
     }
-    message = await Countly.validateUserDataValue(keyValue, 'value', 'incrementBy');
+    message = Validate.UserDataValue(keyValue, 'value', 'incrementBy');
     if (message) {
         return message;
     }
@@ -1190,11 +1191,11 @@ Countly.userDataBulk.multiply = async function (keyName, keyValue) {
         return msg;
     }
     L.d(`multiply, Multiplying user property: [${keyName}, ${keyValue}]`);
-    let message = await Countly.validateString(keyName, 'key', 'multiply');
+    let message = Validate.String(keyName, 'key', 'multiply');
     if (message) {
         return message;
     }
-    message = await Countly.validateUserDataValue(keyValue, 'value', 'multiply');
+    message = Validate.UserDataValue(keyValue, 'value', 'multiply');
     if (message) {
         return message;
     }
@@ -1208,11 +1209,11 @@ Countly.userDataBulk.saveMax = async function (keyName, keyValue) {
         return msg;
     }
     L.d(`saveMax, Saving max user property: [${keyName}, ${keyValue}]`);
-    let message = await Countly.validateString(keyName, 'key', 'saveMax');
+    let message = Validate.String(keyName, 'key', 'saveMax');
     if (message) {
         return message;
     }
-    message = await Countly.validateUserDataValue(keyValue, 'value', 'saveMax');
+    message = Validate.UserDataValue(keyValue, 'value', 'saveMax');
     if (message) {
         return message;
     }
@@ -1226,11 +1227,11 @@ Countly.userDataBulk.saveMin = async function (keyName, keyValue) {
         return msg;
     }
     L.d(`saveMin, Saving min user property: [${keyName}, ${keyValue}]`);
-    let message = await Countly.validateString(keyName, 'key', 'saveMin');
+    let message = Validate.String(keyName, 'key', 'saveMin');
     if (message) {
         return message;
     }
-    message = await Countly.validateUserDataValue(keyValue, 'value', 'saveMin');
+    message = Validate.UserDataValue(keyValue, 'value', 'saveMin');
     if (message) {
         return message;
     }
@@ -1244,11 +1245,11 @@ Countly.userDataBulk.setOnce = async function (keyName, keyValue) {
         return msg;
     }
     L.d(`setOnce, Setting once user property: [${keyName}, ${keyValue}]`);
-    let message = await Countly.validateString(keyName, 'key', 'setOnce');
+    let message = Validate.String(keyName, 'key', 'setOnce');
     if (message) {
         return message;
     }
-    message = await Countly.validateValidUserData(keyValue, 'value', 'setOnce');
+    message = Validate.ValidUserData(keyValue, 'value', 'setOnce');
     if (message) {
         return message;
     }
@@ -1264,11 +1265,11 @@ Countly.userDataBulk.pushUniqueValue = async function (keyName, keyValue) {
         return msg;
     }
     L.d(`pushUniqueValue, Pushing unique value to user property: [${keyName}, ${keyValue}]`);
-    let message = await Countly.validateString(keyName, 'key', 'pushUniqueValue');
+    let message = Validate.String(keyName, 'key', 'pushUniqueValue');
     if (message) {
         return message;
     }
-    message = await Countly.validateValidUserData(keyValue, 'value', 'pushUniqueValue');
+    message = Validate.ValidUserData(keyValue, 'value', 'pushUniqueValue');
     if (message) {
         return message;
     }
@@ -1284,11 +1285,11 @@ Countly.userDataBulk.pushValue = async function (keyName, keyValue) {
         return msg;
     }
     L.d(`pushValue, Pushing value to user property: [${keyName}, ${keyValue}]`);
-    let message = await Countly.validateString(keyName, 'key', 'pushValue');
+    let message = Validate.String(keyName, 'key', 'pushValue');
     if (message) {
         return message;
     }
-    message = await Countly.validateValidUserData(keyValue, 'value', 'pushValue');
+    message = Validate.ValidUserData(keyValue, 'value', 'pushValue');
     if (message) {
         return message;
     }
@@ -1304,11 +1305,11 @@ Countly.userDataBulk.pullValue = async function (keyName, keyValue) {
         return msg;
     }
     L.d(`pullValue, Pulling value from user property: [${keyName}, ${keyValue}]`);
-    let message = await Countly.validateString(keyName, 'key', 'pullValue');
+    let message = Validate.String(keyName, 'key', 'pullValue');
     if (message) {
         return message;
     }
-    message = await Countly.validateValidUserData(keyValue, 'value', 'pullValue');
+    message = Validate.ValidUserData(keyValue, 'value', 'pullValue');
     if (message) {
         return message;
     }
@@ -1923,117 +1924,6 @@ Countly.setCustomMetrics = async function (customMetric) {
     if (args.length != 0) {
         CountlyReactNative.setCustomMetrics(args);
     }
-};
-/**
- * Validate user data value, it should be 'number' or 'string' that is parseable to 'number'
- * and it should not be null or undefined
- * It will return message if any issue found related to data validation else return null.
- * @param {String} stringValue : value of data to validate
- * @param {String} stringName : name of that value string
- * @param {String} functionName : name of function from where value is validating.
- * @returns
- */
-Countly.validateUserDataValue = async (stringValue, stringName, functionName) => {
-    L.d(`validateUserDataValue, Validating user data value: [${stringValue}], name: [${stringName}], function: [${functionName}]`);
-    // validating that value should not be null or undefined
-    let message = await Countly.validateValidUserData(stringValue, stringName, functionName);
-    if (message) {
-        return message;
-    }
-
-    // validating that value should be 'number' or 'string'
-    message = await Countly.validateUserDataType(stringValue, stringName, functionName);
-    if (message) {
-        return message;
-    }
-
-    // validating that value should be parceable to int.
-    return await Countly.validateParseInt(stringValue, stringName, functionName);
-};
-
-/**
- * Validate user data value, it should be 'number' or 'string' that is parseable to 'number'
- * It will return message if any issue found related to data validation else return null.
- * @param {String} stringValue : value of data to validate
- * @param {String} stringName : name of that value string
- * @param {String} functionName : name of function from where value is validating.
- * @returns
- */
-Countly.validateUserDataType = async (stringValue, stringName, functionName) => {
-    L.d(`validateUserDataType, Validating user data type: [${stringValue}], name: [${stringName}], function: [${functionName}]`);
-    let message = null;
-    if (typeof stringValue === 'number') {
-        return null;
-    }
-    if (typeof stringValue === 'string') {
-        L.w(`${functionName} unsupported data type '${typeof stringValue}', its data type should be 'number'`);
-        return null;
-    }
-
-    message = `skipping value for '${stringName.toString()}', due to unsupported data type '${typeof stringValue}', its data type should be 'number'`;
-    L.e(`${functionName}, ${message}`);
-    return message;
-};
-
-/**
- * Validate user data value, it should not be null or undefined
- * It will return message if any issue found related to data validation else return null.
- * @param {String} stringValue : value of data to validate
- * @param {String} stringName : name of that value string
- * @param {String} functionName : name of function from where value is validating.
- * @returns
- */
-Countly.validateValidUserData = async (stringValue, stringName, functionName) => {
-    L.d(`validateValidUserData, Validating valid user data: [${stringValue}], name: [${stringName}], function: [${functionName}]`);
-    if (stringValue || stringValue == '') {
-        return null;
-    }
-
-    const message = `${stringName} should not be null or undefined`;
-    L.e(`${functionName}, ${message}`);
-    return message;
-};
-
-/**
- * Validate user data value, it should be parseable to 'number'
- * It will return message if any issue found related to data validation else return null.
- * @param {String} stringValue : value of data to validate
- * @param {String} stringName : name of that value string
- * @param {String} functionName : name of function from where value is validating.
- * @returns
- */
-Countly.validateParseInt = async (stringValue, stringName, functionName) => {
-    L.d(`validateParseInt, Validating parse int: [${stringValue}], name: [${stringName}], function: [${functionName}]`);
-    const intValue = parseInt(stringValue);
-    if (!isNaN(intValue)) {
-        return null;
-    }
-
-    const message = `skipping value for '${stringName.toString()}', due to unsupported data type '${typeof stringValue}', its data type should be 'number' or parseable to 'integer'`;
-    L.e(`${functionName}, ${message}`);
-    return message;
-};
-
-/**
- * Validate string, it should not be empty, null or undefined
- * It will return message if any issue found related to string validation else return null.
- * @param {String} stringValue : value of string to validate
- * @param {String} stringName : name of that value string
- * @param {String} functionName : name of function from where value is validating.
- * @returns
- */
-Countly.validateString = async (stringValue, stringName, functionName) => {
-    L.d(`validateString, Validating string: [${stringValue}], name: [${stringName}], function: [${functionName}]`);
-    let message = null;
-    if (!stringValue) {
-        message = `${stringName} should not be null, undefined or empty`;
-    } else if (typeof stringValue !== 'string') {
-        message = `skipping value for '${stringName.toString()}', due to unsupported data type '${typeof stringValue}', its data type should be 'string'`;
-    }
-    if (message) {
-        L.e(`${functionName}, ${message}`);
-    }
-    return message;
 };
 
 export default Countly;

@@ -610,7 +610,9 @@ class Example extends Component {
         const responseCode = successCodes[this.random(successCodes.length)];
         const requestPayloadSize = this.random(700) + 200;
         const responsePayloadSize = this.random(700) + 200;
-        Countly.recordNetworkTrace(networkTraceKey, responseCode, requestPayloadSize, responsePayloadSize);
+        const startTime = new Date().getTime();
+        const endTime = startTime + 500;
+        Countly.recordNetworkTrace(networkTraceKey, responseCode, requestPayloadSize, responsePayloadSize, startTime, endTime);
     };
     recordNetworkTraceFailure = () => {
         const networkTraceKey = 'api/endpoint.1';
