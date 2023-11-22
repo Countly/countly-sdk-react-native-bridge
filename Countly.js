@@ -22,8 +22,7 @@ let _state = CountlyState;
 CountlyState.CountlyReactNative = CountlyReactNative;
 CountlyState.eventEmitter = eventEmitter;
 
-Countly.feedback = Feedback;
-Countly.feedback.state = CountlyState;
+Countly.feedback = new Feedback(CountlyState);
 
 let _isCrashReportingEnabled = false;
 
