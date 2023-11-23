@@ -53,7 +53,7 @@ function validateValidUserData(stringValue, stringName, functionName) {
  */
 function validateParseInt(stringValue, stringName, functionName) {
     L.d(`validateParseInt, Validating parse int: [${stringValue}], name: [${stringName}], function: [${functionName}]`);
-    const intValue = parseInt(stringValue);
+    const intValue = parseInt(stringValue, 10); // explivitly converting to base 10, Codacy issue
     if (!isNaN(intValue)) {
         return null;
     }
