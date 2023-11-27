@@ -320,7 +320,7 @@ Countly.configureIntentRedirectionCheck = function (allowedIntentClassNames = []
     }
 
     if (_isPushInitialized) {
-        var message = "'configureIntentRedirectionCheck' must be called before 'askForNotificationPermission'";
+        let message = "'configureIntentRedirectionCheck' must be called before 'askForNotificationPermission'";
         L.e(`configureIntentRedirectionCheck, ${message}`);
         return message;
     }
@@ -341,7 +341,7 @@ Countly.configureIntentRedirectionCheck = function (allowedIntentClassNames = []
 
     const _allowedIntentClassNames = [];
     for (const className of allowedIntentClassNames) {
-        var message = Validate.String(className, 'class name', 'configureIntentRedirectionCheck');
+        let message = Validate.String(className, 'class name', 'configureIntentRedirectionCheck');
         if (message == null) {
             _allowedIntentClassNames.push(className);
         }
@@ -349,7 +349,7 @@ Countly.configureIntentRedirectionCheck = function (allowedIntentClassNames = []
 
     const _allowedIntentPackageNames = [];
     for (const packageName of allowedIntentPackageNames) {
-        var message = Validate.String(packageName, 'package name', 'configureIntentRedirectionCheck');
+        let message = Validate.String(packageName, 'package name', 'configureIntentRedirectionCheck');
         if (message == null) {
             _allowedIntentPackageNames.push(packageName);
         }
