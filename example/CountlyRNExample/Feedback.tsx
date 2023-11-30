@@ -8,7 +8,7 @@ import { lightOrange } from './Constants';
 
 // This function fetches the widget list and presents the widget with the given type. (with callback)
 function getAndPresentWidgetWithCallback(widgetType: string) {
-    Countly.feedback.getAvailableFeedbackWidgets((retrivedWidgets: any[], error: null) => {
+    Countly.feedback.getAvailableFeedbackWidgets((retrivedWidgets: any[], error: any) => {
         if (error != null) {
             console.error(`reportRatingManually, Error [${error}]`);
             return;
@@ -173,24 +173,99 @@ const styles = StyleSheet.create({
     },
 });
 
-let state = { ratingId: '61eac4627b8ad224e37bb3f5' };
+const state = { ratingId: '61eac4627b8ad224e37bb3f5' };
 
 function FeedbackScreen({ navigation }) {
     return (
         <SafeAreaView>
             <ScrollView>
                 <Text style={{ fontSize: 16, fontWeight: 'bold', textAlign: 'center', marginTop: 20 }}>With Callback</Text>
-                <CountlyButton title="Present Rating Widget" onPress={() => getAndPresentWidgetWithCallback('rating')} color={lightOrange} lightText={true} />
-                <CountlyButton title="Present Survey Widget" onPress={() => getAndPresentWidgetWithCallback('survey')} color={lightOrange} lightText={true} />
-                <CountlyButton title="Present NPS Widget" onPress={() => getAndPresentWidgetWithCallback('nps')} color={lightOrange} lightText={true} />
+                <CountlyButton
+                    title="Present Rating Widget"
+                    onPress={() => {
+                        getAndPresentWidgetWithCallback('rating');
+                    }}
+                    color={lightOrange}
+                    lightText={true}
+                />
+                <CountlyButton
+                    title="Present Survey Widget"
+                    onPress={() => {
+                        getAndPresentWidgetWithCallback('survey');
+                    }}
+                    color={lightOrange}
+                    lightText={true}
+                />
+                <CountlyButton
+                    title="Present NPS Widget"
+                    onPress={() => {
+                        getAndPresentWidgetWithCallback('nps');
+                    }}
+                    color={lightOrange}
+                    lightText={true}
+                />
                 <Text style={{ fontSize: 16, fontWeight: 'bold', textAlign: 'center', marginTop: 20 }}>Async Method</Text>
-                <CountlyButton title="Present Rating Widget" onPress={() => getAndPresentWidgetAsync('rating').catch((e) => console.log(e))} color={lightOrange} lightText={true} />
-                <CountlyButton title="Present Survey Widget" onPress={() => getAndPresentWidgetAsync('survey').catch((e) => console.log(e))} color={lightOrange} lightText={true} />
-                <CountlyButton title="Present NPS Widget" onPress={() => getAndPresentWidgetAsync('nps').catch((e) => console.log(e))} color={lightOrange} lightText={true} />
+                <CountlyButton
+                    title="Present Rating Widget"
+                    onPress={async () =>
+                        getAndPresentWidgetAsync('rating').catch((e) => {
+                            console.log(e);
+                        })
+                    }
+                    color={lightOrange}
+                    lightText={true}
+                />
+                <CountlyButton
+                    title="Present Survey Widget"
+                    onPress={async () =>
+                        getAndPresentWidgetAsync('survey').catch((e) => {
+                            console.log(e);
+                        })
+                    }
+                    color={lightOrange}
+                    lightText={true}
+                />
+                <CountlyButton
+                    title="Present NPS Widget"
+                    onPress={async () =>
+                        getAndPresentWidgetAsync('nps').catch((e) => {
+                            console.log(e);
+                        })
+                    }
+                    color={lightOrange}
+                    lightText={true}
+                />
                 <Text style={{ fontSize: 16, fontWeight: 'bold', textAlign: 'center', marginTop: 20 }}>Report Widget Manually</Text>
-                <CountlyButton title="Report Rating Widget" onPress={() => reportWidgetManually('rating').catch((e) => console.log(e))} color={lightOrange} lightText={true} />
-                <CountlyButton title="Report Survey Widget" onPress={() => reportWidgetManually('survey').catch((e) => console.log(e))} color={lightOrange} lightText={true} />
-                <CountlyButton title="Report NPS Widget" onPress={() => reportWidgetManually('nps').catch((e) => console.log(e))} color={lightOrange} lightText={true} />
+                <CountlyButton
+                    title="Report Rating Widget"
+                    onPress={async () =>
+                        reportWidgetManually('rating').catch((e) => {
+                            console.log(e);
+                        })
+                    }
+                    color={lightOrange}
+                    lightText={true}
+                />
+                <CountlyButton
+                    title="Report Survey Widget"
+                    onPress={async () =>
+                        reportWidgetManually('survey').catch((e) => {
+                            console.log(e);
+                        })
+                    }
+                    color={lightOrange}
+                    lightText={true}
+                />
+                <CountlyButton
+                    title="Report NPS Widget"
+                    onPress={async () =>
+                        reportWidgetManually('nps').catch((e) => {
+                            console.log(e);
+                        })
+                    }
+                    color={lightOrange}
+                    lightText={true}
+                />
                 <Text style={{ fontSize: 16, fontWeight: 'bold', textAlign: 'center', marginTop: 20 }}>Legacy Methods</Text>
                 <CountlyButton onPress={showStarRating} title="Show Star Rating Model" color="#00b5ad" />
                 <TextInput
@@ -204,6 +279,8 @@ function FeedbackScreen({ navigation }) {
                 <CountlyButton disabled={!state.ratingId} onPress={presentRatingWidgetUsingEditBox} title="Show Feedback using EditBox" color="#00b5ad" />
                 <CountlyButton onPress={showSurvey} title="Show Survey" color="#00b5ad" />
                 <CountlyButton onPress={showNPS} title="Show NPS" color="#00b5ad" />
+                <CountlyButton onPress={showFeedbackPopup} title="Show Feedback Popup" color="#00b5ad" />
+                <CountlyButton onPress={setStarRatingDialogTexts} title="Set Star Rating Dialog Texts" color="#00b5ad" />
             </ScrollView>
         </SafeAreaView>
     );
