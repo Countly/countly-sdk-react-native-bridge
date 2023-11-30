@@ -21,7 +21,21 @@ class Example extends React.Component {
         return (
             <NavigationContainer>
                 <Stack.Navigator initialRouteName={navigationName.Home}>
-                    <Stack.Screen name={navigationName.Home} component={HomeScreen} />
+                    <Stack.Screen
+                        name={navigationName.Home}
+                        component={HomeScreen}
+                        options={{
+                            headerTitle: (props) => (
+                                <Image
+                                    source={require('./asset/countly-logo.png')}
+                                    style={{ width: 144, height: 42 }}
+                                    onError={(e) => {
+                                        console.log(e.nativeEvent.error);
+                                    }}
+                                />
+                            ),
+                        }}
+                    />
                     <Stack.Screen name={navigationName.Feedback} component={FeedbackScreen} />
                     <Stack.Screen name={navigationName.Events} component={EventScreen} />
                     <Stack.Screen name={navigationName.UserProfiles} component={UserProfilesScreen} />

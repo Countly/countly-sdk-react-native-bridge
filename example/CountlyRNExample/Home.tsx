@@ -32,16 +32,7 @@ function HomeScreen({ navigation }) {
     return (
         <SafeAreaView>
             <ScrollView>
-                <View style={{ justifyContent: 'center', alignItems: 'center', margin: 20 }}>
-                    <Image
-                        source={require('./asset/countly-logo.png')}
-                        style={{ width: 144, height: 42 }}
-                        onError={(e) => {
-                            console.log(e.nativeEvent.error);
-                        }}
-                    />
-                </View>
-                <Text style={{ fontSize: 16, fontWeight: 'bold', textAlign: 'center', marginTop: 20 }}>Features List</Text>
+                <Text style={{ fontSize: 16, fontWeight: 'bold', textAlign: 'center', marginTop: 10 }}>Features List</Text>
                 <CountlyButton title="Feedback" onPress={() => navigation.navigate(navigationName.Feedback)} color={lightGreen} lightText={true} />
                 <CountlyButton title="Events" onPress={() => navigation.navigate(navigationName.Events)} color={lightGreen} lightText={true} />
                 <CountlyButton title="User Profiles" onPress={() => navigation.navigate(navigationName.UserProfiles)} color={lightGreen} lightText={true} />
