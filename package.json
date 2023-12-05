@@ -15,6 +15,7 @@
     ],
     "license": "MIT",
     "main": "Countly.js",
+    "types": "Countly.d.ts",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/Countly/countly-sdk-react-native-bridge.git"
