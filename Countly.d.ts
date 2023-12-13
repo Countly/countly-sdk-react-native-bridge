@@ -1,43 +1,70 @@
+interface Segmentation {
+  [key: string]: string;
+}
+
+interface CountlyEventOptions {
+  eventName: string;
+  eventCount?: number;
+  eventSum?: number | string;
+  segments?: Segmentation;
+}
+
+interface FeedbackWidget {
+  id: string;
+  type: string;
+  name?: string;
+}
+
+interface FeedbackWidgetResultObject {
+  error: string,
+  data: FeedbackWidget[],
+}
+
+interface CountlyUserData {
+  name?: string;
+  username?: string;
+  email?: string;
+  organization?: string;
+  phone?: string;
+  picture?: string;
+  gender?: string;
+  byear?: number | string;
+  custom?: Record<string, any>;
+}
+type CountlyCallback = (message: string) => void;
+type CountlyErrorCallback = (error: string | null) => void;
+
+type WidgetCallback = () => void;
+type FeedbackWidgetCallback = (retrievedWidgets: FeedbackWidget[], error: string | null) => void;
+type WidgetInfoCallback = (widgetInfo: FeedbackWidget[], error: string | null) => void;
+
+interface RatingWidgetResult {
+  rating: number,
+  comment: string,
+}
+
+interface CustomMetric {
+  [key: string]: string;
+}
+
+interface TraceCustomMetric {
+  [key: string]: number | string;
+}
+
+type ValidationFunction = (
+  stringValue: string,
+  stringName: string,
+  functionName: string
+) => Promise<string | null>;
+
+interface ResultObject {
+  error: string,
+  data: object,
+}
+interface ErrorObject { error: string | null }
+
 declare module 'countly-sdk-react-native-bridge' {
-  type CountlyCallback = (message: string) => void;
-  type CountlyErrorCallback = (error: string | null) => void;
-
-  type WidgetCallback = () => void;
-  type FeedbackWidgetCallback = (retrievedWidgets: FeedbackWidget[], error: string | null) => void;
-  type WidgetInfoCallback = (widgetInfo: FeedbackWidget[], error: string | null) => void;
-
-  interface RatingWidgetResult {
-    rating: number,
-    comment: string,
-  }
-
-  interface CustomMetric {
-    [key: string]: string;
-  }
-
-  interface TraceCustomMetric {
-    [key: string]: number | string;
-  }
-
-  interface Segmentation {
-    [key: string]: string;
-  }
-
-  type ValidationFunction = (
-    stringValue: string,
-    stringName: string,
-    functionName: string
-  ) => Promise<string | null>;
-
-  interface ResultObject {
-    error: string,
-    data: object,
-  }
-  export interface FeedbackWidgetResultObject {
-    error: string,
-    data: FeedbackWidget[],
-  }
-  interface ErrorObject { error: string | null }
+  import type CountlyConfig from 'countly-sdk-react-native-bridge/CountlyConfig'
 
   namespace Countly {
     serverUrl: string;
@@ -56,12 +83,6 @@ declare module 'countly-sdk-react-native-bridge' {
       DEVELOPMENT: string;
       PRODUCTION: string;
       ADHOC: string;
-    }
-
-    export interface FeedbackWidget {
-      id: string;
-      type: string;
-      name?: string;
     }
 
     /**
@@ -142,13 +163,6 @@ declare module 'countly-sdk-react-native-bridge' {
      * @return {Promise<string> | string} boolean or error message
      */
     export function hasBeenCalledOnStart(): Promise<string> | string;
-
-    export interface CountlyEventOptions {
-      eventName: string;
-      eventCount?: number;
-      eventSum?: number | string;
-      segments?: Segmentation;
-    }
 
     /**
      *
@@ -445,18 +459,6 @@ declare module 'countly-sdk-react-native-bridge' {
      * @return {string | void} error message or void
      */
     export function endEvent(options: CountlyEventOptions): string | void;
-
-    export interface CountlyUserData {
-      name?: string;
-      username?: string;
-      email?: string;
-      organization?: string;
-      phone?: string;
-      picture?: string;
-      gender?: string;
-      byear?: number | string;
-      custom?: Record<string, any>;
-    }
 
     /**
      *
