@@ -458,7 +458,7 @@ declare module 'countly-sdk-react-native-bridge' {
      * @param {string | object} options event options
      * @return {string | void} error message or void
      */
-    export function endEvent(options: CountlyEventOptions): string | void;
+    export function endEvent(options: string | CountlyEventOptions): string | void;
 
     /**
      *
