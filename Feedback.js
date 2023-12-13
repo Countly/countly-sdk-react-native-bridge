@@ -9,7 +9,7 @@ class Feedback {
     /**
      * Get a list of available feedback widgets as an array of objects.
      * @param {callback} [onFinished] - returns (retrievedWidgets, error). This parameter is optional.
-     * @return {Object} Object {error: String or Null, data: Array or null }
+     * @return {object} object {error: String or null, data: Array or null }
      */
     async getAvailableFeedbackWidgets(onFinished) {
         if (!this.#state.isInitialized) {
@@ -35,12 +35,12 @@ class Feedback {
     /**
      * Present a chosen feedback widget
      *
-     * @param {Object} feedbackWidget - feedback Widget with id, type and name
-     * @param {String} closeButtonText - text for cancel/close button
+     * @param {object} feedbackWidget - feedback Widget with id, type and name
+     * @param {string} closeButtonText - text for cancel/close button
      * @param {callback} [widgetShownCallback] - Callback to be executed when feedback widget is displayed. This parameter is optional.
      * @param {callback} [widgetClosedCallback] - Callback to be executed when feedback widget is closed. This parameter is optional.
      *
-     * @return {Object} Object {error: String or null}
+     * @return {object} object {error: string or null}
      */
     presentFeedbackWidget(feedbackWidget, closeButtonText, widgetShownCallback, widgetClosedCallback) {
         if (!this.#state.isInitialized) {
@@ -90,10 +90,10 @@ class Feedback {
     }
 
     /**
-     * Get a feedback widget's data as an Object.
-     * @param {Object} widgetInfo - widget to get data for. You should get this from 'getAvailableFeedbackWidgets' method.
-     * @param {callback} [onFinished] - returns (Object retrievedWidgetData, error). This parameter is optional.
-     * @return {Object} Object {error: String, data: Object or null}
+     * Get a feedback widget's data as an object.
+     * @param {object} widgetInfo - widget to get data for. You should get this from 'getAvailableFeedbackWidgets' method.
+     * @param {callback} [onFinished] - returns (object retrievedWidgetData, error). This parameter is optional.
+     * @return {object} object {error: string, data: object or null}
      */
     async getFeedbackWidgetData(widgetInfo, onFinished) {
         if (!this.#state.isInitialized) {
@@ -123,10 +123,10 @@ class Feedback {
 
     /**
      * Report manually for a feedback widget.
-     * @param {Object} widgetInfo -  the widget you are targeting. You should get this from 'getAvailableFeedbackWidgets' method.
-     * @param {Object} widgetData - data of that widget. You should get this from 'getFeedbackWidgetData' method.
-     * @param {Object} widgetResult - Information you want to report.
-     * @return {Object} Object {error: String}
+     * @param {object} widgetInfo -  the widget you are targeting. You should get this from 'getAvailableFeedbackWidgets' method.
+     * @param {object} widgetData - data of that widget. You should get this from 'getFeedbackWidgetData' method.
+     * @param {object} widgetResult - Information you want to report.
+     * @return {object} object {error: string}
      */
     async reportFeedbackWidgetManually(widgetInfo, widgetData, widgetResult) {
         if (!this.#state.isInitialized) {
