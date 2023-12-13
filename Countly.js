@@ -308,7 +308,7 @@ Countly.registerForNotification = function (theListener) {
  *
  * @param {array of allowed class names } allowedIntentClassNames set allowed intent class names
  * @param {array of allowed package names } allowedIntentPackageNames set allowed intent package names
- * @param {bool to check additional intent checks} useAdditionalIntentRedirectionChecks by default its true
+ * @param {boolean} useAdditionalIntentRedirectionChecks to check additional intent checks. The default value is "true"
  * @return {String || void} error message or void
  */
 Countly.configureIntentRedirectionCheck = function (allowedIntentClassNames = [], allowedIntentPackageNames = [], useAdditionalIntentRedirectionChecks = true) {
