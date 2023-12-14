@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import React from 'react';
-import { View, Image, Text, SafeAreaView, ScrollView, Alert } from 'react-native';
+import { Text, SafeAreaView, ScrollView, Alert } from 'react-native';
 import CountlyButton from './CountlyButton';
 import Countly from 'countly-sdk-react-native-bridge';
 import countlyConfig from './Configuration';
