@@ -24,7 +24,13 @@
 
 
 - (void)downloadRemoteConfigAutomatically;
+
 - (CountlyRCData *)getValue:(NSString *)key;
+- (NSDictionary<NSString*, CountlyRCData *> *)getAllValues;
+
+- (CountlyRCData *)getValueAndEnroll:(NSString *)key;
+- (NSDictionary<NSString*, CountlyRCData *> *)getAllValuesAndEnroll;
+
 - (void)downloadValuesForKeys:(NSArray *)keys omitKeys:(NSArray *)omitKeys completionHandler:(RCDownloadCallback)completionHandler;
 
 - (NSDictionary *)testingGetAllVariants;
@@ -32,7 +38,9 @@
 - (void)testingDownloadAllVariants:(RCVariantCallback)completionHandler;
 - (void)testingEnrollIntoVariant:(NSString *)key variantName:(NSString *)variantName completionHandler:(RCVariantCallback)completionHandler;
 
-- (NSDictionary<NSString*, CountlyRCData *> *)getAllValues;
+- (void) testingDownloadExperimentInformation:(RCVariantCallback)completionHandler;
+- (NSDictionary<NSString*, CountlyExperimentInformation*> *) testingGetAllExperimentInfo;
+
 - (void)enrollIntoABTestsForKeys:(NSArray *)keys;
 - (void)exitABTestsForKeys:(NSArray *)keys;
 
