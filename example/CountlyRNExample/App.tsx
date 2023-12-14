@@ -14,6 +14,7 @@ import ConsentScreen from './Consent';
 import RemoteConfigScreen from './RemoteConfig';
 import OthersScreen from './Others';
 import CrashesScreen from './Crashes';
+import { Image } from 'react-native';
 
 const Stack = createNativeStackNavigator();
 class Example extends React.Component {

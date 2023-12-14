@@ -95,18 +95,6 @@ const showStarRating = () => {
     Countly.showStarRating();
 };
 
-const showFeedbackPopup = () => {
-    Countly.showFeedbackPopup('5f8c837a5294f7aae370067c', 'Submit');
-};
-
-presentRatingWidget = () => {
-    Countly.presentRatingWidgetWithID('625f9032028614795fe5a85b', 'Submit', (error) => {
-        if (error != null) {
-            console.log(error);
-        }
-    });
-};
-
 const presentRatingWidgetUsingEditBox = function () {
     Countly.presentRatingWidgetWithID(state.ratingId, 'Submit', (error) => {
         if (error != null) {
@@ -279,7 +267,6 @@ function FeedbackScreen({ navigation }) {
                 <CountlyButton disabled={!state.ratingId} onPress={presentRatingWidgetUsingEditBox} title="Show Feedback using EditBox" color="#00b5ad" />
                 <CountlyButton onPress={showSurvey} title="Show Survey" color="#00b5ad" />
                 <CountlyButton onPress={showNPS} title="Show NPS" color="#00b5ad" />
-                <CountlyButton onPress={showFeedbackPopup} title="Show Feedback Popup" color="#00b5ad" />
                 <CountlyButton onPress={setStarRatingDialogTexts} title="Set Star Rating Dialog Texts" color="#00b5ad" />
             </ScrollView>
         </SafeAreaView>
