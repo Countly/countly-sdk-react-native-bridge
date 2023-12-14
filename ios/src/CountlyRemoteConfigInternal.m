@@ -9,14 +9,13 @@
 NSString* const kCountlyRCKeyFetchRemoteConfig  = @"fetch_remote_config";
 NSString* const kCountlyRCKeyFetchVariant       = @"ab_fetch_variants";
 NSString* const kCountlyRCKeyEnrollVariant      = @"ab_enroll_variant";
+NSString* const kCountlyRCKeyFetchExperiments   = @"ab_fetch_experiments";
 NSString* const kCountlyRCKeyVariant            = @"variant";
 NSString* const kCountlyRCKeyKey                = @"key";
 NSString* const kCountlyRCKeyKeys               = @"keys";
 NSString* const kCountlyRCKeyOmitKeys           = @"omit_keys";
 
 NSString* const kCountlyRCKeyRC                 = @"rc";
-NSString* const kCountlyRCKeyABOptIn            = @"ab";
-NSString* const kCountlyRCKeyABOptOut           = @"ab_opt_out";
 NSString* const kCountlyRCKeyAutoOptIn          = @"oi";
 
 
@@ -27,6 +26,7 @@ CLYRequestResult const CLYResponseError         = @"CLYResponseError";
 @interface CountlyRemoteConfigInternal ()
 @property (nonatomic) NSDictionary* localCachedVariants;
 @property (nonatomic) NSDictionary<NSString *, CountlyRCData *>* cachedRemoteConfig;
+@property (nonatomic) NSDictionary<NSString*, CountlyExperimentInformation*> * localCachedExperiments;
 @end
 
 @implementation CountlyRemoteConfigInternal
@@ -46,9 +46,14 @@ CLYRequestResult const CLYResponseError         = @"CLYResponseError";
 {
     if (self = [super init])
     {
-        self.cachedRemoteConfig = [CountlyPersistency.sharedInstance retrieveRemoteConfig] ;
+        self.cachedRemoteConfig = [CountlyPersistency.sharedInstance retrieveRemoteConfig];
+        if(!self.cachedRemoteConfig) {
+            self.cachedRemoteConfig = NSMutableDictionary.new;
+        }
         
         self.remoteConfigGlobalCallbacks = [[NSMutableArray alloc] init];
+        
+        self.localCachedExperiments = NSMutableDictionary.new;
     }
     
     return self;
@@ -153,7 +158,7 @@ CLYRequestResult const CLYResponseError         = @"CLYResponseError";
 - (id)remoteConfigValueForKey:(NSString *)key
 {
     CountlyRCData* countlyRCValue = self.cachedRemoteConfig[key];
-    if(countlyRCValue) {
+    if (countlyRCValue) {
         return countlyRCValue.value;
     }
     return nil;
@@ -161,7 +166,7 @@ CLYRequestResult const CLYResponseError         = @"CLYResponseError";
 
 - (void)clearCachedRemoteConfig
 {
-    if(!self.isRCValueCachingEnabled)
+    if (!self.isRCValueCachingEnabled)
     {
         [self clearAll];
     }
@@ -173,7 +178,7 @@ CLYRequestResult const CLYResponseError         = @"CLYResponseError";
 
 -(void)clearAll
 {
-    self.cachedRemoteConfig = nil;
+    self.cachedRemoteConfig = NSMutableDictionary.new;
     [CountlyPersistency.sharedInstance storeRemoteConfig:self.cachedRemoteConfig];
 }
 
@@ -250,14 +255,17 @@ CLYRequestResult const CLYResponseError         = @"CLYResponseError";
         queryString = [queryString stringByAppendingFormat:@"&%@=%@", kCountlyRCKeyOmitKeys, [omitKeys cly_JSONify]];
     }
     
+    if (self.enrollABOnRCDownload) {
+        queryString = [queryString stringByAppendingFormat:@"&%@=%@", kCountlyRCKeyAutoOptIn, @"1"];
+    }
+    
     if (CountlyConsentManager.sharedInstance.consentForSessions)
     {
         queryString = [queryString stringByAppendingFormat:@"&%@=%@", kCountlyQSKeyMetrics, [CountlyDeviceInfo metrics]];
     }
     
-    if(self.enrollABOnRCDownload) {
-        queryString = [queryString stringByAppendingFormat:@"&%@=%@", kCountlyRCKeyAutoOptIn, @"1"];
-    }
+    queryString = [queryString stringByAppendingFormat:@"&%@=%@",
+                   kCountlyAppVersionKey, CountlyDeviceInfo.appVersion];
     
     queryString = [CountlyConnectionManager.sharedInstance appendChecksum:queryString];
     
@@ -282,11 +290,38 @@ CLYRequestResult const CLYResponseError         = @"CLYResponseError";
 
 - (CountlyRCData *)getValue:(NSString *)key
 {
-    return self.cachedRemoteConfig[key];
+    CountlyRCData *countlyRCData = self.cachedRemoteConfig[key];
+    if (!countlyRCData) {
+        countlyRCData = [[CountlyRCData alloc] initWithValue:nil isCurrentUsersData:YES];
+    }
+    return countlyRCData;
 }
 
 - (NSDictionary<NSString*, CountlyRCData *> *)getAllValues
 {
+    return self.cachedRemoteConfig;
+}
+
+- (CountlyRCData *)getValueAndEnroll:(NSString *)key
+{
+    CountlyRCData *countlyRCData = [self getValue:key];
+    if (countlyRCData.value) {
+        [self enrollIntoABTestsForKeys:@[key]];
+    }
+    else {
+        CLY_LOG_D(@"No value exists against key: %@ to enroll in AB testing", key);
+    }
+    return countlyRCData;
+}
+
+- (NSDictionary<NSString*, CountlyRCData *> *)getAllValuesAndEnroll
+{
+    if (self.cachedRemoteConfig && self.cachedRemoteConfig.count > 0) {
+        [self enrollIntoABTestsForKeys: self.cachedRemoteConfig.allKeys];
+    }
+    else {
+        CLY_LOG_D(@"No values exists to enroll in AB testing...");
+    }
     return self.cachedRemoteConfig;
 }
 
@@ -301,8 +336,7 @@ CLYRequestResult const CLYResponseError         = @"CLYResponseError";
     
     CLY_LOG_D(@"Entolling in AB Tests...");
     
-    [self enrollExitABForKeys:keys enroll:YES];
-    
+    [CountlyConnectionManager.sharedInstance sendEnrollABRequestForKeys:keys];
 }
 
 - (void)exitABTestsForKeys:(NSArray *)keys
@@ -316,7 +350,7 @@ CLYRequestResult const CLYResponseError         = @"CLYResponseError";
     
     CLY_LOG_D(@"Exiting AB Tests...");
     
-    [self enrollExitABForKeys:keys enroll:NO];
+    [CountlyConnectionManager.sharedInstance sendExitABRequestForKeys:keys];
 }
 
 - (void)downloadValuesForKeys:(NSArray *)keys omitKeys:(NSArray *)omitKeys completionHandler:(RCDownloadCallback)completionHandler
@@ -337,7 +371,6 @@ CLYRequestResult const CLYResponseError         = @"CLYResponseError";
         if (!error)
         {
             CLY_LOG_D(@"Fetching remote config is successful. \n%@", remoteConfig);
-//            NSDictionary* remoteConfigMeta = [self createRCMeta:remoteConfig];
             if (!keys && !omitKeys)
             {
                 fullValueUpdate = true;
@@ -448,6 +481,7 @@ CLYRequestResult const CLYResponseError         = @"CLYResponseError";
     }];
 }
 
+
 - (void)testingDownloadAllVariantsInternal:(void (^)(CLYRequestResult response, NSDictionary* variants, NSError * error))completionHandler
 {
     if (!CountlyServerConfig.sharedInstance.networkingEnabled)
@@ -473,7 +507,7 @@ CLYRequestResult const CLYResponseError         = @"CLYResponseError";
                  {
                     
                     NSString *valueType = NSStringFromClass([arrayValue class]);
-                    if([valueType isEqualToString:@"__NSDictionaryI"]) {
+                    if ([valueType isEqualToString:@"__NSDictionaryI"]) {
                         [valuesArray addObject:arrayValue[@"name"]];
                     }
                     else {
@@ -559,12 +593,12 @@ CLYRequestResult const CLYResponseError         = @"CLYResponseError";
         return;
     }
     
-    if(!key) {
+    if (!key) {
         CLY_LOG_D(@"'enrollInRCVariant' is aborted: 'key' is not valid");
         return;
     }
     
-    if(!variantName) {
+    if (!variantName) {
         CLY_LOG_D(@"'enrollInRCVariant' is aborted: 'variantName' is not valid");
         return;
     }
@@ -623,10 +657,8 @@ CLYRequestResult const CLYResponseError         = @"CLYResponseError";
     
     queryString = [queryString stringByAppendingFormat:@"&%@=%@", kCountlyQSKeyMethod, kCountlyRCKeyFetchVariant];
     
-    if (CountlyConsentManager.sharedInstance.consentForSessions)
-    {
-        queryString = [queryString stringByAppendingFormat:@"&%@=%@", kCountlyQSKeyMetrics, [CountlyDeviceInfo metrics]];
-    }
+    queryString = [queryString stringByAppendingFormat:@"&%@=%@",
+                   kCountlyAppVersionKey, CountlyDeviceInfo.appVersion];
     
     queryString = [CountlyConnectionManager.sharedInstance appendChecksum:queryString];
     
@@ -647,6 +679,137 @@ CLYRequestResult const CLYResponseError         = @"CLYResponseError";
         NSURLRequest* request = [NSURLRequest requestWithURL:[NSURL URLWithString:withQueryString]];
         return request;
     }
+}
+
+- (void) testingDownloadExperimentInformation:(RCVariantCallback)completionHandler
+{
+    if (!CountlyConsentManager.sharedInstance.consentForRemoteConfig)
+    {
+        CLY_LOG_D(@"'testingDownloadExperimentInformation' is aborted: RemoteConfig consent requires");
+        return;
+    }
+    if (CountlyDeviceInfo.sharedInstance.isDeviceIDTemporary)
+    {
+        CLY_LOG_D(@"'testingDownloadExperimentInformation' is aborted: Due to temporary device id");
+        return;
+    }
+    
+    CLY_LOG_D(@"Download experiments info...");
+    
+    [self testingDownloaExperimentInfoInternal:^(CLYRequestResult response, NSDictionary *experimentInfo,NSError *error)
+     {
+        if (!error)
+        {
+            self.localCachedExperiments = experimentInfo;
+            CLY_LOG_D(@"Download experiments info is successful. \n%@", experimentInfo);
+            
+        }
+        else
+        {
+            CLY_LOG_W(@"Download experiments info failed: %@", error);
+        }
+        
+        if (completionHandler)
+            completionHandler(response, error);
+    }];
+}
+
+
+- (void)testingDownloaExperimentInfoInternal:(void (^)(CLYRequestResult response, NSDictionary* experimentsInfo, NSError * error))completionHandler
+{
+    if (!CountlyServerConfig.sharedInstance.networkingEnabled)
+    {
+        CLY_LOG_D(@"'testingDownloaExperimentInfoInternal' is aborted: SDK Networking is disabled from server config!");
+        return;
+    }
+    if (!completionHandler)
+        return;
+    
+    NSURLRequest* request = [self downloadExperimentInfoRequest];
+    NSURLSessionTask* task = [NSURLSession.sharedSession dataTaskWithRequest:request completionHandler:^(NSData* data, NSURLResponse* response, NSError* error)
+                              {
+        
+        NSMutableDictionary<NSString*, CountlyExperimentInformation*> * experiments = NSMutableDictionary.new;
+        
+        if (!error)
+        {
+            
+            NSArray* experimentsInfo = [NSJSONSerialization JSONObjectWithData:data options:0 error:&error];
+            [experimentsInfo enumerateObjectsUsingBlock:^(NSDictionary* value, NSUInteger idx, BOOL * stop)
+             {
+                CountlyExperimentInformation* experimentInfo = [[CountlyExperimentInformation alloc] initWithID:value[@"id"] experimentName:value[@"name"] experimentDescription:value[@"description"] currentVariant:value[@"currentVariant"] variants:value[@"variants"]];
+                experiments[experimentInfo.experimentID] = experimentInfo;
+                
+            }];
+        }
+        
+        if (!error)
+        {
+            if (((NSHTTPURLResponse*)response).statusCode != 200)
+            {
+                NSMutableDictionary* userInfo = experiments.mutableCopy;
+                userInfo[NSLocalizedDescriptionKey] = @"Fetch variants general API error";
+                error = [NSError errorWithDomain:kCountlyErrorDomain code:CLYErrorRemoteConfigGeneralAPIError userInfo:userInfo];
+            }
+        }
+        
+        if (error)
+        {
+            CLY_LOG_D(@"Download experiments Request <%p> failed!\nError: %@", request, error);
+            
+            dispatch_async(dispatch_get_main_queue(), ^
+                           {
+                completionHandler(CLYResponseError, nil, error);
+            });
+            
+            return;
+        }
+        
+        CLY_LOG_D(@"Download experiments Request <%p> successfully completed.", request);
+        
+        dispatch_async(dispatch_get_main_queue(), ^
+                       {
+            completionHandler(CLYResponseSuccess, experiments, nil);
+        });
+    }];
+    
+    [task resume];
+    
+    CLY_LOG_D(@"Download experiments Request <%p> started:\n[%@] %@", (id)request, request.HTTPMethod, request.URL.absoluteString);
+}
+
+- (NSURLRequest *)downloadExperimentInfoRequest
+{
+    NSString* queryString = [CountlyConnectionManager.sharedInstance queryEssentials];
+    
+    queryString = [queryString stringByAppendingFormat:@"&%@=%@", kCountlyQSKeyMethod, kCountlyRCKeyFetchExperiments];
+    
+    queryString = [queryString stringByAppendingFormat:@"&%@=%@",
+                   kCountlyAppVersionKey, CountlyDeviceInfo.appVersion];
+    
+    queryString = [CountlyConnectionManager.sharedInstance appendChecksum:queryString];
+    
+    NSString* serverOutputSDKEndpoint = [CountlyConnectionManager.sharedInstance.host stringByAppendingFormat:@"%@%@",
+                                         kCountlyEndpointO,
+                                         kCountlyEndpointSDK];
+    
+    if (CountlyConnectionManager.sharedInstance.alwaysUsePOST)
+    {
+        NSMutableURLRequest* request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:serverOutputSDKEndpoint]];
+        request.HTTPMethod = @"POST";
+        request.HTTPBody = [queryString cly_dataUTF8];
+        return request.copy;
+    }
+    else
+    {
+        NSString* withQueryString = [serverOutputSDKEndpoint stringByAppendingFormat:@"?%@", queryString];
+        NSURLRequest* request = [NSURLRequest requestWithURL:[NSURL URLWithString:withQueryString]];
+        return request;
+    }
+}
+- (NSDictionary<NSString*, CountlyExperimentInformation*> *) testingGetAllExperimentInfo
+{
+    return self.localCachedExperiments;
 }
 
 - (NSURLRequest *)enrollInVarianRequestForKey:(NSString *)key variantName:(NSString *)variantName
@@ -660,90 +823,13 @@ CLYRequestResult const CLYResponseError         = @"CLYResponseError";
         queryString = [queryString stringByAppendingFormat:@"&%@=%@", kCountlyRCKeyVariant, variantName.cly_URLEscaped];
     }
     
-    if (CountlyConsentManager.sharedInstance.consentForSessions)
-    {
-        queryString = [queryString stringByAppendingFormat:@"&%@=%@", kCountlyQSKeyMetrics, [CountlyDeviceInfo metrics]];
-    }
+    queryString = [queryString stringByAppendingFormat:@"&%@=%@",
+                   kCountlyAppVersionKey, CountlyDeviceInfo.appVersion];
     
     queryString = [CountlyConnectionManager.sharedInstance appendChecksum:queryString];
     
     NSString* serverOutputSDKEndpoint = [CountlyConnectionManager.sharedInstance.host stringByAppendingFormat:@"%@",
                                          kCountlyEndpointI];
-    
-    if (CountlyConnectionManager.sharedInstance.alwaysUsePOST)
-    {
-        NSMutableURLRequest* request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:serverOutputSDKEndpoint]];
-        request.HTTPMethod = @"POST";
-        request.HTTPBody = [queryString cly_dataUTF8];
-        return request.copy;
-    }
-    else
-    {
-        NSString* withQueryString = [serverOutputSDKEndpoint stringByAppendingFormat:@"?%@", queryString];
-        NSURLRequest* request = [NSURLRequest requestWithURL:[NSURL URLWithString:withQueryString]];
-        return request;
-    }
-}
-
-- (void)enrollExitABForKeys:(NSArray *)keys enroll:(BOOL)enroll
-{
-    if (!CountlyServerConfig.sharedInstance.networkingEnabled)
-    {
-        CLY_LOG_D(@"'%@' is aborted: SDK Networking is disabled from server config!", enroll ? @"enrollABTestForKeys" : @"exitABTestForKeys");
-        return;
-    }
-    
-    NSURLRequest* request = enroll ? [self enrollABRequestForKeys:keys] : [self exitABRequestForKeys:keys];
-    NSURLSessionTask* task = [NSURLSession.sharedSession dataTaskWithRequest:request completionHandler:^(NSData* data, NSURLResponse* response, NSError* error)
-                              {
-        
-        if (error)
-        {
-            CLY_LOG_D(@"%@ Request <%p> failed!\nError: %@", enroll ? @"enrollABTestForKeys" : @"exitABTestForKeys", request, error);
-        }
-        else
-        {
-            CLY_LOG_D(@"%@ Request <%p> successfully completed.", enroll ? @"enrollABTestForKeys" : @"exitABTestForKeys", request);
-        }
-        
-    }];
-    
-    [task resume];
-    
-    CLY_LOG_D(@"%@ Request <%p> started:\n[%@] %@", enroll ? @"enrollABTestForKeys" : @"exitABTestForKeys", (id)request, request.HTTPMethod, request.URL.absoluteString);
-}
-
-- (NSURLRequest *)enrollABRequestForKeys:(NSArray*)keys
-{
-    return [self aBRequestForMethod:kCountlyRCKeyABOptIn keys:keys];
-}
-
-- (NSURLRequest *)exitABRequestForKeys:(NSArray*)keys
-{
-    return [self aBRequestForMethod:kCountlyRCKeyABOptOut keys:keys];
-}
-
-- (NSURLRequest *)aBRequestForMethod:(NSString*)method keys:(NSArray*)keys
-{
-    NSString* queryString = [CountlyConnectionManager.sharedInstance queryEssentials];
-    
-    queryString = [queryString stringByAppendingFormat:@"&%@=%@", kCountlyQSKeyMethod, kCountlyRCKeyABOptIn];
-    
-    if (keys)
-    {
-        queryString = [queryString stringByAppendingFormat:@"&%@=%@", kCountlyRCKeyKeys, [keys cly_JSONify]];
-    }
-    
-    if (CountlyConsentManager.sharedInstance.consentForSessions)
-    {
-        queryString = [queryString stringByAppendingFormat:@"&%@=%@", kCountlyQSKeyMetrics, [CountlyDeviceInfo metrics]];
-    }
-    
-    queryString = [CountlyConnectionManager.sharedInstance appendChecksum:queryString];
-    
-    NSString* serverOutputSDKEndpoint = [CountlyConnectionManager.sharedInstance.host stringByAppendingFormat:@"%@%@",
-                                         kCountlyEndpointO,
-                                         kCountlyEndpointSDK];
     
     if (CountlyConnectionManager.sharedInstance.alwaysUsePOST)
     {
