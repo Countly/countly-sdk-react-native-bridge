@@ -1,3 +1,9 @@
+## 23.12.0
+* Added TS type declerations to the SDK
+
+* Updated the underlying Android SDK version to 23.12.0
+* Updated the underlying iOS SDK version to 23.12.0
+
 ## 23.10.0
 * Fixed a bug where segment provided to 'logException' was ignored in Android devices
 * Fixed a bug where bridged SDK logs were not printing
