@@ -54,7 +54,7 @@
         "node-notifier": "10.0.1",
         "prettier": "3.0.3",
         "react-test-renderer": "18.2.0",
-        "ts-node": "10.9.1",
+        "ts-node": "10.9.2",
         "typescript": "5.2.2",
         "utf-8-validate": "6.0.3"
     }
