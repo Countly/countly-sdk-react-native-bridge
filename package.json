@@ -21,7 +21,7 @@
         "url": "git+https://github.com/Countly/countly-sdk-react-native-bridge.git"
     },
     "devDependencies": {
-        "@babel/core": "7.23.3",
+        "@babel/core": "7.23.7",
         "@babel/preset-env": "7.23.3",
         "@babel/runtime": "7.23.2",
         "@react-native-community/eslint-config": "3.2.0",
