@@ -1,4 +1,6 @@
-type Segmentation = Record<string, string>;
+interface Segmentation {
+    [key: string]: string;
+}
 
 interface CountlyEventOptions {
     eventName: string;
@@ -41,9 +43,13 @@ interface RatingWidgetResult {
     comment: string;
 }
 
-type CustomMetric = Record<string, string>;
+interface CustomMetric {
+    [key: string]: string;
+}
 
-type TraceCustomMetric = Record<string, number | string>;
+interface TraceCustomMetric {
+    [key: string]: number | string;
+}
 
 type ValidationFunction = (stringValue: string, stringName: string, functionName: string) => Promise<string | null>;
 
@@ -59,17 +65,17 @@ declare module 'countly-sdk-react-native-bridge' {
     import type CountlyConfig from 'countly-sdk-react-native-bridge/CountlyConfig';
 
     namespace Countly {
-        string;
-        string;
-        any;
-        any;
-        boolean;
-        boolean;
-        boolean;
-        string;
-        string;
-        string;
-        string;
+        serverUrl: string;
+        appKey: string;
+        eventEmitter: any;
+        CountlyReactNative: any;
+        _isCrashReportingEnabled: boolean;
+        _isInitialized: boolean;
+        _isPushInitialized: boolean;
+        widgetShownCallbackName: string;
+        widgetClosedCallbackName: string;
+        ratingWidgetCallbackName: string;
+        pushNotificationCallbackName: string;
         export const TemporaryDeviceIDString: string;
         export interface messagingMode {
             DEVELOPMENT: string;
@@ -435,7 +441,7 @@ declare module 'countly-sdk-react-native-bridge' {
          * @param {string | object} options event options
          * @return {string | void} error message or void
          */
-        export function endEvent(options: CountlyEventOptions | string): string | void;
+        export function endEvent(options: string | CountlyEventOptions): string | void;
 
         /**
          *
@@ -444,7 +450,7 @@ declare module 'countly-sdk-react-native-bridge' {
          * @param {object} userData user data
          * @return {string | void} error message or void
          */
-        export function setUserData(userData: CountlyUserData): Promise<void> | string;
+        export function setUserData(userData: CountlyUserData): string | Promise<void>;
 
         namespace userData {
             export function setProperty(keyName: string, keyValue: any): Promise<void> | string;
@@ -535,8 +541,8 @@ declare module 'countly-sdk-react-native-bridge' {
         export function updateRemoteConfigForKeysOnly(keyNames: readonly string[], callback: CountlyCallback): string | void;
         export function updateRemoteConfigExceptKeys(keyNames: readonly string[], callback: CountlyCallback): string | void;
         export function getRemoteConfigValueForKey(keyName: string, callback: (value: any) => void): string | void;
-        export function getRemoteConfigValueForKeyP(keyName: string): Promise<any> | string;
-        export function remoteConfigClearValues(): Promise<string> | string;
+        export function getRemoteConfigValueForKeyP(keyName: string): string | Promise<any>;
+        export function remoteConfigClearValues(): string | Promise<string>;
 
         /**
          * @deprecated in 23.02.0 : use 'countlyConfig.setStarRatingDialogTexts' instead of 'setStarRatingDialogTexts'.
@@ -661,11 +667,11 @@ declare module 'countly-sdk-react-native-bridge' {
          * Supported data type for customMetric values is string
          */
         export function setCustomMetrics(customMetric: CustomMetric): string | void;
-        ValidationFunction;
-        ValidationFunction;
-        ValidationFunction;
-        ValidationFunction;
-        (functionName: string, warning: string) => Promise<void>;
+        validateUserDataValue: ValidationFunction;
+        validateUserDataType: ValidationFunction;
+        validateValidUserData: ValidationFunction;
+        validateParseInt: ValidationFunction;
+        logWarning: (functionName: string, warning: string) => Promise<void>;
     }
 
     export default Countly;
