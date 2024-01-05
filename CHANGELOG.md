@@ -1,3 +1,9 @@
+## X.X.X
+* Added 'disableAdditionalIntentRedirectionChecks' config method
+
+* Underlying Android SDK version is X.X.X
+* Underlying iOS SDK version is X.X.X
+
 ## 23.12.0
 * Added TS type declerations to the SDK
 

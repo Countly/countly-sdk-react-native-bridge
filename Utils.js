@@ -78,6 +78,9 @@ function configToJson(config) {
         if (config.enableApm) {
             json['enableApm'] = config.enableApm;
         }
+        if (config.disableAdditionalIntentRedirectionChecks) {
+            json['disableAdditionalIntentRedirectionChecks'] = config.disableAdditionalIntentRedirectionChecks;
+        }
         const pushNotification = {};
         if (config.tokenType) {
             pushNotification['tokenType'] = config.tokenType;
@@ -95,7 +98,7 @@ function configToJson(config) {
         if (config.allowedIntentClassNames) {
             json['allowedIntentClassNames'] = config.allowedIntentClassNames;
         }
-        if (config.allowedIntentClassNames) {
+        if (config.allowedIntentPackageNames) {
             json['allowedIntentPackageNames'] = config.allowedIntentPackageNames;
         }
         if (config.starRatingTextTitle) {
