@@ -1,6 +1,4 @@
-interface Segmentation {
-  [key: string]: string;
-}
+type Segmentation = Record<string, string>;
 
 interface CountlyEventOptions {
     eventName: string;
@@ -16,8 +14,8 @@ interface FeedbackWidget {
 }
 
 interface FeedbackWidgetResultObject {
-    error: string,
-    data: FeedbackWidget[],
+    error: string;
+    data: FeedbackWidget[];
 }
 
 interface CountlyUserData {
@@ -39,45 +37,39 @@ type FeedbackWidgetCallback = (retrievedWidgets: FeedbackWidget[], error: string
 type WidgetInfoCallback = (widgetInfo: FeedbackWidget[], error: string | null) => void;
 
 interface RatingWidgetResult {
-    rating: number,
-  comment: string,
+    rating: number;
+    comment: string;
 }
 
-interface CustomMetric {
-  [key: string]: string;
-}
+type CustomMetric = Record<string, string>;
 
-interface TraceCustomMetric {
-  [key: string]: number | string;
-}
+type TraceCustomMetric = Record<string, number | string>;
 
-type ValidationFunction = (
-  stringValue: string,
-  stringName: string,
-  functionName: string
-) => Promise<string | null>;
+type ValidationFunction = (stringValue: string, stringName: string, functionName: string) => Promise<string | null>;
 
 interface ResultObject {
-    error: string,
-    data: object,
+    error: string;
+    data: object;
 }
-interface ErrorObject { error: string | null }
+interface ErrorObject {
+    error: string | null;
+}
 
 declare module 'countly-sdk-react-native-bridge' {
-    import type CountlyConfig from 'countly-sdk-react-native-bridge/CountlyConfig'
+    import type CountlyConfig from 'countly-sdk-react-native-bridge/CountlyConfig';
 
     namespace Countly {
-        serverUrl: string;
-        appKey: string;
-        eventEmitter: any;
-        CountlyReactNative: any;
-        _isCrashReportingEnabled: boolean;
-        _isInitialized: boolean;
-        _isPushInitialized: boolean;
-        widgetShownCallbackName: string;
-        widgetClosedCallbackName: string;
-        ratingWidgetCallbackName: string;
-        pushNotificationCallbackName: string;
+        string;
+        string;
+        any;
+        any;
+        boolean;
+        boolean;
+        boolean;
+        string;
+        string;
+        string;
+        string;
         export const TemporaryDeviceIDString: string;
         export interface messagingMode {
             DEVELOPMENT: string;
@@ -235,11 +227,7 @@ declare module 'countly-sdk-react-native-bridge' {
          * @param {boolean} useAdditionalIntentRedirectionChecks to check additional intent checks. It is by default its true
          * @return {string | void} error message or void
          */
-        export function configureIntentRedirectionCheck(
-      allowedIntentClassNames?: string[],
-      allowedIntentPackageNames?: string[],
-      useAdditionalIntentRedirectionChecks?: boolean
-    ): string | void;
+        export function configureIntentRedirectionCheck(allowedIntentClassNames?: string[], allowedIntentPackageNames?: string[], useAdditionalIntentRedirectionChecks?: boolean): string | void;
 
         /**
          * @deprecated at 23.6.0 - Automatic sessions are handled by underlying SDK, this function will do nothing.
@@ -296,12 +284,7 @@ declare module 'countly-sdk-react-native-bridge' {
          * @param {string | null} location comma separate lat and lng values. For example, "56.42345,123.45325"
          * @param {string | null} ipAddress IP address of user's
          */
-        export function setLocationInit(
-      countryCode: string | null,
-      city: string | null,
-      location: string | null,
-      ipAddress: string | null,
-    ): void;
+        export function setLocationInit(countryCode: string | null, city: string | null, location: string | null, ipAddress: string | null): void;
 
         /**
          *
@@ -311,12 +294,7 @@ declare module 'countly-sdk-react-native-bridge' {
          * @param {string | null} location comma separate lat and lng values. For example, "56.42345,123.45325"
          * @param {string | null} ipAddress IP address of user's
          * */
-        export function setLocation(
-      countryCode: string | null,
-      city: string | null,
-      location: string | null,
-      ipAddress: string | null
-    ): string | void;
+        export function setLocation(countryCode: string | null, city: string | null, location: string | null, ipAddress: string | null): string | void;
 
         /**
          *
@@ -342,7 +320,6 @@ declare module 'countly-sdk-react-native-bridge' {
          * @return {DeviceIdType | null} deviceIdType or null
          * */
         export function getDeviceIDType(): Promise<DeviceIdType> | null;
-
 
         /**
          * Change the current device id
@@ -458,7 +435,7 @@ declare module 'countly-sdk-react-native-bridge' {
          * @param {string | object} options event options
          * @return {string | void} error message or void
          */
-        export function endEvent(options: string | CountlyEventOptions): string | void;
+        export function endEvent(options: CountlyEventOptions | string): string | void;
 
         /**
          *
@@ -467,7 +444,7 @@ declare module 'countly-sdk-react-native-bridge' {
          * @param {object} userData user data
          * @return {string | void} error message or void
          */
-        export function setUserData(userData: CountlyUserData): string | Promise<void>;
+        export function setUserData(userData: CountlyUserData): Promise<void> | string;
 
         namespace userData {
             export function setProperty(keyName: string, keyValue: any): Promise<void> | string;
@@ -558,8 +535,8 @@ declare module 'countly-sdk-react-native-bridge' {
         export function updateRemoteConfigForKeysOnly(keyNames: readonly string[], callback: CountlyCallback): string | void;
         export function updateRemoteConfigExceptKeys(keyNames: readonly string[], callback: CountlyCallback): string | void;
         export function getRemoteConfigValueForKey(keyName: string, callback: (value: any) => void): string | void;
-        export function getRemoteConfigValueForKeyP(keyName: string): string | Promise<any>;
-        export function remoteConfigClearValues(): string | Promise<string>;
+        export function getRemoteConfigValueForKeyP(keyName: string): Promise<any> | string;
+        export function remoteConfigClearValues(): Promise<string> | string;
 
         /**
          * @deprecated in 23.02.0 : use 'countlyConfig.setStarRatingDialogTexts' instead of 'setStarRatingDialogTexts'.
@@ -571,11 +548,7 @@ declare module 'countly-sdk-react-native-bridge' {
          * @param {string} starRatingTextDismiss - dialog's dismiss buttons text (Only for Android)
          * @return {string | void} error message or void
          */
-        export function setStarRatingDialogTexts(
-      starRatingTextTitle: string,
-      starRatingTextMessage: string,
-      starRatingTextDismiss: string,
-    ): void;
+        export function setStarRatingDialogTexts(starRatingTextTitle: string, starRatingTextMessage: string, starRatingTextDismiss: string): void;
         export function showStarRating(callback?: CountlyCallback): string | void;
 
         /**
@@ -606,12 +579,7 @@ declare module 'countly-sdk-react-native-bridge' {
          *
          * @return {string | void} error message or void
          */
-        export function presentFeedbackWidgetObject(
-      feedbackWidget: FeedbackWidget,
-      closeButtonText: string,
-      widgetShownCallback: WidgetCallback,
-      widgetClosedCallback: WidgetCallback
-    ): string | void;
+        export function presentFeedbackWidgetObject(feedbackWidget: FeedbackWidget, closeButtonText: string, widgetShownCallback: WidgetCallback, widgetClosedCallback: WidgetCallback): string | void;
 
         /**
          *
@@ -627,14 +595,7 @@ declare module 'countly-sdk-react-native-bridge' {
         export function cancelTrace(traceKey: string): string | void;
         export function clearAllTraces(): string | void;
         export function endTrace(traceKey: string, customMetric?: TraceCustomMetric): string | void;
-        export function recordNetworkTrace(
-      networkTraceKey: string,
-      responseCode: number,
-      requestPayloadSize: number,
-      responsePayloadSize: number,
-      startTime: number,
-      endTime: number,
-    ): string | void;
+        export function recordNetworkTrace(networkTraceKey: string, responseCode: number, requestPayloadSize: number, responsePayloadSize: number, startTime: number, endTime: number): string | void;
 
         /**
          * @deprecated in 23.02.0 : use 'countlyConfig.enableApm' instead of 'enableApm'.
@@ -700,11 +661,11 @@ declare module 'countly-sdk-react-native-bridge' {
          * Supported data type for customMetric values is string
          */
         export function setCustomMetrics(customMetric: CustomMetric): string | void;
-        validateUserDataValue: ValidationFunction;
-        validateUserDataType: ValidationFunction;
-        validateValidUserData: ValidationFunction;
-        validateParseInt: ValidationFunction;
-        logWarning: (functionName: string, warning: string) => Promise<void>;
+        ValidationFunction;
+        ValidationFunction;
+        ValidationFunction;
+        ValidationFunction;
+        (functionName: string, warning: string) => Promise<void>;
     }
 
     export default Countly;
