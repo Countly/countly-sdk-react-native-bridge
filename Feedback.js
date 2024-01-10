@@ -1,4 +1,4 @@
-import * as L from './Logger.js';
+import * as L from "./Logger.js";
 
 class Feedback {
     #state;
@@ -19,7 +19,7 @@ class Feedback {
             return { error: message, data: null };
         }
 
-        L.d('getAvailableFeedbackWidgets, getAvailableFeedbackWidgets');
+        L.d("getAvailableFeedbackWidgets, getAvailableFeedbackWidgets");
         let result = null;
         let error = null;
         try {
@@ -51,22 +51,22 @@ class Feedback {
         }
         let message = null;
         if (!feedbackWidget) {
-            message = 'feedbackWidget should not be null or undefined';
+            message = "feedbackWidget should not be null or undefined";
             L.e(`presentFeedbackWidget, ${message}`);
             return { error: message };
         }
         if (!feedbackWidget.id) {
-            message = 'FeedbackWidget id should not be null or empty';
+            message = "FeedbackWidget id should not be null or empty";
             L.e(`presentFeedbackWidget, ${message}`);
             return { error: message };
         }
         if (!feedbackWidget.type) {
-            message = 'FeedbackWidget type should not be null or empty';
+            message = "FeedbackWidget type should not be null or empty";
             L.e(`presentFeedbackWidget, ${message}`);
             return { error: message };
         }
-        if (typeof closeButtonText !== 'string') {
-            closeButtonText = '';
+        if (typeof closeButtonText !== "string") {
+            closeButtonText = "";
             L.w(`presentFeedbackWidget, unsupported data type of closeButtonText : [${typeof args}]`);
         }
 
@@ -84,8 +84,8 @@ class Feedback {
             });
         }
 
-        feedbackWidget.name = feedbackWidget.name || '';
-        closeButtonText = closeButtonText || '';
+        feedbackWidget.name = feedbackWidget.name || "";
+        closeButtonText = closeButtonText || "";
         this.#state.CountlyReactNative.presentFeedbackWidget([feedbackWidget.id, feedbackWidget.type, feedbackWidget.name, closeButtonText]);
         return { error: null };
     }
