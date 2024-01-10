@@ -84,9 +84,9 @@ async function reportWidgetManually(widgetType: string) {
     Countly.feedback.reportFeedbackWidgetManually(widget, widgetData.data, { rating: 5, comment: 'This is random' });
 }
 
-//============================================================
+// ============================================================
 // Old methods from the example project
-//============================================================
+// ============================================================
 const setStarRatingDialogTexts = () => {
     Countly.setStarRatingDialogTexts();
 };

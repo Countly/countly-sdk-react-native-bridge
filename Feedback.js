@@ -2,6 +2,7 @@ import * as L from './Logger.js';
 
 class Feedback {
     #state;
+
     constructor(state) {
         this.#state = state;
     }
