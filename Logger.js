@@ -1,4 +1,4 @@
-const countlyNamespace = '[CountlyReactNative] ';
+const countlyNamespace = "[CountlyReactNative] ";
 let canLog = false;
 
 /**
@@ -7,7 +7,7 @@ let canLog = false;
  */
 function initialize(debugMode) {
     canLog = debugMode && console !== undefined;
-    i('[Logger] initializing the module');
+    i("[Logger] initializing the module");
 }
 
 /**

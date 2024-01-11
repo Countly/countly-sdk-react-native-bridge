@@ -1,10 +1,10 @@
-import parseErrorStackLib from '../react-native/Libraries/Core/Devtools/parseErrorStack.js';
-import * as L from './Logger.js';
+import parseErrorStackLib from "../react-native/Libraries/Core/Devtools/parseErrorStack.js";
+import * as L from "./Logger.js";
 
 const DeviceIdType = {
-    DEVELOPER_SUPPLIED: 'DEVELOPER_SUPPLIED',
-    SDK_GENERATED: 'SDK_GENERATED',
-    TEMPORARY_ID: 'TEMPORARY_ID',
+    DEVELOPER_SUPPLIED: "DEVELOPER_SUPPLIED",
+    SDK_GENERATED: "SDK_GENERATED",
+    TEMPORARY_ID: "TEMPORARY_ID",
 };
 
 /**
@@ -16,20 +16,20 @@ const DeviceIdType = {
 function stringToDeviceIDType(deviceIdType) {
     let result = null;
     switch (deviceIdType) {
-    case 'DS':
+    case "DS":
         result = DeviceIdType.DEVELOPER_SUPPLIED;
         break;
-    case 'TID':
+    case "TID":
         result = DeviceIdType.TEMPORARY_ID;
         break;
-    case 'SG':
+    case "SG":
         result = DeviceIdType.SDK_GENERATED;
         break;
     default:
         break;
     }
     if (result == null) {
-        L.e('_getDeviceIdType, ' + `unexpected deviceIdType [${deviceIdType}] from native side`);
+        L.e("_getDeviceIdType, " + `unexpected deviceIdType [${deviceIdType}] from native side`);
         return null;
     }
     return result;
@@ -43,7 +43,7 @@ function stringToDeviceIDType(deviceIdType) {
  * @return {Object} json
  */
 function configToJson(config) {
-    L.d('configToJson, Converting config to json');
+    L.d("configToJson, Converting config to json");
     const json = {};
     try {
         json.serverURL = config.serverURL;
@@ -132,7 +132,7 @@ function configToJson(config) {
 function getStackTrace(e) {
     let jsStackTrace = null;
     try {
-        if (Platform.hasOwnProperty('constants')) {
+        if (Platform.hasOwnProperty("constants")) {
             // RN version >= 0.63
             if (Platform.constants.reactNativeVersion.minor >= 64) {
                 // RN version >= 0.64

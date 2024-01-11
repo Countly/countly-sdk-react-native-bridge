@@ -63,8 +63,8 @@ interface ResultObject {
 }
 interface ErrorObject { error: string | null }
 
-declare module 'countly-sdk-react-native-bridge' {
-  import type CountlyConfig from 'countly-sdk-react-native-bridge/CountlyConfig'
+declare module "countly-sdk-react-native-bridge" {
+  import type CountlyConfig from "countly-sdk-react-native-bridge/CountlyConfig"
 
   namespace Countly {
     serverUrl: string;
@@ -710,7 +710,7 @@ declare module 'countly-sdk-react-native-bridge' {
   export default Countly;
 }
 
-declare module 'countly-sdk-react-native-bridge/CountlyConfig' {
+declare module "countly-sdk-react-native-bridge/CountlyConfig" {
   /**
    *
    * Config object for Countly Init

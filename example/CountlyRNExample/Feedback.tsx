@@ -1,10 +1,10 @@
 /* eslint-disable react-native/no-inline-styles */
-import React from 'react';
-import { ScrollView, StyleSheet, Text, TextInput } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Countly from 'countly-sdk-react-native-bridge';
-import CountlyButton from './CountlyButton';
-import { lightOrange } from './Constants';
+import React from "react";
+import { ScrollView, StyleSheet, Text, TextInput } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Countly from "countly-sdk-react-native-bridge";
+import CountlyButton from "./CountlyButton";
+import { lightOrange } from "./Constants";
 
 // This function fetches the widget list and presents the widget with the given type. (with callback)
 function getAndPresentWidgetWithCallback(widgetType: string) {
@@ -46,12 +46,12 @@ async function getAndPresentWidgetAsync(widgetType: string) {
 function presentWidget(widget: any) {
     Countly.feedback.presentFeedbackWidget(
         widget,
-        'Close',
+        "Close",
         function () {
-            console.log('presentWidget, Widgetshown');
+            console.log("presentWidget, Widgetshown");
         },
         function () {
-            console.log('presentWidget, Widgetclosed');
+            console.log("presentWidget, Widgetclosed");
         }
     );
 }
@@ -76,12 +76,12 @@ async function reportWidgetManually(widgetType: string) {
     // Get widget data
     const widgetData = await Countly.feedback.getFeedbackWidgetData(widget);
     if (widgetData.error != null) {
-        console.error('reportWidgetManually, Error while fetching widget data');
+        console.error("reportWidgetManually, Error while fetching widget data");
         return;
     }
 
     // Report widget manually. Third parameter is some random data for the sake of example.
-    Countly.feedback.reportFeedbackWidgetManually(widget, widgetData.data, { rating: 5, comment: 'This is random' });
+    Countly.feedback.reportFeedbackWidgetManually(widget, widgetData.data, { rating: 5, comment: "This is random" });
 }
 
 // ============================================================
@@ -96,7 +96,7 @@ const showStarRating = () => {
 };
 
 const presentRatingWidgetUsingEditBox = function () {
-    Countly.presentRatingWidgetWithID(state.ratingId, 'Submit', (error) => {
+    Countly.presentRatingWidgetWithID(state.ratingId, "Submit", (error) => {
         if (error != null) {
             console.log(`presentRatingWidgetUsingEditBox : ${error}`);
         }
@@ -109,16 +109,16 @@ const showSurvey = () => {
             console.log(`showSurvey Error : ${error}`);
         } else {
             console.log(`showSurvey Success : ${retrivedWidgets.length}`);
-            const surveyWidget = retrivedWidgets.find((x) => x.type === 'survey');
+            const surveyWidget = retrivedWidgets.find((x) => x.type === "survey");
             if (surveyWidget) {
                 Countly.presentFeedbackWidgetObject(
                     surveyWidget,
-                    'Close',
+                    "Close",
                     function () {
-                        console.log('showSurvey presentFeedbackWidgetObject : ' + 'Widgetshown');
+                        console.log("showSurvey presentFeedbackWidgetObject : " + "Widgetshown");
                     },
                     function () {
-                        console.log('showSurvey presentFeedbackWidgetObject : ' + 'Widgetclosed');
+                        console.log("showSurvey presentFeedbackWidgetObject : " + "Widgetclosed");
                     }
                 );
             }
@@ -132,16 +132,16 @@ const showNPS = () => {
             console.log(`showNPS Error : ${error}`);
         } else {
             console.log(`showNPS Success : ${retrivedWidgets.length}`);
-            const npsWidget = retrivedWidgets.find((x) => x.type === 'nps');
+            const npsWidget = retrivedWidgets.find((x) => x.type === "nps");
             if (npsWidget) {
                 Countly.presentFeedbackWidgetObject(
                     npsWidget,
-                    'Close',
+                    "Close",
                     function () {
-                        console.log('showNPS presentFeedbackWidgetObject : ' + 'Widgetshown');
+                        console.log("showNPS presentFeedbackWidgetObject : " + "Widgetshown");
                     },
                     function () {
-                        console.log('showNPS presentFeedbackWidgetObject : ' + 'Widgetclosed');
+                        console.log("showNPS presentFeedbackWidgetObject : " + "Widgetclosed");
                     }
                 );
             }
@@ -152,26 +152,26 @@ const showNPS = () => {
 const styles = StyleSheet.create({
     inputRoundedBorder: {
         margin: 5,
-        backgroundColor: 'white',
+        backgroundColor: "white",
         borderWidth: 1,
         borderRadius: 10,
-        borderColor: 'grey',
+        borderColor: "grey",
         padding: 10,
         fontSize: 20,
     },
 });
 
-const state = { ratingId: '61eac4627b8ad224e37bb3f5' };
+const state = { ratingId: "61eac4627b8ad224e37bb3f5" };
 
 function FeedbackScreen({ navigation }) {
     return (
         <SafeAreaView>
             <ScrollView>
-                <Text style={{ fontSize: 16, fontWeight: 'bold', textAlign: 'center', marginTop: 20 }}>With Callback</Text>
+                <Text style={{ fontSize: 16, fontWeight: "bold", textAlign: "center", marginTop: 20 }}>With Callback</Text>
                 <CountlyButton
                     title="Present Rating Widget"
                     onPress={() => {
-                        getAndPresentWidgetWithCallback('rating');
+                        getAndPresentWidgetWithCallback("rating");
                     }}
                     color={lightOrange}
                     lightText={true}
@@ -179,7 +179,7 @@ function FeedbackScreen({ navigation }) {
                 <CountlyButton
                     title="Present Survey Widget"
                     onPress={() => {
-                        getAndPresentWidgetWithCallback('survey');
+                        getAndPresentWidgetWithCallback("survey");
                     }}
                     color={lightOrange}
                     lightText={true}
@@ -187,16 +187,16 @@ function FeedbackScreen({ navigation }) {
                 <CountlyButton
                     title="Present NPS Widget"
                     onPress={() => {
-                        getAndPresentWidgetWithCallback('nps');
+                        getAndPresentWidgetWithCallback("nps");
                     }}
                     color={lightOrange}
                     lightText={true}
                 />
-                <Text style={{ fontSize: 16, fontWeight: 'bold', textAlign: 'center', marginTop: 20 }}>Async Method</Text>
+                <Text style={{ fontSize: 16, fontWeight: "bold", textAlign: "center", marginTop: 20 }}>Async Method</Text>
                 <CountlyButton
                     title="Present Rating Widget"
                     onPress={async () =>
-                        getAndPresentWidgetAsync('rating').catch((e) => {
+                        getAndPresentWidgetAsync("rating").catch((e) => {
                             console.log(e);
                         })
                     }
@@ -206,7 +206,7 @@ function FeedbackScreen({ navigation }) {
                 <CountlyButton
                     title="Present Survey Widget"
                     onPress={async () =>
-                        getAndPresentWidgetAsync('survey').catch((e) => {
+                        getAndPresentWidgetAsync("survey").catch((e) => {
                             console.log(e);
                         })
                     }
@@ -216,18 +216,18 @@ function FeedbackScreen({ navigation }) {
                 <CountlyButton
                     title="Present NPS Widget"
                     onPress={async () =>
-                        getAndPresentWidgetAsync('nps').catch((e) => {
+                        getAndPresentWidgetAsync("nps").catch((e) => {
                             console.log(e);
                         })
                     }
                     color={lightOrange}
                     lightText={true}
                 />
-                <Text style={{ fontSize: 16, fontWeight: 'bold', textAlign: 'center', marginTop: 20 }}>Report Widget Manually</Text>
+                <Text style={{ fontSize: 16, fontWeight: "bold", textAlign: "center", marginTop: 20 }}>Report Widget Manually</Text>
                 <CountlyButton
                     title="Report Rating Widget"
                     onPress={async () =>
-                        reportWidgetManually('rating').catch((e) => {
+                        reportWidgetManually("rating").catch((e) => {
                             console.log(e);
                         })
                     }
@@ -237,7 +237,7 @@ function FeedbackScreen({ navigation }) {
                 <CountlyButton
                     title="Report Survey Widget"
                     onPress={async () =>
-                        reportWidgetManually('survey').catch((e) => {
+                        reportWidgetManually("survey").catch((e) => {
                             console.log(e);
                         })
                     }
@@ -247,14 +247,14 @@ function FeedbackScreen({ navigation }) {
                 <CountlyButton
                     title="Report NPS Widget"
                     onPress={async () =>
-                        reportWidgetManually('nps').catch((e) => {
+                        reportWidgetManually("nps").catch((e) => {
                             console.log(e);
                         })
                     }
                     color={lightOrange}
                     lightText={true}
                 />
-                <Text style={{ fontSize: 16, fontWeight: 'bold', textAlign: 'center', marginTop: 20 }}>Legacy Methods</Text>
+                <Text style={{ fontSize: 16, fontWeight: "bold", textAlign: "center", marginTop: 20 }}>Legacy Methods</Text>
                 <CountlyButton onPress={showStarRating} title="Show Star Rating Model" color="#00b5ad" />
                 <TextInput
                     style={styles.inputRoundedBorder}
