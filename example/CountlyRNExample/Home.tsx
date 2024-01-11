@@ -1,14 +1,14 @@
 /* eslint-disable react-native/no-inline-styles */
-import React from 'react';
-import { Text, SafeAreaView, ScrollView, Alert } from 'react-native';
-import CountlyButton from './CountlyButton';
-import Countly from 'countly-sdk-react-native-bridge';
-import countlyConfig from './Configuration';
-import { lightGreen, navigationName } from './Constants';
+import React from "react";
+import { Text, SafeAreaView, ScrollView, Alert } from "react-native";
+import CountlyButton from "./CountlyButton";
+import Countly from "countly-sdk-react-native-bridge";
+import countlyConfig from "./Configuration";
+import { lightGreen, navigationName } from "./Constants";
 
 async function initialize() {
     if (await Countly.isInitialized()) {
-        console.warn('Countly is already initialized');
+        console.warn("Countly is already initialized");
         return;
     }
 
@@ -24,7 +24,7 @@ async function initialize() {
         console.log(`Just received this notification data: ${jsonString}`);
         Alert.alert(`theNotification: ${jsonString}`);
     }); // Set callback to receive push notifications
-    Countly.askForNotificationPermission('android.resource://com.countly.demo/raw/notif_sample'); // This method will ask for permission, enables push notification and send push token to countly server.
+    Countly.askForNotificationPermission("android.resource://com.countly.demo/raw/notif_sample"); // This method will ask for permission, enables push notification and send push token to countly server.
 }
 
 function HomeScreen({ navigation }) {
@@ -32,7 +32,7 @@ function HomeScreen({ navigation }) {
     return (
         <SafeAreaView>
             <ScrollView>
-                <Text style={{ fontSize: 16, fontWeight: 'bold', textAlign: 'center', marginTop: 10 }}>Features List</Text>
+                <Text style={{ fontSize: 16, fontWeight: "bold", textAlign: "center", marginTop: 10 }}>Features List</Text>
                 <CountlyButton title="Feedback" onPress={() => navigation.navigate(navigationName.Feedback)} color={lightGreen} lightText={true} />
                 <CountlyButton title="Events" onPress={() => navigation.navigate(navigationName.Events)} color={lightGreen} lightText={true} />
                 <CountlyButton title="User Profiles" onPress={() => navigation.navigate(navigationName.UserProfiles)} color={lightGreen} lightText={true} />
