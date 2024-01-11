@@ -1585,15 +1585,16 @@ Countly.showStarRating = function (callback) {
  * @param {callback listener} [ratingWidgetCallback] This parameter is optional.
  */
 Countly.presentRatingWidgetWithID = function (widgetId, closeButtonText, ratingWidgetCallback) {
+    var message = "";
     if (!_state.isInitialized) {
-        var message = "'init' must be called before 'presentRatingWidgetWithID'";
+        message = "'init' must be called before 'presentRatingWidgetWithID'";
         L.e(`presentRatingWidgetWithID, ${message}`);
         return message;
     }
     if (!widgetId) {
-        var message1 = 'Rating Widget id should not be null or empty';
-        L.e(`presentRatingWidgetWithID, ${message1}`);
-        return message1;
+        message = 'Rating Widget id should not be null or empty';
+        L.e(`presentRatingWidgetWithID, ${message}`);
+        return message;
     }
     if (typeof closeButtonText !== 'string') {
         closeButtonText = '';
