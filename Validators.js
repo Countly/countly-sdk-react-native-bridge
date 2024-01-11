@@ -1,4 +1,4 @@
-import * as L from './Logger.js';
+import * as L from "./Logger.js";
 
 /**
  * Validate user data value, it should be 'number' or 'string' that is parseable to 'number'
@@ -11,10 +11,10 @@ import * as L from './Logger.js';
 function validateUserDataType(stringValue, stringName, functionName) {
     L.d(`validateUserDataType, Validating user data type: [${stringValue}], name: [${stringName}], function: [${functionName}]`);
     let message = null;
-    if (typeof stringValue === 'number') {
+    if (typeof stringValue === "number") {
         return null;
     }
-    if (typeof stringValue === 'string') {
+    if (typeof stringValue === "string") {
         L.w(`${functionName} unsupported data type '${typeof stringValue}', its data type should be 'number'`);
         return null;
     }
@@ -34,7 +34,7 @@ function validateUserDataType(stringValue, stringName, functionName) {
  */
 function validateValidUserData(stringValue, stringName, functionName) {
     L.d(`validateValidUserData, Validating valid user data: [${stringValue}], name: [${stringName}], function: [${functionName}]`);
-    if (stringValue || stringValue == '') {
+    if (stringValue || stringValue == "") {
         return null;
     }
 
@@ -76,7 +76,7 @@ function validateString(stringValue, stringName, functionName) {
     let message = null;
     if (!stringValue) {
         message = `${stringName} should not be null, undefined or empty`;
-    } else if (typeof stringValue !== 'string') {
+    } else if (typeof stringValue !== "string") {
         message = `skipping value for '${stringName.toString()}', due to unsupported data type '${typeof stringValue}', its data type should be 'string'`;
     }
     if (message) {

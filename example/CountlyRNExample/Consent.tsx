@@ -1,8 +1,8 @@
-import React from 'react';
-import { ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Countly from 'countly-sdk-react-native-bridge';
-import CountlyButton from './CountlyButton';
+import React from "react";
+import { ScrollView } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Countly from "countly-sdk-react-native-bridge";
+import CountlyButton from "./CountlyButton";
 
 const giveConsent = (name: string) => {
     Countly.giveConsent([name]);
@@ -13,11 +13,11 @@ const removeConsent = (name: string) => {
 };
 
 const giveMultipleConsent = () => {
-    Countly.giveConsent(['events', 'views', 'star-rating', 'crashes', 'invalidFeatureName']);
+    Countly.giveConsent(["events", "views", "star-rating", "crashes", "invalidFeatureName"]);
 };
 
 const removeMultipleConsent = () => {
-    Countly.removeConsent(['events', 'views']);
+    Countly.removeConsent(["events", "views"]);
 };
 
 const giveAllConsent = () => {
@@ -36,70 +36,70 @@ function ConsentScreen({ navigation }) {
                 <CountlyButton onPress={removeAllConsent} title="Remove all Consent" color="#00b5ad" />
                 <CountlyButton
                     onPress={() => {
-                        giveConsent('sessions');
+                        giveConsent("sessions");
                     }}
                     title="Give sessions"
                     color="#00b5ad"
                 />
                 <CountlyButton
                     onPress={() => {
-                        giveConsent('events');
+                        giveConsent("events");
                     }}
                     title="Give events"
                     color="#00b5ad"
                 />
                 <CountlyButton
                     onPress={() => {
-                        giveConsent('views');
+                        giveConsent("views");
                     }}
                     title="Give views"
                     color="#00b5ad"
                 />
                 <CountlyButton
                     onPress={() => {
-                        giveConsent('location');
+                        giveConsent("location");
                     }}
                     title="Give location"
                     color="#00b5ad"
                 />
                 <CountlyButton
                     onPress={() => {
-                        giveConsent('crashes');
+                        giveConsent("crashes");
                     }}
                     title="Give crashes"
                     color="#00b5ad"
                 />
                 <CountlyButton
                     onPress={() => {
-                        giveConsent('attribution');
+                        giveConsent("attribution");
                     }}
                     title="Give attribution"
                     color="#00b5ad"
                 />
                 <CountlyButton
                     onPress={() => {
-                        giveConsent('users');
+                        giveConsent("users");
                     }}
                     title="Give users"
                     color="#00b5ad"
                 />
                 <CountlyButton
                     onPress={() => {
-                        giveConsent('push');
+                        giveConsent("push");
                     }}
                     title="Give push"
                     color="#00b5ad"
                 />
                 <CountlyButton
                     onPress={() => {
-                        giveConsent('star-rating');
+                        giveConsent("star-rating");
                     }}
                     title="Give star-rating"
                     color="#00b5ad"
                 />
                 <CountlyButton
                     onPress={() => {
-                        giveConsent('apm');
+                        giveConsent("apm");
                     }}
                     title="Give APM"
                     color="#00b5ad"
@@ -107,70 +107,70 @@ function ConsentScreen({ navigation }) {
 
                 <CountlyButton
                     onPress={() => {
-                        removeConsent('sessions');
+                        removeConsent("sessions");
                     }}
                     title="Remove sessions"
                     color="#00b5ad"
                 />
                 <CountlyButton
                     onPress={() => {
-                        removeConsent('events');
+                        removeConsent("events");
                     }}
                     title="Remove events"
                     color="#00b5ad"
                 />
                 <CountlyButton
                     onPress={() => {
-                        removeConsent('views');
+                        removeConsent("views");
                     }}
                     title="Remove views"
                     color="#00b5ad"
                 />
                 <CountlyButton
                     onPress={() => {
-                        removeConsent('location');
+                        removeConsent("location");
                     }}
                     title="Remove location"
                     color="#00b5ad"
                 />
                 <CountlyButton
                     onPress={() => {
-                        removeConsent('crashes');
+                        removeConsent("crashes");
                     }}
                     title="Remove crashes"
                     color="#00b5ad"
                 />
                 <CountlyButton
                     onPress={() => {
-                        removeConsent('attribution');
+                        removeConsent("attribution");
                     }}
                     title="Remove attribution"
                     color="#00b5ad"
                 />
                 <CountlyButton
                     onPress={() => {
-                        removeConsent('users');
+                        removeConsent("users");
                     }}
                     title="Remove users"
                     color="#00b5ad"
                 />
                 <CountlyButton
                     onPress={() => {
-                        removeConsent('push');
+                        removeConsent("push");
                     }}
                     title="Remove push"
                     color="#00b5ad"
                 />
                 <CountlyButton
                     onPress={() => {
-                        removeConsent('star-rating');
+                        removeConsent("star-rating");
                     }}
                     title="Remove star-rating"
                     color="#00b5ad"
                 />
                 <CountlyButton
                     onPress={() => {
-                        removeConsent('apm');
+                        removeConsent("apm");
                     }}
                     title="Remove APM"
                     color="#00b5ad"

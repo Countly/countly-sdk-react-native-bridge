@@ -1,20 +1,20 @@
-import * as React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import * as React from "react";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-import { navigationName } from './Constants';
-import HomeScreen from './Home';
-import FeedbackScreen from './Feedback';
-import EventScreen from './Events';
-import UserProfilesScreen from './UserProfiles';
-import ViewsScreen from './Views';
-import APMScreen from './APM';
-import DeviceIDScreen from './DeviceID';
-import ConsentScreen from './Consent';
-import RemoteConfigScreen from './RemoteConfig';
-import OthersScreen from './Others';
-import CrashesScreen from './Crashes';
-import { Image } from 'react-native';
+import { navigationName } from "./Constants";
+import HomeScreen from "./Home";
+import FeedbackScreen from "./Feedback";
+import EventScreen from "./Events";
+import UserProfilesScreen from "./UserProfiles";
+import ViewsScreen from "./Views";
+import APMScreen from "./APM";
+import DeviceIDScreen from "./DeviceID";
+import ConsentScreen from "./Consent";
+import RemoteConfigScreen from "./RemoteConfig";
+import OthersScreen from "./Others";
+import CrashesScreen from "./Crashes";
+import { Image } from "react-native";
 
 const Stack = createNativeStackNavigator();
 class Example extends React.Component {
@@ -28,7 +28,7 @@ class Example extends React.Component {
                         options={{
                             headerTitle: (props) => (
                                 <Image
-                                    source={require('./asset/countly-logo.png')}
+                                    source={require("./asset/countly-logo.png")}
                                     style={{ width: 144, height: 42 }}
                                     onError={(e) => {
                                         console.log(e.nativeEvent.error);
