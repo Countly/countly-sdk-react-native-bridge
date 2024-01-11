@@ -6,6 +6,7 @@ import CountlyButton from './CountlyButton';
 
 class AttributionKey {
     static IDFA = 'idfa';
+
     static AdvertisingID = 'adid';
 }
 

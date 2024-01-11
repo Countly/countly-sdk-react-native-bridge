@@ -39,7 +39,7 @@ let _ratingWidgetListener;
 const ratingWidgetCallbackName = 'ratingWidgetCallback';
 const pushNotificationCallbackName = 'pushNotificationCallback';
 
-Countly.messagingMode = { 'DEVELOPMENT': '1', 'PRODUCTION': '0', 'ADHOC': '2' };
+Countly.messagingMode = { DEVELOPMENT: '1', PRODUCTION: '0', ADHOC: '2' };
 if (/android/.exec(Platform.OS)) {
     Countly.messagingMode.DEVELOPMENT = '2';
 }
@@ -1591,9 +1591,9 @@ Countly.presentRatingWidgetWithID = function (widgetId, closeButtonText, ratingW
         return message;
     }
     if (!widgetId) {
-        message = 'Rating Widget id should not be null or empty';
-        L.e(`presentRatingWidgetWithID, ${message}`);
-        return message;
+        var message1 = 'Rating Widget id should not be null or empty';
+        L.e(`presentRatingWidgetWithID, ${message1}`);
+        return message1;
     }
     if (typeof closeButtonText !== 'string') {
         closeButtonText = '';
@@ -1776,7 +1776,7 @@ Countly.recordNetworkTrace = function (networkTraceKey, responseCode, requestPay
  * Should be called before Countly init
  */
 Countly.enableApm = function () {
-    L.w(`enableApm, enableApm is deprecated, use countlyConfig.enableApm instead.`);
+    L.w('enableApm, enableApm is deprecated, use countlyConfig.enableApm instead.');
     const args = [];
     CountlyReactNative.enableApm(args);
 };
@@ -1789,7 +1789,7 @@ Countly.enableApm = function () {
  * Should be called before Countly init
  */
 Countly.enableAttribution = async function (attributionID = '') {
-    L.w(`enableAttribution, enableAttribution is deprecated, use Countly.recordIndirectAttribution instead.`);
+    L.w('enableAttribution, enableAttribution is deprecated, use Countly.recordIndirectAttribution instead.');
     if (/ios/.exec(Platform.OS)) {
         if (attributionID == '') {
             const message = "attribution Id for iOS can't be empty string";
@@ -1812,7 +1812,7 @@ Countly.enableAttribution = async function (attributionID = '') {
  * Currently implemented for iOS only
  */
 Countly.recordAttributionID = function (attributionID) {
-    L.w(`recordAttributionID, recordAttributionID is deprecated, use Countly.recordIndirectAttribution instead.`);
+    L.w('recordAttributionID, recordAttributionID is deprecated, use Countly.recordIndirectAttribution instead.');
     if (!/ios/.exec(Platform.OS)) {
         return 'recordAttributionID : To be implemented';
     }
