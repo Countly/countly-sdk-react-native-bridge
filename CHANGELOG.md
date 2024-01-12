@@ -1,3 +1,9 @@
+## xx.x.x
+* Fixed a bug where callback was not defined but called in `getRemoteConfigValueForKeyP` and `remoteConfigClearValues`
+
+* Underlying Android SDK version is 23.12.0
+* Underlying iOS SDK version to 23.12.0
+
 ## 23.12.0
 * Added TS type declerations to the SDK
 
