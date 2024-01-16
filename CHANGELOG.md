@@ -1,5 +1,5 @@
 ## xx.x.x
-* Fixed a bug where callback was not defined but called in `getRemoteConfigValueForKeyP` and `remoteConfigClearValues`
+* Fixed a bug in `getRemoteConfigValueForKeyP` and `remoteConfigClearValues` where those functions would produce a "Property 'callback' doesn't exist", if they are called before initializing the SDK.
 
 * Underlying Android SDK version is 23.12.0
 * Underlying iOS SDK version to 23.12.0
