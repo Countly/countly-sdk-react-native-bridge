@@ -1509,7 +1509,6 @@ Countly.getRemoteConfigValueForKeyP = function (keyName) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'getRemoteConfigValueForKeyP'";
         L.e(`getRemoteConfigValueForKeyP, ${message}`);
-        callback(message);
         return message;
     }
     L.d(`getRemoteConfigValueForKeyP, Getting remote config value for key: [${keyName}]`);
@@ -1538,7 +1537,6 @@ Countly.remoteConfigClearValues = async function () {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'remoteConfigClearValues'";
         L.e(`remoteConfigClearValues, ${message}`);
-        callback(message);
         return message;
     }
     L.d("remoteConfigClearValues, Clearing remote config values");
