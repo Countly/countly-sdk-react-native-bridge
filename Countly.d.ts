@@ -64,7 +64,7 @@ interface ResultObject {
 interface ErrorObject { error: string | null }
 
 declare module "countly-sdk-react-native-bridge" {
-  import type CountlyConfig from "countly-sdk-react-native-bridge/CountlyConfig"
+  import type CountlyConfig from "countly-sdk-react-native-bridge/CountlyConfig";
 
   namespace Countly {
     serverUrl: string;
@@ -204,6 +204,15 @@ declare module "countly-sdk-react-native-bridge" {
      * @return {string | void} error message or void
      */
     export function pushTokenType(tokenType: string, channelName: string, channelDescription: string): Promise<string> | string;
+
+    /**
+     *
+     * Send push token
+     * @param {object} options - object containing the push token
+     * {token: string}
+     *
+     * @return {string | void} error message or void
+     */
     export function sendPushToken(options: { readonly token?: string }): void;
 
     /**
@@ -213,6 +222,7 @@ declare module "countly-sdk-react-native-bridge" {
      * Custom sound should be place at 'your_project_root/android/app/src/main/res/raw'
      * Should be called after Countly init
      *
+     * @return {string | void} error message or void
      */
     export function askForNotificationPermission(customSoundPath?: string): string | void;
 
@@ -246,7 +256,7 @@ declare module "countly-sdk-react-native-bridge" {
      *
      * Countly start for android
      *
-     * @return {string | void} error message or void
+     * @return {void} void
      */
     export function start(): void;
 
@@ -255,7 +265,7 @@ declare module "countly-sdk-react-native-bridge" {
      *
      * Countly stop for android
      *
-     * @return {string | void} error message or void
+     * @return {void} void
      */
     export function stop(): void;
 
@@ -266,6 +276,7 @@ declare module "countly-sdk-react-native-bridge" {
      * @deprecated in 20.04.6
      *
      * @function Countly.setLoggingEnabled should be used to enable/disable countly internal debugging logs
+     * @return {void} void
      */
     export function enableLogging(): void;
 
@@ -275,6 +286,7 @@ declare module "countly-sdk-react-native-bridge" {
      * @deprecated in 20.04.6
      *
      * @function Countly.setLoggingEnabled should be used to enable/disable countly internal debugging logs
+     * @return {void} void
      */
     export function disableLogging(): void;
 
@@ -283,6 +295,7 @@ declare module "countly-sdk-react-native-bridge" {
      * Should be called before Countly init
      *
      * @param {[boolean = true]} enabled server url
+     * @return {void} void
      */
     export function setLoggingEnabled(enabled?: boolean): void;
 
@@ -295,6 +308,7 @@ declare module "countly-sdk-react-native-bridge" {
      * @param {string | null} city Name of the user's city
      * @param {string | null} location comma separate lat and lng values. For example, "56.42345,123.45325"
      * @param {string | null} ipAddress IP address of user's
+     * @return {void} void
      */
     export function setLocationInit(
       countryCode: string | null,
@@ -310,7 +324,8 @@ declare module "countly-sdk-react-native-bridge" {
      * @param {string | null} city Name of the user's city
      * @param {string | null} location comma separate lat and lng values. For example, "56.42345,123.45325"
      * @param {string | null} ipAddress IP address of user's
-     * */
+     * @return {string | void} error message or void
+     */
     export function setLocation(
       countryCode: string | null,
       city: string | null,
@@ -340,7 +355,7 @@ declare module "countly-sdk-react-native-bridge" {
      * Should be called after Countly init
      *
      * @return {DeviceIdType | null} deviceIdType or null
-     * */
+     */
     export function getDeviceIDType(): Promise<DeviceIdType> | null;
 
 
@@ -350,7 +365,7 @@ declare module "countly-sdk-react-native-bridge" {
      * @param {string} newDeviceID id new device id
      * @param {boolean} onServer merge device id
      * @return {string | void} error message or void
-     * */
+     */
     export function changeDeviceId(newDeviceID: string, onServer: boolean): string | void;
 
     /**
@@ -358,6 +373,7 @@ declare module "countly-sdk-react-native-bridge" {
      * Set to "true" if you want HTTP POST to be used for all requests
      * Should be called before Countly init
      * @param {boolean} forceHttp force http post for all requests. Default value is true
+     * @return {void} void
      */
     export function setHttpPostForced(boolean?: boolean): void;
 
@@ -366,6 +382,7 @@ declare module "countly-sdk-react-native-bridge" {
      *
      * Enable crash reporting to report unhandled crashes to Countly
      * Should be called before Countly init
+     * @return {void} void
      */
     export function enableCrashReporting(): void;
 
@@ -394,6 +411,7 @@ declare module "countly-sdk-react-native-bridge" {
      * Set custom crash segment for Countly
      *
      * @param {Map} segments segments
+     * @return {void} void
      */
     export function setCustomCrashSegments(segments: Record<string, any>): void;
 
@@ -470,30 +488,232 @@ declare module "countly-sdk-react-native-bridge" {
     export function setUserData(userData: CountlyUserData): string | Promise<void>;
 
     namespace userData {
+      /**
+       *
+       * Set custom key and value pair for the current user.
+       *
+       * @param {string} keyName user property key
+       * @param {object} keyValue user property value
+       * @return {string | void} error message or void
+       */
       export function setProperty(keyName: string, keyValue: any): Promise<void> | string;
+
+      /**
+       *
+       * Increment custom user data by 1
+       *
+       * @param {string} keyName user property key
+       * @return {string | void} error message or void
+       */
       export function increment(keyName: string): Promise<void> | string;
+
+      /**
+       *
+       * Increment custom user data by a specified value
+       *
+       * @param {string} keyName user property key
+       * @param {string} keyValue value to increment user property by
+       * @return {string | void} error message or void
+       */
       export function incrementBy(keyName: string, keyValue: any): Promise<void> | string;
+
+      /**
+       *
+       * Multiply custom user data by a specified value
+       *
+       * @param {string} keyName user property key
+       * @param {string} keyValue value to multiply user property by
+       * @return {string | void} error message or void
+       */
       export function multiply(keyName: string, keyValue: any): Promise<void> | string;
+
+      /**
+       *
+       * Save the max value between current and provided value.
+       *
+       * @param {string} keyName user property key
+       * @param {string} keyValue user property value
+       * @return {string | void} error message or void
+       */
       export function saveMax(keyName: string, keyValue: any): Promise<void> | string;
+
+      /**
+       *
+       * Save the min value between current and provided value.
+       *
+       * @param {string} keyName user property key
+       * @param {string} keyValue user property value
+       * @return {string | void} error message or void
+       */
       export function saveMin(keyName: string, keyValue: any): Promise<void> | string;
+
+      /**
+       *
+       * Set the property value if it does not exist.
+       *
+       * @param {string} keyName user property key
+       * @param {string} keyValue user property value
+       * @return {string | void} error message or void
+       */
       export function setOnce(keyName: string, keyValue: any): Promise<void> | string;
+
+      /**
+       *
+       * Add value to custom property (array) if value does not exist within.
+       *
+       * @param {string} keyName user property key
+       * @param {string} keyValue user property value
+       * @return {string | void} error message or void
+       */
       export function pushUniqueValue(keyName: string, keyValue: any): Promise<void> | string;
+
+      /**
+       *
+       * Add value to custom property (array).
+       *
+       * @param {string} keyName user property key
+       * @param {string} keyValue user property value
+       * @return {string | void} error message or void
+       */
       export function pushValue(keyName: string, keyValue: any): Promise<void> | string;
+
+      /**
+       *
+       * Remove value to custom property (array).
+       *
+       * @param {string} keyName user property key
+       * @param {string} keyValue user property value
+       * @return {string | void} error message or void
+       */
       export function pullValue(keyName: string, keyValue: any): Promise<void> | string;
     }
 
     namespace userDataBulk {
+      /**
+       *
+       * Custom key and value pairs for the current user.
+       * Remember to call Countly.userDataBulk.save() after calling all userDataBulk methods to send the bulk data to server.
+       *
+       * @param {object} customAndPredefined custom key value pairs
+       * @return {string | void} error message or void
+       */
       export function setUserProperties(properties: object): Promise<void> | string;
+
+      /**
+       *
+       * Save user data and send to server.
+       *
+       * @return {string | void} error message or void
+       */
       export function save(): Promise<void>;
+
+      /**
+       *
+       * Set custom key and value pair for the current user.
+       * Remember to call Countly.userDataBulk.save() after calling all userDataBulk methods to send the bulk data to server.
+       *
+       * @param {string} keyName custom user data key
+       * @param {string} keyValue custom user data value
+       * @return {string | void} error message or void
+       */
       export function setProperty(keyName: string, keyValue: any): Promise<string> | string;
+
+      /**
+       *
+       * Increment custom user data by 1
+       * Remember to call Countly.userDataBulk.save() after calling all userDataBulk methods to send the bulk data to server.
+       *
+       * @param {string} keyName user property key
+       * @return {string | void} error message or void
+       */
       export function increment(keyName: string): Promise<void> | string;
+
+      /**
+       *
+       * Increment custom user data by a specified value
+       * Remember to call Countly.userDataBulk.save() after calling all userDataBulk methods to send the bulk data to server.
+       *
+       * @param {string} keyName user property key
+       * @param {string} keyValue value to increment user property by
+       * @return {string | void} error message or void
+       */
       export function incrementBy(keyName: string, keyValue: any): Promise<void> | string;
+
+      /**
+       *
+       * Multiply custom user data by a specified value
+       * Remember to call Countly.userDataBulk.save() after calling all userDataBulk methods to send the bulk data to server.
+       *
+       * @param {string} keyName user property key
+       * @param {string} keyValue value to multiply user property by
+       * @return {string | void} error message or void
+       */
       export function multiply(keyName: string, keyValue: any): Promise<void> | string;
+
+      /**
+       *
+       * Save the max value between current and provided value.
+       * Remember to call Countly.userDataBulk.save() after calling all userDataBulk methods to send the bulk data to server.
+       *
+       * @param {string} keyName user property key
+       * @param {string} keyValue user property value
+       * @return {string | void} error message or void
+       */
       export function saveMax(keyName: string, keyValue: any): Promise<void> | string;
+
+      /**
+       *
+       * Save the min value between current and provided value.
+       * Remember to call Countly.userDataBulk.save() after calling all userDataBulk methods to send the bulk data to server.
+       *
+       * @param {string} keyName user property key
+       * @param {string} keyValue user property value
+       * @return {string | void} error message or void
+       */
       export function saveMin(keyName: string, keyValue: any): Promise<void> | string;
+
+      /**
+       *
+       * Set the property value if it does not exist.
+       * Remember to call Countly.userDataBulk.save() after calling all userDataBulk methods to send the bulk data to server.
+       *
+       * @param {string} keyName user property key
+       * @param {string} keyValue user property value
+       * @return {string | void} error message or void
+       */
       export function setOnce(keyName: string, keyValue: any): Promise<void> | string;
+
+      /**
+       *
+       * Add value to custom property (array) if value does not exist within.
+       * Remember to call Countly.userDataBulk.save() after calling all userDataBulk methods to send the bulk data to server.
+       *
+       * @param {string} keyName user property key
+       * @param {string} keyValue user property value
+       * @return {string | void} error message or void
+       */
       export function pushUniqueValue(keyName: string, keyValue: any): Promise<void> | string;
+
+      /**
+       *
+       * Add value to custom property (array).
+       * Remember to call Countly.userDataBulk.save() after calling all userDataBulk methods to send the bulk data to server.
+       *
+       * @param {string} keyName user property key
+       * @param {string} keyValue user property value
+       * @return {string | void} error message or void
+       */
       export function pushValue(keyName: string, keyValue: any): Promise<void> | string;
+
+      /**
+       *
+       * Remove value to custom property (array).
+       * Remember to call Countly.userDataBulk.save() after calling all userDataBulk methods to send the bulk data to server.
+       *
+       * @param {string} keyName user property key
+       * @param {string} keyValue user property value
+       * @return {string | void} error message or void
+       */
       export function pullValue(keyName: string, keyValue: any): Promise<void> | string;
     }
 
@@ -504,6 +724,7 @@ declare module "countly-sdk-react-native-bridge" {
      * Should be called before Countly init
      *
      * @param {boolean} flag if true, consent is required for features to work.
+     * @return {void} void
      */
     export function setRequiresConsent(flag: boolean): void;
 
@@ -524,6 +745,7 @@ declare module "countly-sdk-react-native-bridge" {
      * Should be called after Countly init
      *
      * @param {string[] | string} args list of consents
+     * @return {void} void
      */
     export function giveConsentInit(args: string[] | string): Promise<void>;
 
@@ -554,11 +776,62 @@ declare module "countly-sdk-react-native-bridge" {
      * @return {string | void} error message or void
      */
     export function removeAllConsent(): string | void;
+
+    /**
+     *
+     * Replaces all stored Remote Config values with new values from server.
+     *
+     * @param {function} callback function to be called after fetching values.
+     * @return {string | void} error message or void
+     */
     export function remoteConfigUpdate(callback: CountlyCallback): string | void;
+
+    /**
+     *
+     * Replace specific Remote Config key value pairs with new values from server.
+     *
+     * @param {[string]} keyNames array of keys to replace.
+     * @param {function} callback function to be called after fetching values.
+     * @return {string | void} error message or void
+     */
     export function updateRemoteConfigForKeysOnly(keyNames: readonly string[], callback: CountlyCallback): string | void;
+
+    /**
+     *
+     * Replace all except specific Remote Config key value pairs with new values from server.
+     *
+     * @param {[string]} keyNames array of keys to skip.
+     * @param {function} callback function to be called after fetching values.
+     * @return {string | void} error message or void
+     */
     export function updateRemoteConfigExceptKeys(keyNames: readonly string[], callback: CountlyCallback): string | void;
+
+    /**
+     *
+     * Replace Remote Config key value for a specific key with new values from server.
+     * This takes in a callback that is called after new values are fetched.
+     *
+     * @param {string} keyNames key to fetch.
+     * @param {function} callback function to be called after fetching new values.
+     * @return {string | void} error message or void
+     */
     export function getRemoteConfigValueForKey(keyName: string, callback: (value: any) => void): string | void;
+
+    /**
+     *
+     * Replace Remote Config key value for a specific key with new values from server. This returns a promise that can be listened to.
+     *
+     * @param {string} keyName key to fetch.
+     * @return {string | promise} error message or promise
+     */
     export function getRemoteConfigValueForKeyP(keyName: string): string | Promise<any>;
+
+    /**
+     *
+     * Clear all Remote Config values downloaded from the server.
+     *
+     * @return {string | promise} error message or promise
+     */
     export function remoteConfigClearValues(): string | Promise<string>;
 
     /**
@@ -576,6 +849,15 @@ declare module "countly-sdk-react-native-bridge" {
       starRatingTextMessage: string,
       starRatingTextDismiss: string,
     ): void;
+
+    /**
+     *
+     * For getting brief feedback from your users to be displayed on the
+      Countly dashboard.
+     *
+     * @param {function} callback function to be called after it completes.
+     * @return {string | void} error message or void
+     */
     export function showStarRating(callback?: CountlyCallback): string | void;
 
     /**
@@ -584,6 +866,7 @@ declare module "countly-sdk-react-native-bridge" {
      * @param {string} widgetId - id of rating widget to present
      * @param {string} closeButtonText - text for cancel/close button
      * @param {callback listener} [ratingWidgetCallback] This parameter is optional.
+     * @return {string | void} error message or void
      */
     export function presentRatingWidgetWithID(widgetId: string, closeButtonText: string, ratingWidgetCallback?: CountlyErrorCallback): string | void;
 
@@ -591,7 +874,7 @@ declare module "countly-sdk-react-native-bridge" {
      * Get a list of available feedback widgets as array of object to handle multiple widgets of same type.
      * @deprecated in 23.8.0 : use 'Countly.feedback.getAvailableFeedbackWidgets' instead of 'getFeedbackWidgets'.
      * @param {callback listener} [onFinished] - returns (retrievedWidgets, error). This parameter is optional.
-     * @return {string | []} error message or []
+     * @return {string | []} error message or array of feedback widgets
      */
     export function getFeedbackWidgets(onFinished?: FeedbackWidgetCallback): Promise<any> | string;
 
@@ -619,14 +902,63 @@ declare module "countly-sdk-react-native-bridge" {
      * Should be called before Countly init
      * 
      * @param {number} size - event count
-     * 
+     * @return {void} void
      */
     export function setEventSendThreshold(size: number): void;
 
+    /**
+     *
+     * Measure and record time taken by any operation.
+     *
+     * @param {string} traceKey name of trace
+     * @return {string | void} error message or void
+     */
     export function startTrace(traceKey: string): string | void;
+
+    /**
+     *
+     * Cancel custom trace.
+     *
+     * @param {string} traceKey name of trace
+     * @return {string | void} error message or void
+     */
     export function cancelTrace(traceKey: string): string | void;
+
+    /**
+     *
+     * Cancel all custom traces.
+     *
+     * @return {string | void} error message or void
+     */
     export function clearAllTraces(): string | void;
+
+    /**
+     *
+     * End a custom trace.
+     *
+     * @param {string} traceKey name of trace
+     * @param {object} customMetric metrics
+     * @return {string | void} error message or void
+     */
     export function endTrace(traceKey: string, customMetric?: TraceCustomMetric): string | void;
+
+    /**
+     *
+     * Manually record a custom trace
+     *
+     * @param {string} networkTraceKey name of trace
+     * @param {number} responseCode HTTP status code of the received
+      response
+     * @param {number} requestPayloadSize Size of the request's
+      payload in bytes
+     * @param {number} responsePayloadSize Size
+      of the received response's payload in bytes
+     * @param {number} startTime UNIX timestamp in milliseconds for
+      the starting time of the request
+     * @param {number} endTime UNIX timestamp in milliseconds for
+      the ending time of the request
+     * @return {string | void} error message or void
+     */
     export function recordNetworkTrace(
       networkTraceKey: string,
       responseCode: number,
@@ -641,6 +973,7 @@ declare module "countly-sdk-react-native-bridge" {
      *
      * Enable APM features, which includes the recording of app start time.
      * Should be called before Countly init
+     * @return {void} void
      */
     export function enableApm(): void;
 
@@ -650,6 +983,8 @@ declare module "countly-sdk-react-native-bridge" {
      * Enable campaign attribution reporting to Countly.
      * For iOS use "recordAttributionID" instead of "enableAttribution"
      * Should be called before Countly init
+     * @param {string} attributionID attribution ID
+     * @return {string | void} error message or void
      */
     export function enableAttribution(attributionID?: string): string;
 
@@ -659,6 +994,8 @@ declare module "countly-sdk-react-native-bridge" {
      *
      * set attribution Id for campaign attribution reporting.
      * Currently implemented for iOS only
+     * @param {string} attributionID attribution ID
+     * @return {string | void} error message or void
      */
     export function recordAttributionID(attributionID: string): string | void;
 
@@ -667,16 +1004,22 @@ declare module "countly-sdk-react-native-bridge" {
      * In request queue, if there are any request whose app key is different 
      * than the current app key,
      * these requests' app key will be replaced with the current app key.
+     * @return {string | void} error message or void
      */
     export function replaceAllAppKeysInQueueWithCurrentAppKey(): string | void;
 
     /**
      * set direct attribution Id for campaign attribution reporting.
+     * @param {string} campaignType type
+     * @param {string} campaignData data
+     * @return {string | void} error message or void
      */
     export function recordDirectAttribution(campaignType, campaignData): void;
 
     /**
      * set indirect attribution Id for campaign attribution reporting.
+     * @param {string} attributionValues attribution values
+     * @return {string | void} error message or void
      */
     export function recordIndirectAttribution(attributionValues): void;
 
@@ -684,12 +1027,14 @@ declare module "countly-sdk-react-native-bridge" {
      * Removes all requests with a different app key in request queue.
      * In request queue, if there are any request whose app key is different than the current app key,
      * these requests will be removed from request queue.
+     * @return {string | void} error message or void
      */
     export function removeDifferentAppKeysFromQueue(): string | void;
 
     /**
      * Call this function when app is loaded, so that the app launch duration can be recorded.
      * Should be called after init.
+     * @return {string | void} error message or void
      */
     export function appLoadingFinished(): string | void;
 
@@ -698,6 +1043,7 @@ declare module "countly-sdk-react-native-bridge" {
      * Should be called before Countly init
      * @param {object} customMetric - metric with key/value pair
      * Supported data type for customMetric values is string
+     * @return {string | void} error message or void
      */
     export function setCustomMetrics(customMetric: CustomMetric): string | void;
     validateUserDataValue: ValidationFunction;
