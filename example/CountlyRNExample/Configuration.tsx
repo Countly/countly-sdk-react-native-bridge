@@ -1,7 +1,11 @@
 import CountlyConfig from "countly-sdk-react-native-bridge/CountlyConfig";
 
-const COUNTLY_SERVER_KEY = "https://yourdomain.countly";
-const COUNTLY_APP_KEY = "COUNTLY_APP_KEY";
+const COUNTLY_SERVER_KEY = "https://your.server.ly";
+const COUNTLY_APP_KEY = "YOUR_APP_KEY";
+
+if(COUNTLY_APP_KEY === "YOUR_APP_KEY" || COUNTLY_SERVER_KEY === "https://your.server.ly"){
+    throw new Error("Please do not use default set of app key and server url")
+}
 
 const countlyConfig = new CountlyConfig(COUNTLY_SERVER_KEY, COUNTLY_APP_KEY).setLoggingEnabled(true); // Enable countly internal debugging logs
 // .setDeviceID(Countly.TemporaryDeviceIDString) // Enable temporary id mode
