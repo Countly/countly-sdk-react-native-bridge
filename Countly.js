@@ -371,7 +371,6 @@ Countly.configureIntentRedirectionCheck = function (allowedIntentClassNames = []
  *
  * Countly start for android
  *
- * @return {void} void
  */
 Countly.start = function () {
     L.w("start, Automatic sessions are handled by underlying SDK, this function will do nothing.");
@@ -382,7 +381,6 @@ Countly.start = function () {
  *
  * Countly stop for android
  *
- * @return {void} void
  */
 Countly.stop = function () {
     L.w("stop, Automatic sessions are handled by underlying SDK, this function will do nothing.");
@@ -396,7 +394,6 @@ Countly.stop = function () {
  *
  * @function Countly.setLoggingEnabled should be used to enable/disable countly internal debugging logs
  * 
- * @return {void} void
  */
 
 Countly.enableLogging = function () {
@@ -411,7 +408,6 @@ Countly.enableLogging = function () {
  *
  * @function Countly.setLoggingEnabled should be used to enable/disable countly internal debugging logs
  * 
- * @return {void} void
  */
 Countly.disableLogging = function () {
     L.w("disableLogging, disableLogging is deprecated, use countlyConfig.enableLogging instead");
@@ -423,7 +419,6 @@ Countly.disableLogging = function () {
  * Should be called before Countly init
  *
  * @param {[boolean = true]} enabled server url
- * @return {void} void
  */
 Countly.setLoggingEnabled = function (enabled = true) {
     // TODO: init check
@@ -440,7 +435,6 @@ Countly.setLoggingEnabled = function (enabled = true) {
  * @param {string | null} city Name of the user's city
  * @param {string | null} location comma separate lat and lng values. For example, "56.42345,123.45325"
  * @param {string | null} ipAddress IP address of user's
- * @return {void} void
  */
 Countly.setLocationInit = function (countryCode, city, location, ipAddress) {
     L.w("setLocationInit, setLocationInit is deprecated, use countlyConfig.setLocation instead");
@@ -563,7 +557,6 @@ Countly.changeDeviceId = function (newDeviceID, onServer) {
  * Set to "true" if you want HTTP POST to be used for all requests
  * Should be called before Countly init
  * @param {boolean} forceHttp force http post for all requests.
- * @return {void} void
  */
 Countly.setHttpPostForced = function (boolean = true) {
     L.d(`setHttpPostForced, Setting http post forced to: [${boolean}]`);
@@ -577,7 +570,6 @@ Countly.setHttpPostForced = function (boolean = true) {
  *
  * Enable crash reporting to report unhandled crashes to Countly
  * Should be called before Countly init
- * @return {void} void
  */
 Countly.enableCrashReporting = async function () {
     L.w("enableCrashReporting, enableCrashReporting is deprecated, use countlyConfig.enableCrashReporting instead");
@@ -675,7 +667,6 @@ Countly.logException = function (exception, nonfatal, segments) {
  * Set custom crash segment for Countly
  *
  * @param {object} segments segments
- * @return {void} void
  */
 Countly.setCustomCrashSegments = function (segments) {
     L.d(`setCustomCrashSegments, Setting custom crash segments: [${JSON.stringify(segments)}]`);
@@ -1543,7 +1534,6 @@ Countly.userDataBulk.pullValue = async function (keyName, keyValue) {
  * Should be called before Countly init
  *
  * @param {boolean} flag if true, consent is required for features to work.
- * @return {void} void
  */
 Countly.setRequiresConsent = function (flag) {
     L.w(`setRequiresConsent, setRequiresConsent is deprecated, use countlyConfig.setRequiresConsent instead. Flag : [${flag}]`);
@@ -1581,7 +1571,6 @@ Countly.giveConsent = function (args) {
  * Should be called after Countly init
  *
  * @param {string[] | string} args list of consents
- * @return {void} void
  */
 Countly.giveConsentInit = async function (args) {
     L.w("giveConsentInit, giveConsentInit is deprecated, use countlyConfig.giveConsent instead.");
@@ -1678,7 +1667,7 @@ Countly.remoteConfigUpdate = function (callback) {
  *
  * Replace specific Remote Config key value pairs with new values from server.
  *
- * @param {[string]} keyNames array of keys to replace.
+ * @param {string[]} keyNames array of keys to replace.
  * @param {function} callback function to be called after fetching values.
  * @return {string | void} error message or void
  */
@@ -1705,7 +1694,7 @@ Countly.updateRemoteConfigForKeysOnly = function (keyNames, callback) {
  *
  * Replace all except specific Remote Config key value pairs with new values from server.
  *
- * @param {[string]} keyNames array of keys to skip.
+ * @param {string[]} keyNames array of keys to skip.
  * @param {function} callback function to be called after fetching values.
  * @return {string | void} error message or void
  */
@@ -1969,7 +1958,6 @@ Countly.presentFeedbackWidgetObject = async function (feedbackWidget, closeButto
  * Events get grouped together and are sent either every minute or after the unsent event count reaches a threshold. By default it is 10
  * Should be called before Countly init
  * @param {number} size - event count
- * @return {void} void
  */
 Countly.setEventSendThreshold = function (size) {
     CountlyReactNative.setEventSendThreshold([size.toString() || ""]);
@@ -2035,6 +2023,7 @@ Countly.clearAllTraces = function () {
  * End a custom trace.
  *
  * @param {string} traceKey name of trace
+ * @param {object} customMetric metric with key/value pair
  * @return {string | void} error message or void
  */
 Countly.endTrace = function (traceKey, customMetric) {
@@ -2093,7 +2082,6 @@ Countly.recordNetworkTrace = function (networkTraceKey, responseCode, requestPay
  *
  * Enable APM features, which includes the recording of app start time.
  * Should be called before Countly init
- * @return {void} void
  */
 Countly.enableApm = function () {
     L.w("enableApm, enableApm is deprecated, use countlyConfig.enableApm instead.");
@@ -2231,7 +2219,7 @@ Countly.appLoadingFinished = async function () {
 /**
  * Set the metrics you want to override
  * Should be called before Countly init
- * @param {object} customMetric - metric with key/value pair
+ * @param {object} customMetric metric with key/value pair
  * Supported data type for customMetric values is String
  * @return {string | void} error message or void
  */

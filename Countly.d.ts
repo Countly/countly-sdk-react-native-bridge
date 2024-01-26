@@ -256,7 +256,6 @@ declare module "countly-sdk-react-native-bridge" {
      *
      * Countly start for android
      *
-     * @return {void} void
      */
     export function start(): void;
 
@@ -265,7 +264,6 @@ declare module "countly-sdk-react-native-bridge" {
      *
      * Countly stop for android
      *
-     * @return {void} void
      */
     export function stop(): void;
 
@@ -276,7 +274,6 @@ declare module "countly-sdk-react-native-bridge" {
      * @deprecated in 20.04.6
      *
      * @function Countly.setLoggingEnabled should be used to enable/disable countly internal debugging logs
-     * @return {void} void
      */
     export function enableLogging(): void;
 
@@ -286,7 +283,6 @@ declare module "countly-sdk-react-native-bridge" {
      * @deprecated in 20.04.6
      *
      * @function Countly.setLoggingEnabled should be used to enable/disable countly internal debugging logs
-     * @return {void} void
      */
     export function disableLogging(): void;
 
@@ -295,7 +291,6 @@ declare module "countly-sdk-react-native-bridge" {
      * Should be called before Countly init
      *
      * @param {[boolean = true]} enabled server url
-     * @return {void} void
      */
     export function setLoggingEnabled(enabled?: boolean): void;
 
@@ -308,7 +303,6 @@ declare module "countly-sdk-react-native-bridge" {
      * @param {string | null} city Name of the user's city
      * @param {string | null} location comma separate lat and lng values. For example, "56.42345,123.45325"
      * @param {string | null} ipAddress IP address of user's
-     * @return {void} void
      */
     export function setLocationInit(
       countryCode: string | null,
@@ -358,7 +352,6 @@ declare module "countly-sdk-react-native-bridge" {
      */
     export function getDeviceIDType(): Promise<DeviceIdType> | null;
 
-
     /**
      * Change the current device id
      *
@@ -373,7 +366,6 @@ declare module "countly-sdk-react-native-bridge" {
      * Set to "true" if you want HTTP POST to be used for all requests
      * Should be called before Countly init
      * @param {boolean} forceHttp force http post for all requests. Default value is true
-     * @return {void} void
      */
     export function setHttpPostForced(boolean?: boolean): void;
 
@@ -382,7 +374,6 @@ declare module "countly-sdk-react-native-bridge" {
      *
      * Enable crash reporting to report unhandled crashes to Countly
      * Should be called before Countly init
-     * @return {void} void
      */
     export function enableCrashReporting(): void;
 
@@ -411,7 +402,6 @@ declare module "countly-sdk-react-native-bridge" {
      * Set custom crash segment for Countly
      *
      * @param {Map} segments segments
-     * @return {void} void
      */
     export function setCustomCrashSegments(segments: Record<string, any>): void;
 
@@ -724,7 +714,6 @@ declare module "countly-sdk-react-native-bridge" {
      * Should be called before Countly init
      *
      * @param {boolean} flag if true, consent is required for features to work.
-     * @return {void} void
      */
     export function setRequiresConsent(flag: boolean): void;
 
@@ -745,7 +734,6 @@ declare module "countly-sdk-react-native-bridge" {
      * Should be called after Countly init
      *
      * @param {string[] | string} args list of consents
-     * @return {void} void
      */
     export function giveConsentInit(args: string[] | string): Promise<void>;
 
@@ -790,7 +778,7 @@ declare module "countly-sdk-react-native-bridge" {
      *
      * Replace specific Remote Config key value pairs with new values from server.
      *
-     * @param {[string]} keyNames array of keys to replace.
+     * @param {string[]} keyNames array of keys to replace.
      * @param {function} callback function to be called after fetching values.
      * @return {string | void} error message or void
      */
@@ -800,7 +788,7 @@ declare module "countly-sdk-react-native-bridge" {
      *
      * Replace all except specific Remote Config key value pairs with new values from server.
      *
-     * @param {[string]} keyNames array of keys to skip.
+     * @param {string[]} keyNames array of keys to skip.
      * @param {function} callback function to be called after fetching values.
      * @return {string | void} error message or void
      */
@@ -902,7 +890,6 @@ declare module "countly-sdk-react-native-bridge" {
      * Should be called before Countly init
      * 
      * @param {number} size - event count
-     * @return {void} void
      */
     export function setEventSendThreshold(size: number): void;
 
@@ -937,7 +924,7 @@ declare module "countly-sdk-react-native-bridge" {
      * End a custom trace.
      *
      * @param {string} traceKey name of trace
-     * @param {object} customMetric metrics
+     * @param {object} customMetric metric with key/value pair
      * @return {string | void} error message or void
      */
     export function endTrace(traceKey: string, customMetric?: TraceCustomMetric): string | void;
@@ -973,7 +960,6 @@ declare module "countly-sdk-react-native-bridge" {
      *
      * Enable APM features, which includes the recording of app start time.
      * Should be called before Countly init
-     * @return {void} void
      */
     export function enableApm(): void;
 
@@ -1041,7 +1027,7 @@ declare module "countly-sdk-react-native-bridge" {
     /**
      * Set the metrics you want to override
      * Should be called before Countly init
-     * @param {object} customMetric - metric with key/value pair
+     * @param {object} customMetric metric with key/value pair
      * Supported data type for customMetric values is string
      * @return {string | void} error message or void
      */
