@@ -1,4 +1,4 @@
-import { initialize } from './Logger.js';
+import { initialize } from "./Logger.js";
 /**
  * Countly SDK React Native Bridge
  * https://github.com/Countly/countly-sdk-react-native-bridge

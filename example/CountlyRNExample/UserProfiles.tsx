@@ -1,8 +1,8 @@
-import React from 'react';
-import { ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Countly from 'countly-sdk-react-native-bridge';
-import CountlyButton from './CountlyButton';
+import React from "react";
+import { ScrollView } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Countly from "countly-sdk-react-native-bridge";
+import CountlyButton from "./CountlyButton";
 
 interface UserDataPredefined {
     name?: string;
@@ -23,14 +23,14 @@ interface UserDataBulkCustom_1 extends UserDataPredefined {
 const onSendUserData = () => {
     // example for setUserData
     const options: UserDataPredefined = {
-        name: 'Name of User',
-        username: 'Username',
-        email: 'User Email',
-        organization: 'User Organization',
-        phone: 'User Contact number',
-        picture: 'https://count.ly/images/logos/countly-logo.png',
-        picturePath: '',
-        gender: 'Male',
+        name: "Name of User",
+        username: "Username",
+        email: "User Email",
+        organization: "User Organization",
+        phone: "User Contact number",
+        picture: "https://count.ly/images/logos/countly-logo.png",
+        picturePath: "",
+        gender: "Male",
         byear: 1989,
     };
     Countly.setUserData(options);
@@ -40,18 +40,18 @@ const onSetUserProperties = () => {
     // example for setUserData
     // Predefined user properties
     const options: UserDataBulkCustom_1 = {
-        name: 'Name of User',
-        username: 'Username',
-        email: 'User Email',
-        organization: 'User Organization',
-        phone: 'User Contact number',
-        picture: 'https://count.ly/images/logos/countly-logo.png',
-        picturePath: '',
-        gender: 'Male',
+        name: "Name of User",
+        username: "Username",
+        email: "User Email",
+        organization: "User Organization",
+        phone: "User Contact number",
+        picture: "https://count.ly/images/logos/countly-logo.png",
+        picturePath: "",
+        gender: "Male",
         byear: 1989,
         // Custom User Properties
-        customeValueA: 'Custom value A',
-        customeValueB: 'Custom value B',
+        customeValueA: "Custom value A",
+        customeValueB: "Custom value B",
     };
     Countly.userDataBulk.setUserProperties(options);
     Countly.userDataBulk.save();
@@ -82,57 +82,57 @@ const onSendUserDataBulk = () => {
 const onUpdateUserData = () => {
     // example for setUserData
     const options: UserDataPredefined = {
-        organization: 'Updated User Organization',
-        phone: 'Updated User Contact number',
-        gender: 'Female',
+        organization: "Updated User Organization",
+        phone: "Updated User Contact number",
+        gender: "Female",
         byear: 1995,
     };
     Countly.setUserData(options);
 };
 
 const userData_setProperty = () => {
-    Countly.userData.setProperty('setProperty', 'keyValue');
+    Countly.userData.setProperty("setProperty", "keyValue");
 };
 
 const userData_increment = () => {
-    Countly.userData.setProperty('increment', 5);
-    Countly.userData.increment('increment');
+    Countly.userData.setProperty("increment", 5);
+    Countly.userData.increment("increment");
 };
 
 const userData_incrementBy = () => {
-    Countly.userData.setProperty('incrementBy', 5);
-    Countly.userData.incrementBy('incrementBy', 10);
+    Countly.userData.setProperty("incrementBy", 5);
+    Countly.userData.incrementBy("incrementBy", 10);
 };
 
 const userData_multiply = () => {
-    Countly.userData.setProperty('multiply', 5);
-    Countly.userData.multiply('multiply', 20);
+    Countly.userData.setProperty("multiply", 5);
+    Countly.userData.multiply("multiply", 20);
 };
 
 const userData_saveMax = () => {
-    Countly.userData.setProperty('saveMax', 5);
-    Countly.userData.saveMax('saveMax', 100);
+    Countly.userData.setProperty("saveMax", 5);
+    Countly.userData.saveMax("saveMax", 100);
 };
 
 const userData_saveMin = () => {
-    Countly.userData.setProperty('saveMin', 5);
-    Countly.userData.saveMin('saveMin', 50);
+    Countly.userData.setProperty("saveMin", 5);
+    Countly.userData.saveMin("saveMin", 50);
 };
 
 const userData_setOnce = () => {
-    Countly.userData.setOnce('setOnce', 200);
+    Countly.userData.setOnce("setOnce", 200);
 };
 
 const userData_pushUniqueValue = () => {
-    Countly.userData.pushUniqueValue('type', 'morning');
+    Countly.userData.pushUniqueValue("type", "morning");
 };
 
 const userData_pushValue = () => {
-    Countly.userData.pushValue('type', 'morning');
+    Countly.userData.pushValue("type", "morning");
 };
 
 const userData_pullValue = () => {
-    Countly.userData.pullValue('type', 'morning');
+    Countly.userData.pullValue("type", "morning");
 };
 
 function UserProfilesScreen({ navigation }) {

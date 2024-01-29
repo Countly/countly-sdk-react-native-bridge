@@ -5,8 +5,8 @@ CountlyState.CountlyReactNative = null;
 CountlyState.eventEmitter = null;
 
 // Feedback module related variables
-CountlyState.widgetShownCallbackName = 'widgetShownCallback';
-CountlyState.widgetClosedCallbackName = 'widgetClosedCallback';
+CountlyState.widgetShownCallbackName = "widgetShownCallback";
+CountlyState.widgetClosedCallbackName = "widgetClosedCallback";
 /*
  * Callback to be executed when feedback widget is displayed
  */

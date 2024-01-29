@@ -1,8 +1,10 @@
 ## X.X.X
 * Added 'disableAdditionalIntentRedirectionChecks' config method
 
-* Underlying Android SDK version is X.X.X
-* Underlying iOS SDK version is X.X.X
+* Fixed a bug in `getRemoteConfigValueForKeyP` and `remoteConfigClearValues` where those functions would produce a "Property 'callback' doesn't exist", if they are called before initializing the SDK.
+
+* Underlying Android SDK version is 23.12.0
+* Underlying iOS SDK version to 23.12.0
 
 ## 23.12.0
 * Added TS type declerations to the SDK

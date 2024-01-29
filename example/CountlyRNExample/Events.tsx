@@ -1,8 +1,8 @@
-import React from 'react';
-import { ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Countly from 'countly-sdk-react-native-bridge';
-import CountlyButton from './CountlyButton';
+import React from "react";
+import { ScrollView } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Countly from "countly-sdk-react-native-bridge";
+import CountlyButton from "./CountlyButton";
 
 interface Segmentation {}
 interface SegmentationCustom_1 extends Segmentation {
@@ -21,53 +21,53 @@ interface EventPropsCustom_1 extends EventProps {
 
 const basicEvent = () => {
     // example for basic event
-    const event = { eventName: 'Basic Event', eventCount: 1 };
+    const event = { eventName: "Basic Event", eventCount: 1 };
     Countly.sendEvent(event);
 };
 const eventWithSum = () => {
     // example for event with sum
-    const event = { eventName: 'Event With Sum', eventCount: 1, eventSum: '0.99' };
+    const event = { eventName: "Event With Sum", eventCount: 1, eventSum: "0.99" };
     Countly.sendEvent(event);
 };
 const eventWithSegment = () => {
     // example for event with segment
     let event: EventPropsCustom_1 = {
-        eventName: 'Event With Segment',
+        eventName: "Event With Segment",
         eventCount: 1,
-        segments: { Country: 'Turkey', Age: '28' },
+        segments: { Country: "Turkey", Age: "28" },
     };
-    event.segments = { Country: 'Turkey', Age: '28' };
+    event.segments = { Country: "Turkey", Age: "28" };
     Countly.sendEvent(event);
     event = {
-        eventName: 'Event With Segment',
+        eventName: "Event With Segment",
         eventCount: 1,
-        segments: { Country: 'France', Age: '38' },
+        segments: { Country: "France", Age: "38" },
     };
     Countly.sendEvent(event);
 };
 const eventWithSumAndSegment = () => {
     // example for event with segment and sum
     let event: EventPropsCustom_1 = {
-        eventName: 'Event With Sum And Segment',
+        eventName: "Event With Sum And Segment",
         eventCount: 1,
-        eventSum: '0.99',
-        segments: { Country: 'Turkey', Age: '28' },
+        eventSum: "0.99",
+        segments: { Country: "Turkey", Age: "28" },
     };
     Countly.sendEvent(event);
     event = {
-        eventName: 'Event With Sum And Segment',
+        eventName: "Event With Sum And Segment",
         eventCount: 3,
-        eventSum: '1.99',
-        segments: { Country: 'France', Age: '38' },
+        eventSum: "1.99",
+        segments: { Country: "France", Age: "38" },
     };
     Countly.sendEvent(event);
 };
 
 // TIMED EVENTS
 const startEvent = () => {
-    Countly.startEvent('timedEvent');
+    Countly.startEvent("timedEvent");
     setTimeout(() => {
-        Countly.endEvent('timedEvent');
+        Countly.endEvent("timedEvent");
     }, 1000);
 };
 
@@ -77,11 +77,11 @@ const startEvent = () => {
 */
 const timedEventWithSum = () => {
     // Event with sum
-    Countly.startEvent('timedEventWithSum');
+    Countly.startEvent("timedEventWithSum");
 
     const event: EventProps = {
-        eventName: 'timedEventWithSum',
-        eventSum: '0.99',
+        eventName: "timedEventWithSum",
+        eventSum: "0.99",
     };
 
     setTimeout(() => {
@@ -91,11 +91,11 @@ const timedEventWithSum = () => {
 
 const timedEventWithSegment = () => {
     // Event with segment
-    Countly.startEvent('timedEventWithSegment');
+    Countly.startEvent("timedEventWithSegment");
 
     const event: EventPropsCustom_1 = {
-        eventName: 'timedEventWithSegment',
-        segments: { Country: 'Germany', Age: '32' },
+        eventName: "timedEventWithSegment",
+        segments: { Country: "Germany", Age: "32" },
     };
     setTimeout(() => {
         Countly.endEvent(event);
@@ -104,13 +104,13 @@ const timedEventWithSegment = () => {
 
 const timedEventWithSumAndSegment = () => {
     // Event with Segment, sum and count
-    Countly.startEvent('timedEventWithSumAndSegment');
+    Countly.startEvent("timedEventWithSumAndSegment");
 
     const event: EventPropsCustom_1 = {
-        eventName: 'timedEventWithSumAndSegment',
+        eventName: "timedEventWithSumAndSegment",
         eventCount: 1,
-        eventSum: '0.99',
-        segments: { Country: 'India', Age: '21' },
+        eventSum: "0.99",
+        segments: { Country: "India", Age: "21" },
     };
     setTimeout(() => {
         Countly.endEvent(event);
