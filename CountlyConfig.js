@@ -130,6 +130,15 @@ class CountlyConfig {
     }
 
     /**
+     * AdditionalIntentRedirectionChecks are enabled by default.
+     * This method should be used to disable them.
+     */
+    disableAdditionalIntentRedirectionChecks() {
+        this.disableAdditionalIntentRedirectionChecks = true;
+        return this;
+    }
+
+    /**
      * Method to set the push token type
      * @deprecated
      * Use setPushTokenType() instead to set pushToken

@@ -102,6 +102,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     private List<String> allowedIntentClassNames = new ArrayList<>();
     private List<String> allowedIntentPackageNames = new ArrayList<>();
     private boolean useAdditionalIntentRedirectionChecks = true;
+    private boolean disableAdditionalIntentRedirectionChecksConfigSet = false;
 
     private final ReactApplicationContext _reactContext;
 
@@ -224,21 +225,27 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             }
             if (_config.has("pushNotification")) {
                 JSONObject pushObject = _config.getJSONObject("pushNotification");
-                int messagingMode = Integer.parseInt(pushObject.getString("tokenType"));
-                channelName = pushObject.getString("channelName");
-                channelDescription = pushObject.getString("channelDescription");
-                if (pushObject.has("accentColor")) {
-                    setHexNotificationAccentColor(pushObject.getString("accentColor"));
-                }
-
-                if (messagingMode == 0) {
-                    CountlyReactNative.messagingMode = Countly.CountlyMessagingMode.PRODUCTION;
-                } else {
+                if (!pushObject.toString().equals("{}")) {
+                    int messagingMode = Integer.parseInt(pushObject.getString("tokenType"));
+                    channelName = pushObject.getString("channelName");
+                    channelDescription = pushObject.getString("channelDescription");
+                    if (pushObject.has("accentColor")) {
+                        setHexNotificationAccentColor(pushObject.getString("accentColor"));
+                    }
+                    
+                    if (messagingMode == 0) {
+                        CountlyReactNative.messagingMode = Countly.CountlyMessagingMode.PRODUCTION;
+                    } else {
                     CountlyReactNative.messagingMode = Countly.CountlyMessagingMode.TEST;
+                    }
                 }
             }
             if (_config.has("attributionID")) {
                 log("recordAttributionID: Not implemented for Android", LogLevel.DEBUG);
+            }
+            if (_config.has("disableAdditionalIntentRedirectionChecks")) {
+                useAdditionalIntentRedirectionChecks = false;
+                disableAdditionalIntentRedirectionChecksConfigSet = true;
             }
             if (_config.has("allowedIntentClassNames")) {
                 JSONArray intentArr = _config.getJSONArray("allowedIntentClassNames");
@@ -945,7 +952,10 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     @ReactMethod
     public void configureIntentRedirectionCheck(ReadableArray intentClassNames, ReadableArray intentPackageNames, boolean useAdditionalIntentRedirectionChecks) {
         Countly.sharedInstance();
-        this.useAdditionalIntentRedirectionChecks = useAdditionalIntentRedirectionChecks;
+        // if in config you disabled this option, then you can't enable it later
+        if (disableAdditionalIntentRedirectionChecksConfigSet == false) {
+            this.useAdditionalIntentRedirectionChecks = useAdditionalIntentRedirectionChecks;
+        }
         allowedIntentClassNames.clear();
         allowedIntentPackageNames.clear();
 

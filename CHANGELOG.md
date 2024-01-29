@@ -1,4 +1,6 @@
-## xx.x.x
+## X.X.X
+* Added 'disableAdditionalIntentRedirectionChecks' config method
+
 * Fixed a bug in `getRemoteConfigValueForKeyP` and `remoteConfigClearValues` where those functions would produce a "Property 'callback' doesn't exist", if they are called before initializing the SDK.
 
 * Underlying Android SDK version is 23.12.0

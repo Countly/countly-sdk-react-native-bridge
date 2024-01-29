@@ -4,6 +4,7 @@ const COUNTLY_SERVER_KEY = "https://yourdomain.countly";
 const COUNTLY_APP_KEY = "COUNTLY_APP_KEY";
 
 const countlyConfig = new CountlyConfig(COUNTLY_SERVER_KEY, COUNTLY_APP_KEY).setLoggingEnabled(true); // Enable countly internal debugging logs
+// .disableAdditionalIntentRedirectionChecks() // Disable additional intent redirection checks
 // .setDeviceID(Countly.TemporaryDeviceIDString) // Enable temporary id mode
 // .enableCrashReporting() // Enable crash reporting to report unhandled crashes to Countly
 // .setRequiresConsent(true) // Set that consent should be required for features to work.
