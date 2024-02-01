@@ -3,7 +3,7 @@ import CountlyConfig from "countly-sdk-react-native-bridge/CountlyConfig";
 const COUNTLY_SERVER_KEY = "https://your.server.ly";
 const COUNTLY_APP_KEY = "YOUR_APP_KEY";
 
-if(COUNTLY_APP_KEY === "YOUR_APP_KEY" || COUNTLY_SERVER_KEY === "https://your.server.ly"){
+if (COUNTLY_APP_KEY === "YOUR_APP_KEY" || COUNTLY_SERVER_KEY === "https://your.server.ly") {
     console.warn("Please do not use default set of app key and server url")
 }
 
