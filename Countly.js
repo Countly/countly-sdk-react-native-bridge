@@ -261,6 +261,14 @@ Countly.pushTokenType = function (tokenType, channelName, channelDescription) {
     CountlyReactNative.pushTokenType(args);
 };
 
+/**
+ *
+ * Send push token
+ * @param {object} options - object containing the push token
+ * {token: string}
+ *
+ * @return {string | void} error message or void
+ */
 Countly.sendPushToken = function (options) {
     L.d(`sendPushToken, Sending push token: [${JSON.stringify(options)}]`);
     const args = [];
@@ -275,6 +283,7 @@ Countly.sendPushToken = function (options) {
  * Custom sound should be place at 'your_project_root/android/app/src/main/res/raw'
  * Should be called after Countly init
  *
+ * @return {string | void} error message or void
  */
 Countly.askForNotificationPermission = function (customSoundPath = "null") {
     if (!_state.isInitialized) {
@@ -362,7 +371,6 @@ Countly.configureIntentRedirectionCheck = function (allowedIntentClassNames = []
  *
  * Countly start for android
  *
- * @return {string | void} error message or void
  */
 Countly.start = function () {
     L.w("start, Automatic sessions are handled by underlying SDK, this function will do nothing.");
@@ -373,7 +381,6 @@ Countly.start = function () {
  *
  * Countly stop for android
  *
- * @return {string | void} error message or void
  */
 Countly.stop = function () {
     L.w("stop, Automatic sessions are handled by underlying SDK, this function will do nothing.");
@@ -386,6 +393,7 @@ Countly.stop = function () {
  * @deprecated in 20.04.6
  *
  * @function Countly.setLoggingEnabled should be used to enable/disable countly internal debugging logs
+ * 
  */
 
 Countly.enableLogging = function () {
@@ -399,6 +407,7 @@ Countly.enableLogging = function () {
  * @deprecated in 20.04.6
  *
  * @function Countly.setLoggingEnabled should be used to enable/disable countly internal debugging logs
+ * 
  */
 Countly.disableLogging = function () {
     L.w("disableLogging, disableLogging is deprecated, use countlyConfig.enableLogging instead");
@@ -444,7 +453,8 @@ Countly.setLocationInit = function (countryCode, city, location, ipAddress) {
  * @param {string | null} city Name of the user's city
  * @param {string | null} location comma separate lat and lng values. For example, "56.42345,123.45325"
  * @param {string | null} ipAddress IP address of user's
- * */
+ * @return {string | void} error message or void
+ */
 Countly.setLocation = function (countryCode, city, location, ipAddress) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'setLocation'";
@@ -499,7 +509,7 @@ Countly.getCurrentDeviceId = async function () {
  * Should be called after Countly init
  *
  * @return {DeviceIdType | null} deviceIdType or null
- * */
+ */
 Countly.getDeviceIDType = async function () {
     if (!_state.isInitialized) {
         L.e("getDeviceIDType, 'init' must be called before 'getDeviceIDType'");
@@ -520,7 +530,7 @@ Countly.getDeviceIDType = async function () {
  * @param {string} newDeviceID id new device id
  * @param {boolean} onServer merge device id
  * @return {string | void} error message or void
- * */
+ */
 Countly.changeDeviceId = function (newDeviceID, onServer) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'changeDeviceId'";
@@ -887,6 +897,14 @@ Countly.setUserData = async function (userData) {
     await CountlyReactNative.setUserData(args);
 };
 
+/**
+ *
+ * Set custom key and value pair for the current user.
+ *
+ * @param {string} keyName user property key
+ * @param {object} keyValue user property value
+ * @return {string | void} error message or void
+ */
 Countly.userData.setProperty = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'setProperty'";
@@ -909,6 +927,14 @@ Countly.userData.setProperty = async function (keyName, keyValue) {
         await CountlyReactNative.userData_setProperty([keyName, keyValue]);
     }
 };
+
+/**
+ *
+ * Increment custom user data by 1
+ *
+ * @param {string} keyName user property key
+ * @return {string | void} error message or void
+ */
 Countly.userData.increment = async function (keyName) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'increment'";
@@ -925,6 +951,15 @@ Countly.userData.increment = async function (keyName) {
         await CountlyReactNative.userData_increment([keyName]);
     }
 };
+
+/**
+ *
+ * Increment custom user data by a specified value
+ *
+ * @param {string} keyName user property key
+ * @param {string} keyValue value to increment user property by
+ * @return {string | void} error message or void
+ */
 Countly.userData.incrementBy = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'incrementBy'";
@@ -943,6 +978,15 @@ Countly.userData.incrementBy = async function (keyName, keyValue) {
     const intValue = parseInt(keyValue).toString();
     await CountlyReactNative.userData_incrementBy([keyName, intValue]);
 };
+
+/**
+ *
+ * Multiply custom user data by a specified value
+ *
+ * @param {string} keyName user property key
+ * @param {string} keyValue value to multiply user property by
+ * @return {string | void} error message or void
+ */
 Countly.userData.multiply = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'multiply'";
@@ -961,6 +1005,15 @@ Countly.userData.multiply = async function (keyName, keyValue) {
     const intValue = parseInt(keyValue).toString();
     await CountlyReactNative.userData_multiply([keyName, intValue]);
 };
+
+/**
+ *
+ * Save the max value between current and provided value.
+ *
+ * @param {string} keyName user property key
+ * @param {string} keyValue user property value
+ * @return {string | void} error message or void
+ */
 Countly.userData.saveMax = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'saveMax'";
@@ -979,6 +1032,15 @@ Countly.userData.saveMax = async function (keyName, keyValue) {
     const intValue = parseInt(keyValue).toString();
     await CountlyReactNative.userData_saveMax([keyName, intValue]);
 };
+
+/**
+ *
+ * Save the min value between current and provided value.
+ *
+ * @param {string} keyName user property key
+ * @param {string} keyValue user property value
+ * @return {string | void} error message or void
+ */
 Countly.userData.saveMin = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'saveMin'";
@@ -997,6 +1059,15 @@ Countly.userData.saveMin = async function (keyName, keyValue) {
     const intValue = parseInt(keyValue).toString();
     await CountlyReactNative.userData_saveMin([keyName, intValue]);
 };
+
+/**
+ *
+ * Set the property value if it does not exist.
+ *
+ * @param {string} keyName user property key
+ * @param {string} keyValue user property value
+ * @return {string | void} error message or void
+ */
 Countly.userData.setOnce = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'setOnce'";
@@ -1017,6 +1088,15 @@ Countly.userData.setOnce = async function (keyName, keyValue) {
         await CountlyReactNative.userData_setOnce([keyName, keyValue]);
     }
 };
+
+/**
+ *
+ * Add value to custom property (array) if value does not exist within.
+ *
+ * @param {string} keyName user property key
+ * @param {string} keyValue user property value
+ * @return {string | void} error message or void
+ */
 Countly.userData.pushUniqueValue = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'pushUniqueValue'";
@@ -1037,6 +1117,15 @@ Countly.userData.pushUniqueValue = async function (keyName, keyValue) {
         await CountlyReactNative.userData_pushUniqueValue([keyName, keyValue]);
     }
 };
+
+/**
+ *
+ * Add value to custom property (array).
+ *
+ * @param {string} keyName user property key
+ * @param {string} keyValue user property value
+ * @return {string | void} error message or void
+ */
 Countly.userData.pushValue = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'pushValue'";
@@ -1057,6 +1146,15 @@ Countly.userData.pushValue = async function (keyName, keyValue) {
         await CountlyReactNative.userData_pushValue([keyName, keyValue]);
     }
 };
+
+/**
+ *
+ * Remove value to custom property (array).
+ *
+ * @param {string} keyName user property key
+ * @param {string} keyValue user property value
+ * @return {string | void} error message or void
+ */
 Countly.userData.pullValue = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'pullValue'";
@@ -1078,7 +1176,14 @@ Countly.userData.pullValue = async function (keyName, keyValue) {
     }
 };
 
-// providing key/values with predefined and custom properties
+/**
+ *
+ * Custom key and value pairs for the current user.
+ * Remember to call Countly.userDataBulk.save() after calling all userDataBulk methods to send the bulk data to server.
+ *
+ * @param {object} customAndPredefined custom key value pairs
+ * @return {string | void} error message or void
+ */
 Countly.userDataBulk.setUserProperties = async function (customAndPredefined) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'setUserProperties'";
@@ -1117,6 +1222,12 @@ Countly.userDataBulk.setUserProperties = async function (customAndPredefined) {
     await CountlyReactNative.userDataBulk_setUserProperties(customAndPredefined);
 };
 
+/**
+ *
+ * Save user data and send to server.
+ *
+ * @return {string | void} error message or void
+ */
 Countly.userDataBulk.save = async function () {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'save'";
@@ -1127,6 +1238,15 @@ Countly.userDataBulk.save = async function () {
     await CountlyReactNative.userDataBulk_save([]);
 };
 
+/**
+ *
+ * Set custom key and value pair for the current user.
+ * Remember to call Countly.userDataBulk.save() after calling all userDataBulk methods to send the bulk data to server.
+ *
+ * @param {string} keyName custom user data key
+ * @param {string} keyValue custom user data value
+ * @return {string | void} error message or void
+ */
 Countly.userDataBulk.setProperty = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'setProperty'";
@@ -1149,6 +1269,15 @@ Countly.userDataBulk.setProperty = async function (keyName, keyValue) {
         await CountlyReactNative.userDataBulk_setProperty([keyName, keyValue]);
     }
 };
+
+/**
+ *
+ * Increment custom user data by 1
+ * Remember to call Countly.userDataBulk.save() after calling all userDataBulk methods to send the bulk data to server.
+ *
+ * @param {string} keyName user property key
+ * @return {string | void} error message or void
+ */
 Countly.userDataBulk.increment = async function (keyName) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'increment'";
@@ -1165,6 +1294,16 @@ Countly.userDataBulk.increment = async function (keyName) {
         await CountlyReactNative.userDataBulk_increment([keyName]);
     }
 };
+
+/**
+ *
+ * Increment custom user data by a specified value
+ * Remember to call Countly.userDataBulk.save() after calling all userDataBulk methods to send the bulk data to server.
+ *
+ * @param {string} keyName user property key
+ * @param {string} keyValue value to increment user property by
+ * @return {string | void} error message or void
+ */
 Countly.userDataBulk.incrementBy = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'incrementBy'";
@@ -1183,6 +1322,16 @@ Countly.userDataBulk.incrementBy = async function (keyName, keyValue) {
     const intValue = parseInt(keyValue).toString();
     await CountlyReactNative.userDataBulk_incrementBy([keyName, intValue]);
 };
+
+/**
+ *
+ * Multiply custom user data by a specified value
+ * Remember to call Countly.userDataBulk.save() after calling all userDataBulk methods to send the bulk data to server.
+ *
+ * @param {string} keyName user property key
+ * @param {string} keyValue value to multiply user property by
+ * @return {string | void} error message or void
+ */
 Countly.userDataBulk.multiply = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'multiply'";
@@ -1201,6 +1350,16 @@ Countly.userDataBulk.multiply = async function (keyName, keyValue) {
     const intValue = parseInt(keyValue).toString();
     await CountlyReactNative.userDataBulk_multiply([keyName, intValue]);
 };
+
+/**
+ *
+ * Save the max value between current and provided value.
+ * Remember to call Countly.userDataBulk.save() after calling all userDataBulk methods to send the bulk data to server.
+ *
+ * @param {string} keyName user property key
+ * @param {string} keyValue user property value
+ * @return {string | void} error message or void
+ */
 Countly.userDataBulk.saveMax = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'saveMax'";
@@ -1219,6 +1378,16 @@ Countly.userDataBulk.saveMax = async function (keyName, keyValue) {
     const intValue = parseInt(keyValue).toString();
     await CountlyReactNative.userDataBulk_saveMax([keyName, intValue]);
 };
+
+/**
+ *
+ * Save the min value between current and provided value.
+ * Remember to call Countly.userDataBulk.save() after calling all userDataBulk methods to send the bulk data to server.
+ *
+ * @param {string} keyName user property key
+ * @param {string} keyValue user property value
+ * @return {string | void} error message or void
+ */
 Countly.userDataBulk.saveMin = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'saveMin'";
@@ -1237,6 +1406,16 @@ Countly.userDataBulk.saveMin = async function (keyName, keyValue) {
     const intValue = parseInt(keyValue).toString();
     await CountlyReactNative.userDataBulk_saveMin([keyName, intValue]);
 };
+
+/**
+ *
+ * Set the property value if it does not exist.
+ * Remember to call Countly.userDataBulk.save() after calling all userDataBulk methods to send the bulk data to server.
+ *
+ * @param {string} keyName user property key
+ * @param {string} keyValue user property value
+ * @return {string | void} error message or void
+ */
 Countly.userDataBulk.setOnce = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'setOnce'";
@@ -1257,6 +1436,16 @@ Countly.userDataBulk.setOnce = async function (keyName, keyValue) {
         await CountlyReactNative.userDataBulk_setOnce([keyName, keyValue]);
     }
 };
+
+/**
+ *
+ * Add value to custom property (array) if value does not exist within.
+ * Remember to call Countly.userDataBulk.save() after calling all userDataBulk methods to send the bulk data to server.
+ *
+ * @param {string} keyName user property key
+ * @param {string} keyValue user property value
+ * @return {string | void} error message or void
+ */
 Countly.userDataBulk.pushUniqueValue = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'pushUniqueValue'";
@@ -1277,6 +1466,16 @@ Countly.userDataBulk.pushUniqueValue = async function (keyName, keyValue) {
         await CountlyReactNative.userDataBulk_pushUniqueValue([keyName, keyValue]);
     }
 };
+
+/**
+ *
+ * Add value to custom property (array).
+ * Remember to call Countly.userDataBulk.save() after calling all userDataBulk methods to send the bulk data to server.
+ *
+ * @param {string} keyName user property key
+ * @param {string} keyValue user property value
+ * @return {string | void} error message or void
+ */
 Countly.userDataBulk.pushValue = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'pushValue'";
@@ -1297,6 +1496,16 @@ Countly.userDataBulk.pushValue = async function (keyName, keyValue) {
         await CountlyReactNative.userDataBulk_pushValue([keyName, keyValue]);
     }
 };
+
+/**
+ *
+ * Remove value to custom property (array).
+ * Remember to call Countly.userDataBulk.save() after calling all userDataBulk methods to send the bulk data to server.
+ *
+ * @param {string} keyName user property key
+ * @param {string} keyValue user property value
+ * @return {string | void} error message or void
+ */
 Countly.userDataBulk.pullValue = async function (keyName, keyValue) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'pullValue'";
@@ -1434,6 +1643,13 @@ Countly.removeAllConsent = function () {
     CountlyReactNative.removeAllConsent();
 };
 
+/**
+ *
+ * Replaces all stored Remote Config values with new values from server.
+ *
+ * @param {function} callback function to be called after fetching values.
+ * @return {string | void} error message or void
+ */
 Countly.remoteConfigUpdate = function (callback) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'remoteConfigUpdate'";
@@ -1447,6 +1663,14 @@ Countly.remoteConfigUpdate = function (callback) {
     });
 };
 
+/**
+ *
+ * Replace specific Remote Config key value pairs with new values from server.
+ *
+ * @param {string[]} keyNames array of keys to replace.
+ * @param {function} callback function to be called after fetching values.
+ * @return {string | void} error message or void
+ */
 Countly.updateRemoteConfigForKeysOnly = function (keyNames, callback) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'updateRemoteConfigForKeysOnly'";
@@ -1466,6 +1690,14 @@ Countly.updateRemoteConfigForKeysOnly = function (keyNames, callback) {
     }
 };
 
+/**
+ *
+ * Replace all except specific Remote Config key value pairs with new values from server.
+ *
+ * @param {string[]} keyNames array of keys to skip.
+ * @param {function} callback function to be called after fetching values.
+ * @return {string | void} error message or void
+ */
 Countly.updateRemoteConfigExceptKeys = function (keyNames, callback) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'updateRemoteConfigExceptKeys'";
@@ -1485,6 +1717,14 @@ Countly.updateRemoteConfigExceptKeys = function (keyNames, callback) {
     }
 };
 
+/**
+ *
+ * Replace Remote Config key value for a specific key with new values from server.
+ *
+ * @param {string} keyNames key to fetch.
+ * @param {function} callback function to be called after fetching new values.
+ * @return {string | void} error message or void
+ */
 Countly.getRemoteConfigValueForKey = function (keyName, callback) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'getRemoteConfigValueForKey'";
@@ -1505,6 +1745,13 @@ Countly.getRemoteConfigValueForKey = function (keyName, callback) {
     });
 };
 
+/**
+ *
+ * Replace Remote Config key value for a specific key with new values from server.
+ *
+ * @param {string} keyName key to fetch.
+ * @return {string | promise} error message or promise
+ */
 Countly.getRemoteConfigValueForKeyP = function (keyName) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'getRemoteConfigValueForKeyP'";
@@ -1533,6 +1780,12 @@ Countly.getRemoteConfigValueForKeyP = function (keyName) {
         });
 };
 
+/**
+ *
+ * Clear all Remote Config values downloaded from the server.
+ *
+ * @return {string | promise} error message or promise
+ */
 Countly.remoteConfigClearValues = async function () {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'remoteConfigClearValues'";
@@ -1543,6 +1796,7 @@ Countly.remoteConfigClearValues = async function () {
     const result = await CountlyReactNative.remoteConfigClearValues();
     return result;
 };
+
 /**
  * @deprecated in 23.02.0 : use 'countlyConfig.setStarRatingDialogTexts' instead of 'setStarRatingDialogTexts'.
  *
@@ -1562,6 +1816,14 @@ Countly.setStarRatingDialogTexts = function (starRatingTextTitle, starRatingText
     CountlyReactNative.setStarRatingDialogTexts(args);
 };
 
+/**
+ *
+ * For getting brief feedback from your users to be displayed on the
+  Countly dashboard.
+ *
+ * @param {function} callback function to be called after it completes.
+ * @return {string | void} error message or void
+ */
 Countly.showStarRating = function (callback) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'showStarRating'";
@@ -1581,6 +1843,7 @@ Countly.showStarRating = function (callback) {
  * @param {string} widgetId - id of rating widget to present
  * @param {string} closeButtonText - text for cancel/close button
  * @param {callback listener} [ratingWidgetCallback] This parameter is optional.
+ * @return {string | void} error message or void
  */
 Countly.presentRatingWidgetWithID = function (widgetId, closeButtonText, ratingWidgetCallback) {
     var message = "";
@@ -1590,7 +1853,7 @@ Countly.presentRatingWidgetWithID = function (widgetId, closeButtonText, ratingW
         return message;
     }
     if (!widgetId) {
-        message = 'Rating Widget id should not be null or empty';
+        message = "Rating Widget id should not be null or empty";
         L.e(`presentRatingWidgetWithID, ${message}`);
         return message;
     }
@@ -1612,7 +1875,7 @@ Countly.presentRatingWidgetWithID = function (widgetId, closeButtonText, ratingW
  * Get a list of available feedback widgets as array of object to handle multiple widgets of same type.
  * @deprecated in 23.8.0 : use 'Countly.feedback.getAvailableFeedbackWidgets' instead of 'getFeedbackWidgets'.
  * @param {callback listener} [onFinished] - returns (retrievedWidgets, error). This parameter is optional.
- * @return {string | []} error message or []
+ * @return {string | []} error message or array of feedback widgets
  */
 Countly.getFeedbackWidgets = async function (onFinished) {
     if (!_state.isInitialized) {
@@ -1694,11 +1957,19 @@ Countly.presentFeedbackWidgetObject = async function (feedbackWidget, closeButto
  *
  * Events get grouped together and are sent either every minute or after the unsent event count reaches a threshold. By default it is 10
  * Should be called before Countly init
+ * @param {number} size - event count
  */
 Countly.setEventSendThreshold = function (size) {
     CountlyReactNative.setEventSendThreshold([size.toString() || ""]);
 };
 
+/**
+ *
+ * Measure and record time taken by any operation.
+ *
+ * @param {string} traceKey name of trace
+ * @return {string | void} error message or void
+ */
 Countly.startTrace = function (traceKey) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'startTrace'";
@@ -1711,6 +1982,13 @@ Countly.startTrace = function (traceKey) {
     CountlyReactNative.startTrace(args);
 };
 
+/**
+ *
+ * Cancel custom trace.
+ *
+ * @param {string} traceKey name of trace
+ * @return {string | void} error message or void
+ */
 Countly.cancelTrace = function (traceKey) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'cancelTrace'";
@@ -1723,6 +2001,12 @@ Countly.cancelTrace = function (traceKey) {
     CountlyReactNative.cancelTrace(args);
 };
 
+/**
+ *
+ * Cancel all custom traces.
+ *
+ * @return {string | void} error message or void
+ */
 Countly.clearAllTraces = function () {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'clearAllTraces'";
@@ -1734,6 +2018,14 @@ Countly.clearAllTraces = function () {
     CountlyReactNative.clearAllTraces(args);
 };
 
+/**
+ *
+ * End a custom trace.
+ *
+ * @param {string} traceKey name of trace
+ * @param {object} customMetric metric with key/value pair
+ * @return {string | void} error message or void
+ */
 Countly.endTrace = function (traceKey, customMetric) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'endTrace'";
@@ -1751,6 +2043,23 @@ Countly.endTrace = function (traceKey, customMetric) {
     CountlyReactNative.endTrace(args);
 };
 
+/**
+ *
+ * Manually record a custom trace
+ *
+ * @param {string} networkTraceKey name of trace
+ * @param {number} responseCode HTTP status code of the received
+  response
+ * @param {number} requestPayloadSize Size of the request's
+  payload in bytes
+ * @param {number} responsePayloadSize Size
+  of the received response's payload in bytes
+ * @param {number} startTime UNIX timestamp in milliseconds for
+  the starting time of the request
+ * @param {number} endTime UNIX timestamp in milliseconds for
+  the ending time of the request
+ * @return {string | void} error message or void
+ */
 Countly.recordNetworkTrace = function (networkTraceKey, responseCode, requestPayloadSize, responsePayloadSize, startTime, endTime) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'recordNetworkTrace'";
@@ -1786,6 +2095,8 @@ Countly.enableApm = function () {
  * Enable campaign attribution reporting to Countly.
  * For iOS use "recordAttributionID" instead of "enableAttribution"
  * Should be called before Countly init
+ * @param {string} attributionID attribution ID
+ * @return {string | void} error message or void
  */
 Countly.enableAttribution = async function (attributionID = "") {
     L.w("enableAttribution, enableAttribution is deprecated, use Countly.recordIndirectAttribution instead.");
@@ -1809,6 +2120,8 @@ Countly.enableAttribution = async function (attributionID = "") {
  *
  * set attribution Id for campaign attribution reporting.
  * Currently implemented for iOS only
+ * @param {string} attributionID attribution ID
+ * @return {string | void} error message or void
  */
 Countly.recordAttributionID = function (attributionID) {
     L.w("recordAttributionID, recordAttributionID is deprecated, use Countly.recordIndirectAttribution instead.");
@@ -1819,10 +2132,12 @@ Countly.recordAttributionID = function (attributionID) {
     args.push(attributionID);
     CountlyReactNative.recordAttributionID(args);
 };
+
 /**
  * Replaces all requests with a different app key with the current app key.
  * In request queue, if there are any request whose app key is different than the current app key,
  * these requests' app key will be replaced with the current app key.
+ * @return {string | void} error message or void
  */
 Countly.replaceAllAppKeysInQueueWithCurrentAppKey = function () {
     if (!_state.isInitialized) {
@@ -1833,8 +2148,12 @@ Countly.replaceAllAppKeysInQueueWithCurrentAppKey = function () {
     L.d("replaceAllAppKeysInQueueWithCurrentAppKey, Replacing all app keys in queue with current app key");
     CountlyReactNative.replaceAllAppKeysInQueueWithCurrentAppKey();
 };
+
 /**
  * set direct attribution Id for campaign attribution reporting.
+ * @param {string} campaignType type
+ * @param {string} campaignData data
+ * @return {string | void} error message or void
  */
 Countly.recordDirectAttribution = function (campaignType, campaignData) {
     if (!_state.isInitialized) {
@@ -1848,8 +2167,11 @@ Countly.recordDirectAttribution = function (campaignType, campaignData) {
     args.push(campaignData);
     CountlyReactNative.recordDirectAttribution(args);
 };
+
 /**
  * set indirect attribution Id for campaign attribution reporting.
+ * @param {string} attributionValues attribution values
+ * @return {string | void} error message or void
  */
 Countly.recordIndirectAttribution = function (attributionValues) {
     if (!_state.isInitialized) {
@@ -1862,10 +2184,12 @@ Countly.recordIndirectAttribution = function (attributionValues) {
     args.push(attributionValues);
     CountlyReactNative.recordIndirectAttribution(args);
 };
+
 /**
  * Removes all requests with a different app key in request queue.
  * In request queue, if there are any request whose app key is different than the current app key,
  * these requests will be removed from request queue.
+ * @return {string | void} error message or void
  */
 Countly.removeDifferentAppKeysFromQueue = function () {
     if (!_state.isInitialized) {
@@ -1880,6 +2204,7 @@ Countly.removeDifferentAppKeysFromQueue = function () {
 /**
  * Call this function when app is loaded, so that the app launch duration can be recorded.
  * Should be called after init.
+ * @return {string | void} error message or void
  */
 Countly.appLoadingFinished = async function () {
     if (!_state.isInitialized) {
@@ -1894,8 +2219,9 @@ Countly.appLoadingFinished = async function () {
 /**
  * Set the metrics you want to override
  * Should be called before Countly init
- * @param {object} customMetric - metric with key/value pair
+ * @param {object} customMetric metric with key/value pair
  * Supported data type for customMetric values is String
+ * @return {string | void} error message or void
  */
 Countly.setCustomMetrics = async function (customMetric) {
     L.d(`setCustomMetrics, Setting custom metrics: [${JSON.stringify(customMetric)}]`);
