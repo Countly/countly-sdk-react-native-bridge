@@ -1057,6 +1057,11 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
     constructor(serverURL: string, appKey: string);
 
     /**
+     * getter for CountlyConfigApm instance that is used to access CountlyConfigApm methods
+     */
+    apm(): CountlyConfigApm;
+
+    /**
      * Method to set the server url
      *
      * @param {string} serverURL server url
@@ -1212,4 +1217,42 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
   }
 
   export default CountlyConfig;
+}
+
+declare module "countly-sdk-react-native-bridge/lib/configuration_interfaces/countly_config_apm" {
+  declare class CountlyConfigApm {
+    enableForegroundBackground(): boolean;
+
+    trackAppStartTime(): boolean;
+
+    enableManualAppLoaded(): boolean;
+
+    startTSOverride(): number;
+
+    /**
+     * Enables the automatic tracking of app foreground and background 
+     * durations.
+     */
+    enableForegroundBackgroundTracking(): CountlyConfigApm;
+
+    /**
+     * Enables the tracking of app start time. (For iOS after this call you 
+     * will have to call [enableManualAppLoadedTrigger])
+     */
+    enableAppStartTimeTracking(): CountlyConfigApm;
+
+    /**
+     * Enables the usage of manual trigger [Countly.appLoadingFinished] to 
+     * determine app start finish time.
+     */
+    enableManualAppLoadedTrigger(): CountlyConfigApm;
+
+    /**
+     * Gives you the ability to override the app start initial timestamp.
+     * [timestamp] is the timestamp (in milliseconds)
+     */
+    setAppStartTimestampOverride(timestamp: number): CountlyConfigApm;
+  }
+
+  export default CountlyConfigApm;
 }

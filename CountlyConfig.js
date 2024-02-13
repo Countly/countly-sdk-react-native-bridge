@@ -1,4 +1,5 @@
 import { initialize } from "./Logger.js";
+import CountlyConfigApm from "./lib/configuration_interfaces/countly_config_apm.js";
 /**
  * Countly SDK React Native Bridge
  * https://github.com/Countly/countly-sdk-react-native-bridge
@@ -16,6 +17,11 @@ class CountlyConfig {
     constructor(serverURL, appKey) {
         this.serverURL = serverURL;
         this.appKey = appKey;
+        this._countlyConfigApmInstance = CountlyConfigApm();
+    }
+
+    get apm() {
+        return this._countlyConfigApmInstance;
     }
 
     /**
