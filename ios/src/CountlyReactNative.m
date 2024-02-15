@@ -148,9 +148,28 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
         config.starRatingMessage = json[@"starRatingTextMessage"];
     }
 
+    // APM ------------------------------------------------
+    NSNumber *enableForegroundBackground = json[@"enableForegroundBackground"];
+    if (enableForegroundBackground) {
+        config.apm.enableForegroundBackgroundTracking = [enableForegroundBackground boolValue];
+    }
+    NSNumber *enableManualAppLoaded = json[@"enableManualAppLoaded"];
+    if (enableManualAppLoaded) {
+        config.apm.enableManualAppLoadedTrigger = [enableManualAppLoaded boolValue];
+    }
+    NSNumber *trackAppStartTime = json[@"trackAppStartTime"];
+    if (trackAppStartTime) {
+        config.apm.enableAppStartTimeTracking = [trackAppStartTime boolValue];
+    }
+    NSNumber *startTSOverride = json[@"startTSOverride"];
+    if (startTSOverride) {
+        [config.apm setAppStartTimestampOverride:[startTSOverride longLongValue]];
+    }
+    // Legacy APM
     if (json[@"enableApm"]) {
         config.enablePerformanceMonitoring = YES;
     }
+    // APM END --------------------------------------------
 
     if (json[@"crashReporting"]) {
         [self addCountlyFeature:CLYCrashReporting];
