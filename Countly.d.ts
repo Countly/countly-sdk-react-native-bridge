@@ -1045,6 +1045,48 @@ declare module "countly-sdk-react-native-bridge" {
 declare module "countly-sdk-react-native-bridge/CountlyConfig" {
   /**
    *
+   * This class holds APM specific configurations to be used with 
+   * CountlyConfig class and serves as an interface.
+   *
+   */
+  declare class CountlyConfigApm {
+      constructor();
+
+      enableForegroundBackground: boolean;
+
+      enableManualAppLoaded: boolean;
+
+      startTSOverride: number;
+
+      trackAppStartTime: boolean;
+
+      /**
+       * Enables the tracking of app start time. (For iOS after this call you 
+       * will have to call [enableManualAppLoadedTrigger])
+       */
+      enableAppStartTimeTracking(): CountlyConfigApm;
+
+      /**
+       * Enables the automatic tracking of app foreground and background 
+       * durations.
+       */
+      enableForegroundBackgroundTracking(): CountlyConfigApm;
+
+      /**
+       * Enables the usage of manual trigger [Countly.appLoadingFinished] to 
+       * determine app start finish time.
+       */
+      enableManualAppLoadedTrigger(): CountlyConfigApm;
+
+      /**
+       * Gives you the ability to override the app start initial timestamp.
+       * [timestamp] is the timestamp (in milliseconds)
+       */
+      setAppStartTimestampOverride(timestamp: number): CountlyConfigApm;
+  }
+
+  /**
+   *
    * Config object for Countly Init
    * Should be called before Countly "askForNotificationPermission"
    *
@@ -1059,7 +1101,7 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
     /**
      * getter for CountlyConfigApm instance that is used to access CountlyConfigApm methods
      */
-    apm(): CountlyConfigApm;
+    apm: CountlyConfigApm;
 
     /**
      * Method to set the server url
@@ -1217,42 +1259,4 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
   }
 
   export default CountlyConfig;
-}
-
-declare module "countly-sdk-react-native-bridge/lib/configuration_interfaces/countly_config_apm" {
-  declare class CountlyConfigApm {
-    enableForegroundBackground(): boolean;
-
-    trackAppStartTime(): boolean;
-
-    enableManualAppLoaded(): boolean;
-
-    startTSOverride(): number;
-
-    /**
-     * Enables the automatic tracking of app foreground and background 
-     * durations.
-     */
-    enableForegroundBackgroundTracking(): CountlyConfigApm;
-
-    /**
-     * Enables the tracking of app start time. (For iOS after this call you 
-     * will have to call [enableManualAppLoadedTrigger])
-     */
-    enableAppStartTimeTracking(): CountlyConfigApm;
-
-    /**
-     * Enables the usage of manual trigger [Countly.appLoadingFinished] to 
-     * determine app start finish time.
-     */
-    enableManualAppLoadedTrigger(): CountlyConfigApm;
-
-    /**
-     * Gives you the ability to override the app start initial timestamp.
-     * [timestamp] is the timestamp (in milliseconds)
-     */
-    setAppStartTimestampOverride(timestamp: number): CountlyConfigApm;
-  }
-
-  export default CountlyConfigApm;
 }

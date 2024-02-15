@@ -20,9 +20,7 @@ class CountlyConfig {
         this._countlyConfigApmInstance = CountlyConfigApm();
     }
 
-    get apm() {
-        return this._countlyConfigApmInstance;
-    }
+    apm = this._countlyConfigApmInstance;
 
     /**
      * Method to set the server url
