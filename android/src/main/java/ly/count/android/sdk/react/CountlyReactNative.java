@@ -225,7 +225,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 config.apm.enableManualAppLoadedTrigger();
             }
             if (_config.has("startTSOverride")) {
-                config.apm.setAppStartTimestampOverride(_config.getLong("trackAppStartTime"));
+                config.apm.setAppStartTimestampOverride(_config.getLong("startTSOverride"));
             }
             if (_config.has("trackAppStartTime")) {
                 config.apm.enableAppStartTimeTracking();

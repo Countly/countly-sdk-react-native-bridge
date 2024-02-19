@@ -17,10 +17,15 @@ class CountlyConfig {
     constructor(serverURL, appKey) {
         this.serverURL = serverURL;
         this.appKey = appKey;
-        this._countlyConfigApmInstance = CountlyConfigApm();
+        this._countlyConfigApmInstance = new CountlyConfigApm();
     }
 
-    apm = this._countlyConfigApmInstance;
+    /**
+     * Getter to get the APM specific configurations
+     */
+    get apm() {
+        return this._countlyConfigApmInstance;
+    }
 
     /**
      * Method to set the server url
