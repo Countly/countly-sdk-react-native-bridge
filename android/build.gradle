@@ -41,7 +41,7 @@ repositories {
 
 dependencies {
     implementation "com.facebook.react:react-native:${safeExtGet('reactNativeVersion', '+')}"
-    implementation 'ly.count.android:sdk:23.12.0'
+    implementation 'ly.count.android:sdk:24.1.1'
 
     // Import the BoM for the Firebase platform
     // The BoM version of 28.4.2 is the newest release that will target firebase-messaging version 22
