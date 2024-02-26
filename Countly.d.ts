@@ -956,7 +956,7 @@ declare module "countly-sdk-react-native-bridge" {
     ): string | void;
 
     /**
-     * @deprecated in 23.02.0 : use 'countlyConfig.enableApm' instead of 'enableApm'.
+     * @deprecated in 23.02.0 : use 'countlyConfig.apm' interface instead of 'enableApm'.
      *
      * Enable APM features, which includes the recording of app start time.
      * Should be called before Countly init
@@ -1166,6 +1166,8 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
     enableParameterTamperingProtection(tamperingProtectionSalt: string): CountlyConfig;
 
     /**
+     * @deprecated in 24.1.0 : use 'countlyConfig.apm' interface instead of 'config.enableApm'.
+     * 
      * Method to enable application performance monitoring which includes the recording of app start time.
      */
     enableApm(): CountlyConfig;

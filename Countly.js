@@ -2078,13 +2078,13 @@ Countly.recordNetworkTrace = function (networkTraceKey, responseCode, requestPay
 };
 
 /**
- * @deprecated in 23.02.0 : use 'countlyConfig.enableApm' instead of 'enableApm'.
+ * @deprecated in 23.02.0 : use 'countlyConfig.apm' interface instead of 'enableApm'.
  *
  * Enable APM features, which includes the recording of app start time.
  * Should be called before Countly init
  */
 Countly.enableApm = function () {
-    L.w("enableApm, enableApm is deprecated, use countlyConfig.enableApm instead.");
+    L.w("enableApm, enableApm is deprecated, use countlyConfig.apm interface instead.");
     const args = [];
     CountlyReactNative.enableApm(args);
 };
