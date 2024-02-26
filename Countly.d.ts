@@ -1049,17 +1049,7 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
    * CountlyConfig class and serves as an interface.
    *
    */
-  declare class CountlyConfigApm {
-      constructor();
-
-      enableForegroundBackground: boolean;
-
-      enableManualAppLoaded: boolean;
-
-      startTSOverride: number;
-
-      trackAppStartTime: boolean;
-
+  class CountlyConfigApm {
       /**
        * Enables the tracking of app start time. (For iOS after this call you 
        * will have to call [enableManualAppLoadedTrigger])
