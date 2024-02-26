@@ -130,7 +130,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     public CountlyReactNative(ReactApplicationContext reactContext) {
         super(reactContext);
         _reactContext = reactContext;
-        config.enableManualAppLoadedTrigger();
         reactContext.addLifecycleEventListener(this);
     }
 
