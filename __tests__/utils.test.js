@@ -1,4 +1,4 @@
-const { stringToDeviceIDType, DeviceIdType } = require("../UtilsCrash.js");
+const { stringToDeviceIDType, DeviceIdType } = require("../Utils.js");
 
 test("'SG' returns DeviceIdType.SDK_GENERATED", () => {
     expect(stringToDeviceIDType("SG")).toBe(DeviceIdType.SDK_GENERATED);
