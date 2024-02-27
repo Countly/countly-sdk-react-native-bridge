@@ -20,3 +20,4 @@ android/.settings/org.eclipse.buildship.core.prefs
 android/.classpath
 countly-sdk-react-native-bridge-*.tgz
 example/AwesomeProject
+coverage/

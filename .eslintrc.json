@@ -15,6 +15,14 @@
         "sourceType": "module",
         "project": ["**/tsconfig.json"]
     },
+    "overrides": [
+      {
+        "files": ["__tests__/**/*"],
+        "env": {
+          "jest": true
+        }
+      }
+    ],
     "parser": "@typescript-eslint/parser",
     "plugins": ["react", "react-native", "@typescript-eslint"],
     "root": true,
