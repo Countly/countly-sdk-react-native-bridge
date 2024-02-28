@@ -3,7 +3,7 @@ module.exports = {
         __DEV__: true
     },
     displayName: {
-        name: "REACT NATIVE TEST",
+        name: "Countly React Native SDK Tests",
         color: "blue",
     },
     collectCoverage: true,
@@ -13,4 +13,5 @@ module.exports = {
         "!**/vendor/**",
         "!**/example/**",
     ],
+    testPathIgnorePatterns: ["/node_modules/", "AwesomeProject"],
 };
