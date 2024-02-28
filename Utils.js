@@ -76,9 +76,24 @@ function configToJson(config) {
         if (config.tamperingProtectionSalt) {
             json.tamperingProtectionSalt = config.tamperingProtectionSalt;
         }
+        // APM ------------------------------------------------
+        if (config.apm.enableForegroundBackground) {
+            json.enableForegroundBackground = config.apm.enableForegroundBackground;
+        }
+        if (config.apm.enableManualAppLoaded) {
+            json.enableManualAppLoaded = config.apm.enableManualAppLoaded;
+        }
+        if (config.apm.startTSOverride) {
+            json.startTSOverride = config.apm.startTSOverride;
+        }
+        if (config.apm.trackAppStartTime) {
+            json.trackAppStartTime = config.apm.trackAppStartTime;
+        }
+        // Legacy APM
         if (config.enableApm) {
             json.enableApm = config.enableApm;
         }
+        // APM END --------------------------------------------
         if (config.disableAdditionalIntentRedirectionChecks) {
             json['disableAdditionalIntentRedirectionChecks'] = config.disableAdditionalIntentRedirectionChecks;
         }

@@ -130,7 +130,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     public CountlyReactNative(ReactApplicationContext reactContext) {
         super(reactContext);
         _reactContext = reactContext;
-        config.enableManualAppLoadedTrigger();
         reactContext.addLifecycleEventListener(this);
     }
 
@@ -217,9 +216,24 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             if (_config.has("starRatingTextDismiss")) {
                 config.setStarRatingTextDismiss(_config.getString("starRatingTextDismiss"));
             }
+            // APM ------------------------------------------------
+            if (_config.has("enableForegroundBackground")) {
+                config.apm.enableForegroundBackgroundTracking();
+            }
+            if (_config.has("enableManualAppLoaded")) {
+                config.apm.enableManualAppLoadedTrigger();
+            }
+            if (_config.has("startTSOverride")) {
+                config.apm.setAppStartTimestampOverride(_config.getLong("startTSOverride"));
+            }
+            if (_config.has("trackAppStartTime")) {
+                config.apm.enableAppStartTimeTracking();
+            }
+            // Legacy APM
             if (_config.has("enableApm")) {
                 config.setRecordAppStartTime(_config.getBoolean("enableApm"));
             }
+            // APM END --------------------------------------------
             if (_config.has("crashReporting")) {
                 config.enableCrashReporting();
             }
