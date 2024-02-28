@@ -11,7 +11,6 @@ import CountlyState from "./CountlyState.js";
 import Feedback from "./Feedback.js";
 import * as L from "./Logger.js";
 import * as Utils from "./Utils.js";
-import * as UtilsCrash from "./UtilsCrash.js";
 import * as Validate from "./Validators.js";
 
 const { CountlyReactNative } = NativeModules;
@@ -579,7 +578,7 @@ Countly.enableCrashReporting = async function () {
         L.i("enableCrashReporting, Adding Countly JS error handler.");
         const previousHandler = ErrorUtils.getGlobalHandler();
         ErrorUtils.setGlobalHandler((error, isFatal) => {
-            const jsStackTrace = UtilsCrash.getStackTrace(error);
+            const jsStackTrace = Utils.getStackTrace(error);
             let errorTitle;
             let stackArr;
             if (jsStackTrace == null) {
