@@ -1,10 +1,20 @@
 ## X.X.X
+* ! Minor breaking change ! Tracking of foreground and background time for APM is disabled by default
+
 * Added 'disableAdditionalIntentRedirectionChecks' config method
+* Added a new metric for detecting whether or not a device has a hinge for Android
+* Added four new APM configuration options under the 'apm' interface of 'CountlyConfig':
+  * 'enableForegroundBackgroundTracking' for enabling automatic F/B time tracking
+  * 'enableAppStartTimeTracking' for enabling automatic app launch time tracking (Android only)
+  * 'enableManualAppLoadedTrigger' for enabling the manipulation of app load time finished timestamp
+  * 'setAppStartTimestampOverride' for enabling the manipulation of app load time starting timestamp
+
+Deprecated 'enableApm' config option. Use instead 'apm.enableAppStartTimeTracking'. (for iOS also 'enableForegroundBackgroundTracking' must be used)
 
 * Fixed a bug in `getRemoteConfigValueForKeyP` and `remoteConfigClearValues` where those functions would produce a "Property 'callback' doesn't exist", if they are called before initializing the SDK.
 
-* Underlying Android SDK version is 23.12.0
-* Underlying iOS SDK version to 23.12.0
+* Updated the underlying Android SDK version to 24.1.1
+* Updated the underlying iOS SDK version to 24.1.0
 
 ## 23.12.0
 * Added TS type declerations to the SDK

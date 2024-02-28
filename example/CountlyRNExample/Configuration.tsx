@@ -17,10 +17,17 @@ const countlyConfig = new CountlyConfig(COUNTLY_SERVER_KEY, COUNTLY_APP_KEY).set
 // .enableParameterTamperingProtection('salt') // Set the optional salt to be used for calculating the checksum of requested data which will be sent with each request
 // .pinnedCertificates("count.ly.cer") // It will ensure that connection is made with one of the public keys specified
 // .setHttpPostForced(false) // Set to "true" if you want HTTP POST to be used for all requests
-// .enableApm() // Enable APM features, which includes the recording of app start time.
 // .pushTokenType(Countly.messagingMode.DEVELOPMENT, 'ChannelName', 'ChannelDescription') // Set messaging mode for push notifications
 // .configureIntentRedirectionCheck(['MainActivity'], ['com.countly.demo'])
 // .setStarRatingDialogTexts('Title', 'Message', 'Dismiss')
 // .recordDirectAttribution('countly', campaignData)
 // .recordIndirectAttribution(attributionValues)
+
+// APM configuration ========================================
+// countlyConfig.apm
+//   .enableAppStartTimeTracking()
+//   .enableForegroundBackgroundTracking()
+//   .enableManualAppLoadedTrigger()
+//   .setAppStartTimestampOverride(11223344);
+
 export default countlyConfig;

@@ -956,7 +956,7 @@ declare module "countly-sdk-react-native-bridge" {
     ): string | void;
 
     /**
-     * @deprecated in 23.02.0 : use 'countlyConfig.enableApm' instead of 'enableApm'.
+     * @deprecated in 23.02.0 : use 'countlyConfig.apm' interface instead of 'enableApm'.
      *
      * Enable APM features, which includes the recording of app start time.
      * Should be called before Countly init
@@ -1045,6 +1045,38 @@ declare module "countly-sdk-react-native-bridge" {
 declare module "countly-sdk-react-native-bridge/CountlyConfig" {
   /**
    *
+   * This class holds APM specific configurations to be used with 
+   * CountlyConfig class and serves as an interface.
+   *
+   */
+  class CountlyConfigApm {
+      /**
+       * Enables the tracking of app start time. (For iOS after this call you 
+       * will have to call [enableManualAppLoadedTrigger])
+       */
+      enableAppStartTimeTracking(): CountlyConfigApm;
+
+      /**
+       * Enables the automatic tracking of app foreground and background 
+       * durations.
+       */
+      enableForegroundBackgroundTracking(): CountlyConfigApm;
+
+      /**
+       * Enables the usage of manual trigger [Countly.appLoadingFinished] to 
+       * determine app start finish time.
+       */
+      enableManualAppLoadedTrigger(): CountlyConfigApm;
+
+      /**
+       * Gives you the ability to override the app start initial timestamp.
+       * [timestamp] is the timestamp (in milliseconds)
+       */
+      setAppStartTimestampOverride(timestamp: number): CountlyConfigApm;
+  }
+
+  /**
+   *
    * Config object for Countly Init
    * Should be called before Countly "askForNotificationPermission"
    *
@@ -1055,6 +1087,11 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
      * @param {string} appKey application key
      */
     constructor(serverURL: string, appKey: string);
+
+    /**
+     * getter for CountlyConfigApm instance that is used to access CountlyConfigApm methods
+     */
+    apm: CountlyConfigApm;
 
     /**
      * Method to set the server url
@@ -1129,6 +1166,8 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
     enableParameterTamperingProtection(tamperingProtectionSalt: string): CountlyConfig;
 
     /**
+     * @deprecated in 24.1.0 : use 'countlyConfig.apm' interface instead of 'config.enableApm'.
+     * 
      * Method to enable application performance monitoring which includes the recording of app start time.
      */
     enableApm(): CountlyConfig;

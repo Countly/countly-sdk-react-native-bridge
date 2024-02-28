@@ -46,6 +46,7 @@
         "no-bitwise": "off",
         "no-mixed-operators": "off",
         "object-shorthand": "off",
+        "max-classes-per-file": "off",
         "block-spacing": [
             "error",
             "always"
