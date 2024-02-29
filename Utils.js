@@ -1,5 +1,5 @@
-import parseErrorStackLib from "../react-native/Libraries/Core/Devtools/parseErrorStack.js";
 import * as L from "./Logger.js";
+import parseErrorStackLib from "react-native/Libraries/Core/Devtools/parseErrorStack.js";
 
 const DeviceIdType = {
     DEVELOPER_SUPPLIED: "DEVELOPER_SUPPLIED",
@@ -96,7 +96,7 @@ function configToJson(config) {
         }
         // APM END --------------------------------------------
         if (config.disableAdditionalIntentRedirectionChecks) {
-            json['disableAdditionalIntentRedirectionChecks'] = config.disableAdditionalIntentRedirectionChecks;
+            json["disableAdditionalIntentRedirectionChecks"] = config.disableAdditionalIntentRedirectionChecks;
         }
         const pushNotification = {};
         if (config.tokenType) {
