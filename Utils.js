@@ -96,7 +96,7 @@ function configToJson(config) {
         }
         // APM END --------------------------------------------
         if (config.disableAdditionalIntentRedirectionChecks) {
-            json.disableAdditionalIntentRedirectionChecks = config.disableAdditionalIntentRedirectionChecks;
+            json["disableAdditionalIntentRedirectionChecks"] = config.disableAdditionalIntentRedirectionChecks;
         }
         const pushNotification = {};
         if (config.tokenType) {
