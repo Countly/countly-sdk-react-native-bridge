@@ -521,7 +521,7 @@ Countly.getDeviceIDType = async function () {
         L.e("getDeviceIDType, unexpected null value from native side");
         return null;
     }
-    return Utils.stringToDeviceIDType(result);
+    return Utils.intToDeviceIDType(result);
 };
 
 /**

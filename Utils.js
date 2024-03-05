@@ -9,28 +9,27 @@ const DeviceIdType = {
 
 /**
  *
- * internal countly function that converts String to DeviceIdType.
+ * internal countly function that converts int to DeviceIdType.
+ * @param {number} deviceIdType device id type as int
  *
- * @return {DeviceIdType || null} deviceIdType e.g DeviceIdType.DEVELOPER_SUPPLIED, DeviceIdType.TEMPORARY_ID, DeviceIdType.SDK_GENERATED.
+ * @return {DeviceIdType} deviceIdType e.g DeviceIdType.DEVELOPER_SUPPLIED, DeviceIdType.TEMPORARY_ID, DeviceIdType.SDK_GENERATED.
  */
-function stringToDeviceIDType(deviceIdType) {
+function intToDeviceIDType(deviceIdType) {
     let result = null;
     switch (deviceIdType) {
-    case "DS":
-        result = DeviceIdType.DEVELOPER_SUPPLIED;
-        break;
-    case "TID":
-        result = DeviceIdType.TEMPORARY_ID;
-        break;
-    case "SG":
+    case 10101:
         result = DeviceIdType.SDK_GENERATED;
         break;
-    default:
+    case 20202:
+        result = DeviceIdType.DEVELOPER_SUPPLIED;
         break;
-    }
-    if (result == null) {
+    case 30303:
+        result = DeviceIdType.TEMPORARY_ID;
+        break;
+    default:
         L.e("_getDeviceIdType, " + `unexpected deviceIdType [${deviceIdType}] from native side`);
-        return null;
+        result = DeviceIdType.SDK_GENERATED;
+        break;
     }
     return result;
 }
@@ -169,4 +168,4 @@ function getStackTrace(e) {
     return jsStackTrace;
 }
 
-export { configToJson, stringToDeviceIDType, DeviceIdType, getStackTrace };
+export { configToJson, intToDeviceIDType, DeviceIdType, getStackTrace };

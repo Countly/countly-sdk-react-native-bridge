@@ -1,57 +1,64 @@
-const { stringToDeviceIDType, DeviceIdType } = require("../Utils.js");
+const { intToDeviceIDType, DeviceIdType } = require("../Utils.js");
 
-// 'stringToDeviceIDType'
-// 'SG' is provided as input
+// 'intToDeviceIDType'
+// 10101 is provided as input
 // The function should return DeviceIdType.SDK_GENERATED
-test("'SG' maps to DeviceIdType.SDK_GENERATED", () => {
-    expect(stringToDeviceIDType("SG")).toBe(DeviceIdType.SDK_GENERATED);
+test("10101 maps to DeviceIdType.SDK_GENERATED", () => {
+    expect(intToDeviceIDType(10101)).toBe(DeviceIdType.SDK_GENERATED);
 });
 
-// 'stringToDeviceIDType'
-// 'DS' is provided as input
+// 'intToDeviceIDType'
+// 20202 is provided as input
 // The function should return DeviceIdType.DEVELOPER_SUPPLIED
-test("'DS' maps to DeviceIdType.DEVELOPER_SUPPLIED", () => {
-    expect(stringToDeviceIDType("DS")).toBe(DeviceIdType.DEVELOPER_SUPPLIED);
+test("20202 maps to DeviceIdType.DEVELOPER_SUPPLIED", () => {
+    expect(intToDeviceIDType(20202)).toBe(DeviceIdType.DEVELOPER_SUPPLIED);
 });
 
-// 'stringToDeviceIDType'
-// 'TID' is provided as input
+// 'intToDeviceIDType'
+// 30303 is provided as input
 // The function should return DeviceIdType.TEMPORARY_ID
-test("'TID' maps to DeviceIdType.TEMPORARY_ID", () => {
-    expect(stringToDeviceIDType("TID")).toBe(DeviceIdType.TEMPORARY_ID);
+test("30303 maps to DeviceIdType.TEMPORARY_ID", () => {
+    expect(intToDeviceIDType(30303)).toBe(DeviceIdType.TEMPORARY_ID);
 });
 
-// 'stringToDeviceIDType'
-// An empty string is provided as input
-// The function should return 'null', indicating an invalid input
-test("Invalid input results in 'null'", () => {
-    expect(stringToDeviceIDType("")).toBe(null);
-});
-
-// 'stringToDeviceIDType'
-// An 'null' is provided as input
-// The function should return 'null', indicating an invalid input
-test("'null' input results in 'null'", () => {
-    expect(stringToDeviceIDType(null)).toBe(null);
-});
-
-// 'stringToDeviceIDType'
-// An 'dsaifedos' is provided as input
-// The function should return 'null', indicating an invalid input
-test("'dsaifedos' input results in 'null'", () => {
-    expect(stringToDeviceIDType("dsaifedos")).toBe(null);
-});
-
-// 'stringToDeviceIDType'
+// 'intToDeviceIDType'
 // An 0 is provided as input
-// The function should return 'null', indicating an invalid input
-test("0 input results in 'null'", () => {
-    expect(stringToDeviceIDType(0)).toBe(null);
+// The function should return DeviceIdType.SDK_GENERATED
+test("0 input results in DeviceIdType.SDK_GENERATED", () => {
+    expect(intToDeviceIDType(0)).toBe(DeviceIdType.SDK_GENERATED);
 });
 
-// 'stringToDeviceIDType'
+// 'intToDeviceIDType'
+// An -1 is provided as input
+// The function should return DeviceIdType.SDK_GENERATED
+test("-1 input results in DeviceIdType.SDK_GENERATED", () => {
+    expect(intToDeviceIDType(-1)).toBe(DeviceIdType.SDK_GENERATED);
+});
+
+// 'intToDeviceIDType'
+// An empty string is provided as input
+// The function should return DeviceIdType.SDK_GENERATED
+test("Invalid input results in DeviceIdType.SDK_GENERATED", () => {
+    expect(intToDeviceIDType("")).toBe(DeviceIdType.SDK_GENERATED);
+});
+
+// 'intToDeviceIDType'
+// An 'null' is provided as input
+// The function should return DeviceIdType.SDK_GENERATED
+test("'null' input results in DeviceIdType.SDK_GENERATED", () => {
+    expect(intToDeviceIDType(null)).toBe(DeviceIdType.SDK_GENERATED);
+});
+
+// 'intToDeviceIDType'
+// An 'dsaifedos' is provided as input
+// The function should return DeviceIdType.SDK_GENERATED
+test("'dsaifedos' input results in DeviceIdType.SDK_GENERATED", () => {
+    expect(intToDeviceIDType("dsaifedos")).toBe(DeviceIdType.SDK_GENERATED);
+});
+
+// 'intToDeviceIDType'
 // An 'undefined' is provided as input
-// The function should return 'null', indicating an invalid input
-test("'undefined' input results in 'null'", () => {
-    expect(stringToDeviceIDType(undefined)).toBe(null);
+// The function should return DeviceIdType.SDK_GENERATED
+test("'undefined' input results in DeviceIdType.SDK_GENERATED", () => {
+    expect(intToDeviceIDType(undefined)).toBe(DeviceIdType.SDK_GENERATED);
 });
