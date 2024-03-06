@@ -129,14 +129,20 @@ declare module "countly-sdk-react-native-bridge" {
     /**
      * Countly Event Module
      */
-    namespace event {
+    namespace events {
       /**
        * Used to send various types of event;
        *
-       * @param {CountlyEventOptions} options event
+       * @param {string | CountlyEventOptions} options event options. 
+       * CountlyEventOptions {
+       *   eventName: string;
+       *   eventCount?: number;
+       *   eventSum?: number | string;
+       *   segments?: Segmentation;
+       * }
        * @return {string | void} error message or void
        */
-      export function sendEvent(options: CountlyEventOptions): string | void;
+      export function recordEvent(options: CountlyEventOptions): string | void;
 
       /**
        *
@@ -160,7 +166,13 @@ declare module "countly-sdk-react-native-bridge" {
        *
        * End Event
        *
-       * @param {string | CountlyEventOptions} options event options
+       * @param {string | CountlyEventOptions} options event options. 
+       * CountlyEventOptions {
+       *   eventName: string;
+       *   eventCount?: number;
+       *   eventSum?: number | string;
+       *   segments?: Segmentation;
+       * }
        * @return {string | void} error message or void
        */
       export function endEvent(options: string | CountlyEventOptions): string | void;

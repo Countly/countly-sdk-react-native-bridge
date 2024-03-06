@@ -9,6 +9,7 @@ import { Platform, NativeModules, NativeEventEmitter } from "react-native";
 import CountlyConfig from "./CountlyConfig.js";
 import CountlyState from "./CountlyState.js";
 import Feedback from "./Feedback.js";
+import Event from "./Event.js";
 import * as L from "./Logger.js";
 import * as Utils from "./Utils.js";
 import * as Validate from "./Validators.js";
@@ -24,6 +25,7 @@ CountlyState.CountlyReactNative = CountlyReactNative;
 CountlyState.eventEmitter = eventEmitter;
 
 Countly.feedback = new Feedback(CountlyState);
+Countly.events = new Event(CountlyState);
 
 let _isCrashReportingEnabled = false;
 
@@ -127,7 +129,13 @@ Countly.hasBeenCalledOnStart = function () {
  *
  * Used to send various types of event;
  *
- * @param {CountlyEventOptions} options event
+ * @param {CountlyEventOptions} options event options. 
+ * CountlyEventOptions {
+ *   eventName: string;
+ *   eventCount?: number;
+ *   eventSum?: number | string;
+ *   segments?: Segmentation;
+ * }
  * @return {string | void} error message or void
  */
 Countly.sendEvent = function (options) {
@@ -790,7 +798,13 @@ Countly.cancelEvent = function (eventName) {
  *
  * End Event
  *
- * @param {string | CountlyEventOptions} options event options
+ * @param {string | CountlyEventOptions} options event options. 
+ * CountlyEventOptions {
+ *   eventName: string;
+ *   eventCount?: number;
+ *   eventSum?: number | string;
+ *   segments?: Segmentation;
+ * }
  * @return {string | void} error message or void
  */
 Countly.endEvent = function (options) {

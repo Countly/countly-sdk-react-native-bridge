@@ -11,10 +11,16 @@ class Event {
     /**
      * Used to send various types of event;
      *
-     * @param {CountlyEventOptions} options event
+     * @param {string | CountlyEventOptions} options event options. 
+     * CountlyEventOptions {
+     *   eventName: string;
+     *   eventCount?: number;
+     *   eventSum?: number | string;
+     *   segments?: Segmentation;
+     * }
      * @return {string | void} error message or void
      */
-    sendEvent(options) {
+    recordEvent(options) {
         if (!this.#state.isInitialized) {
             const message = "'init' must be called before 'sendEvent'";
             L.e(`sendEvent, ${message}`);
@@ -72,7 +78,7 @@ class Event {
             args.push(event);
             args.push(segments[event]);
         }
-        this.#state.this.#state.CountlyReactNative.event(args);
+        this.#state.CountlyReactNative.event(args);
     }
 
     /**
@@ -121,7 +127,13 @@ class Event {
      *
      * End Event
      *
-     * @param {string | CountlyEventOptions} options event options
+     * @param {string | CountlyEventOptions} options event options. 
+     * CountlyEventOptions {
+     *   eventName: string;
+     *   eventCount?: number;
+     *   eventSum?: number | string;
+     *   segments?: Segmentation;
+     * }
      * @return {string | void} error message or void
      */
     endEvent(options) {
