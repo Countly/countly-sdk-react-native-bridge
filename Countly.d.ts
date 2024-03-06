@@ -127,6 +127,46 @@ declare module "countly-sdk-react-native-bridge" {
     }
 
     /**
+     * Countly Event Module
+     */
+    namespace event {
+      /**
+       * Used to send various types of event;
+       *
+       * @param {CountlyEventOptions} options event
+       * @return {string | void} error message or void
+       */
+      export function sendEvent(options: CountlyEventOptions): string | void;
+
+      /**
+       *
+       * Start Event
+       *
+       * @param {string} eventName name of event
+       * @return {string | void} error message or void
+       */
+      export function startEvent(eventName: string): string | void;
+
+      /**
+       *
+       * Cancel Event
+       *
+       * @param {string} eventName name of event
+       * @return {string | void} error message or void
+       */
+      export function cancelEvent(eventName: string): string | void;
+
+      /**
+       *
+       * End Event
+       *
+       * @param {string | CountlyEventOptions} options event options
+       * @return {string | void} error message or void
+       */
+      export function endEvent(options: string | CountlyEventOptions): string | void;
+    }
+
+    /**
      * Initialize Countly
      *
      * @deprecated in 23.02.0 : use 'initWithConfig' instead of 'init'.

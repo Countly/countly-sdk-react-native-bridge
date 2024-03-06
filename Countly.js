@@ -127,7 +127,7 @@ Countly.hasBeenCalledOnStart = function () {
  *
  * Used to send various types of event;
  *
- * @param {object} options event
+ * @param {CountlyEventOptions} options event
  * @return {string | void} error message or void
  */
 Countly.sendEvent = function (options) {
@@ -790,7 +790,7 @@ Countly.cancelEvent = function (eventName) {
  *
  * End Event
  *
- * @param {string | object} options event options
+ * @param {string | CountlyEventOptions} options event options
  * @return {string | void} error message or void
  */
 Countly.endEvent = function (options) {
