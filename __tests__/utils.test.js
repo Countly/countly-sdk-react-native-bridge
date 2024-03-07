@@ -29,6 +29,13 @@ test("0 input results in DeviceIdType.SDK_GENERATED", () => {
 });
 
 // 'intToDeviceIDType'
+// 1337 is provided as input
+// The function should return DeviceIdType.TEMPORARY_ID
+test("1337 maps to DeviceIdType.TEMPORARY_ID", () => {
+    expect(intToDeviceIDType(1337)).toBe(DeviceIdType.SDK_GENERATED);
+});
+
+// 'intToDeviceIDType'
 // An -1 is provided as input
 // The function should return DeviceIdType.SDK_GENERATED
 test("-1 input results in DeviceIdType.SDK_GENERATED", () => {

@@ -401,15 +401,15 @@ RCT_REMAP_METHOD(getCurrentDeviceId, getCurrentDeviceIdWithResolver : (RCTPromis
 RCT_REMAP_METHOD(getDeviceIDType, getDeviceIDTypeWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
         CLYDeviceIDType deviceIDType = [Countly.sharedInstance deviceIDType];
-        NSNumber *deviceIDTypeInt = NULL;
+        NSInteger deviceIDTypeInt = 0;
         if ([deviceIDType isEqualToString:CLYDeviceIDTypeCustom]) {
-            deviceIDTypeInt = @20202;
+            deviceIDTypeInt = 20202;
         } else if ([deviceIDType isEqualToString:CLYDeviceIDTypeTemporary]) {
-            deviceIDTypeInt = @30303;
+            deviceIDTypeInt = 30303;
         } else {
-            deviceIDTypeInt = @10101;
+            deviceIDTypeInt = 10101;
         }
-        resolve(deviceIDTypeInt);
+        resolve(@(deviceIDTypeInt));
     });
 }
 
