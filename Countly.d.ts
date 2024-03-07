@@ -133,16 +133,13 @@ declare module "countly-sdk-react-native-bridge" {
       /**
        * Used to send various types of event;
        *
-       * @param {string | CountlyEventOptions} options event options. 
-       * CountlyEventOptions {
-       *   eventName: string;
-       *   eventCount?: number;
-       *   eventSum?: number | string;
-       *   segments?: Segmentation;
-       * }
+       * @param {string} eventName event name. 
+       * @param {number} eventCount event count. 
+       * @param {number} eventSum event sum. 
+       * @param {Segmentation} segments event segmentation.
        * @return {string | void} error message or void
        */
-      export function recordEvent(options: CountlyEventOptions): string | void;
+      export function recordEvent(eventName: string, eventCount?: number, eventSum?: number, segments?: Segmentation): string | void;
 
       /**
        *
@@ -166,16 +163,13 @@ declare module "countly-sdk-react-native-bridge" {
        *
        * End Event
        *
-       * @param {string | CountlyEventOptions} options event options. 
-       * CountlyEventOptions {
-       *   eventName: string;
-       *   eventCount?: number;
-       *   eventSum?: number | string;
-       *   segments?: Segmentation;
-       * }
+       * @param {string} eventName event name. 
+       * @param {number} eventCount event count. 
+       * @param {number} eventSum event sum. 
+       * @param {Segmentation} segments event segmentation.
        * @return {string | void} error message or void
        */
-      export function endEvent(options: string | CountlyEventOptions): string | void;
+      export function endEvent(eventName: string, eventCount?: number, eventSum?: number, segments?: Segmentation): string | void;
     }
 
     /**

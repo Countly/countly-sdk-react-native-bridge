@@ -11,69 +11,57 @@ class Event {
     /**
      * Used to send various types of event;
      *
-     * @param {string | CountlyEventOptions} options event options. 
-     * CountlyEventOptions {
-     *   eventName: string;
-     *   eventCount?: number;
-     *   eventSum?: number | string;
-     *   segments?: Segmentation;
-     * }
+     * @param {string} eventName event name. 
+     * @param {number} eventCount event count. 
+     * @param {number} eventSum event sum. 
+     * @param {Segmentation} segments event segmentation.
      * @return {string | void} error message or void
      */
-    recordEvent(options) {
+    recordEvent(eventName, eventCount, eventSum, segments) {
         if (!this.#state.isInitialized) {
-            const message = "'init' must be called before 'sendEvent'";
-            L.e(`sendEvent, ${message}`);
+            const message = "'init' must be called before 'recordEvent'";
+            L.e(`recordEvent, ${message}`);
             return message;
         }
-        if (!options) {
-            const message = "sendEvent, no event object provided";
-            L.e(`sendEvent, ${message}`);
+        if (!eventName) {
+            const message = "recordEvent, eventName is required";
+            L.e(`recordEvent, ${message}`);
             return message;
         }
-        if (!options.eventName) {
-            const message = "sendEvent, eventName is required";
-            L.e(`sendEvent, ${message}`);
-            return message;
-        }
-        L.d(`sendEvent, Sending event: ${JSON.stringify(options)}]`);
+        L.d(`recordEvent, Sending event: [eventName: ${eventName}, eventCount: ${eventCount}, eventSum: ${eventSum}, segments: ${segments}]`);
 
         const args = [];
         let eventType = "event"; // event, eventWithSum, eventWithSegment, eventWithSumSegment
-        let segments = {};
 
-        if (options.eventSum) {
+        if (eventSum) {
             eventType = "eventWithSum";
         }
-        if (options.segments) {
+        if (segments) {
             eventType = "eventWithSegment";
         }
-        if (options.segments && options.eventSum) {
+        if (segments && eventSum) {
             eventType = "eventWithSumSegment";
         }
 
         args.push(eventType);
-        args.push(options.eventName.toString());
+        args.push(eventName);
 
-        if (options.eventCount) {
-            args.push(options.eventCount.toString());
+        if (eventCount) {
+            args.push(eventCount);
         } else {
-            args.push("1");
+            args.push(1);
         }
 
-        if (options.eventSum) {
-            options.eventSum = options.eventSum.toString();
-            if (options.eventSum.indexOf(".") === -1) {
-                options.eventSum = parseFloat(options.eventSum).toFixed(2);
-                args.push(options.eventSum);
+        if (eventSum) {
+            let eventSumTemp = eventSum.toString();
+            if (eventSumTemp.indexOf(".") === -1) {
+                eventSumTemp = parseFloat(eventSumTemp).toFixed(2);
+                args.push(eventSumTemp);
             } else {
-                args.push(options.eventSum);
+                args.push(eventSum);
             }
         }
 
-        if (options.segments) {
-            segments = options.segments;
-        }
         for (const event in segments) {
             args.push(event);
             args.push(segments[event]);
@@ -127,66 +115,63 @@ class Event {
      *
      * End Event
      *
-     * @param {string | CountlyEventOptions} options event options. 
-     * CountlyEventOptions {
-     *   eventName: string;
-     *   eventCount?: number;
-     *   eventSum?: number | string;
-     *   segments?: Segmentation;
-     * }
+     * @param {string} eventName event name. 
+     * @param {number} eventCount event count. 
+     * @param {number} eventSum event sum. 
+     * @param {Segmentation} segments event segmentation.
      * @return {string | void} error message or void
      */
-    endEvent(options) {
+    endEvent(eventName, eventCount, eventSum, segments) {
         if (!this.#state.isInitialized) {
             const message = "'init' must be called before 'endEvent'";
             L.e(`endEvent, ${message}`);
             return message;
         }
-        L.d(`endEvent, Ending event: [${JSON.stringify(options)}]`);
-        if (typeof options === "string") {
-            options = { eventName: options };
+        L.d(`endEvent, Ending event: [eventName: ${eventName}, eventCount: ${eventCount}, eventSum: ${eventSum}, segments: ${segments}]`);
+
+        if (!eventName) {
+            const message = "endEvent, eventName is required";
+            L.e(`endEvent, ${message}`);
+            return message;
         }
+
         const args = [];
         let eventType = "event"; // event, eventWithSum, eventWithSegment, eventWithSumSegment
-        let segments = {};
 
-        if (options.eventSum) {
+        if (eventSum) {
             eventType = "eventWithSum";
         }
-        if (options.segments) {
+        if (segments) {
             eventType = "eventWithSegment";
         }
-        if (options.segments && options.eventSum) {
+        if (segments && eventSum) {
             eventType = "eventWithSumSegment";
         }
 
         args.push(eventType);
 
-        if (!options.eventName) {
-            options.eventName = "";
+        if (!eventName) {
+            eventName = "";
         }
-        args.push(options.eventName.toString());
+        args.push(eventName);
 
-        if (!options.eventCount) {
-            options.eventCount = "1";
+        if (!eventCount) {
+            eventCount = 1;
         }
-        args.push(options.eventCount.toString());
+        args.push(eventCount);
 
-        if (options.eventSum) {
-            let eventSumTemp = options.eventSum.toString();
+        if (eventSum) {
+            let eventSumTemp = eventSum.toString();
             if (eventSumTemp.indexOf(".") === -1) {
                 eventSumTemp = parseFloat(eventSumTemp).toFixed(2);
                 args.push(eventSumTemp);
             } else {
-                args.push(eventSumTemp);
+                args.push(eventSum);
             }
         } else {
             args.push("0.0");
         }
 
-        if (options.segments) {
-            segments = options.segments;
-        }
         for (const event in segments) {
             args.push(event);
             args.push(segments[event]);

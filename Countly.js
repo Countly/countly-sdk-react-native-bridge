@@ -196,7 +196,7 @@ Countly.sendEvent = function (options) {
         args.push(event);
         args.push(segments[event]);
     }
-    CountlyReactNative.event(args);
+    CountlyReactNative.eventLegacy(args);
 };
 
 /**
@@ -862,7 +862,7 @@ Countly.endEvent = function (options) {
         args.push(event);
         args.push(segments[event]);
     }
-    CountlyReactNative.endEvent(args);
+    CountlyReactNative.endEventLegacy(args);
 };
 
 /**
