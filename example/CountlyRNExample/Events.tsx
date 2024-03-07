@@ -4,70 +4,30 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Countly from "countly-sdk-react-native-bridge";
 import CountlyButton from "./CountlyButton";
 
-interface Segmentation {}
-interface SegmentationCustom_1 extends Segmentation {
-    Country: string;
-    Age: string;
-}
-interface EventProps {
-    eventName: string;
-    segments?: Segmentation;
-    eventCount?: number;
-    eventSum?: string;
-}
-interface EventPropsCustom_1 extends EventProps {
-    segments?: SegmentationCustom_1;
-}
-
 const basicEvent = () => {
     // example for basic event
-    const event = { eventName: "Basic Event", eventCount: 1 };
-    Countly.sendEvent(event);
+    Countly.events.recordEvent("Basic Event", 1);
 };
 const eventWithSum = () => {
     // example for event with sum
-    const event = { eventName: "Event With Sum", eventCount: 1, eventSum: "0.99" };
-    Countly.sendEvent(event);
+    Countly.events.recordEvent("Event With Sum", 1, 0.99);
 };
 const eventWithSegment = () => {
     // example for event with segment
-    let event: EventPropsCustom_1 = {
-        eventName: "Event With Segment",
-        eventCount: 1,
-        segments: { Country: "Turkey", Age: "28" },
-    };
-    event.segments = { Country: "Turkey", Age: "28" };
-    Countly.sendEvent(event);
-    event = {
-        eventName: "Event With Segment",
-        eventCount: 1,
-        segments: { Country: "France", Age: "38" },
-    };
-    Countly.sendEvent(event);
+    Countly.events.recordEvent("Event With Segment", 1, undefined, { Country: "Turkey", Age: "28" });
+    Countly.events.recordEvent("Event With Segment", 1, undefined, { Country: "France", Age: "38" });
 };
 const eventWithSumAndSegment = () => {
     // example for event with segment and sum
-    let event: EventPropsCustom_1 = {
-        eventName: "Event With Sum And Segment",
-        eventCount: 1,
-        eventSum: "0.99",
-        segments: { Country: "Turkey", Age: "28" },
-    };
-    Countly.sendEvent(event);
-    event = {
-        eventName: "Event With Sum And Segment",
-        eventCount: 3,
-        eventSum: "1.99",
-        segments: { Country: "France", Age: "38" },
-    };
-    Countly.sendEvent(event);
+    Countly.events.recordEvent("Event With Sum And Segment", 1, 0.99, { Country: "Turkey", Age: "28" });
+    Countly.events.recordEvent("Event With Sum And Segment", 3, 1.99, { Country: "France", Age: "38" });
 };
 
 // TIMED EVENTS
 const startEvent = () => {
-    Countly.startEvent("timedEvent");
+    Countly.events.startEvent("timedEvent");
     setTimeout(() => {
-        Countly.endEvent("timedEvent");
+        Countly.events.endEvent("timedEvent");
     }, 1000);
 };
 
@@ -77,15 +37,10 @@ const startEvent = () => {
 */
 const timedEventWithSum = () => {
     // Event with sum
-    Countly.startEvent("timedEventWithSum");
-
-    const event: EventProps = {
-        eventName: "timedEventWithSum",
-        eventSum: "0.99",
-    };
+    Countly.events.startEvent("timedEventWithSum");
 
     setTimeout(() => {
-        Countly.endEvent(event);
+        Countly.events.endEvent("timedEventWithSum", undefined, 0.99);
     }, 1000);
 };
 
@@ -93,12 +48,8 @@ const timedEventWithSegment = () => {
     // Event with segment
     Countly.startEvent("timedEventWithSegment");
 
-    const event: EventPropsCustom_1 = {
-        eventName: "timedEventWithSegment",
-        segments: { Country: "Germany", Age: "32" },
-    };
     setTimeout(() => {
-        Countly.endEvent(event);
+        Countly.events.endEvent("timedEventWithSegment", undefined, undefined, { Country: "Germany", Age: "32" });
     }, 1000);
 };
 
@@ -106,14 +57,8 @@ const timedEventWithSumAndSegment = () => {
     // Event with Segment, sum and count
     Countly.startEvent("timedEventWithSumAndSegment");
 
-    const event: EventPropsCustom_1 = {
-        eventName: "timedEventWithSumAndSegment",
-        eventCount: 1,
-        eventSum: "0.99",
-        segments: { Country: "India", Age: "21" },
-    };
     setTimeout(() => {
-        Countly.endEvent(event);
+        Countly.events.endEvent("timedEventWithSumAndSegment", 1, 0.99, { Country: "India", Age: "21" });
     }, 1000);
 };
 // TIMED EVENTS
