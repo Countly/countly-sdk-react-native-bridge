@@ -11,9 +11,9 @@ class Event {
     /**
      * Used to send various types of event;
      *
-     * @param {string} eventName event name. 
-     * @param {number} eventCount event count. 
-     * @param {number} eventSum event sum. 
+     * @param {string} eventName event name.
+     * @param {number} eventCount event count.
+     * @param {number} eventSum event sum.
      * @param {Segmentation} segments event segmentation.
      * @return {string | void} error message or void
      */
@@ -30,41 +30,29 @@ class Event {
         }
         L.d(`recordEvent, Sending event: [eventName: ${eventName}, eventCount: ${eventCount}, eventSum: ${eventSum}, segments: ${segments}]`);
 
-        const args = [];
-        let eventType = "event"; // event, eventWithSum, eventWithSegment, eventWithSumSegment
-
-        if (eventSum) {
-            eventType = "eventWithSum";
-        }
-        if (segments) {
-            eventType = "eventWithSegment";
-        }
-        if (segments && eventSum) {
-            eventType = "eventWithSumSegment";
-        }
-
-        args.push(eventType);
-        args.push(eventName);
+        const args = {};
+        args.n = eventName;
 
         if (eventCount) {
-            args.push(eventCount);
+            args.c = eventCount;
         } else {
-            args.push(1);
+            args.c = 1;
         }
 
         if (eventSum) {
             let eventSumTemp = eventSum.toString();
             if (eventSumTemp.indexOf(".") === -1) {
                 eventSumTemp = parseFloat(eventSumTemp).toFixed(2);
-                args.push(eventSumTemp);
+                args.s = eventSumTemp;
             } else {
-                args.push(eventSum);
+                args.s = eventSum;
             }
         }
 
+        args.g = [];
         for (const event in segments) {
-            args.push(event);
-            args.push(segments[event]);
+            args.g.push(event);
+            args.g.push(segments[event]);
         }
         this.#state.CountlyReactNative.event(args);
     }
@@ -115,9 +103,9 @@ class Event {
      *
      * End Event
      *
-     * @param {string} eventName event name. 
-     * @param {number} eventCount event count. 
-     * @param {number} eventSum event sum. 
+     * @param {string} eventName event name.
+     * @param {number} eventCount event count.
+     * @param {number} eventSum event sum.
      * @param {Segmentation} segments event segmentation.
      * @return {string | void} error message or void
      */
@@ -127,54 +115,31 @@ class Event {
             L.e(`endEvent, ${message}`);
             return message;
         }
-        L.d(`endEvent, Ending event: [eventName: ${eventName}, eventCount: ${eventCount}, eventSum: ${eventSum}, segments: ${segments}]`);
+        L.d(`recordEvent, Sending event: [eventName: ${eventName}, eventCount: ${eventCount}, eventSum: ${eventSum}, segments: ${segments}]`);
 
-        if (!eventName) {
-            const message = "endEvent, eventName is required";
-            L.e(`endEvent, ${message}`);
-            return message;
-        }
+        const args = {};
+        args.n = eventName;
 
-        const args = [];
-        let eventType = "event"; // event, eventWithSum, eventWithSegment, eventWithSumSegment
-
-        if (eventSum) {
-            eventType = "eventWithSum";
+        if (eventCount) {
+            args.c = eventCount;
+        } else {
+            args.c = 1;
         }
-        if (segments) {
-            eventType = "eventWithSegment";
-        }
-        if (segments && eventSum) {
-            eventType = "eventWithSumSegment";
-        }
-
-        args.push(eventType);
-
-        if (!eventName) {
-            eventName = "";
-        }
-        args.push(eventName);
-
-        if (!eventCount) {
-            eventCount = 1;
-        }
-        args.push(eventCount);
 
         if (eventSum) {
             let eventSumTemp = eventSum.toString();
             if (eventSumTemp.indexOf(".") === -1) {
                 eventSumTemp = parseFloat(eventSumTemp).toFixed(2);
-                args.push(eventSumTemp);
+                args.s = eventSumTemp;
             } else {
-                args.push(eventSum);
+                args.s = eventSum;
             }
-        } else {
-            args.push("0.0");
         }
 
+        args.g = [];
         for (const event in segments) {
-            args.push(event);
-            args.push(segments[event]);
+            args.g.push(event);
+            args.g.push(segments[event]);
         }
         this.#state.CountlyReactNative.endEvent(args);
     }

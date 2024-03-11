@@ -750,46 +750,25 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     }
 
     @ReactMethod
-    public void event(ReadableArray args) {
-        String eventType = args.getString(0);
-        switch (eventType) {
-            case "event": {
-                String eventName = args.getString(1);
-                int eventCount = args.getInt(2);
-                Countly.sharedInstance().events().recordEvent(eventName, eventCount);
-                break;
-            }
-            case "eventWithSum": {
-                String eventName = args.getString(1);
-                int eventCount = args.getInt(2);
-                double eventSum = args.getDouble(3);
-                Countly.sharedInstance().events().recordEvent(eventName, eventCount, eventSum);
-                break;
-            }
-            case "eventWithSegment": {
-                String eventName = args.getString(1);
-                int eventCount = args.getInt(2);
-                HashMap<String, Object> segmentation = new HashMap<>();
-                for (int i = 3, il = args.size(); i < il; i += 2) {
-                    segmentation.put(args.getString(i), args.getString(i + 1));
-                }
-                Countly.sharedInstance().events().recordEvent(eventName, segmentation, eventCount);
-                break;
-            }
-            case "eventWithSumSegment": {
-                String eventName = args.getString(1);
-                int eventCount = args.getInt(2);
-                double eventSum = args.getDouble(3);
-                HashMap<String, Object> segmentation = new HashMap<>();
-                for (int i = 4, il = args.size(); i < il; i += 2) {
-                    segmentation.put(args.getString(i), args.getString(i + 1));
-                }
-                Countly.sharedInstance().events().recordEvent(eventName, segmentation, eventCount, eventSum);
-                break;
-            }
-            default:
-                break;
+    public void event(ReadableMap args) {
+        String eventName = args.getString("n");
+
+        int eventCount = 0;
+        if (args.hasKey("c")) {
+            eventCount = args.getInt("c");
         }
+
+        double eventSum = 0;
+        if (args.hasKey("s")) {
+            eventSum = args.getDouble("s");
+        }
+
+        HashMap<String, Object> segmentation = new HashMap<>();
+        ReadableArray segments = args.getArray("g");
+        for (int i = 0, il = segments != null ? segments.size() : 0; i < il; i += 2) {
+            segmentation.put(segments.getString(i), segments.getString(i + 1));
+        }
+        Countly.sharedInstance().events().recordEvent(eventName, segmentation, eventCount, eventSum);
     }
 
     @ReactMethod
@@ -847,45 +826,26 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     }
 
     @ReactMethod
-    public void endEvent(ReadableArray args) {
-        String eventType = args.getString(0);
-        switch (eventType) {
-            case "event": {
-                String eventName = args.getString(1);
-                Countly.sharedInstance().events().endEvent(eventName);
-                break;
-            }
-            case "eventWithSum": {
-                String eventName = args.getString(1);
-                int eventCount = args.getInt(2);
-                double eventSum = args.getDouble(3);
-                Countly.sharedInstance().events().endEvent(eventName, null, eventCount, eventSum);
-                break;
-            }
-            case "eventWithSegment": {
-                String eventName = args.getString(1);
-                int eventCount = args.getInt(2);
-                HashMap<String, Object> segmentation = new HashMap<>();
-                for (int i = 4, il = args.size(); i < il; i += 2) {
-                    segmentation.put(args.getString(i), args.getString(i + 1));
-                }
-                Countly.sharedInstance().events().endEvent(eventName, segmentation, eventCount, 0);
-                break;
-            }
-            case "eventWithSumSegment": {
-                String eventName = args.getString(1);
-                int eventCount = args.getInt(2);
-                double eventSum = args.getDouble(3);
-                HashMap<String, Object> segmentation = new HashMap<>();
-                for (int i = 4, il = args.size(); i < il; i += 2) {
-                    segmentation.put(args.getString(i), args.getString(i + 1));
-                }
-                Countly.sharedInstance().events().endEvent(eventName, segmentation, eventCount, eventSum);
-                break;
-            }
-            default:
-                break;
+    public void endEvent(ReadableMap args) {
+        String eventName = args.getString("n");
+
+        int eventCount = 0;
+        if (args.hasKey("c")) {
+            eventCount = args.getInt("c");
         }
+
+        double eventSum = 0;
+        if (args.hasKey("s")) {
+            eventSum = args.getDouble("s");
+        }
+
+        HashMap<String, Object> segmentation = new HashMap<>();
+        ReadableArray segments = args.getArray("g");
+        for (int i = 0, il = segments != null ? segments.size() : 0; i < il; i += 2) {
+            segmentation.put(segments.getString(i), segments.getString(i + 1));
+        }
+
+        Countly.sharedInstance().events().endEvent(eventName, segmentation, eventCount, eventSum);
     }
 
     @ReactMethod
