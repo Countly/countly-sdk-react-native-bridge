@@ -19,12 +19,15 @@ function intToDeviceIDType(deviceIdType) {
     switch (deviceIdType) {
     case 10101:
         result = DeviceIdType.SDK_GENERATED;
+        L.e(`_getDeviceIdType, DeviceIDType: ${result}`);
         break;
     case 20202:
         result = DeviceIdType.DEVELOPER_SUPPLIED;
+        L.e(`_getDeviceIdType, DeviceIDType: ${result}`);
         break;
     case 30303:
         result = DeviceIdType.TEMPORARY_ID;
+        L.e(`_getDeviceIdType, DeviceIDType: ${result}`);
         break;
     default:
         L.e("_getDeviceIdType, " + `unexpected deviceIdType [${deviceIdType}] from native side`);
