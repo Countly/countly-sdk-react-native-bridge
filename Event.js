@@ -28,7 +28,7 @@ class Event {
             L.e(`recordEvent, ${message}`);
             return message;
         }
-        L.d(`recordEvent, Sending event: [eventName: ${eventName}, eventCount: ${eventCount}, eventSum: ${eventSum}, segments: ${segments}]`);
+        L.i(`recordEvent, Sending event: [eventName: ${eventName}, eventCount: ${eventCount}, eventSum: ${eventSum}, segments: ${segments}]`);
 
         const args = {};
         args.n = eventName;
@@ -74,7 +74,7 @@ class Event {
         if (message) {
             return message;
         }
-        L.d(`startEvent, Starting event: [${eventName}]`);
+        L.i(`startEvent, Starting event: [${eventName}]`);
         this.#state.CountlyReactNative.startEvent([eventName.toString()]);
     }
 
@@ -95,7 +95,7 @@ class Event {
         if (message) {
             return message;
         }
-        L.d(`cancelEvent, Canceling event: [${eventName}]`);
+        L.i(`cancelEvent, Canceling event: [${eventName}]`);
         this.#state.CountlyReactNative.cancelEvent([eventName.toString()]);
     }
 
@@ -104,18 +104,18 @@ class Event {
      * End Event
      *
      * @param {string} eventName event name.
+     * @param {Segmentation} segments event segmentation.
      * @param {number} eventCount event count.
      * @param {number} eventSum event sum.
-     * @param {Segmentation} segments event segmentation.
      * @return {string | void} error message or void
      */
-    endEvent(eventName, eventCount, eventSum, segments) {
+    endEvent(eventName, segments, eventCount, eventSum) {
         if (!this.#state.isInitialized) {
             const message = "'init' must be called before 'endEvent'";
             L.e(`endEvent, ${message}`);
             return message;
         }
-        L.d(`recordEvent, Sending event: [eventName: ${eventName}, eventCount: ${eventCount}, eventSum: ${eventSum}, segments: ${segments}]`);
+        L.i(`recordEvent, Sending event: [eventName: ${eventName}, segments: ${segments}, eventCount: ${eventCount}, eventSum: ${eventSum}]`);
 
         const args = {};
         args.n = eventName;

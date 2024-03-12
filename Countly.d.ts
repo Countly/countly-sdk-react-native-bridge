@@ -164,12 +164,12 @@ declare module "countly-sdk-react-native-bridge" {
        * End Event
        *
        * @param {string} eventName event name.
+       * @param {Segmentation} segments event segmentation.
        * @param {number} eventCount event count.
        * @param {number} eventSum event sum.
-       * @param {Segmentation} segments event segmentation.
        * @return {string | void} error message or void
        */
-      export function endEvent(eventName: string, eventCount?: number, eventSum?: number, segments?: Segmentation): string | void;
+      export function endEvent(eventName: string, segments?: Segmentation, eventCount?: number, eventSum?: number): string | void;
     }
 
     /**
