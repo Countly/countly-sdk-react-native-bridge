@@ -517,9 +517,6 @@ Countly.getDeviceIDType = async function () {
     }
     L.d("getDeviceIDType, Getting device id type");
     const result = await CountlyReactNative.getDeviceIDType();
-    if (result == null || result == "") {
-        return null;
-    }
     return Utils.intToDeviceIDType(result);
 };
 
