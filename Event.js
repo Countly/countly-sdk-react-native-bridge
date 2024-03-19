@@ -39,15 +39,7 @@ class Event {
             args.c = 1;
         }
 
-        if (eventSum) {
-            let eventSumTemp = eventSum.toString();
-            if (eventSumTemp.indexOf(".") === -1) {
-                eventSumTemp = parseFloat(eventSumTemp).toFixed(2);
-                args.s = eventSumTemp;
-            } else {
-                args.s = eventSum;
-            }
-        }
+        args.s = eventSum;
 
         args.g = [];
         for (const event in segments) {
@@ -126,15 +118,7 @@ class Event {
             args.c = 1;
         }
 
-        if (eventSum) {
-            let eventSumTemp = eventSum.toString();
-            if (eventSumTemp.indexOf(".") === -1) {
-                eventSumTemp = parseFloat(eventSumTemp).toFixed(2);
-                args.s = eventSumTemp;
-            } else {
-                args.s = eventSum;
-            }
-        }
+        args.s = eventSum;
 
         args.g = [];
         for (const event in segments) {
