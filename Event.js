@@ -15,18 +15,16 @@ class Event {
      * @param {number} eventCount event count.
      * @param {number} eventSum event sum.
      * @param {Segmentation} segments event segmentation.
-     * @return {string | void} error message or void
+     * @return {void} void
      */
     recordEvent(eventName, eventCount, eventSum, segments) {
         if (!this.#state.isInitialized) {
-            const message = "'init' must be called before 'recordEvent'";
-            L.e(`recordEvent, ${message}`);
-            return message;
+            L.e("recordEvent, 'init' must be called before 'recordEvent'");
+            return;
         }
         if (!eventName) {
-            const message = "recordEvent, eventName is required";
-            L.e(`recordEvent, ${message}`);
-            return message;
+            L.e("recordEvent, eventName is required");
+            return;
         }
         L.i(`recordEvent, Sending event: [eventName: ${eventName}, eventCount: ${eventCount}, eventSum: ${eventSum}, segments: ${segments}]`);
 
@@ -54,17 +52,17 @@ class Event {
      * Start Event
      *
      * @param {string} eventName name of event
-     * @return {string | void} error message or void
+     * @return {void} void
      */
     startEvent(eventName) {
         if (!this.#state.isInitialized) {
-            const msg = "'init' must be called before 'startEvent'";
-            L.e(`startEvent, ${msg}`);
-            return msg;
+            L.e("startEvent, 'init' must be called before 'startEvent'");
+            return;
         }
         const message = Validate.String(eventName, "eventName", "startEvent");
         if (message) {
-            return message;
+            L.e(`startEvent, ${message}`);
+            return;
         }
         L.i(`startEvent, Starting event: [${eventName}]`);
         this.#state.CountlyReactNative.startEvent([eventName.toString()]);
@@ -75,17 +73,17 @@ class Event {
      * Cancel Event
      *
      * @param {string} eventName name of event
-     * @return {string | void} error message or void
+     * @return {void} void
      */
     cancelEvent(eventName) {
         if (!this.#state.isInitialized) {
-            const msg = "'init' must be called before 'cancelEvent'";
-            L.e(`cancelEvent, ${msg}`);
+            L.e("cancelEvent, 'init' must be called before 'cancelEvent'");
             return msg;
         }
         const message = Validate.String(eventName, "eventName", "cancelEvent");
         if (message) {
-            return message;
+            L.e(`cancelEvent, ${message}`);
+            return;
         }
         L.i(`cancelEvent, Canceling event: [${eventName}]`);
         this.#state.CountlyReactNative.cancelEvent([eventName.toString()]);
@@ -99,13 +97,12 @@ class Event {
      * @param {Segmentation} segments event segmentation.
      * @param {number} eventCount event count.
      * @param {number} eventSum event sum.
-     * @return {string | void} error message or void
+     * @return {void} void
      */
     endEvent(eventName, segments, eventCount, eventSum) {
         if (!this.#state.isInitialized) {
-            const message = "'init' must be called before 'endEvent'";
-            L.e(`endEvent, ${message}`);
-            return message;
+            L.e("endEvent, 'init' must be called before 'endEvent'");
+            return;
         }
         L.i(`recordEvent, Sending event: [eventName: ${eventName}, segments: ${segments}, eventCount: ${eventCount}, eventSum: ${eventSum}]`);
 

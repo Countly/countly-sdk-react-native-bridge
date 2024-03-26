@@ -137,27 +137,27 @@ declare module "countly-sdk-react-native-bridge" {
        * @param {number} eventCount event count.
        * @param {number} eventSum event sum.
        * @param {Segmentation} segments event segmentation.
-       * @return {string | void} error message or void
+       * @return {void} void
        */
-      export function recordEvent(eventName: string, eventCount?: number, eventSum?: number, segments?: Segmentation): string | void;
+      export function recordEvent(eventName: string, eventCount?: number, eventSum?: number, segments?: Segmentation): void;
 
       /**
        *
        * Start Event
        *
        * @param {string} eventName name of event
-       * @return {string | void} error message or void
+       * @return {void} void
        */
-      export function startEvent(eventName: string): string | void;
+      export function startEvent(eventName: string): void;
 
       /**
        *
        * Cancel Event
        *
        * @param {string} eventName name of event
-       * @return {string | void} error message or void
+       * @return {void} void
        */
-      export function cancelEvent(eventName: string): string | void;
+      export function cancelEvent(eventName: string): void;
 
       /**
        *
@@ -167,9 +167,9 @@ declare module "countly-sdk-react-native-bridge" {
        * @param {Segmentation} segments event segmentation.
        * @param {number} eventCount event count.
        * @param {number} eventSum event sum.
-       * @return {string | void} error message or void
+       * @return {void} void
        */
-      export function endEvent(eventName: string, segments?: Segmentation, eventCount?: number, eventSum?: number): string | void;
+      export function endEvent(eventName: string, segments?: Segmentation, eventCount?: number, eventSum?: number): void;
     }
 
     /**
