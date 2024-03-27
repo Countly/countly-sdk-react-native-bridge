@@ -127,6 +127,52 @@ declare module "countly-sdk-react-native-bridge" {
     }
 
     /**
+     * Countly Event Module
+     */
+    namespace events {
+      /**
+       * Used to record an event;
+       *
+       * @param {string} eventName event name.
+       * @param {Segmentation} segments event segmentation.
+       * @param {number} eventCount event count.
+       * @param {number} eventSum event sum.
+       * @return {void} void
+       */
+      export function recordEvent(eventName: string, segments?: Segmentation, eventCount?: number, eventSum?: number): void;
+
+      /**
+       *
+       * Start Event
+       *
+       * @param {string} eventName name of event
+       * @return {void} void
+       */
+      export function startEvent(eventName: string): void;
+
+      /**
+       *
+       * Cancel Event
+       *
+       * @param {string} eventName name of event
+       * @return {void} void
+       */
+      export function cancelEvent(eventName: string): void;
+
+      /**
+       *
+       * End Event
+       *
+       * @param {string} eventName event name.
+       * @param {Segmentation} segments event segmentation.
+       * @param {number} eventCount event count.
+       * @param {number} eventSum event sum.
+       * @return {void} void
+       */
+      export function endEvent(eventName: string, segments?: Segmentation, eventCount?: number, eventSum?: number): void;
+    }
+
+    /**
      * Initialize Countly
      *
      * @deprecated in 23.02.0 : use 'initWithConfig' instead of 'init'.
@@ -167,6 +213,7 @@ declare module "countly-sdk-react-native-bridge" {
     /**
      *
      * Used to send various types of event;
+     * @deprecated in xx.x.x : use 'Countly.event.cancelEvent' instead of this.
      *
      * @param {CountlyEventOptions} options event
      * @return {string | void} error message or void
@@ -444,6 +491,7 @@ declare module "countly-sdk-react-native-bridge" {
     /**
      *
      * Start Event
+     * @deprecated in xx.x.x : use 'Countly.event.startEvent' instead of this.
      *
      * @param {string} eventName name of event
      * @return {string | void} error message or void
@@ -453,6 +501,7 @@ declare module "countly-sdk-react-native-bridge" {
     /**
      *
      * Cancel Event
+     * @deprecated in xx.x.x : use 'Countly.event.cancelEvent' instead of this.
      *
      * @param {string} eventName name of event
      * @return {string | void} error message or void
@@ -462,6 +511,7 @@ declare module "countly-sdk-react-native-bridge" {
     /**
      *
      * End Event
+     * @deprecated in xx.x.x : use 'Countly.event.endEvent' instead of this.
      *
      * @param {string | object} options event options
      * @return {string | void} error message or void

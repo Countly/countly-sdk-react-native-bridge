@@ -231,7 +231,7 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
     }
 }
 
-RCT_EXPORT_METHOD(event : (NSArray *)arguments) {
+RCT_EXPORT_METHOD(eventLegacy : (NSArray *)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^{
       NSString *eventType = [arguments objectAtIndex:0];
       if (eventType != nil && [eventType length] > 0) {
@@ -274,6 +274,26 @@ RCT_EXPORT_METHOD(event : (NSArray *)arguments) {
       }
     });
 }
+
+RCT_EXPORT_METHOD(event : (NSDictionary *)arguments) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSString *eventName = [arguments objectForKey:@"n"];
+
+        NSNumber *countNumber = [arguments objectForKey:@"c"];
+        int countInt = [countNumber intValue];
+
+        NSNumber *sumNumber = [arguments objectForKey:@"s"];
+        float sumFloat = [sumNumber floatValue];
+
+        NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
+        NSArray *segments = [arguments objectForKey:@"g"];
+        for (int i = 0, il = (int)segments.count; i < il; i += 2) {
+            dict[[segments objectAtIndex:i]] = [segments objectAtIndex:i + 1];
+        }
+        [[Countly sharedInstance] recordEvent:eventName segmentation:dict count:countInt sum:sumFloat];
+    });
+}
+
 RCT_EXPORT_METHOD(recordView : (NSArray *)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^{
       NSString *recordView = [arguments objectAtIndex:0];
@@ -478,7 +498,7 @@ RCT_EXPORT_METHOD(cancelEvent : (NSArray *)arguments) {
     });
 }
 
-RCT_EXPORT_METHOD(endEvent : (NSArray *)arguments) {
+RCT_EXPORT_METHOD(endEventLegacy : (NSArray *)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^{
       NSString *eventType = [arguments objectAtIndex:0];
 
@@ -525,6 +545,25 @@ RCT_EXPORT_METHOD(endEvent : (NSArray *)arguments) {
           [Countly.sharedInstance endEvent:eventName segmentation:dict count:countInt sum:sumInt];
       } else {
       }
+    });
+}
+
+RCT_EXPORT_METHOD(endEvent : (NSDictionary *)arguments) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSString *eventName = [arguments objectForKey:@"n"];
+
+        NSNumber *countNumber = [arguments objectForKey:@"c"];
+        int countInt = [countNumber intValue];
+
+        NSNumber *sumNumber = [arguments objectForKey:@"s"];
+        float sumFloat = [sumNumber floatValue];
+
+        NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
+        NSArray *segments = [arguments objectForKey:@"g"];
+        for (int i = 0, il = (int)segments.count; i < il; i += 2) {
+            dict[[segments objectAtIndex:i]] = [segments objectAtIndex:i + 1];
+        }
+        [[Countly sharedInstance] endEvent:eventName segmentation:dict count:countInt sum:sumFloat];
     });
 }
 
