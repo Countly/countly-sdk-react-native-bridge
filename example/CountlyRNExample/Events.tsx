@@ -6,21 +6,21 @@ import CountlyButton from "./CountlyButton";
 
 const basicEvent = () => {
     // example for basic event
-    Countly.events.recordEvent("Basic Event", 1);
+    Countly.events.recordEvent("Basic Event", undefined, 1);
 };
 const eventWithSum = () => {
     // example for event with sum
-    Countly.events.recordEvent("Event With Sum", 1, 0.99);
+    Countly.events.recordEvent("Event With Sum", undefined, 1, 0.99);
 };
 const eventWithSegment = () => {
     // example for event with segment
-    Countly.events.recordEvent("Event With Segment", 1, undefined, { Country: "Turkey", Age: "28" });
-    Countly.events.recordEvent("Event With Segment", 1, undefined, { Country: "France", Age: "38" });
+    Countly.events.recordEvent("Event With Segment", { Country: "Turkey", Age: "28" }, 1, undefined);
+    Countly.events.recordEvent("Event With Segment", { Country: "France", Age: "38" }, 1, undefined);
 };
 const eventWithSumAndSegment = () => {
     // example for event with segment and sum
-    Countly.events.recordEvent("Event With Sum And Segment", 1, 0.99, { Country: "Turkey", Age: "28" });
-    Countly.events.recordEvent("Event With Sum And Segment", 3, 1.99, { Country: "France", Age: "38" });
+    Countly.events.recordEvent("Event With Sum And Segment", { Country: "Turkey", Age: "28" }, 1, 0.99);
+    Countly.events.recordEvent("Event With Sum And Segment", { Country: "France", Age: "38" }, 3, 1.99);
 };
 
 // TIMED EVENTS
@@ -40,28 +40,43 @@ const timedEventWithSum = () => {
     Countly.events.startEvent("timedEventWithSum");
 
     setTimeout(() => {
-        Countly.events.endEvent("timedEventWithSum", undefined, 0.99);
+        Countly.events.endEvent("timedEventWithSum", undefined, undefined, 0.99);
     }, 1000);
 };
 
 const timedEventWithSegment = () => {
     // Event with segment
-    Countly.startEvent("timedEventWithSegment");
+    Countly.events.startEvent("timedEventWithSegment");
 
     setTimeout(() => {
-        Countly.events.endEvent("timedEventWithSegment", undefined, undefined, { Country: "Germany", Age: "32" });
+        Countly.events.endEvent("timedEventWithSegment", { Country: "Germany", Age: "32" }, undefined, undefined);
     }, 1000);
 };
 
 const timedEventWithSumAndSegment = () => {
     // Event with Segment, sum and count
-    Countly.startEvent("timedEventWithSumAndSegment");
+    Countly.events.startEvent("timedEventWithSumAndSegment");
 
     setTimeout(() => {
-        Countly.events.endEvent("timedEventWithSumAndSegment", 1, 0.99, { Country: "India", Age: "21" });
+        Countly.events.endEvent("timedEventWithSumAndSegment", { Country: "India", Age: "21" }, 1, 0.99);
     }, 1000);
 };
 // TIMED EVENTS
+
+// Test Bad Values
+const testEventWithBadValues = () => {
+    Countly.events.recordEvent(10);
+    Countly.events.recordEvent("Basic Event", "11");
+    Countly.events.recordEvent("Basic Event", 1, "abc");
+    Countly.events.recordEvent("Event With Sum", undefined, "1", "0.99");
+    Countly.events.recordEvent("Event With Segment", ["Country", "France"], "1", "0.99");
+    Countly.events.recordEvent("Event With Segment", ["Country", "France"], "abc", "def");
+    Countly.events.recordEvent(null, null, null, null);
+    Countly.events.recordEvent(0, 0, 0, 0);
+    Countly.events.recordEvent(" ", " ", " ", " ");
+    Countly.events.recordEvent("", "", "", "");
+};
+// Test Bad Values
 
 const eventSendThreshold = () => {
     Countly.setEventSendThreshold(10);
@@ -79,6 +94,7 @@ function EventScreen({ navigation }) {
                 <CountlyButton onPress={timedEventWithSum} title="Timed events with Sum" color="#e0e0e0" />
                 <CountlyButton onPress={timedEventWithSegment} title="Timed events with Segment" color="#e0e0e0" />
                 <CountlyButton onPress={timedEventWithSumAndSegment} title="Timed events with Sum and Segment" color="#e0e0e0" />
+                <CountlyButton onPress={testEventWithBadValues} title="Test Event With Bad Values" color="#e0e0e0" />
                 <CountlyButton onPress={eventSendThreshold} title="Set Event Threshold" color="#00b5ad" />
             </ScrollView>
         </SafeAreaView>

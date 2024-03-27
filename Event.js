@@ -9,15 +9,15 @@ class Event {
     }
 
     /**
-     * Used to send various types of event;
+     * Used to record an event;
      *
      * @param {string} eventName event name.
+     * @param {Segmentation} segments event segmentation.
      * @param {number} eventCount event count.
      * @param {number} eventSum event sum.
-     * @param {Segmentation} segments event segmentation.
      * @return {void} void
      */
-    recordEvent(eventName, eventCount, eventSum, segments) {
+    recordEvent(eventName, segments, eventCount, eventSum) {
         if (!this.#state.isInitialized) {
             L.e("recordEvent, 'init' must be called before 'recordEvent'");
             return;

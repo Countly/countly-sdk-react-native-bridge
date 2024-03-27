@@ -126,9 +126,10 @@ Countly.hasBeenCalledOnStart = function () {
 };
 
 /**
+ * Used to send event;
  *
- * Used to send various types of event;
- *
+ * @deprecated in xx.x.x : use 'Countly.event.recordEvent' instead of this.
+ * 
  * @param {CountlyEventOptions} options event options. 
  * CountlyEventOptions {
  *   eventName: string;
@@ -753,8 +754,8 @@ Countly.pinnedCertificates = function (certificateName) {
 };
 
 /**
- *
  * Start Event
+ * @deprecated in xx.x.x : use 'Countly.event.startEvent' instead of this.
  *
  * @param {string} eventName name of event
  * @return {string | void} error message or void
@@ -774,8 +775,8 @@ Countly.startEvent = function (eventName) {
 };
 
 /**
- *
  * Cancel Event
+ * @deprecated in xx.x.x : use 'Countly.event.cancelEvent' instead of this.
  *
  * @param {string} eventName name of event
  * @return {string | void} error message or void
@@ -795,8 +796,8 @@ Countly.cancelEvent = function (eventName) {
 };
 
 /**
- *
  * End Event
+ * @deprecated in xx.x.x : use 'Countly.event.endEvent' instead of this.
  *
  * @param {string | CountlyEventOptions} options event options. 
  * CountlyEventOptions {
