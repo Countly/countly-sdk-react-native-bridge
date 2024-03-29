@@ -112,4 +112,39 @@ function validateUserDataValue(stringValue, stringName, functionName) {
     return validateParseInt(stringValue, stringName, functionName);
 }
 
-export { validateUserDataValue as UserDataValue, validateString as String, validateParseInt as ParseInt, validateValidUserData as ValidUserData, validateUserDataType as UserDataType };
+/**
+ * Validate event module parameters.
+ * and it should not be null or undefined
+ * It will log a message if any issue found related to data validation and return true.
+ * If the parameters are valid, it will return true.
+ * @param {String} functionName : name of function from where value is validating.
+ * @param {String} eventName : event name
+ * @param {String} segments : segmentation data
+ * @param {String} eventCount : event count
+ * @param {String} eventSum : event sum
+ * @returns
+ */
+function isEventParametersValid(functionName, eventName, segments, eventCount, eventSum) {
+    if (eventName && typeof eventName !== 'string') {
+        L.w(`${functionName}, eventName: [${eventName}] must be a string`);
+        return false;
+    }
+    if (segments && typeof segments !== 'object') {
+        L.w(`${functionName}, segments: [${segments}] must be an instance of Segmentation`);
+        return false;
+    }
+
+    if (eventCount && typeof eventCount !== 'number') {
+        L.w(`${functionName}, eventCount: [${eventCount}] must be a number`);
+        return false;
+    }
+
+    if (eventSum && typeof eventSum !== 'number') {
+        L.w(`${functionName}, eventSum: [${eventSum}] must be a number`);
+        return false;
+    }
+
+    return true;
+}
+
+export { validateUserDataValue as UserDataValue, validateString as String, validateParseInt as ParseInt, validateValidUserData as ValidUserData, validateUserDataType as UserDataType, isEventParametersValid };

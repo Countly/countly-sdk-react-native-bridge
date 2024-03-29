@@ -26,6 +26,11 @@ class Event {
             L.e("recordEvent, eventName is required");
             return;
         }
+        const validParameters = Validate.isEventParametersValid('recordEvent', eventName, segments, eventCount, eventSum);
+        if (!validParameters) {
+            return;
+        }
+
         L.i(`recordEvent, Sending event: [eventName: ${eventName}, eventCount: ${eventCount}, eventSum: ${eventSum}, segments: ${segments}]`);
 
         const args = {};
@@ -102,6 +107,10 @@ class Event {
     endEvent(eventName, segments, eventCount, eventSum) {
         if (!this.#state.isInitialized) {
             L.e("endEvent, 'init' must be called before 'endEvent'");
+            return;
+        }
+        const validParameters = Validate.isEventParametersValid('recordEvent', eventName, segments, eventCount, eventSum);
+        if (!validParameters) {
             return;
         }
         L.i(`recordEvent, Sending event: [eventName: ${eventName}, segments: ${segments}, eventCount: ${eventCount}, eventSum: ${eventSum}]`);

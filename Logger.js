@@ -11,7 +11,7 @@ function initialize(debugMode) {
 }
 
 /**
- * Error - this is a issues that needs attention right now.
+ * Error - this is an issues that needs attention right now.
  * @param {String} message
  */
 function e(message) {
