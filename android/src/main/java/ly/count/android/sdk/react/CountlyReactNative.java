@@ -750,7 +750,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     }
 
     @ReactMethod
-    public void event(ReadableMap args) {
+    public void recordEvent(ReadableMap args) {
         String eventName = args.getString("n");
 
         int eventCount = 0;

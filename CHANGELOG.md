@@ -13,11 +13,8 @@ Deprecated 'enableApm' config option. Use instead 'apm.enableAppStartTimeTrackin
 
 * Fixed a bug in `getRemoteConfigValueForKeyP` and `remoteConfigClearValues` where those functions would produce a "Property 'callback' doesn't exist", if they are called before initializing the SDK.
 
-* Deprecated the old events methods. You should now use the `events` object. Deprecated methods are:
-  * sendEvent
-  * startEvent
-  * cancelEvent
-  * endEvent
+* Added new Event interface (`Countly.event`) on the SDK interface that exposes the event calls.
+* Deprecated the old events methods.
 
 * Updated the underlying Android SDK version to 24.1.1
 * Updated the underlying iOS SDK version to 24.1.0

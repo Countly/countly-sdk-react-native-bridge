@@ -9,24 +9,24 @@ class Event {
     }
 
     /**
-     * Used to record an event;
+     * Record an event;
      *
-     * @param {string} eventName event name.
-     * @param {Segmentation} segments event segmentation.
-     * @param {number} eventCount event count.
-     * @param {number} eventSum event sum.
+     * @param {string} eventName - Name of the event.
+     * @param {Segmentation} segments - segementation data for the event.
+     * @param {number} eventCount - event count.
+     * @param {number} eventSum - event sum.
      * @return {void} void
      */
     recordEvent(eventName, segments, eventCount, eventSum) {
         if (!this.#state.isInitialized) {
-            L.e("recordEvent, 'init' must be called before 'recordEvent'");
+            L.d("recordEvent, 'init' must be called before 'recordEvent'");
             return;
         }
         if (!eventName) {
-            L.e("recordEvent, eventName is required");
+            L.d("recordEvent, eventName is required");
             return;
         }
-        const validParameters = Validate.isEventParametersValid('recordEvent', eventName, segments, eventCount, eventSum);
+        const validParameters = Validate.areEventParametersValid('recordEvent', eventName, segments, eventCount, eventSum);
         if (!validParameters) {
             return;
         }
@@ -49,24 +49,25 @@ class Event {
             args.g.push(event);
             args.g.push(segments[event]);
         }
-        this.#state.CountlyReactNative.event(args);
+        this.#state.CountlyReactNative.recordEvent(args);
     }
 
     /**
      *
      * Start Event
+     * NB: If endEvent is not called (with the same event name),
+     * no event will be recorded.
      *
      * @param {string} eventName name of event
      * @return {void} void
      */
     startEvent(eventName) {
         if (!this.#state.isInitialized) {
-            L.e("startEvent, 'init' must be called before 'startEvent'");
+            L.d("startEvent, 'init' must be called before 'startEvent'");
             return;
         }
-        const message = Validate.String(eventName, "eventName", "startEvent");
-        if (message) {
-            L.e(`startEvent, ${message}`);
+        const isInvalid = Validate.String(eventName, "eventName", "startEvent");
+        if (isInvalid) {
             return;
         }
         L.i(`startEvent, Starting event: [${eventName}]`);
@@ -75,19 +76,18 @@ class Event {
 
     /**
      *
-     * Cancel Event
+     * Cancels an Event
      *
      * @param {string} eventName name of event
      * @return {void} void
      */
     cancelEvent(eventName) {
         if (!this.#state.isInitialized) {
-            L.e("cancelEvent, 'init' must be called before 'cancelEvent'");
+            L.d("cancelEvent, 'init' must be called before 'cancelEvent'");
             return msg;
         }
-        const message = Validate.String(eventName, "eventName", "cancelEvent");
-        if (message) {
-            L.e(`cancelEvent, ${message}`);
+        const isInvalid = Validate.String(eventName, "eventName", "cancelEvent");
+        if (isInvalid) {
             return;
         }
         L.i(`cancelEvent, Canceling event: [${eventName}]`);
@@ -97,23 +97,24 @@ class Event {
     /**
      *
      * End Event
+     * NB: Should be called after startEvent.
      *
-     * @param {string} eventName event name.
-     * @param {Segmentation} segments event segmentation.
-     * @param {number} eventCount event count.
-     * @param {number} eventSum event sum.
+     * @param {string} eventName - Name of the event.
+     * @param {Segmentation} segments - segementation data for the event.
+     * @param {number} eventCount - event count.
+     * @param {number} eventSum - event sum.
      * @return {void} void
      */
     endEvent(eventName, segments, eventCount, eventSum) {
         if (!this.#state.isInitialized) {
-            L.e("endEvent, 'init' must be called before 'endEvent'");
+            L.d("endEvent, 'init' must be called before 'endEvent'");
             return;
         }
-        const validParameters = Validate.isEventParametersValid('recordEvent', eventName, segments, eventCount, eventSum);
+        const validParameters = Validate.areEventParametersValid('endEvent', eventName, segments, eventCount, eventSum);
         if (!validParameters) {
             return;
         }
-        L.i(`recordEvent, Sending event: [eventName: ${eventName}, segments: ${segments}, eventCount: ${eventCount}, eventSum: ${eventSum}]`);
+        L.i(`endEvent, Sending event: [eventName: ${eventName}, segments: ${segments}, eventCount: ${eventCount}, eventSum: ${eventSum}]`);
 
         const args = {};
         args.n = eventName;

@@ -131,45 +131,48 @@ declare module "countly-sdk-react-native-bridge" {
      */
     namespace events {
       /**
-       * Used to record an event;
+       * Record an event;
        *
-       * @param {string} eventName event name.
-       * @param {Segmentation} segments event segmentation.
-       * @param {number} eventCount event count.
-       * @param {number} eventSum event sum.
+       * @param {string} eventName - Name of the event.
+       * @param {Segmentation} segments - segementation data for the event.
+       * @param {number} eventCount - event count.
+       * @param {number} eventSum - event sum.
        * @return {void} void
        */
       export function recordEvent(eventName: string, segments?: Segmentation, eventCount?: number, eventSum?: number): void;
 
       /**
        *
-       * Start Event
+       * Starts a timed Event.
+       * NB: If endEvent is not called (with the same event name),
+       * no event will be recorded.
        *
-       * @param {string} eventName name of event
+       * @param {string} eventName - Name of the event.
        * @return {void} void
        */
       export function startEvent(eventName: string): void;
 
       /**
        *
-       * Cancel Event
+       * Ends a timed Event
+       * NB: Should be called after startEvent.
        *
-       * @param {string} eventName name of event
-       * @return {void} void
-       */
-      export function cancelEvent(eventName: string): void;
-
-      /**
-       *
-       * End Event
-       *
-       * @param {string} eventName event name.
-       * @param {Segmentation} segments event segmentation.
-       * @param {number} eventCount event count.
-       * @param {number} eventSum event sum.
+       * @param {string} eventName - Name of the event.
+       * @param {Segmentation} segments - segementation data for the event.
+       * @param {number} eventCount - event count.
+       * @param {number} eventSum - event sum.
        * @return {void} void
        */
       export function endEvent(eventName: string, segments?: Segmentation, eventCount?: number, eventSum?: number): void;
+
+      /**
+       *
+       * Cancels an event
+       *
+       * @param {string} eventName - Name of the event.
+       * @return {void} void
+       */
+      export function cancelEvent(eventName: string): void;
     }
 
     /**
@@ -213,7 +216,7 @@ declare module "countly-sdk-react-native-bridge" {
     /**
      *
      * Used to send various types of event;
-     * @deprecated in xx.x.x : use 'Countly.event.cancelEvent' instead of this.
+     * @deprecated in xx.x.x : use 'Countly.event.recordEvent' instead of this.
      *
      * @param {CountlyEventOptions} options event
      * @return {string | void} error message or void

@@ -275,7 +275,7 @@ RCT_EXPORT_METHOD(eventLegacy : (NSArray *)arguments) {
     });
 }
 
-RCT_EXPORT_METHOD(event : (NSDictionary *)arguments) {
+RCT_EXPORT_METHOD(recordEvent : (NSDictionary *)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^{
         NSString *eventName = [arguments objectForKey:@"n"];
 

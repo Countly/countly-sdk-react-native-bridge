@@ -15,7 +15,7 @@ function validateUserDataType(stringValue, stringName, functionName) {
         return null;
     }
     if (typeof stringValue === "string") {
-        L.w(`${functionName} unsupported data type '${typeof stringValue}', its data type should be 'number'`);
+        L.d(`${functionName} unsupported data type '${typeof stringValue}', its data type should be 'number'`);
         return null;
     }
 
@@ -80,7 +80,7 @@ function validateString(stringValue, stringName, functionName) {
         message = `skipping value for '${stringName.toString()}', due to unsupported data type '${typeof stringValue}', its data type should be 'string'`;
     }
     if (message) {
-        L.e(`${functionName}, ${message}`);
+        L.d(`${functionName}, ${message}`);
     }
     return message;
 }
@@ -113,38 +113,38 @@ function validateUserDataValue(stringValue, stringName, functionName) {
 }
 
 /**
- * Validate event module parameters.
- * and it should not be null or undefined
- * It will log a message if any issue found related to data validation and return true.
+ * Validate event module parameters for undefined or wrong type.
+ * It will log a message if any issue found and return false.
  * If the parameters are valid, it will return true.
- * @param {String} functionName : name of function from where value is validating.
- * @param {String} eventName : event name
- * @param {String} segments : segmentation data
- * @param {String} eventCount : event count
- * @param {String} eventSum : event sum
+ * 
+ * @param {String} functionName : name of function that called this method.
+ * @param {string} eventName - Name of the event.
+ * @param {Segmentation} segments - segementation data for the event.
+ * @param {number} eventCount - event count.
+ * @param {number} eventSum - event sum.
  * @returns
  */
-function isEventParametersValid(functionName, eventName, segments, eventCount, eventSum) {
-    if (eventName && typeof eventName !== 'string') {
-        L.w(`${functionName}, eventName: [${eventName}] must be a string`);
+function areEventParametersValid(functionName, eventName, segments, eventCount, eventSum) {
+    if (!eventName || typeof eventName !== 'string') {
+        L.d(`${functionName}, eventName: [${eventName}] must be a string`);
         return false;
     }
     if (segments && typeof segments !== 'object') {
-        L.w(`${functionName}, segments: [${segments}] must be an instance of Segmentation`);
+        L.d(`${functionName}, segments: [${segments}] must be an object`);
         return false;
     }
 
     if (eventCount && typeof eventCount !== 'number') {
-        L.w(`${functionName}, eventCount: [${eventCount}] must be a number`);
+        L.d(`${functionName}, eventCount: [${eventCount}] must be a number`);
         return false;
     }
 
     if (eventSum && typeof eventSum !== 'number') {
-        L.w(`${functionName}, eventSum: [${eventSum}] must be a number`);
+        L.d(`${functionName}, eventSum: [${eventSum}] must be a number`);
         return false;
     }
 
     return true;
 }
 
-export { validateUserDataValue as UserDataValue, validateString as String, validateParseInt as ParseInt, validateValidUserData as ValidUserData, validateUserDataType as UserDataType, isEventParametersValid };
+export { validateUserDataValue as UserDataValue, validateString as String, validateParseInt as ParseInt, validateValidUserData as ValidUserData, validateUserDataType as UserDataType, areEventParametersValid };
