@@ -16,8 +16,8 @@ Deprecated 'enableApm' config option. Use instead 'apm.enableAppStartTimeTrackin
 * Added new Event interface (`Countly.event`) on the SDK interface that exposes the event calls.
 * Deprecated the old events methods.
 
-* Updated the underlying Android SDK version to 24.1.1
-* Updated the underlying iOS SDK version to 24.1.0
+* Updated the underlying Android SDK version to 24.x.x
+* Updated the underlying iOS SDK version to 24.x.x
 
 ## 23.12.0
 * Added TS type declerations to the SDK
