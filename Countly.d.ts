@@ -1,5 +1,5 @@
 interface Segmentation {
-  [key: string]: string;
+  [key: string]: number | string | boolean;
 }
 
 interface CountlyEventOptions {

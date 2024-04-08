@@ -31,7 +31,7 @@ class Event {
             return;
         }
 
-        L.i(`recordEvent, Sending event: [eventName: ${eventName}, eventCount: ${eventCount}, eventSum: ${eventSum}, segments: ${segments}]`);
+        L.i(`recordEvent, Sending event: [eventName: ${eventName}, segments: ${JSON.stringify(segments)}, eventCount: ${eventCount}, eventSum: ${eventSum}]`);
 
         const args = {};
         args.n = eventName;
@@ -84,7 +84,7 @@ class Event {
     cancelEvent(eventName) {
         if (!this.#state.isInitialized) {
             L.d("cancelEvent, 'init' must be called before 'cancelEvent'");
-            return msg;
+            return;
         }
         const isInvalid = Validate.String(eventName, "eventName", "cancelEvent");
         if (isInvalid) {
@@ -114,7 +114,7 @@ class Event {
         if (!validParameters) {
             return;
         }
-        L.i(`endEvent, Sending event: [eventName: ${eventName}, segments: ${segments}, eventCount: ${eventCount}, eventSum: ${eventSum}]`);
+        L.i(`endEvent, Sending event: [eventName: ${eventName}, segments: ${JSON.stringify(segments)}, eventCount: ${eventCount}, eventSum: ${eventSum}]`);
 
         const args = {};
         args.n = eventName;

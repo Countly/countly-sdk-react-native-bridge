@@ -19,6 +19,7 @@ import com.facebook.react.bridge.JavaScriptModule;
 import android.content.Context;
 
 import com.facebook.react.bridge.ReadableMapKeySetIterator;
+import com.facebook.react.bridge.ReadableType;
 import ly.count.android.sdk.Countly;
 import ly.count.android.sdk.CountlyConfig;
 import ly.count.android.sdk.DeviceIdType;
@@ -753,20 +754,35 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     public void recordEvent(ReadableMap args) {
         String eventName = args.getString("n");
 
-        int eventCount = 0;
+        int eventCount = 1;
         if (args.hasKey("c")) {
             eventCount = args.getInt("c");
         }
 
-        double eventSum = 0;
+        double eventSum = 0.0;
         if (args.hasKey("s")) {
             eventSum = args.getDouble("s");
         }
 
         HashMap<String, Object> segmentation = new HashMap<>();
         ReadableArray segments = args.getArray("g");
-        for (int i = 0, il = segments != null ? segments.size() : 0; i < il; i += 2) {
-            segmentation.put(segments.getString(i), segments.getString(i + 1));
+        int len = segments != null ? segments.size() : 0;
+        for (int i = 0; i < len; i += 2) {
+            String key = segments.getString(i);
+
+            if (segments.getType(i + 1) == ReadableType.String) {
+                segmentation.put(key, segments.getString(i + 1));
+            } else if (segments.getType(i + 1) == ReadableType.Boolean) {
+                segmentation.put(key, segments.getBoolean(i + 1));
+            } else if (segments.getType(i + 1) == ReadableType.Number) {
+                double doubleValue = segments.getDouble(i + 1);
+                int intValue = segments.getInt(i + 1);
+                if (doubleValue == intValue) {
+                    segmentation.put(key, intValue);
+                } else {
+                    segmentation.put(key, doubleValue);
+                }
+            }
         }
         Countly.sharedInstance().events().recordEvent(eventName, segmentation, eventCount, eventSum);
     }
@@ -829,20 +845,33 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     public void endEvent(ReadableMap args) {
         String eventName = args.getString("n");
 
-        int eventCount = 0;
+        int eventCount = 1;
         if (args.hasKey("c")) {
             eventCount = args.getInt("c");
         }
 
-        double eventSum = 0;
+        double eventSum = 0.0;
         if (args.hasKey("s")) {
             eventSum = args.getDouble("s");
         }
 
         HashMap<String, Object> segmentation = new HashMap<>();
         ReadableArray segments = args.getArray("g");
-        for (int i = 0, il = segments != null ? segments.size() : 0; i < il; i += 2) {
-            segmentation.put(segments.getString(i), segments.getString(i + 1));
+        int len = segments != null ? segments.size() : 0;
+        for (int i = 0; i < len; i += 2) {
+            String key = segments.getString(i);
+
+            if (segments.getType(i + 1) == ReadableType.String) {
+                segmentation.put(key, segments.getString(i + 1));
+            } else if (segments.getType(i + 1) == ReadableType.Number) {
+                double doubleValue = segments.getDouble(i + 1);
+                int intValue = segments.getInt(i + 1);
+                if (doubleValue == intValue) {
+                    segmentation.put(key, intValue);
+                } else {
+                    segmentation.put(key, doubleValue);
+                }
+            }
         }
 
         Countly.sharedInstance().events().endEvent(eventName, segmentation, eventCount, eventSum);

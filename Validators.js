@@ -134,8 +134,24 @@ function areEventParametersValid(functionName, eventName, segments, eventCount, 
         return false;
     }
 
+    if (segments) {
+        for (const event in segments) {
+            const value = segments[event];
+            const valueType = typeof value;
+            if (value && valueType !== 'string' && valueType !== 'number' && valueType !== 'boolean') {
+                L.d(`${functionName}, segmentation value: [${eventSum}] must be a number, string or boolean`);
+                return false;
+            }
+        }
+    }
+
     if (eventCount && typeof eventCount !== 'number') {
         L.d(`${functionName}, eventCount: [${eventCount}] must be a number`);
+        return false;
+    }
+
+    if (eventCount && typeof eventCount === 'number' && eventCount < 0) {
+        L.d(`${functionName}, eventCount: [${eventCount}] must be a positive number`);
         return false;
     }
 

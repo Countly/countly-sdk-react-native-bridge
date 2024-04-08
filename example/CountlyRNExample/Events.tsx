@@ -14,13 +14,13 @@ const eventWithSum = () => {
 };
 const eventWithSegment = () => {
     // example for event with segment
-    Countly.events.recordEvent("Event With Segment", { Country: "Turkey", Age: "28" }, 1, undefined);
-    Countly.events.recordEvent("Event With Segment", { Country: "France", Age: "38" }, 1, undefined);
+    Countly.events.recordEvent("Event With Segment", { Country: "Turkey", Age: 28 }, 1, undefined);
+    Countly.events.recordEvent("Event With Segment", { Country: "France", Age: 38 }, 1, undefined);
 };
 const eventWithSumAndSegment = () => {
     // example for event with segment and sum
-    Countly.events.recordEvent("Event With Sum And Segment", { Country: "Turkey", Age: "28" }, 1, 0.99);
-    Countly.events.recordEvent("Event With Sum And Segment", { Country: "France", Age: "38" }, 3, 1.99);
+    Countly.events.recordEvent("Event With Sum And Segment", { Country: "Turkey", Age: 28, height: 180.21, male: true, }, 1, 0.99);
+    Countly.events.recordEvent("Event With Sum And Segment", { Country: "France", Age: 38, height: 150.55, male: false, }, 3, 1.99);
 };
 
 // TIMED EVENTS
@@ -49,7 +49,7 @@ const timedEventWithSegment = () => {
     Countly.events.startEvent("timedEventWithSegment");
 
     setTimeout(() => {
-        Countly.events.endEvent("timedEventWithSegment", { Country: "Germany", Age: "32" }, undefined, undefined);
+        Countly.events.endEvent("timedEventWithSegment", { Country: "Germany", Age: 32 }, undefined, undefined);
     }, 1000);
 };
 
@@ -58,7 +58,7 @@ const timedEventWithSumAndSegment = () => {
     Countly.events.startEvent("timedEventWithSumAndSegment");
 
     setTimeout(() => {
-        Countly.events.endEvent("timedEventWithSumAndSegment", { Country: "India", Age: "21" }, 1, 0.99);
+        Countly.events.endEvent("timedEventWithSumAndSegment", { Country: "India", Age: 21 }, 1, 0.99);
     }, 1000);
 };
 // TIMED EVENTS
@@ -70,7 +70,8 @@ const testEventWithBadValues = () => {
     Countly.events.recordEvent("Basic Event", 1, "abc");
     Countly.events.recordEvent("Event With Sum", undefined, "1", "0.99");
     Countly.events.recordEvent("Event With Segment", ["Country", "France"], "1", "0.99");
-    Countly.events.recordEvent("Event With Segment", ["Country", "France"], "abc", "def");
+    Countly.events.recordEvent("Event With Segment", {"hello": ["Country", "France"]}, "abc", "def");
+    Countly.events.recordEvent("timedEventWithSumAndSegment", { Country: "India", Age: 21 }, -2, 0.99);
     Countly.events.recordEvent(null, null, null, null);
     Countly.events.recordEvent(0, 0, 0, 0);
     Countly.events.recordEvent(" ", " ", " ", " ");
