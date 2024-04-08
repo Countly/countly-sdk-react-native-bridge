@@ -140,64 +140,13 @@ Countly.hasBeenCalledOnStart = function () {
  * @return {string | void} error message or void
  */
 Countly.sendEvent = function (options) {
-    if (!_state.isInitialized) {
-        const message = "'init' must be called before 'sendEvent'";
-        L.e(`sendEvent, ${message}`);
-        return message;
+    if (typeof options.eventCount === "string") {
+        options.eventCount = parseInt(options.eventCount);
     }
-    if (!options) {
-        const message = "sendEvent, no event object provided";
-        L.e(`sendEvent, ${message}`);
-        return message;
+    if (typeof options.eventSum === "string") {
+        options.eventSum = parseFloat(options.eventSum);
     }
-    if (!options.eventName) {
-        const message = "sendEvent, eventName is required";
-        L.e(`sendEvent, ${message}`);
-        return message;
-    }
-    L.d(`sendEvent, Sending event: ${JSON.stringify(options)}]`);
-
-    const args = [];
-    let eventType = "event"; // event, eventWithSum, eventWithSegment, eventWithSumSegment
-    let segments = {};
-
-    if (options.eventSum) {
-        eventType = "eventWithSum";
-    }
-    if (options.segments) {
-        eventType = "eventWithSegment";
-    }
-    if (options.segments && options.eventSum) {
-        eventType = "eventWithSumSegment";
-    }
-
-    args.push(eventType);
-    args.push(options.eventName.toString());
-
-    if (options.eventCount) {
-        args.push(options.eventCount.toString());
-    } else {
-        args.push("1");
-    }
-
-    if (options.eventSum) {
-        options.eventSum = options.eventSum.toString();
-        if (options.eventSum.indexOf(".") == -1) {
-            options.eventSum = parseFloat(options.eventSum).toFixed(2);
-            args.push(options.eventSum);
-        } else {
-            args.push(options.eventSum);
-        }
-    }
-
-    if (options.segments) {
-        segments = options.segments;
-    }
-    for (const event in segments) {
-        args.push(event);
-        args.push(segments[event]);
-    }
-    CountlyReactNative.eventLegacy(args);
+    Countly.events.recordEvent(options.eventName, options.segments, options.eventCount, options.eventSum);
 };
 
 /**
@@ -761,17 +710,7 @@ Countly.pinnedCertificates = function (certificateName) {
  * @return {string | void} error message or void
  */
 Countly.startEvent = function (eventName) {
-    if (!_state.isInitialized) {
-        const msg = "'init' must be called before 'startEvent'";
-        L.e(`startEvent, ${msg}`);
-        return msg;
-    }
-    const message = Validate.String(eventName, "eventName", "startEvent");
-    if (message) {
-        return message;
-    }
-    L.d(`startEvent, Starting event: [${eventName}]`);
-    CountlyReactNative.startEvent([eventName.toString()]);
+    Countly.events.startEvent(eventName);
 };
 
 /**
@@ -782,17 +721,7 @@ Countly.startEvent = function (eventName) {
  * @return {string | void} error message or void
  */
 Countly.cancelEvent = function (eventName) {
-    if (!_state.isInitialized) {
-        const msg = "'init' must be called before 'cancelEvent'";
-        L.e(`cancelEvent, ${msg}`);
-        return msg;
-    }
-    const message = Validate.String(eventName, "eventName", "cancelEvent");
-    if (message) {
-        return message;
-    }
-    L.d(`cancelEvent, Canceling event: [${eventName}]`);
-    CountlyReactNative.cancelEvent([eventName.toString()]);
+    Countly.events.cancelEvent(eventName);
 };
 
 /**
@@ -809,61 +738,16 @@ Countly.cancelEvent = function (eventName) {
  * @return {string | void} error message or void
  */
 Countly.endEvent = function (options) {
-    if (!_state.isInitialized) {
-        const message = "'init' must be called before 'endEvent'";
-        L.e(`endEvent, ${message}`);
-        return message;
-    }
-    L.d(`endEvent, Ending event: [${JSON.stringify(options)}]`);
     if (typeof options === "string") {
         options = { eventName: options };
     }
-    const args = [];
-    let eventType = "event"; // event, eventWithSum, eventWithSegment, eventWithSumSegment
-    let segments = {};
-
-    if (options.eventSum) {
-        eventType = "eventWithSum";
+    if (typeof options.eventCount === "string") {
+        options.eventCount = parseInt(options.eventCount);
     }
-    if (options.segments) {
-        eventType = "eventWithSegment";
+    if (typeof options.eventSum === "string") {
+        options.eventSum = parseFloat(options.eventSum);
     }
-    if (options.segments && options.eventSum) {
-        eventType = "eventWithSumSegment";
-    }
-
-    args.push(eventType);
-
-    if (!options.eventName) {
-        options.eventName = "";
-    }
-    args.push(options.eventName.toString());
-
-    if (!options.eventCount) {
-        options.eventCount = "1";
-    }
-    args.push(options.eventCount.toString());
-
-    if (options.eventSum) {
-        let eventSumTemp = options.eventSum.toString();
-        if (eventSumTemp.indexOf(".") == -1) {
-            eventSumTemp = parseFloat(eventSumTemp).toFixed(2);
-            args.push(eventSumTemp);
-        } else {
-            args.push(eventSumTemp);
-        }
-    } else {
-        args.push("0.0");
-    }
-
-    if (options.segments) {
-        segments = options.segments;
-    }
-    for (const event in segments) {
-        args.push(event);
-        args.push(segments[event]);
-    }
-    CountlyReactNative.endEventLegacy(args);
+    Countly.events.endEvent(options.eventName, options.segments, options.eventCount, options.eventSum);
 };
 
 /**

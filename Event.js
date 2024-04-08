@@ -71,7 +71,7 @@ class Event {
             return;
         }
         L.i(`startEvent, Starting event: [${eventName}]`);
-        this.#state.CountlyReactNative.startEvent([eventName.toString()]);
+        this.#state.CountlyReactNative.startEvent([eventName]);
     }
 
     /**
@@ -91,7 +91,7 @@ class Event {
             return;
         }
         L.i(`cancelEvent, Canceling event: [${eventName}]`);
-        this.#state.CountlyReactNative.cancelEvent([eventName.toString()]);
+        this.#state.CountlyReactNative.cancelEvent([eventName]);
     }
 
     /**

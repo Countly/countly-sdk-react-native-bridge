@@ -231,50 +231,6 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
     }
 }
 
-RCT_EXPORT_METHOD(eventLegacy : (NSArray *)arguments) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-      NSString *eventType = [arguments objectAtIndex:0];
-      if (eventType != nil && [eventType length] > 0) {
-          if ([eventType isEqual:@"event"]) {
-              NSString *eventName = [arguments objectAtIndex:1];
-              NSString *countString = [arguments objectAtIndex:2];
-              int countInt = [countString intValue];
-              [[Countly sharedInstance] recordEvent:eventName count:countInt];
-
-          } else if ([eventType isEqual:@"eventWithSum"]) {
-              NSString *eventName = [arguments objectAtIndex:1];
-              NSString *countString = [arguments objectAtIndex:2];
-              int countInt = [countString intValue];
-              NSString *sumString = [arguments objectAtIndex:3];
-              float sumFloat = [sumString floatValue];
-              [[Countly sharedInstance] recordEvent:eventName count:countInt sum:sumFloat];
-          } else if ([eventType isEqual:@"eventWithSegment"]) {
-              NSString *eventName = [arguments objectAtIndex:1];
-              NSString *countString = [arguments objectAtIndex:2];
-              int countInt = [countString intValue];
-              NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
-
-              for (int i = 3, il = (int)arguments.count; i < il; i += 2) {
-                  dict[[arguments objectAtIndex:i]] = [arguments objectAtIndex:i + 1];
-              }
-              [[Countly sharedInstance] recordEvent:eventName segmentation:dict count:countInt];
-          } else if ([eventType isEqual:@"eventWithSumSegment"]) {
-              NSString *eventName = [arguments objectAtIndex:1];
-              NSString *countString = [arguments objectAtIndex:2];
-              int countInt = [countString intValue];
-              NSString *sumString = [arguments objectAtIndex:3];
-              float sumFloat = [sumString floatValue];
-              NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
-
-              for (int i = 4, il = (int)arguments.count; i < il; i += 2) {
-                  dict[[arguments objectAtIndex:i]] = [arguments objectAtIndex:i + 1];
-              }
-              [[Countly sharedInstance] recordEvent:eventName segmentation:dict count:countInt sum:sumFloat];
-          }
-      }
-    });
-}
-
 RCT_EXPORT_METHOD(recordEvent : (NSDictionary *)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^{
         NSString *eventName = [arguments objectForKey:@"n"];
@@ -497,56 +453,6 @@ RCT_EXPORT_METHOD(cancelEvent : (NSArray *)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^{
       NSString *cancelEvent = [arguments objectAtIndex:0];
       [Countly.sharedInstance cancelEvent:cancelEvent];
-    });
-}
-
-RCT_EXPORT_METHOD(endEventLegacy : (NSArray *)arguments) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-      NSString *eventType = [arguments objectAtIndex:0];
-
-      if ([eventType isEqual:@"event"]) {
-          NSString *eventName = [arguments objectAtIndex:1];
-          [Countly.sharedInstance endEvent:eventName];
-      } else if ([eventType isEqual:@"eventWithSum"]) {
-          NSString *eventName = [arguments objectAtIndex:1];
-
-          NSString *countString = [arguments objectAtIndex:2];
-          int countInt = [countString intValue];
-
-          NSString *sumString = [arguments objectAtIndex:3];
-          float sumInt = [sumString floatValue];
-
-          NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
-          [Countly.sharedInstance endEvent:eventName segmentation:dict count:countInt sum:sumInt];
-      } else if ([eventType isEqual:@"eventWithSegment"]) {
-          NSString *eventName = [arguments objectAtIndex:1];
-
-          NSString *countString = [arguments objectAtIndex:2];
-          int countInt = [countString intValue];
-
-          NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
-          for (int i = 4, il = (int)arguments.count; i < il; i += 2) {
-              dict[[arguments objectAtIndex:i]] = [arguments objectAtIndex:i + 1];
-          }
-
-          [Countly.sharedInstance endEvent:eventName segmentation:dict count:countInt sum:0];
-      } else if ([eventType isEqual:@"eventWithSumSegment"]) {
-          NSString *eventName = [arguments objectAtIndex:1];
-
-          NSString *countString = [arguments objectAtIndex:2];
-          int countInt = [countString intValue];
-
-          NSString *sumString = [arguments objectAtIndex:3];
-          float sumInt = [sumString floatValue];
-
-          NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
-          for (int i = 4, il = (int)arguments.count; i < il; i += 2) {
-              dict[[arguments objectAtIndex:i]] = [arguments objectAtIndex:i + 1];
-          }
-
-          [Countly.sharedInstance endEvent:eventName segmentation:dict count:countInt sum:sumInt];
-      } else {
-      }
     });
 }
 
