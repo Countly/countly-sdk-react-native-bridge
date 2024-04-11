@@ -9,128 +9,116 @@ class Event {
     }
 
     /**
-     * Record an event;
+     * Records an event.
+     * Event will be saved to the internal queue and will be sent to the server with the next trigger.
      *
-     * @param {string} eventName - Name of the event.
-     * @param {Segmentation} segments - segementation data for the event.
-     * @param {number} eventCount - event count.
-     * @param {number} eventSum - event sum.
-     * @return {void} void
+     * @param {string} eventName - Name of the event (This will be displayed on the dashboard)
+     * @param {Segmentation} segmentation - Extra information to send with your event as key/value pairs
+     * @param {number} eventCount - Indicates how many times this event has happened (Default is 1)
+     * @param {number} eventSum - A numerical value that is attached to this event (Will be summed up on the dashboard for all events with the same name)
+     * @return {void}
      */
-    recordEvent(eventName, segments, eventCount, eventSum) {
+    recordEvent(eventName, segmentation, eventCount, eventSum) {
         if (!this.#state.isInitialized) {
-            L.d("recordEvent, 'init' must be called before 'recordEvent'");
+            L.w("recordEvent, SDK must be initialized before calling 'recordEvent'");
             return;
         }
-        if (!eventName) {
-            L.d("recordEvent, eventName is required");
-            return;
-        }
-        const validParameters = Validate.areEventParametersValid('recordEvent', eventName, segments, eventCount, eventSum);
-        if (!validParameters) {
+        L.i(`recordEvent, called with eventName: [${eventName}], segmentation: [${JSON.stringify(segmentation)}], eventCount: [${eventCount}], eventSum: [${eventSum}]`);
+        const areParamsValid = Validate.areEventParametersValid("recordEvent", eventName, segmentation, eventCount, eventSum);
+        if (!areParamsValid) {
             return;
         }
 
-        L.i(`recordEvent, Sending event: [eventName: ${eventName}, segments: ${JSON.stringify(segments)}, eventCount: ${eventCount}, eventSum: ${eventSum}]`);
-
+        // At this point all parameters should be valid (eventName should exist but other parameters are optional)
         const args = {};
-        args.n = eventName;
-
-        if (eventCount) {
-            args.c = eventCount;
-        } else {
-            args.c = 1;
-        }
-
-        args.s = eventSum;
-
-        args.g = [];
-        for (const event in segments) {
-            args.g.push(event);
-            args.g.push(segments[event]);
+        args.n = eventName; // mandatory
+        args.c = eventCount || 1; // default is 1
+        args.s = eventSum || 0; // default is 0
+        if (segmentation) { // optional
+            args.g = [];
+            for (const key in segmentation) {
+                args.g.push(key);
+                args.g.push(segmentation[key]);
+            }
         }
         this.#state.CountlyReactNative.recordEvent(args);
     }
 
     /**
      *
-     * Start Event
-     * NB: If endEvent is not called (with the same event name),
-     * no event will be recorded.
+     * Starts a Timed Event
+     * If 'endEvent' is not called (with the same event name) no event will be recorded.
      *
-     * @param {string} eventName name of event
-     * @return {void} void
+     * @param {string} eventName - name of the event
+     * @return {void}
      */
     startEvent(eventName) {
         if (!this.#state.isInitialized) {
-            L.d("startEvent, 'init' must be called before 'startEvent'");
+            L.w("startEvent, SDK must be initialized before calling 'startEvent'");
             return;
         }
-        const isInvalid = Validate.String(eventName, "eventName", "startEvent");
-        if (isInvalid) {
+        L.i(`startEvent, called with eventName: [${eventName}]`);
+        const areParamsValid = Validate.areEventParametersValid("startEvent", eventName, null, null, null);
+        if (!areParamsValid) {
             return;
         }
-        L.i(`startEvent, Starting event: [${eventName}]`);
         this.#state.CountlyReactNative.startEvent([eventName]);
     }
 
     /**
      *
-     * Cancels an Event
+     * Cancels a Timed Event if it is started.
      *
-     * @param {string} eventName name of event
-     * @return {void} void
+     * @param {string} eventName - name of the event
+     * @return {void}
      */
     cancelEvent(eventName) {
         if (!this.#state.isInitialized) {
-            L.d("cancelEvent, 'init' must be called before 'cancelEvent'");
+            L.w("cancelEvent, SDK must be initialized before calling 'cancelEvent'");
             return;
         }
-        const isInvalid = Validate.String(eventName, "eventName", "cancelEvent");
-        if (isInvalid) {
+        L.i(`cancelEvent, called with eventName: [${eventName}]`);
+        const areParamsValid = Validate.areEventParametersValid("cancelEvent", eventName, null, null, null);
+        if (!areParamsValid) {
             return;
         }
-        L.i(`cancelEvent, Canceling event: [${eventName}]`);
         this.#state.CountlyReactNative.cancelEvent([eventName]);
     }
 
     /**
      *
-     * End Event
-     * NB: Should be called after startEvent.
+     * Ends a Timed Event if it is started.
+     * Should be called after startEvent.
+     * This will behave like recordEvent.
      *
-     * @param {string} eventName - Name of the event.
-     * @param {Segmentation} segments - segementation data for the event.
-     * @param {number} eventCount - event count.
-     * @param {number} eventSum - event sum.
+     * @param {string} eventName - Name of the event (This will be displayed on the dashboard)
+     * @param {Segmentation} segmentation - Extra information to send with your event as key/value pairs
+     * @param {number} eventCount - Indicates how many times this event has happened (Default is 1)
+     * @param {number} eventSum - A numerical value that is attached to this event (Will be summed up on the dashboard for all events with the same name)
      * @return {void} void
      */
-    endEvent(eventName, segments, eventCount, eventSum) {
+    endEvent(eventName, segmentation, eventCount, eventSum) {
         if (!this.#state.isInitialized) {
-            L.d("endEvent, 'init' must be called before 'endEvent'");
+            L.w("endEvent, SDK must be initialized before calling 'endEvent'");
             return;
         }
-        const validParameters = Validate.areEventParametersValid('endEvent', eventName, segments, eventCount, eventSum);
+        L.i(`endEvent, called with eventName: [${eventName}], segmentation: [${JSON.stringify(segmentation)}], eventCount: [${eventCount}], eventSum: [${eventSum}]`);
+        const validParameters = Validate.areEventParametersValid("endEvent", eventName, segmentation, eventCount, eventSum);
         if (!validParameters) {
             return;
         }
-        L.i(`endEvent, Sending event: [eventName: ${eventName}, segments: ${JSON.stringify(segments)}, eventCount: ${eventCount}, eventSum: ${eventSum}]`);
 
+        // At this point all parameters should be valid (eventName should exist but other parameters are optional)
         const args = {};
-        args.n = eventName;
-
-        if (eventCount) {
-            args.c = eventCount;
-        } else {
-            args.c = 1;
-        }
-
-        args.s = eventSum;
-
-        args.g = [];
-        for (const event in segments) {
-            args.g.push(event);
-            args.g.push(segments[event]);
+        args.n = eventName; // mandatory
+        args.c = eventCount || 1; // default is 1
+        args.s = eventSum || 0; // default is 0
+        if (segmentation) { // optional
+            args.g = [];
+            for (const key in segmentation) {
+                args.g.push(key);
+                args.g.push(segmentation[key]);
+            }
         }
         this.#state.CountlyReactNative.endEvent(args);
     }

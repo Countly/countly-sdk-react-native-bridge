@@ -126,9 +126,9 @@ Countly.hasBeenCalledOnStart = function () {
 };
 
 /**
- * Used to send event;
+ * Sends an event to the server
  *
- * @deprecated in xx.x.x : use 'Countly.event.recordEvent' instead of this.
+ * @deprecated in 24.4.0 : use 'Countly.events.recordEvent' instead of this.
  * 
  * @param {CountlyEventOptions} options event options. 
  * CountlyEventOptions {
@@ -140,12 +140,23 @@ Countly.hasBeenCalledOnStart = function () {
  * @return {string | void} error message or void
  */
 Countly.sendEvent = function (options) {
-    if (typeof options.eventCount === "string") {
-        options.eventCount = parseInt(options.eventCount);
+    if (!_state.isInitialized) {
+        const msg = "'init' must be called before 'recordView'";
+        L.w(`sendEvent, ${msg}`);
+        return msg;
     }
-    if (typeof options.eventSum === "string") {
-        options.eventSum = parseFloat(options.eventSum);
+    L.w("sendEvent, This method is deprecated, use 'Countly.events.recordEvent' instead");
+    if (!options) {
+        const message = "no event object provided!";
+        L.w(`sendEvent, ${message}`);
+        return message;
     }
+    // previous implementation was not clear about the data types of eventCount and eventSum
+    // here parse them to make sure they are in correct format for the new method
+    // parser will return a false value (NaN) in case of invalid data (like undefined, null, empty string, etc.)
+    options.eventCount = parseInt(options.eventCount) || 1;
+    options.eventSum = parseFloat(options.eventSum) || 0;
+
     Countly.events.recordEvent(options.eventName, options.segments, options.eventCount, options.eventSum);
 };
 
@@ -703,30 +714,42 @@ Countly.pinnedCertificates = function (certificateName) {
 };
 
 /**
- * Start Event
- * @deprecated in xx.x.x : use 'Countly.event.startEvent' instead of this.
+ * Start a Timed Event
+ * @deprecated in 24.4.0 : use 'Countly.events.startEvent' instead of this.
  *
  * @param {string} eventName name of event
  * @return {string | void} error message or void
  */
 Countly.startEvent = function (eventName) {
+    if (!_state.isInitialized) {
+        const msg = "'init' must be called before 'startEvent'";
+        L.e(`startEventLegacy, ${msg}`);
+        return msg;
+    }
+    L.w("startEventLegacy, This method is deprecated, use 'Countly.events.startEvent' instead");
     Countly.events.startEvent(eventName);
 };
 
 /**
- * Cancel Event
- * @deprecated in xx.x.x : use 'Countly.event.cancelEvent' instead of this.
+ * Cancel a Timed Event
+ * @deprecated in 24.4.0 : use 'Countly.events.cancelEvent' instead of this.
  *
  * @param {string} eventName name of event
  * @return {string | void} error message or void
  */
 Countly.cancelEvent = function (eventName) {
+    if (!_state.isInitialized) {
+        const msg = "'init' must be called before 'cancelEvent'";
+        L.e(`cancelEventLegacy, ${msg}`);
+        return msg;
+    }
+    L.w("cancelEventLegacy, This method is deprecated, use 'Countly.events.cancelEvent' instead");
     Countly.events.cancelEvent(eventName);
 };
 
 /**
- * End Event
- * @deprecated in xx.x.x : use 'Countly.event.endEvent' instead of this.
+ * End a Timed Event
+ * @deprecated in 24.4.0 : use 'Countly.events.endEvent' instead of this.
  *
  * @param {string | CountlyEventOptions} options event options. 
  * CountlyEventOptions {
@@ -738,15 +761,25 @@ Countly.cancelEvent = function (eventName) {
  * @return {string | void} error message or void
  */
 Countly.endEvent = function (options) {
+    if (!_state.isInitialized) {
+        const message = "'init' must be called before 'endEvent'";
+        L.e(`endEventLegacy, ${message}`);
+        return message;
+    }
+    L.w("endEventLegacy, This method is deprecated, use 'Countly.events.endEvent' instead");
+    if (!options) {
+        const message = "no event object or event name provided!";
+        L.w(`endEventLegacy, ${message}`);
+        return message;
+    }
     if (typeof options === "string") {
         options = { eventName: options };
     }
-    if (typeof options.eventCount === "string") {
-        options.eventCount = parseInt(options.eventCount);
-    }
-    if (typeof options.eventSum === "string") {
-        options.eventSum = parseFloat(options.eventSum);
-    }
+    // previous implementation was not clear about the data types of eventCount and eventSum
+    // here parse them to make sure they are in correct format for the new method
+    // parser will return a false value (NaN) in case of invalid data (like undefined, null, empty string, etc.)
+    options.eventCount = parseInt(options.eventCount) || 1;
+    options.eventSum = parseFloat(options.eventSum) || 0;
     Countly.events.endEvent(options.eventName, options.segments, options.eventCount, options.eventSum);
 };
 
