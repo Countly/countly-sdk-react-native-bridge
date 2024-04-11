@@ -67,17 +67,17 @@ declare module "countly-sdk-react-native-bridge" {
   import type CountlyConfig from "countly-sdk-react-native-bridge/CountlyConfig";
 
   namespace Countly {
-    serverUrl: string;
-    appKey: string;
-    eventEmitter: any;
-    CountlyReactNative: any;
-    _isCrashReportingEnabled: boolean;
-    _isInitialized: boolean;
-    _isPushInitialized: boolean;
-    widgetShownCallbackName: string;
-    widgetClosedCallbackName: string;
-    ratingWidgetCallbackName: string;
-    pushNotificationCallbackName: string;
+    string;
+    string;
+    any;
+    any;
+    boolean;
+    boolean;
+    boolean;
+    string;
+    string;
+    string;
+    string;
     export const TemporaryDeviceIDString: string;
     export interface messagingMode {
       DEVELOPMENT: string;
@@ -140,7 +140,7 @@ declare module "countly-sdk-react-native-bridge" {
      * @param {number} eventSum - A numerical value that is attached to this event (Will be summed up on the dashboard for all events with the same name)
      * @return {void}
      */
-      export function recordEvent(eventName: string, segments?: Segmentation, eventCount?: number, eventSum?: number): void;
+      export function recordEvent(eventName: string, segmentation?: Segmentation, eventCount?: number, eventSum?: number): void;
 
     /**
      *
@@ -164,7 +164,7 @@ declare module "countly-sdk-react-native-bridge" {
      * @param {number} eventSum - A numerical value that is attached to this event (Will be summed up on the dashboard for all events with the same name)
      * @return {void} void
      */
-      export function endEvent(eventName: string, segments?: Segmentation, eventCount?: number, eventSum?: number): void;
+      export function endEvent(eventName: string, segmentation?: Segmentation, eventCount?: number, eventSum?: number): void;
 
     /**
      *
@@ -1086,11 +1086,11 @@ declare module "countly-sdk-react-native-bridge" {
      * @return {string | void} error message or void
      */
     export function setCustomMetrics(customMetric: CustomMetric): string | void;
-    validateUserDataValue: ValidationFunction;
-    validateUserDataType: ValidationFunction;
-    validateValidUserData: ValidationFunction;
-    validateParseInt: ValidationFunction;
-    logWarning: (functionName: string, warning: string) => Promise<void>;
+    ValidationFunction;
+    ValidationFunction;
+    ValidationFunction;
+    ValidationFunction;
+    (functionName: string, warning: string) => Promise<void>;
   }
 
   export default Countly;
