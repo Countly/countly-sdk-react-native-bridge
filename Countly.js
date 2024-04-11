@@ -141,7 +141,7 @@ Countly.hasBeenCalledOnStart = function () {
  */
 Countly.sendEvent = function (options) {
     if (!_state.isInitialized) {
-        const msg = "'init' must be called before 'recordView'";
+        const msg = "'init' must be called before 'sendEvent'";
         L.w(`sendEvent, ${msg}`);
         return msg;
     }
