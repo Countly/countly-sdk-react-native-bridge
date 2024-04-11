@@ -154,7 +154,7 @@ Countly.sendEvent = function (options) {
     // previous implementation was not clear about the data types of eventCount and eventSum
     // here parse them to make sure they are in correct format for the new method
     // parser will return a false value (NaN) in case of invalid data (like undefined, null, empty string, etc.)
-    options.eventCount = parseInt(options.eventCount) || 1;
+    options.eventCount = parseInt(options.eventCount, 10) || 1;
     options.eventSum = parseFloat(options.eventSum) || 0;
 
     Countly.events.recordEvent(options.eventName, options.segments, options.eventCount, options.eventSum);
@@ -778,7 +778,7 @@ Countly.endEvent = function (options) {
     // previous implementation was not clear about the data types of eventCount and eventSum
     // here parse them to make sure they are in correct format for the new method
     // parser will return a false value (NaN) in case of invalid data (like undefined, null, empty string, etc.)
-    options.eventCount = parseInt(options.eventCount) || 1;
+    options.eventCount = parseInt(options.eventCount, 10) || 1;
     options.eventSum = parseFloat(options.eventSum) || 0;
     Countly.events.endEvent(options.eventName, options.segments, options.eventCount, options.eventSum);
 };
@@ -907,7 +907,7 @@ Countly.userData.incrementBy = async function (keyName, keyValue) {
     if (message) {
         return message;
     }
-    const intValue = parseInt(keyValue).toString();
+    const intValue = parseInt(keyValue, 10).toString();
     await CountlyReactNative.userData_incrementBy([keyName, intValue]);
 };
 
@@ -934,7 +934,7 @@ Countly.userData.multiply = async function (keyName, keyValue) {
     if (message) {
         return message;
     }
-    const intValue = parseInt(keyValue).toString();
+    const intValue = parseInt(keyValue, 10).toString();
     await CountlyReactNative.userData_multiply([keyName, intValue]);
 };
 
@@ -961,7 +961,7 @@ Countly.userData.saveMax = async function (keyName, keyValue) {
     if (message) {
         return message;
     }
-    const intValue = parseInt(keyValue).toString();
+    const intValue = parseInt(keyValue, 10).toString();
     await CountlyReactNative.userData_saveMax([keyName, intValue]);
 };
 
@@ -988,7 +988,7 @@ Countly.userData.saveMin = async function (keyName, keyValue) {
     if (message) {
         return message;
     }
-    const intValue = parseInt(keyValue).toString();
+    const intValue = parseInt(keyValue, 10).toString();
     await CountlyReactNative.userData_saveMin([keyName, intValue]);
 };
 
@@ -1251,7 +1251,7 @@ Countly.userDataBulk.incrementBy = async function (keyName, keyValue) {
     if (message) {
         return message;
     }
-    const intValue = parseInt(keyValue).toString();
+    const intValue = parseInt(keyValue, 10).toString();
     await CountlyReactNative.userDataBulk_incrementBy([keyName, intValue]);
 };
 
@@ -1279,7 +1279,7 @@ Countly.userDataBulk.multiply = async function (keyName, keyValue) {
     if (message) {
         return message;
     }
-    const intValue = parseInt(keyValue).toString();
+    const intValue = parseInt(keyValue, 10).toString();
     await CountlyReactNative.userDataBulk_multiply([keyName, intValue]);
 };
 
@@ -1307,7 +1307,7 @@ Countly.userDataBulk.saveMax = async function (keyName, keyValue) {
     if (message) {
         return message;
     }
-    const intValue = parseInt(keyValue).toString();
+    const intValue = parseInt(keyValue, 10).toString();
     await CountlyReactNative.userDataBulk_saveMax([keyName, intValue]);
 };
 
@@ -1335,7 +1335,7 @@ Countly.userDataBulk.saveMin = async function (keyName, keyValue) {
     if (message) {
         return message;
     }
-    const intValue = parseInt(keyValue).toString();
+    const intValue = parseInt(keyValue, 10).toString();
     await CountlyReactNative.userDataBulk_saveMin([keyName, intValue]);
 };
 
