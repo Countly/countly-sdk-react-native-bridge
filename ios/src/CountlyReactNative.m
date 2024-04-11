@@ -469,10 +469,13 @@ RCT_EXPORT_METHOD(endEvent : (NSDictionary *)arguments) {
         NSNumber *sumNumber = [arguments objectForKey:@"s"];
         float sumFloat = [sumNumber floatValue];
 
-        NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
+        NSMutableDictionary *dict = nil;
         NSArray *segments = [arguments objectForKey:@"g"];
-        for (int i = 0, il = (int)segments.count; i < il; i += 2) {
-            dict[[segments objectAtIndex:i]] = [segments objectAtIndex:i + 1];
+        if (segments != nil) {
+            dict = [[NSMutableDictionary alloc] init];
+            for (int i = 0, il = (int)segments.count; i < il; i += 2) {
+                dict[[segments objectAtIndex:i]] = [segments objectAtIndex:i + 1];
+            }
         }
         [[Countly sharedInstance] endEvent:eventName segmentation:dict count:countInt sum:sumFloat];
     });
