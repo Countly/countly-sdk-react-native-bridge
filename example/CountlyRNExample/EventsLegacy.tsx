@@ -4,30 +4,70 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Countly from "countly-sdk-react-native-bridge";
 import CountlyButton from "./CountlyButton";
 
+interface Segmentation {}
+interface SegmentationCustom_1 extends Segmentation {
+    Country: string;
+    Age: string;
+}
+interface EventProps {
+    eventName: string;
+    segments?: Segmentation;
+    eventCount?: number;
+    eventSum?: string;
+}
+interface EventPropsCustom_1 extends EventProps {
+    segments?: SegmentationCustom_1;
+}
+
 const basicEvent = () => {
     // example for basic event
-    Countly.events.recordEvent("Basic Event", undefined, 1);
+    const event = { eventName: "Basic Event", eventCount: 1 };
+    Countly.sendEvent(event);
 };
 const eventWithSum = () => {
     // example for event with sum
-    Countly.events.recordEvent("Event With Sum", undefined, 1, 0.99);
+    const event = { eventName: "Event With Sum", eventCount: 1, eventSum: "0.99" };
+    Countly.sendEvent(event);
 };
 const eventWithSegment = () => {
     // example for event with segment
-    Countly.events.recordEvent("Event With Segment", { Country: "Paris", Age: 28 }, 1, undefined);
-    Countly.events.recordEvent("Event With Segment", { Country: "France", Age: 38 }, 1, undefined);
+    let event: EventPropsCustom_1 = {
+        eventName: "Event With Segment",
+        eventCount: 1,
+        segments: { Country: "Turkey", Age: "28" },
+    };
+    event.segments = { Country: "Turkey", Age: "28" };
+    Countly.sendEvent(event);
+    event = {
+        eventName: "Event With Segment",
+        eventCount: 1,
+        segments: { Country: "France", Age: "38" },
+    };
+    Countly.sendEvent(event);
 };
 const eventWithSumAndSegment = () => {
     // example for event with segment and sum
-    Countly.events.recordEvent("Event With Sum And Segment", { Country: "Lyon", Age: 28, height: 180.21, male: true, }, 1, 0.99);
-    Countly.events.recordEvent("Event With Sum And Segment", { Country: "France", Age: 38, height: 150.55, male: false, }, 3, 1.99);
+    let event: EventPropsCustom_1 = {
+        eventName: "Event With Sum And Segment",
+        eventCount: 1,
+        eventSum: "0.99",
+        segments: { Country: "Turkey", Age: "28" },
+    };
+    Countly.sendEvent(event);
+    event = {
+        eventName: "Event With Sum And Segment",
+        eventCount: 3,
+        eventSum: "1.99",
+        segments: { Country: "France", Age: "38" },
+    };
+    Countly.sendEvent(event);
 };
 
 // TIMED EVENTS
 const startEvent = () => {
-    Countly.events.startEvent("timedEvent");
+    Countly.startEvent("timedEvent");
     setTimeout(() => {
-        Countly.events.endEvent("timedEvent");
+        Countly.endEvent("timedEvent");
     }, 1000);
 };
 
@@ -37,53 +77,52 @@ const startEvent = () => {
 */
 const timedEventWithSum = () => {
     // Event with sum
-    Countly.events.startEvent("timedEventWithSum");
+    Countly.startEvent("timedEventWithSum");
+
+    const event: EventProps = {
+        eventName: "timedEventWithSum",
+        eventSum: "0.99",
+    };
 
     setTimeout(() => {
-        Countly.events.endEvent("timedEventWithSum", undefined, undefined, 0.99);
+        Countly.endEvent(event);
     }, 1000);
 };
 
 const timedEventWithSegment = () => {
     // Event with segment
-    Countly.events.startEvent("timedEventWithSegment");
+    Countly.startEvent("timedEventWithSegment");
 
+    const event: EventPropsCustom_1 = {
+        eventName: "timedEventWithSegment",
+        segments: { Country: "Germany", Age: "32" },
+    };
     setTimeout(() => {
-        Countly.events.endEvent("timedEventWithSegment", { Country: "Germany", Age: 32 }, undefined, undefined);
+        Countly.endEvent(event);
     }, 1000);
 };
 
 const timedEventWithSumAndSegment = () => {
     // Event with Segment, sum and count
-    Countly.events.startEvent("timedEventWithSumAndSegment");
+    Countly.startEvent("timedEventWithSumAndSegment");
 
+    const event: EventPropsCustom_1 = {
+        eventName: "timedEventWithSumAndSegment",
+        eventCount: 1,
+        eventSum: "0.99",
+        segments: { Country: "India", Age: "21" },
+    };
     setTimeout(() => {
-        Countly.events.endEvent("timedEventWithSumAndSegment", { Country: "India", Age: 21 }, 1, 0.99);
+        Countly.endEvent(event);
     }, 1000);
 };
 // TIMED EVENTS
-
-// Test Bad Values
-const testEventWithBadValues = () => {
-    Countly.events.recordEvent(10);
-    Countly.events.recordEvent("Basic Event", "11");
-    Countly.events.recordEvent("Basic Event", 1, "abc");
-    Countly.events.recordEvent("Event With Sum", undefined, "1", "0.99");
-    Countly.events.recordEvent("Event With Segment", ["Country", "France"], "1", "0.99");
-    Countly.events.recordEvent("Event With Segment", { hello: ["Country", "France"] }, "abc", "def");
-    Countly.events.recordEvent("timedEventWithSumAndSegment", { Country: "India", Age: 21 }, -2, 0.99);
-    Countly.events.recordEvent(null, null, null, null);
-    Countly.events.recordEvent(0, 0, 0, 0);
-    Countly.events.recordEvent(" ", " ", " ", " ");
-    Countly.events.recordEvent("", "", "", "");
-};
-// Test Bad Values
 
 const eventSendThreshold = () => {
     Countly.setEventSendThreshold(10);
 };
 
-function EventScreen({ navigation }) {
+function EventLegacyScreen({ navigation }) {
     return (
         <SafeAreaView>
             <ScrollView>
@@ -95,11 +134,10 @@ function EventScreen({ navigation }) {
                 <CountlyButton onPress={timedEventWithSum} title="Timed events with Sum" color="#e0e0e0" />
                 <CountlyButton onPress={timedEventWithSegment} title="Timed events with Segment" color="#e0e0e0" />
                 <CountlyButton onPress={timedEventWithSumAndSegment} title="Timed events with Sum and Segment" color="#e0e0e0" />
-                <CountlyButton onPress={testEventWithBadValues} title="Test Event With Bad Values" color="#e0e0e0" />
                 <CountlyButton onPress={eventSendThreshold} title="Set Event Threshold" color="#00b5ad" />
             </ScrollView>
         </SafeAreaView>
     );
 }
 
-export default EventScreen;
+export default EventLegacyScreen;

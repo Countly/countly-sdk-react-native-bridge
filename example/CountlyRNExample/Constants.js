@@ -13,6 +13,7 @@ const navigationName = {
     Others: "Others",
     DeviceID: "Device ID",
     RemoteConfig: "Remote Config",
+    eventLegacy: "Events Legacy"
 };
 
 export { lightOrange, navigationName, lightGreen };

@@ -9,6 +9,7 @@ import { Platform, NativeModules, NativeEventEmitter } from "react-native";
 import CountlyConfig from "./CountlyConfig.js";
 import CountlyState from "./CountlyState.js";
 import Feedback from "./Feedback.js";
+import Event from "./Event.js";
 import * as L from "./Logger.js";
 import * as Utils from "./Utils.js";
 import * as Validate from "./Validators.js";
@@ -24,6 +25,7 @@ CountlyState.CountlyReactNative = CountlyReactNative;
 CountlyState.eventEmitter = eventEmitter;
 
 Countly.feedback = new Feedback(CountlyState);
+Countly.events = new Event(CountlyState);
 
 let _isCrashReportingEnabled = false;
 
@@ -124,71 +126,38 @@ Countly.hasBeenCalledOnStart = function () {
 };
 
 /**
+ * Sends an event to the server
  *
- * Used to send various types of event;
- *
- * @param {object} options event
+ * @deprecated in 24.4.0 : use 'Countly.events.recordEvent' instead of this.
+ * 
+ * @param {CountlyEventOptions} options event options. 
+ * CountlyEventOptions {
+ *   eventName: string;
+ *   eventCount?: number;
+ *   eventSum?: number | string;
+ *   segments?: Segmentation;
+ * }
  * @return {string | void} error message or void
  */
 Countly.sendEvent = function (options) {
     if (!_state.isInitialized) {
-        const message = "'init' must be called before 'sendEvent'";
-        L.e(`sendEvent, ${message}`);
-        return message;
+        const msg = "'init' must be called before 'sendEvent'";
+        L.w(`sendEvent, ${msg}`);
+        return msg;
     }
+    L.w("sendEvent, This method is deprecated, use 'Countly.events.recordEvent' instead");
     if (!options) {
-        const message = "sendEvent, no event object provided";
-        L.e(`sendEvent, ${message}`);
+        const message = "no event object provided!";
+        L.w(`sendEvent, ${message}`);
         return message;
     }
-    if (!options.eventName) {
-        const message = "sendEvent, eventName is required";
-        L.e(`sendEvent, ${message}`);
-        return message;
-    }
-    L.d(`sendEvent, Sending event: ${JSON.stringify(options)}]`);
+    // previous implementation was not clear about the data types of eventCount and eventSum
+    // here parse them to make sure they are in correct format for the new method
+    // parser will return a false value (NaN) in case of invalid data (like undefined, null, empty string, etc.)
+    options.eventCount = parseInt(options.eventCount, 10) || 1;
+    options.eventSum = parseFloat(options.eventSum) || 0;
 
-    const args = [];
-    let eventType = "event"; // event, eventWithSum, eventWithSegment, eventWithSumSegment
-    let segments = {};
-
-    if (options.eventSum) {
-        eventType = "eventWithSum";
-    }
-    if (options.segments) {
-        eventType = "eventWithSegment";
-    }
-    if (options.segments && options.eventSum) {
-        eventType = "eventWithSumSegment";
-    }
-
-    args.push(eventType);
-    args.push(options.eventName.toString());
-
-    if (options.eventCount) {
-        args.push(options.eventCount.toString());
-    } else {
-        args.push("1");
-    }
-
-    if (options.eventSum) {
-        options.eventSum = options.eventSum.toString();
-        if (options.eventSum.indexOf(".") == -1) {
-            options.eventSum = parseFloat(options.eventSum).toFixed(2);
-            args.push(options.eventSum);
-        } else {
-            args.push(options.eventSum);
-        }
-    }
-
-    if (options.segments) {
-        segments = options.segments;
-    }
-    for (const event in segments) {
-        args.push(event);
-        args.push(segments[event]);
-    }
-    CountlyReactNative.event(args);
+    Countly.events.recordEvent(options.eventName, options.segments, options.eventCount, options.eventSum);
 };
 
 /**
@@ -741,8 +710,8 @@ Countly.pinnedCertificates = function (certificateName) {
 };
 
 /**
- *
- * Start Event
+ * Start a Timed Event
+ * @deprecated in 24.4.0 : use 'Countly.events.startEvent' instead of this.
  *
  * @param {string} eventName name of event
  * @return {string | void} error message or void
@@ -750,20 +719,16 @@ Countly.pinnedCertificates = function (certificateName) {
 Countly.startEvent = function (eventName) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'startEvent'";
-        L.e(`startEvent, ${msg}`);
+        L.e(`startEventLegacy, ${msg}`);
         return msg;
     }
-    const message = Validate.String(eventName, "eventName", "startEvent");
-    if (message) {
-        return message;
-    }
-    L.d(`startEvent, Starting event: [${eventName}]`);
-    CountlyReactNative.startEvent([eventName.toString()]);
+    L.w("startEventLegacy, This method is deprecated, use 'Countly.events.startEvent' instead");
+    Countly.events.startEvent(eventName);
 };
 
 /**
- *
- * Cancel Event
+ * Cancel a Timed Event
+ * @deprecated in 24.4.0 : use 'Countly.events.cancelEvent' instead of this.
  *
  * @param {string} eventName name of event
  * @return {string | void} error message or void
@@ -771,80 +736,47 @@ Countly.startEvent = function (eventName) {
 Countly.cancelEvent = function (eventName) {
     if (!_state.isInitialized) {
         const msg = "'init' must be called before 'cancelEvent'";
-        L.e(`cancelEvent, ${msg}`);
+        L.e(`cancelEventLegacy, ${msg}`);
         return msg;
     }
-    const message = Validate.String(eventName, "eventName", "cancelEvent");
-    if (message) {
-        return message;
-    }
-    L.d(`cancelEvent, Canceling event: [${eventName}]`);
-    CountlyReactNative.cancelEvent([eventName.toString()]);
+    L.w("cancelEventLegacy, This method is deprecated, use 'Countly.events.cancelEvent' instead");
+    Countly.events.cancelEvent(eventName);
 };
 
 /**
+ * End a Timed Event
+ * @deprecated in 24.4.0 : use 'Countly.events.endEvent' instead of this.
  *
- * End Event
- *
- * @param {string | object} options event options
+ * @param {string | CountlyEventOptions} options event options. 
+ * CountlyEventOptions {
+ *   eventName: string;
+ *   eventCount?: number;
+ *   eventSum?: number | string;
+ *   segments?: Segmentation;
+ * }
  * @return {string | void} error message or void
  */
 Countly.endEvent = function (options) {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'endEvent'";
-        L.e(`endEvent, ${message}`);
+        L.e(`endEventLegacy, ${message}`);
         return message;
     }
-    L.d(`endEvent, Ending event: [${JSON.stringify(options)}]`);
+    L.w("endEventLegacy, This method is deprecated, use 'Countly.events.endEvent' instead");
+    if (!options) {
+        const message = "no event object or event name provided!";
+        L.w(`endEventLegacy, ${message}`);
+        return message;
+    }
     if (typeof options === "string") {
         options = { eventName: options };
     }
-    const args = [];
-    let eventType = "event"; // event, eventWithSum, eventWithSegment, eventWithSumSegment
-    let segments = {};
-
-    if (options.eventSum) {
-        eventType = "eventWithSum";
-    }
-    if (options.segments) {
-        eventType = "eventWithSegment";
-    }
-    if (options.segments && options.eventSum) {
-        eventType = "eventWithSumSegment";
-    }
-
-    args.push(eventType);
-
-    if (!options.eventName) {
-        options.eventName = "";
-    }
-    args.push(options.eventName.toString());
-
-    if (!options.eventCount) {
-        options.eventCount = "1";
-    }
-    args.push(options.eventCount.toString());
-
-    if (options.eventSum) {
-        let eventSumTemp = options.eventSum.toString();
-        if (eventSumTemp.indexOf(".") == -1) {
-            eventSumTemp = parseFloat(eventSumTemp).toFixed(2);
-            args.push(eventSumTemp);
-        } else {
-            args.push(eventSumTemp);
-        }
-    } else {
-        args.push("0.0");
-    }
-
-    if (options.segments) {
-        segments = options.segments;
-    }
-    for (const event in segments) {
-        args.push(event);
-        args.push(segments[event]);
-    }
-    CountlyReactNative.endEvent(args);
+    // previous implementation was not clear about the data types of eventCount and eventSum
+    // here parse them to make sure they are in correct format for the new method
+    // parser will return a false value (NaN) in case of invalid data (like undefined, null, empty string, etc.)
+    options.eventCount = parseInt(options.eventCount, 10) || 1;
+    options.eventSum = parseFloat(options.eventSum) || 0;
+    Countly.events.endEvent(options.eventName, options.segments, options.eventCount, options.eventSum);
 };
 
 /**
@@ -971,7 +903,7 @@ Countly.userData.incrementBy = async function (keyName, keyValue) {
     if (message) {
         return message;
     }
-    const intValue = parseInt(keyValue).toString();
+    const intValue = parseInt(keyValue, 10).toString();
     await CountlyReactNative.userData_incrementBy([keyName, intValue]);
 };
 
@@ -998,7 +930,7 @@ Countly.userData.multiply = async function (keyName, keyValue) {
     if (message) {
         return message;
     }
-    const intValue = parseInt(keyValue).toString();
+    const intValue = parseInt(keyValue, 10).toString();
     await CountlyReactNative.userData_multiply([keyName, intValue]);
 };
 
@@ -1025,7 +957,7 @@ Countly.userData.saveMax = async function (keyName, keyValue) {
     if (message) {
         return message;
     }
-    const intValue = parseInt(keyValue).toString();
+    const intValue = parseInt(keyValue, 10).toString();
     await CountlyReactNative.userData_saveMax([keyName, intValue]);
 };
 
@@ -1052,7 +984,7 @@ Countly.userData.saveMin = async function (keyName, keyValue) {
     if (message) {
         return message;
     }
-    const intValue = parseInt(keyValue).toString();
+    const intValue = parseInt(keyValue, 10).toString();
     await CountlyReactNative.userData_saveMin([keyName, intValue]);
 };
 
@@ -1315,7 +1247,7 @@ Countly.userDataBulk.incrementBy = async function (keyName, keyValue) {
     if (message) {
         return message;
     }
-    const intValue = parseInt(keyValue).toString();
+    const intValue = parseInt(keyValue, 10).toString();
     await CountlyReactNative.userDataBulk_incrementBy([keyName, intValue]);
 };
 
@@ -1343,7 +1275,7 @@ Countly.userDataBulk.multiply = async function (keyName, keyValue) {
     if (message) {
         return message;
     }
-    const intValue = parseInt(keyValue).toString();
+    const intValue = parseInt(keyValue, 10).toString();
     await CountlyReactNative.userDataBulk_multiply([keyName, intValue]);
 };
 
@@ -1371,7 +1303,7 @@ Countly.userDataBulk.saveMax = async function (keyName, keyValue) {
     if (message) {
         return message;
     }
-    const intValue = parseInt(keyValue).toString();
+    const intValue = parseInt(keyValue, 10).toString();
     await CountlyReactNative.userDataBulk_saveMax([keyName, intValue]);
 };
 
@@ -1399,7 +1331,7 @@ Countly.userDataBulk.saveMin = async function (keyName, keyValue) {
     if (message) {
         return message;
     }
-    const intValue = parseInt(keyValue).toString();
+    const intValue = parseInt(keyValue, 10).toString();
     await CountlyReactNative.userDataBulk_saveMin([keyName, intValue]);
 };
 

@@ -11,7 +11,7 @@ function initialize(debugMode) {
 }
 
 /**
- * Error - this is a issues that needs attention right now.
+ * Error - this is for things that need immediate attention because SDK won’t work.
  * @param {String} message
  */
 function e(message) {

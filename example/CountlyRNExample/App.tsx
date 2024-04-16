@@ -14,6 +14,7 @@ import ConsentScreen from "./Consent";
 import RemoteConfigScreen from "./RemoteConfig";
 import OthersScreen from "./Others";
 import CrashesScreen from "./Crashes";
+import EventLegacyScreen from "./EventsLegacy";
 import { Image } from "react-native";
 
 const Stack = createNativeStackNavigator();
@@ -47,6 +48,7 @@ class Example extends React.Component {
                     <Stack.Screen name={navigationName.RemoteConfig} component={RemoteConfigScreen} />
                     <Stack.Screen name={navigationName.Others} component={OthersScreen} />
                     <Stack.Screen name={navigationName.Crashes} component={CrashesScreen} />
+                    <Stack.Screen name={navigationName.eventLegacy} component={EventLegacyScreen} />
                 </Stack.Navigator>
             </NavigationContainer>
         );
