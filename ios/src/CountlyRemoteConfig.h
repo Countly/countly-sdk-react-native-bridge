@@ -6,6 +6,7 @@
 
 #import <Foundation/Foundation.h>
 #import "CountlyRCData.h"
+#import "CountlyExperimentInformation.h"
 
 @interface CountlyRemoteConfig : NSObject
 
@@ -15,6 +16,10 @@
 - (CountlyRCData *)getValue:(NSString *)key;
 
 - (NSDictionary<NSString*, CountlyRCData *> *)getAllValues;
+
+- (CountlyRCData *)getValueAndEnroll:(NSString *)key;
+
+- (NSDictionary<NSString*, CountlyRCData *> *)getAllValuesAndEnroll;
 
 -(void)registerDownloadCallback:(RCDownloadCallback) callback;
 
@@ -37,6 +42,9 @@
 - (void)testingDownloadVariantInformation:(RCVariantCallback)completionHandler;
 
 - (void)testingEnrollIntoVariant:(NSString *)key variantName:(NSString *)variantName completionHandler:(RCVariantCallback)completionHandler;
+
+- (void) testingDownloadExperimentInformation:(RCVariantCallback)completionHandler;
+- (NSDictionary<NSString*, CountlyExperimentInformation*> *) testingGetAllExperimentInfo;
 
 - (void)clearAll;
 

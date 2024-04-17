@@ -1,3 +1,37 @@
+## 24.4.0
+* ! Minor breaking change ! Tracking of foreground and background time for APM is disabled by default
+
+* Added `disableAdditionalIntentRedirectionChecks` config method
+* Added a new metric for detecting whether or not a device has a hinge for Android
+* Added four new APM configuration options under the `CountlyConfig.apm` interface:
+  * `enableForegroundBackgroundTracking` for enabling automatic F/B time tracking
+  * `enableAppStartTimeTracking` for enabling automatic app launch time tracking (Android only)
+  * `enableManualAppLoadedTrigger` for enabling the manipulation of app load time finished timestamp
+  * `setAppStartTimestampOverride` for enabling the manipulation of app load time starting timestamp
+* Added a new Event interface (`Countly.events`) that groups event related calls:
+  * `recordEvent` for recording an event
+  * `startEvent` for starting a timed event
+  * `cancelEvent` for canceling an ongoing timed event
+  * `endEvent` for ending a timed event and record it
+
+* Mitigated an issue with `getRemoteConfigValueForKeyP` and `remoteConfigClearValues` happening when they were called before initializing the SDK
+
+* Deprecated `enableApm` config option. Use `apm.enableAppStartTimeTracking` instead (for iOS also `enableForegroundBackgroundTracking` must be used)
+* Deprecated the old events methods:
+  * `sendEvent` use `Countly.events.recordEvent` instead
+  * `startEvent` use `Countly.events.startEvent` instead
+  * `cancelEvent` use `Countly.events.cancelEvent` instead
+  * `endEvent` use `Countly.events.endEvent` instead
+
+* Updated the underlying Android SDK version to 24.4.0
+* Updated the underlying iOS SDK version to 24.4.0
+
+## 23.12.0
+* Added TS type declerations to the SDK
+
+* Updated the underlying Android SDK version to 23.12.0
+* Updated the underlying iOS SDK version to 23.12.0
+
 ## 23.10.0
 * Fixed a bug where segment provided to 'logException' was ignored in Android devices
 * Fixed a bug where bridged SDK logs were not printing

@@ -7,6 +7,8 @@
 #import <Foundation/Foundation.h>
 #import <CoreLocation/CoreLocation.h>
 #import "CountlyRCData.h"
+#import "CountlyAPMConfig.h"
+#import "CountlySDKLimitsConfig.h"
 
 #if (TARGET_OS_IOS || TARGET_OS_TV)
 #import <UIKit/UIKit.h>
@@ -93,6 +95,8 @@ extern CLYMetricKey const CLYMetricKeyDensity;
 extern CLYMetricKey const CLYMetricKeyLocale;
 extern CLYMetricKey const CLYMetricKeyHasWatch;
 extern CLYMetricKey const CLYMetricKeyInstalledWatchApp;
+
+extern NSString* const kCountlyAppVersionKey;
 
 //NOTE: Attribution keys
 typedef NSString* CLYAttributionKey NS_EXTENSIBLE_STRING_ENUM;
@@ -312,6 +316,13 @@ typedef enum : NSUInteger
  */
 @property (nonatomic, copy) NSString* IP;
 
+/**
+ * For disabling location tracking by clearing all existing location info..
+ * @discussion If set, Location tracking is disabled
+ * Once disabled, geo-location based push notifications can be enabled again by calling @c recordLocation: method.
+*/
+@property (nonatomic) BOOL disableLocation;
+
 #pragma mark -
 
 /**
@@ -353,6 +364,12 @@ typedef enum : NSUInteger
 @property (nonatomic) NSUInteger storedRequestsLimit;
 
 /**
+ * Age of a request is the difference between the current time and the creation time of the request. Requests will be removed from the queue if their age exceeds the request drop age set here.
+ * @discussion If not set, it will not effect the requests.
+ */
+@property (nonatomic) NSUInteger requestDropAgeHours;
+
+/**
  * Limit for the length of all string keys.
  * @discussion It affects:
  * @discussion - event names
@@ -366,7 +383,7 @@ typedef enum : NSUInteger
  * @discussion Keys longer than this limit will be truncated.
  * @discussion If not set, it will be 128 chars by default.
  */
-@property (nonatomic) NSUInteger maxKeyLength;
+@property(nonatomic) NSUInteger maxKeyLength DEPRECATED_MSG_ATTRIBUTE("Use 'sdkInternalLimits' CountlySDKLimitsConfig object instead");
 
 /**
  * Limit for the length of values in all key-value pairs.
@@ -379,7 +396,7 @@ typedef enum : NSUInteger
  * @discussion Values longer than this limit will be truncated.
  * @discussion If not set, it will be 256 chars by default.
  */
-@property (nonatomic) NSUInteger maxValueLength;
+@property(nonatomic) NSUInteger maxValueLength DEPRECATED_MSG_ATTRIBUTE("Use 'sdkInternalLimits' CountlySDKLimitsConfig object instead");
 
 /**
  * Limit for the number of key-value pairs in segmentations.
@@ -387,7 +404,13 @@ typedef enum : NSUInteger
  * @discussion As obviously there is no order among the keys of an NSDictionary, it is not defined which ones will be removed.
  * @discussion If not set, it will be 30 by default.
  */
-@property (nonatomic) NSUInteger maxSegmentationValues;
+@property(nonatomic) NSUInteger maxSegmentationValues DEPRECATED_MSG_ATTRIBUTE("Use 'sdkInternalLimits' CountlySDKLimitsConfig object instead");
+
+/**
+ * Variable to access sdkInternalLimits configurations.
+ * @discussion SDK internal limits configurations for developer to interact with SDK.
+ */
+- (CountlySDKLimitsConfig *)sdkInternalLimits;
 
 /**
  * For sending all requests using HTTP POST method.
@@ -453,7 +476,7 @@ typedef enum : NSUInteger
  * @discussion If not set, it will be 100 by default.
  * @discussion If @c shouldUsePLCrashReporter flag is set on initial config, this limit will not be applied.
  */
-@property (nonatomic) NSUInteger crashLogLimit;
+@property (nonatomic) NSUInteger crashLogLimit DEPRECATED_MSG_ATTRIBUTE("Use 'sdkInternalLimits' CountlySDKLimitsConfig object instead");
 
 /**
  * Regular expression used for filtering crash reports and preventing them from being sent to Countly Server.
@@ -596,7 +619,13 @@ typedef enum : NSUInteger
  * For enabling automatic performance monitoring.
  * @discussion If set, Performance Monitoring feature will be started automatically on SDK start.
  */
-@property (nonatomic) BOOL enablePerformanceMonitoring;
+@property (nonatomic) BOOL enablePerformanceMonitoring DEPRECATED_MSG_ATTRIBUTE("Use 'apm' CountlyAPMConfig object instead");
+
+/**
+ * Variable to access apm configurations.
+ * @discussion APM configurations for developer to interact with SDK.
+ */
+- (CountlyAPMConfig *) apm;
 
 #pragma mark -
 

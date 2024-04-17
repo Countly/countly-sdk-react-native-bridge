@@ -275,7 +275,7 @@ void CountlyExceptionHandler(NSException *exception, bool isFatal, bool isAutoDe
     crashReport[kCountlyCRKeyDiskTotal] = @(CountlyDeviceInfo.totalDisk / kCLYMebibit);
     NSInteger batteryLevel = CountlyDeviceInfo.batteryLevel;
     // We will add battery level only if there is a valid value.
-    if(batteryLevel >= 0)
+    if (batteryLevel >= 0)
     {
         crashReport[kCountlyCRKeyBattery] = @(batteryLevel);
     }
@@ -414,11 +414,11 @@ void CountlySignalHandler(int signalCode)
 
         if (![binaryImagesInStack containsObject:imageName])
         {
-            CLY_LOG_V(@"Image Name is not in the stack trace, so it will be ignored!\n%@", imageName);
+            CLY_LOG_V(@"%s, imageName:[%@] is not in the stack trace, so it will be ignored!", __FUNCTION__, imageName);
             continue;
         }
 
-        CLY_LOG_D(@"Image Name is in the stack trace, so it will be used!\n%@", imageName);
+        CLY_LOG_D(@"%s, imageName:[%@] is in the stack trace, so it will be used!", __FUNCTION__, imageName);
 
         const struct mach_header* imageHeader = _dyld_get_image_header(i);
         if (imageHeader == NULL)

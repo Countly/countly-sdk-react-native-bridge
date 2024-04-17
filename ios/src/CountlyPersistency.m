@@ -28,13 +28,14 @@ NSString* const kCountlyServerConfigPersistencyKey = @"kCountlyServerConfigPersi
 
 NSString* const kCountlyCustomCrashLogFileName = @"CountlyCustomCrash.log";
 
+static CountlyPersistency* s_sharedInstance = nil;
+static dispatch_once_t onceToken;
+
 + (instancetype)sharedInstance
 {
     if (!CountlyCommon.sharedInstance.hasStarted)
         return nil;
 
-    static CountlyPersistency* s_sharedInstance = nil;
-    static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{s_sharedInstance = self.new;});
     return s_sharedInstance;
 }
@@ -71,7 +72,7 @@ NSString* const kCountlyCustomCrashLogFileName = @"CountlyCustomCrash.log";
 
 - (void)addToQueue:(NSString *)queryString
 {
-    if(!CountlyServerConfig.sharedInstance.trackingEnabled)
+    if (!CountlyServerConfig.sharedInstance.trackingEnabled)
     {
         CLY_LOG_D(@"'addToQueue' is aborted: SDK Tracking is disabled from server config!");
         return;
@@ -79,13 +80,21 @@ NSString* const kCountlyCustomCrashLogFileName = @"CountlyCustomCrash.log";
     
     if (!queryString.length || [queryString isEqual:NSNull.null])
         return;
+    
+    queryString = [queryString stringByAppendingFormat:@"&%@=%@",
+                   kCountlyAppVersionKey, CountlyDeviceInfo.appVersion];
 
     @synchronized (self)
     {
         [self.queuedRequests addObject:queryString];
-
         if (self.queuedRequests.count > self.storedRequestsLimit && !CountlyConnectionManager.sharedInstance.connection)
-            [self.queuedRequests removeObjectAtIndex:0];
+        {
+            [self removeOldAgeRequestsFromQueue];
+            if (self.queuedRequests.count > self.storedRequestsLimit && !CountlyConnectionManager.sharedInstance.connection)
+            {
+                [self.queuedRequests removeObjectAtIndex:0];
+            }
+        }
     }
 }
 
@@ -199,6 +208,49 @@ NSString* const kCountlyCustomCrashLogFileName = @"CountlyCustomCrash.log";
     }
 }
 
+- (void)removeOldAgeRequestsFromQueue
+{
+    @synchronized (self)
+    {
+        if(self.requestDropAgeHours && self.requestDropAgeHours > 0) {
+            self.isQueueBeingModified = YES;
+            
+            NSPredicate* predicate = [NSPredicate predicateWithBlock:^BOOL(NSString* queryString, NSDictionary<NSString *, id> * bindings)
+                                      {
+                BOOL isOldAgeRequest = [self isOldRequestInternal:queryString];
+                return !isOldAgeRequest;
+            }];
+            
+            [self.queuedRequests filterUsingPredicate:predicate];
+            
+            self.isQueueBeingModified = NO;
+        }
+    }
+}
+
+-(BOOL)isOldRequest:(NSString*) queryString
+{
+    if(self.requestDropAgeHours && self.requestDropAgeHours > 0) {
+        return [self isOldRequestInternal:queryString];
+    }
+    return false;
+    
+}
+
+-(BOOL)isOldRequestInternal:(NSString *)queryString
+{
+    double requestTimeStamp = [[queryString cly_valueForQueryStringKey:kCountlyQSKeyTimestamp] longLongValue]/1000.0;
+    double durationInSecods = NSDate.date.timeIntervalSince1970 - requestTimeStamp;
+    double durationInHours = (durationInSecods/3600.0);
+    BOOL isOldAgeRequest = durationInHours >= self.requestDropAgeHours;
+    if (isOldAgeRequest)
+    {
+        CLY_LOG_D(@"Detected a request with an old age (age in hours: %f) in queue and removed it.", durationInHours);
+    }
+    
+    return isOldAgeRequest;
+}
+
 #pragma mark ---
 
 - (void)recordEvent:(CountlyEvent *)event
@@ -242,6 +294,21 @@ NSString* const kCountlyCustomCrashLogFileName = @"CountlyCustomCrash.log";
     {
         [self.recordedEvents removeAllObjects];
     }
+}
+
+- (void)resetInstance:(BOOL) clearStorage 
+{
+    CLY_LOG_I(@"%s Clear Storage: %d", __FUNCTION__, clearStorage);
+    [CountlyConnectionManager.sharedInstance sendEvents];
+    [self flushEvents];
+    [self clearAllTimedEvents];
+    [self flushQueue];
+    if(clearStorage)
+    {
+        [self saveToFile];
+    }
+    onceToken = 0;
+    s_sharedInstance = nil;
 }
 
 #pragma mark ---
@@ -307,7 +374,7 @@ NSString* const kCountlyCustomCrashLogFileName = @"CountlyCustomCrash.log";
             [line writeToFile:crashLogFileURL.path atomically:YES encoding:NSUTF8StringEncoding error:&error];
             if (error)
             {
-                CLY_LOG_W(@"Crash Log File can not be created: \n%@", error);
+                CLY_LOG_W(@"%s, Crash Log File can not be created, got error %@", __FUNCTION__, error);
             }
         }
     });
@@ -337,7 +404,7 @@ NSString* const kCountlyCustomCrashLogFileName = @"CountlyCustomCrash.log";
         [NSFileManager.defaultManager removeItemAtURL:crashLogFileURL error:&error];
         if (error)
         {
-            CLY_LOG_W(@"Crash Log File can not be deleted: \n%@", error);
+            CLY_LOG_W(@"%s, Crash Log File can not be deleted, got error %@", __FUNCTION__, error);
         }
     }
 }
@@ -368,7 +435,7 @@ NSString* const kCountlyCustomCrashLogFileName = @"CountlyCustomCrash.log";
             [NSFileManager.defaultManager createDirectoryAtURL:URL withIntermediateDirectories:YES attributes:nil error:&error];
             if (error)
             {
-                CLY_LOG_W(@"Application Support directory can not be created: \n%@", error);
+                CLY_LOG_W(@"%s, Application Support directory can not be created, got error %@", __FUNCTION__, error);
             }
         }
     });

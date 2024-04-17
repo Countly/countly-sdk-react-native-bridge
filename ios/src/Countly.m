@@ -28,12 +28,19 @@ NSString* previousEventID;
     appLoadStartTime = floor(NSDate.date.timeIntervalSince1970 * 1000);
 }
 
+static Countly *s_sharedCountly = nil;
+static dispatch_once_t onceToken;
+
 + (instancetype)sharedInstance
 {
-    static Countly *s_sharedCountly = nil;
-    static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{s_sharedCountly = self.new;});
     return s_sharedCountly;
+}
+
+- (void)resetInstance {
+    CLY_LOG_I(@"%s", __FUNCTION__);
+    onceToken = 0;
+    s_sharedCountly = nil;
 }
 
 - (instancetype)init
@@ -74,10 +81,27 @@ NSString* previousEventID;
     CountlyCommon.sharedInstance.shouldIgnoreTrustCheck = config.shouldIgnoreTrustCheck;
     CountlyCommon.sharedInstance.loggerDelegate = config.loggerDelegate;
     CountlyCommon.sharedInstance.internalLogLevel = config.internalLogLevel;
-    CountlyCommon.sharedInstance.maxKeyLength = config.maxKeyLength;
-    CountlyCommon.sharedInstance.maxValueLength = config.maxValueLength;
-    CountlyCommon.sharedInstance.maxSegmentationValues = config.maxSegmentationValues;
-
+    
+    config = [self checkAndFixInternalLimitsConfig:config];
+    
+    CountlyCommon.sharedInstance.maxKeyLength = config.sdkInternalLimits.getMaxKeyLength;
+    CountlyCommon.sharedInstance.maxValueLength = config.sdkInternalLimits.getMaxValueSize;
+    CountlyCommon.sharedInstance.maxSegmentationValues = config.sdkInternalLimits.getMaxSegmentationValues;
+    
+    // For backward compatibility, deprecated values are only set incase new values are not provided using sdkInternalLimits interface
+    if(CountlyCommon.sharedInstance.maxKeyLength == kCountlyMaxKeyLength && config.maxKeyLength != kCountlyMaxKeyLength) {
+        CountlyCommon.sharedInstance.maxKeyLength = config.maxKeyLength;
+        CLY_LOG_I(@"%s provided 'maxKeyLength' override:[ %lu ]", __FUNCTION__, (unsigned long)config.maxKeyLength);
+    }
+    if(CountlyCommon.sharedInstance.maxValueLength == kCountlyMaxValueSize && config.maxValueLength != kCountlyMaxValueSize) {
+        CountlyCommon.sharedInstance.maxValueLength = config.maxValueLength;
+        CLY_LOG_I(@"%s provided 'maxValueLength' override:[ %lu ]", __FUNCTION__, (unsigned long)config.maxValueLength);
+    }
+    if(CountlyCommon.sharedInstance.maxSegmentationValues == kCountlyMaxSegmentationValues && config.maxSegmentationValues != kCountlyMaxSegmentationValues) {
+        CountlyCommon.sharedInstance.maxSegmentationValues = config.maxSegmentationValues;
+        CLY_LOG_I(@"%s provided 'maxSegmentationValues' override:[ %lu ]", __FUNCTION__, (unsigned long)config.maxSegmentationValues);
+    }
+    
     CountlyConsentManager.sharedInstance.requiresConsent = config.requiresConsent;
 
     if (!config.appKey.length || [config.appKey isEqualToString:@"YOUR_APP_KEY"])
@@ -86,7 +110,7 @@ NSString* previousEventID;
     if (!config.host.length || [config.host isEqualToString:@"https://YOUR_COUNTLY_SERVER"])
         [NSException raise:@"CountlyHostNotSetException" format:@"host property on CountlyConfig object is not set"];
 
-    if([CountlyCommon.sharedInstance.SDKName isEqualToString:kCountlySDKName] && [CountlyCommon.sharedInstance.SDKVersion isEqualToString:kCountlySDKVersion])
+    if ([CountlyCommon.sharedInstance.SDKName isEqualToString:kCountlySDKName] && [CountlyCommon.sharedInstance.SDKVersion isEqualToString:kCountlySDKVersion])
     {
         CLY_LOG_I(@"Initializing with %@ SDK v%@ on %@ with %@ %@",
                   CountlyCommon.sharedInstance.SDKName,
@@ -121,6 +145,7 @@ NSString* previousEventID;
     CountlyConnectionManager.sharedInstance.URLSessionConfiguration = config.URLSessionConfiguration;
 
     CountlyPersistency.sharedInstance.eventSendThreshold = config.eventSendThreshold;
+    CountlyPersistency.sharedInstance.requestDropAgeHours = config.requestDropAgeHours;
     CountlyPersistency.sharedInstance.storedRequestsLimit = MAX(1, config.storedRequestsLimit);
 
     CountlyCommon.sharedInstance.manualSessionHandling = config.manualSessionHandling;
@@ -135,7 +160,7 @@ NSString* previousEventID;
     CountlyCommon.sharedInstance.enableServerConfiguration = config.enableServerConfiguration;
     
     // Fetch server configs if 'enableServerConfiguration' is true.
-    if(config.enableServerConfiguration)
+    if (config.enableServerConfiguration)
     {
         [CountlyServerConfig.sharedInstance fetchServerConfig];
     }
@@ -147,7 +172,14 @@ NSString* previousEventID;
     CountlyFeedbacks.sharedInstance.ratingCompletionForAutoAsk = config.starRatingCompletion;
     [CountlyFeedbacks.sharedInstance checkForStarRatingAutoAsk];
 
-    [CountlyLocationManager.sharedInstance updateLocation:config.location city:config.city ISOCountryCode:config.ISOCountryCode IP:config.IP];
+    if(config.disableLocation)
+    {
+        [CountlyLocationManager.sharedInstance disableLocation];
+    }
+    else
+    {
+        [CountlyLocationManager.sharedInstance updateLocation:config.location city:config.city ISOCountryCode:config.ISOCountryCode IP:config.IP];
+    }
 #endif
 
     if (!CountlyCommon.sharedInstance.manualSessionHandling)
@@ -175,7 +207,12 @@ NSString* previousEventID;
 #endif
 
     CountlyCrashReporter.sharedInstance.crashSegmentation = [config.crashSegmentation cly_truncated:@"Crash segmentation"];
-    CountlyCrashReporter.sharedInstance.crashLogLimit = MAX(1, config.crashLogLimit);
+    CountlyCrashReporter.sharedInstance.crashLogLimit = config.sdkInternalLimits.getMaxBreadcrumbCount;
+    // For backward compatibility, deprecated values are only set incase new values are not provided using sdkInternalLimits interface
+    if(CountlyCrashReporter.sharedInstance.crashLogLimit == kCountlyMaxBreadcrumbCount && config.crashLogLimit != kCountlyMaxBreadcrumbCount) {
+        CountlyCrashReporter.sharedInstance.crashLogLimit = MAX(1, config.crashLogLimit);
+        CLY_LOG_W(@"%s provided 'maxBreadcrumbCount' override:[ %lu ]", __FUNCTION__, (unsigned long)config.crashLogLimit);
+    }
     CountlyCrashReporter.sharedInstance.crashFilter = config.crashFilter;
     CountlyCrashReporter.sharedInstance.shouldUsePLCrashReporter = config.shouldUsePLCrashReporter;
     CountlyCrashReporter.sharedInstance.shouldUseMachSignalHandler = config.shouldUseMachSignalHandler;
@@ -194,11 +231,11 @@ NSString* previousEventID;
         CountlyViewTrackingInternal.sharedInstance.isEnabledOnInitialConfig = YES;
         [CountlyViewTrackingInternal.sharedInstance startAutoViewTracking];
     }
-    if(config.automaticViewTrackingExclusionList) {
+    if (config.automaticViewTrackingExclusionList) {
         [CountlyViewTrackingInternal.sharedInstance addAutoViewTrackingExclutionList:config.automaticViewTrackingExclusionList];
     }
 #endif
-    if(config.globalViewSegmentation) {
+    if (config.globalViewSegmentation) {
         [CountlyViewTrackingInternal.sharedInstance setGlobalViewSegmentation:config.globalViewSegmentation];
     }
     timer = [NSTimer timerWithTimeInterval:config.updateSessionPeriod target:self selector:@selector(onTimer:) userInfo:nil repeats:YES];
@@ -207,16 +244,18 @@ NSString* previousEventID;
     CountlyRemoteConfigInternal.sharedInstance.isRCAutomaticTriggersEnabled = config.enableRemoteConfigAutomaticTriggers || config.enableRemoteConfig;
     CountlyRemoteConfigInternal.sharedInstance.isRCValueCachingEnabled = config.enableRemoteConfigValueCaching;
     CountlyRemoteConfigInternal.sharedInstance.remoteConfigCompletionHandler = config.remoteConfigCompletionHandler;
-    if(config.getRemoteConfigGlobalCallbacks) {
+    if (config.getRemoteConfigGlobalCallbacks) {
         CountlyRemoteConfigInternal.sharedInstance.remoteConfigGlobalCallbacks = config.getRemoteConfigGlobalCallbacks;
     }
-    if(config.enrollABOnRCDownload) {
+    if (config.enrollABOnRCDownload) {
         CountlyRemoteConfigInternal.sharedInstance.enrollABOnRCDownload = config.enrollABOnRCDownload;
     }
     [CountlyRemoteConfigInternal.sharedInstance downloadRemoteConfigAutomatically];
+    if (config.apm.getAppStartTimestampOverride) {
+        appLoadStartTime = config.apm.getAppStartTimestampOverride;
+    }
     
-    CountlyPerformanceMonitoring.sharedInstance.isEnabledOnInitialConfig = config.enablePerformanceMonitoring;
-    [CountlyPerformanceMonitoring.sharedInstance startPerformanceMonitoring];
+    [CountlyPerformanceMonitoring.sharedInstance startWithConfig:config.apm];
 
     CountlyCommon.sharedInstance.enableOrientationTracking = config.enableOrientationTracking;
     [CountlyCommon.sharedInstance observeDeviceOrientationChanges];
@@ -224,7 +263,7 @@ NSString* previousEventID;
     [CountlyConnectionManager.sharedInstance proceedOnQueue];
 
     //TODO: Should move at the top after checking the the edge cases of current implementation
-    if(config.enableAllConsents)
+    if (config.enableAllConsents)
         [self giveAllConsents];
     else if (config.consents)
         [self giveConsentForFeatures:config.consents];
@@ -234,6 +273,56 @@ NSString* previousEventID;
 
     if (config.indirectAttribution)
         [self recordIndirectAttribution:config.indirectAttribution];
+}
+
+- (CountlyConfig *) checkAndFixInternalLimitsConfig:(CountlyConfig *)config
+{
+    if (config.sdkInternalLimits.getMaxKeyLength == 0) {
+        [config.sdkInternalLimits setMaxKeyLength:kCountlyMaxKeyLength];
+        CLY_LOG_W(@"%s Ignoring provided value of %lu for 'maxKeyLength' because it's less than 1", __FUNCTION__, (unsigned long)config.sdkInternalLimits.getMaxKeyLength);
+    }
+    else if(config.sdkInternalLimits.getMaxKeyLength != kCountlyMaxKeyLength)
+    {
+        CLY_LOG_I(@"%s provided 'maxKeyLength' override:[ %lu ]", __FUNCTION__, (unsigned long)config.sdkInternalLimits.getMaxKeyLength);
+    }
+    
+    if (config.sdkInternalLimits.getMaxValueSize == 0) {
+        [config.sdkInternalLimits setMaxValueSize:kCountlyMaxValueSize];
+        CLY_LOG_W(@"%s Ignoring provided value of %lu for 'maxValueSize' because it's less than 1", __FUNCTION__, (unsigned long)config.sdkInternalLimits.getMaxValueSize);
+    }
+    else if(config.sdkInternalLimits.getMaxValueSize != kCountlyMaxValueSize)
+    {
+        CLY_LOG_I(@"%s provided 'maxValueSize' override:[ %lu ]", __FUNCTION__, (unsigned long)config.sdkInternalLimits.getMaxValueSize);
+    }
+    
+    if (config.sdkInternalLimits.getMaxSegmentationValues == 0) {
+        [config.sdkInternalLimits setMaxSegmentationValues:kCountlyMaxSegmentationValues];
+        CLY_LOG_W(@"%s Ignoring provided value of %lu for 'maxSegmentationValues' because it's less than 1", __FUNCTION__, (unsigned long)config.sdkInternalLimits.getMaxSegmentationValues);
+    }
+    else if(config.sdkInternalLimits.getMaxSegmentationValues != kCountlyMaxSegmentationValues)
+    {
+        CLY_LOG_I(@"%s provided 'maxSegmentationValues' override:[ %lu ]", __FUNCTION__, (unsigned long)config.sdkInternalLimits.getMaxSegmentationValues);
+    }
+    
+    if (config.sdkInternalLimits.getMaxBreadcrumbCount == 0) {
+        [config.sdkInternalLimits setMaxBreadcrumbCount:kCountlyMaxBreadcrumbCount];
+        CLY_LOG_W(@"%s Ignoring provided value of %lu for 'maxBreadcrumbCount' because it's less than 1", __FUNCTION__, (unsigned long)config.sdkInternalLimits.getMaxBreadcrumbCount);
+    }
+    else if(config.sdkInternalLimits.getMaxBreadcrumbCount != kCountlyMaxBreadcrumbCount)
+    {
+        CLY_LOG_I(@"%s provided 'maxBreadcrumbCount' override:[ %lu ]", __FUNCTION__, (unsigned long)config.sdkInternalLimits.getMaxBreadcrumbCount);
+    }
+    
+    if(config.sdkInternalLimits.getMaxStackTraceLineLength != kCountlyMaxStackTraceLinesPerThread)
+    {
+        CLY_LOG_W(@"%s 'maxStackTraceLineLength' is currently a placeholder and doesn't actively utilize the set values.", __FUNCTION__);
+    }
+    
+    if(config.sdkInternalLimits.getMaxStackTraceLinesPerThread != kCountlyMaxStackTraceLineLength)
+    {
+        CLY_LOG_I(@"%s 'maxStackTraceLinesPerThread' is currently a placeholder and doesn't actively utilize the set values.", __FUNCTION__);
+    }
+    return config;
 }
 
 #pragma mark -
@@ -248,7 +337,7 @@ NSString* previousEventID;
         [CountlyConnectionManager.sharedInstance updateSession];
     }
     // this condtion is called only when both manual session handling and hybrid mode is enabled.
-    else if(CountlyCommon.sharedInstance.enableManualSessionControlHybridMode)
+    else if (CountlyCommon.sharedInstance.enableManualSessionControlHybridMode)
     {
         [CountlyConnectionManager.sharedInstance updateSession];
     }
@@ -555,7 +644,7 @@ NSString* previousEventID;
     
     [CountlyRemoteConfigInternal.sharedInstance clearCachedRemoteConfig];
     
-    if(![deviceID isEqualToString:CLYTemporaryDeviceID] )
+    if (![deviceID isEqualToString:CLYTemporaryDeviceID] )
     {
         [CountlyRemoteConfigInternal.sharedInstance downloadRemoteConfigAutomatically];
     }
@@ -738,7 +827,7 @@ NSString* previousEventID;
     BOOL isReservedEvent = [self isReservedEvent:key];
 
     // If the event is not reserved, assign the previous event ID to the current event's PEID property, or an empty string if previousEventID is nil. Then, update previousEventID to the current event's ID.
-    if(!isReservedEvent)
+    if (!isReservedEvent)
     {
         event.PEID = previousEventID ?: @"";
         previousEventID = event.ID;
@@ -1252,6 +1341,34 @@ NSString* previousEventID;
     long long appLoadEndTime = floor(NSDate.date.timeIntervalSince1970 * 1000);
 
     [CountlyPerformanceMonitoring.sharedInstance recordAppStartDurationTraceWithStartTime:appLoadStartTime endTime:appLoadEndTime];
+}
+
+- (void)halt
+{
+    CLY_LOG_I(@"%s", __FUNCTION__);
+    [self halt:true];
+}
+
+- (void)halt:(BOOL) clearStorage
+{
+    CLY_LOG_I(@"%s %d", __FUNCTION__, clearStorage);
+    [CountlyPersistency.sharedInstance resetInstance:clearStorage];
+    [CountlyDeviceInfo.sharedInstance resetInstance];
+    [self resetInstance];
+    [CountlyCommon.sharedInstance resetInstance];
+    
+    if(clearStorage)
+    {
+        NSString *appDomain = [[NSBundle mainBundle] bundleIdentifier];
+        [NSUserDefaults.standardUserDefaults removePersistentDomainForName:appDomain];
+        [NSUserDefaults.standardUserDefaults synchronize];
+    }
+}
+
+- (void)attemptToSendStoredRequests
+{
+    CLY_LOG_I(@"%s", __FUNCTION__);
+    [CountlyConnectionManager.sharedInstance attemptToSendStoredRequests];
 }
 
 @end

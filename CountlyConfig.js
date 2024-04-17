@@ -1,4 +1,5 @@
-import { initialize } from './Logger.js';
+import { initialize } from "./Logger.js";
+import CountlyConfigApm from "./lib/configuration_interfaces/countly_config_apm.js";
 /**
  * Countly SDK React Native Bridge
  * https://github.com/Countly/countly-sdk-react-native-bridge
@@ -16,6 +17,14 @@ class CountlyConfig {
     constructor(serverURL, appKey) {
         this.serverURL = serverURL;
         this.appKey = appKey;
+        this._countlyConfigApmInstance = new CountlyConfigApm();
+    }
+
+    /**
+     * Getter to get the APM specific configurations
+     */
+    get apm() {
+        return this._countlyConfigApmInstance;
     }
 
     /**
@@ -122,10 +131,21 @@ class CountlyConfig {
     }
 
     /**
+     * @deprecated in 24.4.0 : use 'countlyConfig.apm' interface instead of 'config.enableApm'.
+     * 
      * Method to enable application performance monitoring which includes the recording of app start time.
      */
     enableApm() {
         this.enableApm = true;
+        return this;
+    }
+
+    /**
+     * AdditionalIntentRedirectionChecks are enabled by default.
+     * This method should be used to disable them.
+     */
+    disableAdditionalIntentRedirectionChecks() {
+        this.disableAdditionalIntentRedirectionChecks = true;
         return this;
     }
 

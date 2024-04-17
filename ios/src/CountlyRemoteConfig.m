@@ -69,6 +69,18 @@
     return [CountlyRemoteConfigInternal.sharedInstance getAllValues];
 }
 
+- (CountlyRCData *)getValueAndEnroll:(NSString *)key
+{
+    CLY_LOG_I(@"%s %@", __FUNCTION__, key);
+    return [CountlyRemoteConfigInternal.sharedInstance getValueAndEnroll:key];
+}
+
+- (NSDictionary<NSString*, CountlyRCData *> *)getAllValuesAndEnroll
+{
+    CLY_LOG_I(@"%s", __FUNCTION__);
+    return [CountlyRemoteConfigInternal.sharedInstance getAllValuesAndEnroll];
+}
+
 - (void)enrollIntoABTestsForKeys:(NSArray *)keys
 {
     CLY_LOG_I(@"%s %@", __FUNCTION__, keys);
@@ -111,6 +123,19 @@
 {
     CLY_LOG_I(@"%s %@ %@", __FUNCTION__, omitKeys, completionHandler);
     [CountlyRemoteConfigInternal.sharedInstance downloadValuesForKeys:nil omitKeys:omitKeys completionHandler:completionHandler];
+}
+
+- (void) testingDownloadExperimentInformation:(RCVariantCallback)completionHandler;
+{
+    CLY_LOG_I(@"%s %@", __FUNCTION__, completionHandler);
+    
+    [CountlyRemoteConfigInternal.sharedInstance testingDownloadExperimentInformation:completionHandler];
+}
+
+- (NSDictionary<NSString*, CountlyExperimentInformation*> *) testingGetAllExperimentInfo
+{
+    CLY_LOG_I(@"%s", __FUNCTION__);
+    return [CountlyRemoteConfigInternal.sharedInstance testingGetAllExperimentInfo];
 }
 
 - (void)clearAll

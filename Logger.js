@@ -1,4 +1,4 @@
-const countlyNamespace = '[CountlyReactNative] ';
+const countlyNamespace = "[CountlyReactNative] ";
 let canLog = false;
 
 /**
@@ -7,11 +7,11 @@ let canLog = false;
  */
 function initialize(debugMode) {
     canLog = debugMode && console !== undefined;
-    i('[Logger] initializing the module');
+    i("[Logger] initializing the module");
 }
 
 /**
- * Error - this is a issues that needs attention right now.
+ * Error - this is for things that need immediate attention because SDK won’t work.
  * @param {String} message
  */
 function e(message) {

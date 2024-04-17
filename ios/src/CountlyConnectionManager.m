@@ -11,6 +11,7 @@
     NSTimeInterval unsentSessionLength;
     NSTimeInterval lastSessionStartTime;
     BOOL isCrashing;
+    BOOL isSessionStarted;
 }
 @property (nonatomic) NSURLSession* URLSession;
 @end
@@ -60,6 +61,11 @@ NSString* const kCountlyQSKeyRemainingRequest = @"rr";
 
 NSString* const kCountlyQSKeyMethod           = @"method";
 
+NSString* const kCountlyRCKeyABOptIn          = @"ab";
+NSString* const kCountlyRCKeyABOptOut         = @"ab_opt_out";
+NSString* const kCountlyEndPointOverrideTag   = @"&new_end_point=";
+NSString* const kCountlyNewEndPoint           = @"new_end_point";
+
 CLYAttributionKey const CLYAttributionKeyIDFA = kCountlyQSKeyIDFA;
 CLYAttributionKey const CLYAttributionKeyADID = kCountlyQSKeyADID;
 
@@ -92,6 +98,7 @@ const NSInteger kCountlyGETRequestMaxLength = 2048;
     if (self = [super init])
     {
         unsentSessionLength = 0.0;
+        isSessionStarted = NO;
     }
 
     return self;
@@ -161,6 +168,18 @@ const NSInteger kCountlyGETRequestMaxLength = 2048;
         CLY_LOG_D(@"Queue is empty. All requests are processed.");
         return;
     }
+    BOOL isOldRequest = [CountlyPersistency.sharedInstance isOldRequest:firstItemInQueue];
+    if(isOldRequest)
+    {
+        [CountlyPersistency.sharedInstance removeFromQueue:firstItemInQueue];
+        
+        [CountlyPersistency.sharedInstance saveToFile];
+        
+        [self proceedOnQueue];
+        
+        return;
+    }
+    
 
     NSString* temporaryDeviceIDQueryString = [NSString stringWithFormat:@"&%@=%@", kCountlyQSKeyDeviceID, CLYTemporaryDeviceID];
     if ([firstItemInQueue containsString:temporaryDeviceIDQueryString])
@@ -169,22 +188,49 @@ const NSInteger kCountlyGETRequestMaxLength = 2048;
         return;
     }
 
+    NSString* queryString = firstItemInQueue;
+    NSString* endPoint = kCountlyEndpointI;
+    
+    NSString* overrideEndPoint = [self extractAndRemoveOverrideEndPoint:&queryString];
+    if(overrideEndPoint) {
+        endPoint = overrideEndPoint;
+    }
+    
     [CountlyCommon.sharedInstance startBackgroundTask];
 
-    NSString* queryString = firstItemInQueue;
-
     queryString = [self appendRemainingRequest:queryString];
-    queryString = [self appendChecksum:queryString];
+    NSMutableData* pictureUploadData = [self pictureUploadDataForQueryString:queryString];
 
-    NSString* serverInputEndpoint = [self.host stringByAppendingString:kCountlyEndpointI];
-    NSString* fullRequestURL = [serverInputEndpoint stringByAppendingFormat:@"?%@", queryString];
-    NSMutableURLRequest* request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:fullRequestURL]];
+    if (!pictureUploadData)
+    {
+        queryString = [self appendChecksum:queryString];
+    }
 
-    NSData* pictureUploadData = [self pictureUploadDataForQueryString:queryString];
+    NSString* serverInputEndpoint = [self.host stringByAppendingString:endPoint];
+    NSMutableURLRequest* request;
+    
     if (pictureUploadData)
     {
+        request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:serverInputEndpoint]];
         NSString *contentType = [@"multipart/form-data; boundary=" stringByAppendingString:kCountlyUploadBoundary];
         [request addValue:contentType forHTTPHeaderField: @"Content-Type"];
+        
+        NSArray *query = [queryString componentsSeparatedByString:@"&"];
+        NSEnumerator *e = [query objectEnumerator];
+        NSString* kvString;
+        while (kvString = [e nextObject]) {
+            NSArray *kv = [kvString componentsSeparatedByString:@"="];
+            [self addMultipart:pictureUploadData andKey:[kv[0] stringByRemovingPercentEncoding] andValue:[kv[1] stringByRemovingPercentEncoding]];
+        }
+        
+        if (self.secretSalt)
+        {
+            NSString* checksum = [[[queryString stringByRemovingPercentEncoding] stringByAppendingString:self.secretSalt] cly_SHA256];
+            [self addMultipart:pictureUploadData andKey:kCountlyQSKeyChecksum256 andValue:checksum];
+        }
+        
+        NSString* boundaryEnd = [NSString stringWithFormat:@"\r\n--%@--\r\n", kCountlyUploadBoundary];
+        [pictureUploadData appendData:[boundaryEnd cly_dataUTF8]];
         request.HTTPMethod = @"POST";
         request.HTTPBody = pictureUploadData;
     }
@@ -194,6 +240,11 @@ const NSInteger kCountlyGETRequestMaxLength = 2048;
         request.HTTPMethod = @"POST";
         request.HTTPBody = [queryString cly_dataUTF8];
     }
+    else
+    {
+        NSString* fullRequestURL = [serverInputEndpoint stringByAppendingFormat:@"?%@", queryString];
+        request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:fullRequestURL]];
+    }
 
     request.cachePolicy = NSURLRequestReloadIgnoringLocalCacheData;
 
@@ -201,7 +252,14 @@ const NSInteger kCountlyGETRequestMaxLength = 2048;
     {
         self.connection = nil;
 
+        
         CLY_LOG_V(@"Approximate received data size for request <%p> is %ld bytes.", (id)request, (long)data.length);
+        
+        if(response) {
+            NSInteger code = ((NSHTTPURLResponse*)response).statusCode;
+            CLY_LOG_V(@"%s, Response received from server with status code:[ %ld ] request:[ %@ ]", __FUNCTION__, (long)code, ((NSHTTPURLResponse*)response).URL);
+        }
+        
 
         if (!error)
         {
@@ -217,12 +275,12 @@ const NSInteger kCountlyGETRequestMaxLength = 2048;
             }
             else
             {
-                CLY_LOG_D(@"Request <%p> failed!\nServer reply: %@", request, [data cly_stringUTF8]);
+                CLY_LOG_D(@"%s, request:[ <%p> ] failed! response:[ %@ ]", __FUNCTION__, request, [data cly_stringUTF8]);
             }
         }
         else
         {
-            CLY_LOG_D(@"Request <%p> failed!\nError: %@", request, error);
+            CLY_LOG_D(@"%s, request:[ <%p> ] failed! error:[ %@ ]", __FUNCTION__, request, error);
 #if (TARGET_OS_WATCH)
             [CountlyPersistency.sharedInstance saveToFile];
 #endif
@@ -232,6 +290,19 @@ const NSInteger kCountlyGETRequestMaxLength = 2048;
     [self.connection resume];
 
     [self logRequest:request];
+}
+
+- (NSString*)extractAndRemoveOverrideEndPoint:(NSString **)queryString
+{
+    if([*queryString containsString:kCountlyNewEndPoint]) {
+        NSString* overrideEndPoint = [*queryString cly_valueForQueryStringKey:kCountlyNewEndPoint];
+        if(overrideEndPoint) {
+            NSString* stringToRemove = [kCountlyEndPointOverrideTag stringByAppendingString:overrideEndPoint];
+            *queryString = [*queryString stringByReplacingOccurrencesOfString:stringToRemove withString:@""];
+            return overrideEndPoint;
+        }
+    }
+    return nil;
 }
 
 - (void)logRequest:(NSURLRequest *)request
@@ -248,7 +319,7 @@ const NSInteger kCountlyGETRequestMaxLength = 2048;
         sentSize += request.HTTPBody.length;
     }
 
-    CLY_LOG_D(@"Request <%p> started:\n[%@] %@ \n%@", (id)request, request.HTTPMethod, request.URL.absoluteString, bodyAsString);
+    CLY_LOG_D(@"%s, request:[ <%p> ] started. [%@] %@ %@", __FUNCTION__, (id)request, request.HTTPMethod, request.URL.absoluteString, bodyAsString);
     CLY_LOG_V(@"Approximate sent data size for request <%p> is %ld bytes.", (id)request, (long)sentSize);
 }
 
@@ -258,7 +329,13 @@ const NSInteger kCountlyGETRequestMaxLength = 2048;
 {
     if (!CountlyConsentManager.sharedInstance.consentForSessions)
         return;
+    
+    if (isSessionStarted) {
+        CLY_LOG_W(@"%s A session is already running, this 'beginSession' will be ignored", __FUNCTION__);
+        return;
+    }
 
+    isSessionStarted = YES;
     lastSessionStartTime = NSDate.date.timeIntervalSince1970;
     unsentSessionLength = 0.0;
 
@@ -283,6 +360,11 @@ const NSInteger kCountlyGETRequestMaxLength = 2048;
 {
     if (!CountlyConsentManager.sharedInstance.consentForSessions)
         return;
+    
+    if (!isSessionStarted) {
+        CLY_LOG_W(@"%s No session is running, this 'updateSession' will be ignored", __FUNCTION__);
+        return;
+    }
 
     NSString* queryString = [[self queryEssentials] stringByAppendingFormat:@"&%@=%d",
                              kCountlyQSKeySessionDuration, (int)[self sessionLengthInSeconds]];
@@ -296,7 +378,13 @@ const NSInteger kCountlyGETRequestMaxLength = 2048;
 {
     if (!CountlyConsentManager.sharedInstance.consentForSessions)
         return;
+    
+    if (!isSessionStarted) {
+        CLY_LOG_W(@"%s No session is running, this 'endSession' will be ignored", __FUNCTION__);
+        return;
+    }
 
+    isSessionStarted = NO;
     NSString* queryString = [[self queryEssentials] stringByAppendingFormat:@"&%@=%@&%@=%d",
                              kCountlyQSKeySessionEnd, @"1",
                              kCountlyQSKeySessionDuration, (int)[self sessionLengthInSeconds]];
@@ -312,16 +400,30 @@ const NSInteger kCountlyGETRequestMaxLength = 2048;
 
 - (void)sendEvents
 {
-    NSString* events = [CountlyPersistency.sharedInstance serializedRecordedEvents];
+    [self sendEvents:false];
+}
 
+- (void)attemptToSendStoredRequests
+{
+    [self sendEvents:true];
+}
+
+- (void)sendEvents:(BOOL) saveToFile
+{
+    NSString* events = [CountlyPersistency.sharedInstance serializedRecordedEvents];
+    
     if (!events)
         return;
-
+    
     NSString* queryString = [[self queryEssentials] stringByAppendingFormat:@"&%@=%@",
                              kCountlyQSKeyEvents, events];
-
+    
     [CountlyPersistency.sharedInstance addToQueue:queryString];
-
+    
+    if(saveToFile) {
+        [CountlyPersistency.sharedInstance saveToFileSync];
+    }
+    
     [self proceedOnQueue];
 }
 
@@ -415,6 +517,9 @@ const NSInteger kCountlyGETRequestMaxLength = 2048;
 
     [CountlyPersistency.sharedInstance saveToFileSync];
 
+    queryString = [queryString stringByAppendingFormat:@"&%@=%@",
+                   kCountlyAppVersionKey, CountlyDeviceInfo.appVersion];
+    
     NSString* serverInputEndpoint = [self.host stringByAppendingString:kCountlyEndpointI];
     NSMutableURLRequest* request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:serverInputEndpoint]];
     request.HTTPMethod = @"POST";
@@ -426,7 +531,7 @@ const NSInteger kCountlyGETRequestMaxLength = 2048;
     {
         if (error || ![self isRequestSuccessful:response data:data])
         {
-            CLY_LOG_D(@"Request <%p> failed!\n%@: %@", request, error ? @"Error" : @"Server reply", error ?: [data cly_stringUTF8]);
+            CLY_LOG_D(@"%s, request: [ %p ] failed! %@: %@", __FUNCTION__, request, error ? @"Error" : @"Server reply", error ?: [data cly_stringUTF8]);
             [CountlyPersistency.sharedInstance addToQueue:queryString];
             [CountlyPersistency.sharedInstance saveToFileSync];
         }
@@ -524,6 +629,38 @@ const NSInteger kCountlyGETRequestMaxLength = 2048;
 
 #pragma mark ---
 
+- (void)sendEnrollABRequestForKeys:(NSArray*)keys
+{
+    NSString* queryString = [[self queryEssentials] stringByAppendingFormat:@"&%@=%@", kCountlyQSKeyMethod, kCountlyRCKeyABOptIn];
+    
+    if (keys)
+    {
+        queryString = [queryString stringByAppendingFormat:@"&%@=%@", kCountlyRCKeyKeys, [keys cly_JSONify]];
+    }
+    
+    queryString = [queryString stringByAppendingFormat:@"%@%@%@", kCountlyEndPointOverrideTag, kCountlyEndpointO, kCountlyEndpointSDK];
+    
+    [CountlyPersistency.sharedInstance addToQueue:queryString];
+    
+    [self proceedOnQueue];
+}
+
+- (void)sendExitABRequestForKeys:(NSArray*)keys
+{
+    NSString* queryString = [[self queryEssentials] stringByAppendingFormat:@"&%@=%@", kCountlyQSKeyMethod, kCountlyRCKeyABOptOut];
+    
+    if (keys)
+    {
+        queryString = [queryString stringByAppendingFormat:@"&%@=%@", kCountlyRCKeyKeys, [keys cly_JSONify]];
+    }   
+    
+    [CountlyPersistency.sharedInstance addToQueue:queryString];
+    
+    [self proceedOnQueue];
+}
+
+#pragma mark ---
+
 - (void)addDirectRequest:(NSDictionary<NSString *, NSString *> *)requestParameters
 {
     if (!CountlyConsentManager.sharedInstance.hasAnyConsent)
@@ -539,7 +676,8 @@ const NSInteger kCountlyGETRequestMaxLength = 2048;
             [mutableRequestParameters removeObjectForKey:reservedKey];
         }
     }
-
+    
+    mutableRequestParameters[@"dr"] = [NSNumber numberWithInt:1];
     NSMutableString* queryString = [self queryEssentials].mutableCopy;
 
     [mutableRequestParameters enumerateKeysAndObjectsUsingBlock:^(NSString * key, NSString * value, BOOL * stop)
@@ -635,7 +773,7 @@ const NSInteger kCountlyGETRequestMaxLength = 2048;
     return [NSString stringWithFormat:@"&%@=%@", kCountlyQSKeyAttributionID, [attribution cly_JSONify]];
 }
 
-- (NSData *)pictureUploadDataForQueryString:(NSString *)queryString
+- (NSMutableData *)pictureUploadDataForQueryString:(NSString *)queryString
 {
 #if (TARGET_OS_IOS)
     NSString* localPicturePath = nil;
@@ -684,17 +822,25 @@ const NSInteger kCountlyGETRequestMaxLength = 2048;
     NSString* boundaryStart = [NSString stringWithFormat:@"--%@\r\n", kCountlyUploadBoundary];
     NSString* contentDisposition = [NSString stringWithFormat:@"Content-Disposition: form-data; name=\"pictureFile\"; filename=\"%@\"\r\n", localPicturePath.lastPathComponent];
     NSString* contentType = [NSString stringWithFormat:@"Content-Type: image/%@\r\n\r\n", allowedFileTypes[fileExtIndex]];
-    NSString* boundaryEnd = [NSString stringWithFormat:@"\r\n--%@--\r\n", kCountlyUploadBoundary];
 
     NSMutableData* uploadData = NSMutableData.new;
     [uploadData appendData:[boundaryStart cly_dataUTF8]];
     [uploadData appendData:[contentDisposition cly_dataUTF8]];
     [uploadData appendData:[contentType cly_dataUTF8]];
     [uploadData appendData:imageData];
-    [uploadData appendData:[boundaryEnd cly_dataUTF8]];
     return uploadData;
 #endif
     return nil;
+}
+
+- (void)addMultipart:(NSMutableData *)uploadData andKey:(NSString *)key andValue:(NSString *)value
+{
+    NSString* boundaryStart = [NSString stringWithFormat:@"\r\n--%@\r\n", kCountlyUploadBoundary];
+    NSString* contentDisposition = [NSString stringWithFormat:@"Content-Disposition: form-data; name=\"%@\";\r\n\r\n", key];
+
+    [uploadData appendData:[boundaryStart cly_dataUTF8]];
+    [uploadData appendData:[contentDisposition cly_dataUTF8]];
+    [uploadData appendData:[value cly_dataUTF8]];
 }
 
 - (NSString *)appendChecksum:(NSString *)queryString
@@ -734,17 +880,17 @@ const NSInteger kCountlyGETRequestMaxLength = 2048;
             return NO;
         }
         
+        CLY_LOG_V(@"%s, response:[ %@ ] request:[ %@ ]", __FUNCTION__, serverReply, ((NSHTTPURLResponse*)response).URL);
+        
         NSString* result = serverReply[@"result"];
-        if ([result isEqualToString:@"Success"])
+        
+        if(result)
         {
-            CLY_LOG_V(@"Value for `result` key in server reply is `Success`.");
-            return YES;            
+            return YES;
         }
-        else
-        {
-            CLY_LOG_V(@"Value for `result` key in server reply is not `Success`.");
-            return NO;
-        }
+        
+        return NO;
+        
     }
     else
     {
