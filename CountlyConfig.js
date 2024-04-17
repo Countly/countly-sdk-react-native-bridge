@@ -131,7 +131,7 @@ class CountlyConfig {
     }
 
     /**
-     * @deprecated in 24.1.0 : use 'countlyConfig.apm' interface instead of 'config.enableApm'.
+     * @deprecated in 24.4.0 : use 'countlyConfig.apm' interface instead of 'config.enableApm'.
      * 
      * Method to enable application performance monitoring which includes the recording of app start time.
      */
