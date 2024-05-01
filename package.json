@@ -35,7 +35,7 @@
         "@types/react-native": "0.72.6",
         "@types/react-test-renderer": "18.0.6",
         "@typescript-eslint/eslint-plugin": "6.21.0",
-        "@typescript-eslint/parser": "6.21.0",
+        "@typescript-eslint/parser": "7.8.0",
         "babel-jest": "^29.7.0",
         "bufferutil": "4.0.8",
         "encoding": "0.1.13",
