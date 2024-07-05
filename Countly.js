@@ -34,6 +34,9 @@ Countly.userDataBulk = {}; // userDataBulk interface
 
 let _isPushInitialized = false;
 
+const BUILDING_WITH_PUSH_DISABLED = true;
+const _pushDisabledMsg = 'In this plugin Push notification is disabled, Countly has separate plugin with push notification enabled';
+
 /*
  * Listener for rating widget callback, when callback recieve we will remove the callback using listener.
  */
@@ -218,6 +221,10 @@ Countly.disablePushNotifications = function () {
  * @return {string | void} error message or void
  */
 Countly.pushTokenType = function (tokenType, channelName, channelDescription) {
+    if (BUILDING_WITH_PUSH_DISABLED) {
+      L.e(`pushTokenType, ${_pushDisabledMsg}`);
+      return _pushDisabledMsg;
+    }
     const message = Validate.String(tokenType, "tokenType", "pushTokenType");
     if (message) {
         return message;
@@ -255,6 +262,10 @@ Countly.sendPushToken = function (options) {
  * @return {string | void} error message or void
  */
 Countly.askForNotificationPermission = function (customSoundPath = "null") {
+    if (BUILDING_WITH_PUSH_DISABLED) {
+      L.e(`askForNotificationPermission, ${_pushDisabledMsg}`);
+      return _pushDisabledMsg;
+    }
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'askForNotificationPermission'";
         L.e(`askForNotificationPermission, ${message}`);
@@ -272,6 +283,10 @@ Countly.askForNotificationPermission = function (customSoundPath = "null") {
  * @return {NativeEventEmitter} event
  */
 Countly.registerForNotification = function (theListener) {
+    if (BUILDING_WITH_PUSH_DISABLED) {
+      L.e(`askForNotificationPermission, ${_pushDisabledMsg}`);
+      return _pushDisabledMsg;
+    }
     L.d("registerForNotification, Registering for notification");
     const event = eventEmitter.addListener(pushNotificationCallbackName, theListener);
     CountlyReactNative.registerForNotification([]);
