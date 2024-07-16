@@ -14,17 +14,6 @@ async function initialize() {
 
     await Countly.initWithConfig(countlyConfig); // Initialize the countly SDK.
     Countly.appLoadingFinished();
-
-    /**
-     * Push notifications settings
-     * Should be call after init
-     */
-    Countly.registerForNotification((theNotification: string) => {
-        const jsonString = JSON.stringify(JSON.parse(theNotification));
-        console.log(`Just received this notification data: ${jsonString}`);
-        Alert.alert(`theNotification: ${jsonString}`);
-    }); // Set callback to receive push notifications
-    Countly.askForNotificationPermission("android.resource://com.countly.demo/raw/notif_sample"); // This method will ask for permission, enables push notification and send push token to countly server.
 }
 
 function HomeScreen({ navigation }) {

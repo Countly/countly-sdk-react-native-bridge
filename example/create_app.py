@@ -30,7 +30,7 @@ def setup_react_native_app():
 
     # Add countly-sdk-react-native-bridge to dependencies in package.json
     os.chdir("AwesomeProject")
-    os.system("npm install --save countly-sdk-react-native-bridge@latest @react-navigation/native react-native-screens react-native-safe-area-context @react-navigation/native-stack")
+    os.system("npm install --save countly-sdk-react-native-bridge-np@latest @react-navigation/native react-native-screens react-native-safe-area-context @react-navigation/native-stack")
 
     # If on iOS, run pod install
     if platform.system() == "Darwin":

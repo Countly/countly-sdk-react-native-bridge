@@ -24,10 +24,6 @@ const disableLocation = () => {
     Countly.disableLocation();
 };
 
-const askForNotificationPermission = () => {
-    Countly.askForNotificationPermission();
-};
-
 const setCustomMetrics = () => {
     const customMetric = {
         _carrier: "Custom Carrier",
@@ -57,7 +53,6 @@ function OthersScreen({ navigation }) {
                 <CountlyButton onPress={setLocation} title="Set Location" color="#00b5ad" />
                 <CountlyButton onPress={disableLocation} title="Disable Location" color="#00b5ad" />
                 <CountlyButton onPress={setCustomMetrics} title="Set Custom Metrics" color="#00b5ad" />
-                <CountlyButton onPress={askForNotificationPermission} title="askForNotificationPermission" color="#00b5ad" />
                 <CountlyButton onPress={recordDirectAttribution} title="Record Direct Attribution" color="#1b1c1d" lightText={true} />
                 <CountlyButton onPress={recordIndirectAttribution} title="Record Indirect Attribution" color="#1b1c1d" lightText={true} />
             </ScrollView>

@@ -1195,7 +1195,7 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
      * Method to give consent for specific features before init
      *
      * @param {string[]} consents consents e.g ['location', 'sessions',
-     * 'attribution', 'push', 'events', 'views', 'crashes', 'users', 'push',
+     * 'attribution', 'push', 'events', 'views', 'crashes', 'users',
      * 'star-rating', 'apm', 'feedback', 'remote-config']
      */
       giveConsent(consents: readonly string[]): CountlyConfig;

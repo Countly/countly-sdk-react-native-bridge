@@ -222,7 +222,7 @@ Countly.disablePushNotifications = function () {
  */
 Countly.pushTokenType = function (tokenType, channelName, channelDescription) {
     if (BUILDING_WITH_PUSH_DISABLED) {
-      L.e(`pushTokenType, ${_pushDisabledMsg}`);
+      L.w(`pushTokenType, ${_pushDisabledMsg}`);
       return _pushDisabledMsg;
     }
     const message = Validate.String(tokenType, "tokenType", "pushTokenType");
@@ -246,6 +246,10 @@ Countly.pushTokenType = function (tokenType, channelName, channelDescription) {
  * @return {string | void} error message or void
  */
 Countly.sendPushToken = function (options) {
+    if (BUILDING_WITH_PUSH_DISABLED) {
+      L.w(`pushTokenType, ${_pushDisabledMsg}`);
+      return _pushDisabledMsg;
+    }
     L.d(`sendPushToken, Sending push token: [${JSON.stringify(options)}]`);
     const args = [];
     args.push(options.token || "");
@@ -263,7 +267,7 @@ Countly.sendPushToken = function (options) {
  */
 Countly.askForNotificationPermission = function (customSoundPath = "null") {
     if (BUILDING_WITH_PUSH_DISABLED) {
-      L.e(`askForNotificationPermission, ${_pushDisabledMsg}`);
+      L.w(`askForNotificationPermission, ${_pushDisabledMsg}`);
       return _pushDisabledMsg;
     }
     if (!_state.isInitialized) {
@@ -284,7 +288,7 @@ Countly.askForNotificationPermission = function (customSoundPath = "null") {
  */
 Countly.registerForNotification = function (theListener) {
     if (BUILDING_WITH_PUSH_DISABLED) {
-      L.e(`askForNotificationPermission, ${_pushDisabledMsg}`);
+      L.w(`registerForNotification, ${_pushDisabledMsg}`);
       return _pushDisabledMsg;
     }
     L.d("registerForNotification, Registering for notification");

@@ -8,7 +8,6 @@ import CountlyConfigApm from "./lib/configuration_interfaces/countly_config_apm.
 /**
  *
  * Config Object for Countly Init
- * Should be called before Countly "askForNotificationPermission"
  *
  * @param {String} serverURL server url
  * @param {String} appKey application key
@@ -19,6 +18,9 @@ class CountlyConfig {
         this.appKey = appKey;
         this._countlyConfigApmInstance = new CountlyConfigApm();
     }
+
+    BUILDING_WITH_PUSH_DISABLED = true;
+    _pushDisabledMsg = 'In this plugin Push notification is disabled, Countly has separate plugin with push notification enabled';
 
     /**
      * Getter to get the APM specific configurations
@@ -94,10 +96,13 @@ class CountlyConfig {
      * Method to give consent for specific features before init
      *
      * @param {String[]} consents consents e.g ['location', 'sessions',
-     * 'attribution', 'push', 'events', 'views', 'crashes', 'users', 'push',
+     * 'attribution', 'push', 'events', 'views', 'crashes', 'users',
      * 'star-rating', 'apm', 'feedback', 'remote-config']
      */
     giveConsent(consents) {
+        if (BUILDING_WITH_PUSH_DISABLED && consents.includes('push')) {
+            L.w(`pushTokenType, ${_pushDisabledMsg}`);
+        }
         this.consents = consents;
         return this;
     }
@@ -160,6 +165,10 @@ class CountlyConfig {
      * @param {String} channelDescription channel description
      */
     pushTokenType(tokenType, channelName, channelDescription) {
+        if (BUILDING_WITH_PUSH_DISABLED) {
+            L.w(`pushTokenType, ${_pushDisabledMsg}`);
+            return this;
+        }
         this.tokenType = tokenType;
         this.channelName = channelName;
         this.channelDescription = channelDescription;
@@ -174,6 +183,10 @@ class CountlyConfig {
      * Possible values include 'DEVELOPMENT', 'PRODUCTION', 'ADHOC'.
      */
     setPushTokenType(tokenType) {
+        if (BUILDING_WITH_PUSH_DISABLED) {
+            L.w(`pushTokenType, ${_pushDisabledMsg}`);
+            return this;
+        }
         this.tokenType = tokenType;
         return this;
     }
@@ -186,6 +199,10 @@ class CountlyConfig {
      * @param {String} description channel description
      */
     setPushNotificationChannelInformation(name, description) {
+        if (BUILDING_WITH_PUSH_DISABLED) {
+            L.w(`pushTokenType, ${_pushDisabledMsg}`);
+            return this;
+        }
         this.channelName = name;
         this.channelDescription = description;
         return this;
@@ -199,6 +216,10 @@ class CountlyConfig {
      * example '#000000'
      */
     setPushNotificationAccentColor(accentColor) {
+        if (BUILDING_WITH_PUSH_DISABLED) {
+            L.w(`pushTokenType, ${_pushDisabledMsg}`);
+            return this;
+        }
         this.accentColor = accentColor;
         return this;
     }
