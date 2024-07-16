@@ -248,7 +248,7 @@ Countly.pushTokenType = function (tokenType, channelName, channelDescription) {
 Countly.sendPushToken = function (options) {
     if (BUILDING_WITH_PUSH_DISABLED) {
       L.w(`pushTokenType, ${_pushDisabledMsg}`);
-      return _pushDisabledMsg;
+      return;
     }
     L.d(`sendPushToken, Sending push token: [${JSON.stringify(options)}]`);
     const args = [];
@@ -289,7 +289,7 @@ Countly.askForNotificationPermission = function (customSoundPath = "null") {
 Countly.registerForNotification = function (theListener) {
     if (BUILDING_WITH_PUSH_DISABLED) {
       L.w(`registerForNotification, ${_pushDisabledMsg}`);
-      return _pushDisabledMsg;
+      return;
     }
     L.d("registerForNotification, Registering for notification");
     const event = eventEmitter.addListener(pushNotificationCallbackName, theListener);
