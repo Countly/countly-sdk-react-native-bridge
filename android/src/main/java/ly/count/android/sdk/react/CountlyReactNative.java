@@ -869,11 +869,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             configPush.setAllowedIntentPackageNames(allowedIntentPackageNames);
         }
         CountlyPush.init(configPush);
-        try {
-            log("askForNotificationPermission, firebaseMessagingInstance is null", LogLevel.WARNING);
-        } catch (Exception exception) {
-            log("askForNotificationPermission, Firebase exception", exception, LogLevel.WARNING);
-        }
+        log("askForNotificationPermission, firebaseMessagingInstance is null", LogLevel.WARNING);
     }
 
     @ReactMethod
