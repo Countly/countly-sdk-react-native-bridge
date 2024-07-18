@@ -1,8 +1,7 @@
-import * as L from "./Logger.js";
+import { initialize } from "./Logger.js";
 import CountlyConfigApm from "./lib/configuration_interfaces/countly_config_apm.js";
 
 const BUILDING_WITH_PUSH_DISABLED = true;
-const _pushDisabledMsg = 'In this plugin Push notification is disabled, Countly has separate plugin with push notification enabled';
 
 /**
  * Countly SDK React Native Bridge
@@ -68,7 +67,7 @@ class CountlyConfig {
      */
     setLoggingEnabled(loggingEnabled) {
         this.loggingEnabled = loggingEnabled;
-        L.initialize(loggingEnabled); // initialize React Native SDK logger
+        initialize(loggingEnabled); // initialize React Native SDK logger
         return this;
     }
 
@@ -101,9 +100,6 @@ class CountlyConfig {
      * 'star-rating', 'apm', 'feedback', 'remote-config']
      */
     giveConsent(consents) {
-        if (BUILDING_WITH_PUSH_DISABLED && consents.includes('push')) {
-            L.w(`CountlyConfig giveConsent, ${_pushDisabledMsg}`);
-        }
         this.consents = consents;
         return this;
     }
@@ -167,7 +163,6 @@ class CountlyConfig {
      */
     pushTokenType(tokenType, channelName, channelDescription) {
         if (BUILDING_WITH_PUSH_DISABLED) {
-            L.w(`CountlyConfig pushTokenType, ${_pushDisabledMsg}`);
             return this;
         }
         this.tokenType = tokenType;
@@ -185,7 +180,6 @@ class CountlyConfig {
      */
     setPushTokenType(tokenType) {
         if (BUILDING_WITH_PUSH_DISABLED) {
-            L.w(`CountlyConfig setPushTokenType, ${_pushDisabledMsg}`);
             return this;
         }
         this.tokenType = tokenType;
@@ -201,7 +195,6 @@ class CountlyConfig {
      */
     setPushNotificationChannelInformation(name, description) {
         if (BUILDING_WITH_PUSH_DISABLED) {
-            L.w(`CountlyConfig setPushNotificationChannelInformation, ${_pushDisabledMsg}`);
             return this;
         }
         this.channelName = name;
@@ -218,7 +211,6 @@ class CountlyConfig {
      */
     setPushNotificationAccentColor(accentColor) {
         if (BUILDING_WITH_PUSH_DISABLED) {
-            L.w(`CountlyConfig setPushNotificationAccentColor, ${_pushDisabledMsg}`);
             return this;
         }
         this.accentColor = accentColor;
