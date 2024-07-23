@@ -96,7 +96,7 @@ class CountlyConfig {
      * Method to give consent for specific features before init
      *
      * @param {String[]} consents consents e.g ['location', 'sessions',
-     * 'attribution', 'push', 'events', 'views', 'crashes', 'users',
+     * 'attribution', 'events', 'views', 'crashes', 'users',
      * 'star-rating', 'apm', 'feedback', 'remote-config']
      */
     giveConsent(consents) {
@@ -147,6 +147,9 @@ class CountlyConfig {
      * This method should be used to disable them.
      */
     disableAdditionalIntentRedirectionChecks() {
+        if (BUILDING_WITH_PUSH_DISABLED) {
+            return this;
+        }
         this.disableAdditionalIntentRedirectionChecks = true;
         return this;
     }
@@ -224,6 +227,9 @@ class CountlyConfig {
      * @param {String[]} allowedIntentPackageNames allowed intent package name
      */
     configureIntentRedirectionCheck(allowedIntentClassNames, allowedIntentPackageNames) {
+        if (BUILDING_WITH_PUSH_DISABLED) {
+            return this;
+        }
         this.allowedIntentClassNames = allowedIntentClassNames;
         this.allowedIntentPackageNames = allowedIntentPackageNames;
         return this;

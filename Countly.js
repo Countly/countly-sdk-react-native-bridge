@@ -309,15 +309,19 @@ Countly.registerForNotification = function (theListener) {
  * @return {string | void} error message or void
  */
 Countly.configureIntentRedirectionCheck = function (allowedIntentClassNames = [], allowedIntentPackageNames = [], useAdditionalIntentRedirectionChecks = true) {
+    if (BUILDING_WITH_PUSH_DISABLED) {
+      L.w(`configureIntentRedirectionCheck, ${_pushDisabledMsg}`);
+      return;
+    }
     if (/ios/.exec(Platform.OS)) {
-        L.e("configureIntentRedirectionCheck, configureIntentRedirectionCheck is not required for iOS");
+        L.w("configureIntentRedirectionCheck, configureIntentRedirectionCheck is not required for iOS");
 
         return "configureIntentRedirectionCheck : not required for iOS";
     }
 
     if (_isPushInitialized) {
         let message = "'configureIntentRedirectionCheck' must be called before 'askForNotificationPermission'";
-        L.e(`configureIntentRedirectionCheck, ${message}`);
+        L.w(`configureIntentRedirectionCheck, ${message}`);
         return message;
     }
     L.w("configureIntentRedirectionCheck, configureIntentRedirectionCheck is deprecated, use countlyConfig.configureIntentRedirectionCheck instead");
