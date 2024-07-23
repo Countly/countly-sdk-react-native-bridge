@@ -1,7 +1,7 @@
 import React from "react";
 import { ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Countly from "countly-sdk-react-native-bridge";
+import Countly from "countly-sdk-react-native-bridge-np";
 import CountlyButton from "./CountlyButton";
 
 const basicEvent = () => {

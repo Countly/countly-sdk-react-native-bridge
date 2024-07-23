@@ -247,7 +247,7 @@ Countly.pushTokenType = function (tokenType, channelName, channelDescription) {
  */
 Countly.sendPushToken = function (options) {
     if (BUILDING_WITH_PUSH_DISABLED) {
-      L.w(`pushTokenType, ${_pushDisabledMsg}`);
+      L.w(`sendPushToken, ${_pushDisabledMsg}`);
       return;
     }
     L.d(`sendPushToken, Sending push token: [${JSON.stringify(options)}]`);

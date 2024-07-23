@@ -6,7 +6,7 @@ import platform
 # It is meant to be run from the example folder
 # It will remove any existing AwesomeProject folder, and create a new one
 # It will then copy the contents of CountlyRNExample to AwesomeProject
-# It will then add countly-sdk-react-native-bridge to dependencies in package.json
+# It will then add countly-sdk-react-native-bridge-np to dependencies in package.json
 # If on iOS, it will run pod install
 
 def setup_react_native_app():
@@ -26,7 +26,7 @@ def setup_react_native_app():
     # Copy contents of CountlyRNExample to AwesomeProject
     shutil.copytree("CountlyRNExample", "AwesomeProject", dirs_exist_ok=True)
 
-    print("Adding countly-sdk-react-native-bridge to dependencies...")
+    print("Adding countly-sdk-react-native-bridge-np to dependencies...")
 
     # Add countly-sdk-react-native-bridge to dependencies in package.json
     os.chdir("AwesomeProject")
@@ -36,7 +36,7 @@ def setup_react_native_app():
     if platform.system() == "Darwin":
         print("Running pod install")
         os.chdir("ios")
-        os.system("pod install")
+        os.system("pod install --no-repo-update --verbose")
         os.chdir("..")
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-import CountlyConfig from "countly-sdk-react-native-bridge/CountlyConfig";
+import CountlyConfig from "countly-sdk-react-native-bridge-np/CountlyConfig";
 
 const COUNTLY_SERVER_KEY = "https://your.server.ly";
 const COUNTLY_APP_KEY = "YOUR_APP_KEY";

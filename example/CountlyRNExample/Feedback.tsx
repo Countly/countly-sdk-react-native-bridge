@@ -2,7 +2,7 @@
 import React from "react";
 import { ScrollView, StyleSheet, Text, TextInput } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Countly from "countly-sdk-react-native-bridge";
+import Countly from "countly-sdk-react-native-bridge-np";
 import CountlyButton from "./CountlyButton";
 import { lightOrange } from "./Constants";
 
