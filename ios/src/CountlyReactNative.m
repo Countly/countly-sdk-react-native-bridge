@@ -1,3 +1,4 @@
+#define COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
 #import <React/RCTBridge.h>
 #import <React/RCTEventDispatcher.h>
 #import <React/RCTLog.h>
@@ -24,8 +25,11 @@
 + (CountlyFeedbackWidget *)createWithDictionary:(NSDictionary *)dictionary;
 @end
 
+BOOL BUILDING_WITH_PUSH_DISABLED = true;
+
 NSString *const kCountlyReactNativeSDKVersion = @"24.4.0";
 NSString *const kCountlyReactNativeSDKName = @"js-rnb-ios";
+NSString *const kCountlyReactNativeSDKNameNoPush = @"js-rnbnp-ios";
 
 CLYPushTestMode const CLYPushTestModeProduction = @"CLYPushTestModeProduction";
 
@@ -86,6 +90,7 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
         [self populateConfig:jsonOutput];
 
       CountlyCommon.sharedInstance.SDKName = kCountlyReactNativeSDKName;
+      CountlyCommon.sharedInstance.SDKName = BUILDING_WITH_PUSH_DISABLED ? kCountlyReactNativeSDKNameNoPush : kCountlyReactNativeSDKName;
       CountlyCommon.sharedInstance.SDKVersion = kCountlyReactNativeSDKVersion;
 
 #ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS

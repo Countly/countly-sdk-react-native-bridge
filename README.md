@@ -1,6 +1,6 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/2d691b48780b440d915a0cfa059474b1)](https://app.codacy.com/gh/Countly/countly-sdk-react-native-bridge?utm_source=github.com&utm_medium=referral&utm_content=Countly/countly-sdk-react-native-bridge&utm_campaign=Badge_Grade)
 
-# Countly React Native Bridge SDK
+# Countly React Native Bridge SDK - No Push
 This repository contains the Countly React Native Bridge SDK, which can be integrated into React Native mobile applications. The Countly React Native Bridge SDK is intended to be used with [Countly Lite](https://countly.com/lite) or [Countly Enterprise](https://count.ly/product).
 
 ## What is Countly?
@@ -25,7 +25,6 @@ For an example integration of this SDK, you can have a look [here](https://githu
 
 This SDK supports the following features:
 * [Analytics](https://support.count.ly/hc/en-us/articles/4431589003545-Analytics)
-* [Push Notifications](https://support.count.ly/hc/en-us/articles/4405405459225-Push-Notifications)
 * [User Profiles](https://support.count.ly/hc/en-us/articles/4403281285913-User-Profiles)
 * [Crash Reports](https://support.count.ly/hc/en-us/articles/4404213566105-Crashes-Errors)
 * [A/B Testing](https://support.count.ly/hc/en-us/articles/4416496362393-A-B-Testing-)

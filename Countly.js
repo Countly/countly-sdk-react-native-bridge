@@ -34,6 +34,9 @@ Countly.userDataBulk = {}; // userDataBulk interface
 
 let _isPushInitialized = false;
 
+const BUILDING_WITH_PUSH_DISABLED = true;
+const _pushDisabledMsg = 'Push Notifications are disabled in this flavor. Please use the original Countly React Native SDK if you need to use Push Notifications.';
+
 /*
  * Listener for rating widget callback, when callback recieve we will remove the callback using listener.
  */
@@ -218,6 +221,10 @@ Countly.disablePushNotifications = function () {
  * @return {string | void} error message or void
  */
 Countly.pushTokenType = function (tokenType, channelName, channelDescription) {
+    if (BUILDING_WITH_PUSH_DISABLED) {
+      L.w(`pushTokenType, ${_pushDisabledMsg}`);
+      return _pushDisabledMsg;
+    }
     const message = Validate.String(tokenType, "tokenType", "pushTokenType");
     if (message) {
         return message;
@@ -239,6 +246,10 @@ Countly.pushTokenType = function (tokenType, channelName, channelDescription) {
  * @return {string | void} error message or void
  */
 Countly.sendPushToken = function (options) {
+    if (BUILDING_WITH_PUSH_DISABLED) {
+      L.w(`sendPushToken, ${_pushDisabledMsg}`);
+      return;
+    }
     L.d(`sendPushToken, Sending push token: [${JSON.stringify(options)}]`);
     const args = [];
     args.push(options.token || "");
@@ -255,6 +266,10 @@ Countly.sendPushToken = function (options) {
  * @return {string | void} error message or void
  */
 Countly.askForNotificationPermission = function (customSoundPath = "null") {
+    if (BUILDING_WITH_PUSH_DISABLED) {
+      L.w(`askForNotificationPermission, ${_pushDisabledMsg}`);
+      return _pushDisabledMsg;
+    }
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'askForNotificationPermission'";
         L.e(`askForNotificationPermission, ${message}`);
@@ -272,6 +287,10 @@ Countly.askForNotificationPermission = function (customSoundPath = "null") {
  * @return {NativeEventEmitter} event
  */
 Countly.registerForNotification = function (theListener) {
+    if (BUILDING_WITH_PUSH_DISABLED) {
+      L.w(`registerForNotification, ${_pushDisabledMsg}`);
+      return;
+    }
     L.d("registerForNotification, Registering for notification");
     const event = eventEmitter.addListener(pushNotificationCallbackName, theListener);
     CountlyReactNative.registerForNotification([]);
@@ -290,15 +309,19 @@ Countly.registerForNotification = function (theListener) {
  * @return {string | void} error message or void
  */
 Countly.configureIntentRedirectionCheck = function (allowedIntentClassNames = [], allowedIntentPackageNames = [], useAdditionalIntentRedirectionChecks = true) {
+    if (BUILDING_WITH_PUSH_DISABLED) {
+      L.w(`configureIntentRedirectionCheck, ${_pushDisabledMsg}`);
+      return;
+    }
     if (/ios/.exec(Platform.OS)) {
-        L.e("configureIntentRedirectionCheck, configureIntentRedirectionCheck is not required for iOS");
+        L.w("configureIntentRedirectionCheck, configureIntentRedirectionCheck is not required for iOS");
 
         return "configureIntentRedirectionCheck : not required for iOS";
     }
 
     if (_isPushInitialized) {
         let message = "'configureIntentRedirectionCheck' must be called before 'askForNotificationPermission'";
-        L.e(`configureIntentRedirectionCheck, ${message}`);
+        L.w(`configureIntentRedirectionCheck, ${message}`);
         return message;
     }
     L.w("configureIntentRedirectionCheck, configureIntentRedirectionCheck is deprecated, use countlyConfig.configureIntentRedirectionCheck instead");

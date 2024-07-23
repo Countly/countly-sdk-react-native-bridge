@@ -1,5 +1,8 @@
 import { initialize } from "./Logger.js";
 import CountlyConfigApm from "./lib/configuration_interfaces/countly_config_apm.js";
+
+const BUILDING_WITH_PUSH_DISABLED = true;
+
 /**
  * Countly SDK React Native Bridge
  * https://github.com/Countly/countly-sdk-react-native-bridge
@@ -8,7 +11,6 @@ import CountlyConfigApm from "./lib/configuration_interfaces/countly_config_apm.
 /**
  *
  * Config Object for Countly Init
- * Should be called before Countly "askForNotificationPermission"
  *
  * @param {String} serverURL server url
  * @param {String} appKey application key
@@ -94,7 +96,7 @@ class CountlyConfig {
      * Method to give consent for specific features before init
      *
      * @param {String[]} consents consents e.g ['location', 'sessions',
-     * 'attribution', 'push', 'events', 'views', 'crashes', 'users', 'push',
+     * 'attribution', 'events', 'views', 'crashes', 'users',
      * 'star-rating', 'apm', 'feedback', 'remote-config']
      */
     giveConsent(consents) {
@@ -145,6 +147,9 @@ class CountlyConfig {
      * This method should be used to disable them.
      */
     disableAdditionalIntentRedirectionChecks() {
+        if (BUILDING_WITH_PUSH_DISABLED) {
+            return this;
+        }
         this.disableAdditionalIntentRedirectionChecks = true;
         return this;
     }
@@ -160,6 +165,9 @@ class CountlyConfig {
      * @param {String} channelDescription channel description
      */
     pushTokenType(tokenType, channelName, channelDescription) {
+        if (BUILDING_WITH_PUSH_DISABLED) {
+            return this;
+        }
         this.tokenType = tokenType;
         this.channelName = channelName;
         this.channelDescription = channelDescription;
@@ -174,6 +182,9 @@ class CountlyConfig {
      * Possible values include 'DEVELOPMENT', 'PRODUCTION', 'ADHOC'.
      */
     setPushTokenType(tokenType) {
+        if (BUILDING_WITH_PUSH_DISABLED) {
+            return this;
+        }
         this.tokenType = tokenType;
         return this;
     }
@@ -186,6 +197,9 @@ class CountlyConfig {
      * @param {String} description channel description
      */
     setPushNotificationChannelInformation(name, description) {
+        if (BUILDING_WITH_PUSH_DISABLED) {
+            return this;
+        }
         this.channelName = name;
         this.channelDescription = description;
         return this;
@@ -199,6 +213,9 @@ class CountlyConfig {
      * example '#000000'
      */
     setPushNotificationAccentColor(accentColor) {
+        if (BUILDING_WITH_PUSH_DISABLED) {
+            return this;
+        }
         this.accentColor = accentColor;
         return this;
     }
@@ -210,6 +227,9 @@ class CountlyConfig {
      * @param {String[]} allowedIntentPackageNames allowed intent package name
      */
     configureIntentRedirectionCheck(allowedIntentClassNames, allowedIntentPackageNames) {
+        if (BUILDING_WITH_PUSH_DISABLED) {
+            return this;
+        }
         this.allowedIntentClassNames = allowedIntentClassNames;
         this.allowedIntentPackageNames = allowedIntentPackageNames;
         return this;

@@ -63,8 +63,8 @@ interface ResultObject {
 }
 interface ErrorObject { error: string | null }
 
-declare module "countly-sdk-react-native-bridge" {
-  import type CountlyConfig from "countly-sdk-react-native-bridge/CountlyConfig";
+declare module "countly-sdk-react-native-bridge-np" {
+  import type CountlyConfig from "countly-sdk-react-native-bridge-np/CountlyConfig";
 
   namespace Countly {
     string;
@@ -244,7 +244,7 @@ declare module "countly-sdk-react-native-bridge" {
     export function disablePushNotifications(): string | void;
 
     /**
-     * @deprecated in 23.02.0 : use 'countlyConfig.pushTokenType' instead of 'pushTokenType'.
+     * @deprecated in 23.02.0 : use 'countlyConfig.pushTokenType' instead of 'pushTokenType'. FOR PUSH VERSION ONLY
      *
      * @param {string} tokenType - Token type
      * @param {string} channelName - Channel name
@@ -257,6 +257,7 @@ declare module "countly-sdk-react-native-bridge" {
     export function pushTokenType(tokenType: string, channelName: string, channelDescription: string): Promise<string> | string;
 
     /**
+     * @deprecated FOR PUSH VERSION ONLY
      *
      * Send push token
      * @param {object} options - object containing the push token
@@ -267,6 +268,8 @@ declare module "countly-sdk-react-native-bridge" {
     export function sendPushToken(options: { readonly token?: string }): void;
 
     /**
+     * @deprecated FOR PUSH VERSION ONLY
+     * 
      * This method will ask for permission, enables push notification and send push token to countly server.
      *
      * @param {string} customSoundPath - name of custom sound for push notifications (Only for Android)
@@ -278,6 +281,7 @@ declare module "countly-sdk-react-native-bridge" {
     export function askForNotificationPermission(customSoundPath?: string): string | void;
 
     /**
+     * @deprecated FOR PUSH VERSION ONLY
      *
      * Set callback to receive push notifications
      * @param {callback listener } theListener
@@ -286,7 +290,7 @@ declare module "countly-sdk-react-native-bridge" {
     export function registerForNotification(theListener: (theNotification: string) => void): any; // The return type should be adjusted to the actual event subscription type
 
     /**
-     * @deprecated in 23.02.0 : use 'countlyConfig.configureIntentRedirectionCheck' instead of 'configureIntentRedirectionCheck'.
+     * @deprecated in 23.02.0 : use 'countlyConfig.configureIntentRedirectionCheck' instead of 'configureIntentRedirectionCheck'. FOR PUSH VERSION ONLY
      *
      * Configure intent redirection checks for push notification
      * Should be called before Countly "askForNotificationPermission"
@@ -1096,7 +1100,7 @@ declare module "countly-sdk-react-native-bridge" {
   export default Countly;
 }
 
-declare module "countly-sdk-react-native-bridge/CountlyConfig" {
+declare module "countly-sdk-react-native-bridge-np/CountlyConfig" {
   /**
    *
    * This class holds APM specific configurations to be used with 
@@ -1195,7 +1199,7 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
      * Method to give consent for specific features before init
      *
      * @param {string[]} consents consents e.g ['location', 'sessions',
-     * 'attribution', 'push', 'events', 'views', 'crashes', 'users', 'push',
+     * 'attribution', 'push', 'events', 'views', 'crashes', 'users',
      * 'star-rating', 'apm', 'feedback', 'remote-config']
      */
       giveConsent(consents: readonly string[]): CountlyConfig;
@@ -1227,6 +1231,8 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
       enableApm(): CountlyConfig;
 
       /**
+     * @deprecated FOR PUSH VERSION ONLY
+     * 
      * AdditionalIntentRedirectionChecks are enabled by default.
      * This method should be used to disable them.
      */
@@ -1234,7 +1240,8 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
 
       /**
      * Method to set the push token type
-     * @deprecated
+     * @deprecated FOR PUSH VERSION ONLY
+     * 
      * Use setPushTokenType() instead to set pushToken
      * Use setPushNotificationChannelInformation() instead to set channel information
      *
@@ -1245,6 +1252,8 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
       pushTokenType(tokenType: TokenType, channelName: string, channelDescription: string): CountlyConfig;
 
       /**
+     * @deprecated FOR PUSH VERSION ONLY
+     * 
      * Method to set the push token type
      * NB: ONLY FOR iOS
      *
@@ -1254,6 +1263,8 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
       setPushTokenType(tokenType: messagingMode): CountlyConfig;
 
       /**
+     * @deprecated FOR PUSH VERSION ONLY
+     * 
      * Method to set the push channel name and description
      * NB: ONLY FOR ANDROID
      *
@@ -1263,6 +1274,8 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
       setPushNotificationChannelInformation(name: string, description: string): CountlyConfig;
 
       /**
+     * @deprecated FOR PUSH VERSION ONLY
+     * 
      * Method to set the push notification accent color
      * NB: ONLY FOR ANDROID
      *
@@ -1272,6 +1285,8 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
       setPushNotificationAccentColor(accentColor: string): CountlyConfig;
 
       /**
+     * @deprecated FOR PUSH VERSION ONLY
+     * 
      * Method to configure intent redirection check
      *
      * @param {string[]} allowedIntentClassNames allowed intent class names
