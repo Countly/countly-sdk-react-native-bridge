@@ -35,7 +35,7 @@ Countly.userDataBulk = {}; // userDataBulk interface
 let _isPushInitialized = false;
 
 const BUILDING_WITH_PUSH_DISABLED = true;
-const _pushDisabledMsg = 'In this plugin Push notification is disabled, Countly has separate plugin with push notification enabled';
+const _pushDisabledMsg = 'Push Notifications are disabled in this flavor. Please use the original Countly React Native SDK if you need to use Push Notifications.';
 
 /*
  * Listener for rating widget callback, when callback recieve we will remove the callback using listener.
