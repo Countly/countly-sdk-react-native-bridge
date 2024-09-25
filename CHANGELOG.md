@@ -1,3 +1,7 @@
+## 24.4.1
+* Updated the underlying Android SDK version to 24.4.1
+* Updated the underlying iOS SDK version to 24.4.1
+
 ## 24.4.0
 * ! Minor breaking change ! Tracking of foreground and background time for APM is disabled by default
 
