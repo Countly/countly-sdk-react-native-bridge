@@ -1,18 +1,17 @@
 ## 24.4.1
-* Updated the underlying Android SDK version to 24.4.1
 * ! Minor breaking change ! Mitigated an issue where internal SDK limits did not apply
 * Added support for Feedback Widget terms and conditions
 * Mitigated an issue where the session duration could have been calculated wrongly after a device ID change without merge
 * Mitigated an issue where a session could have continued after a device ID change without merge
-
-* Updated the underlying iOS SDK version to 24.4.1
-* Added support for Feedback Widget terms and conditions
 * Mitigated an issue where SDK limits could affect internal keys
 * Mitigated an issue that enabled recording reserved events
 * Mitigated an issue where timed events could have no ID
 * Mitigated an issue where internal limits were not being applied to some values
 * Mitigated an issue where the request queue could overflow while sending a request
 * Removed timestamps from crash breadcrumbs
+
+* Updated the underlying Android SDK version to 24.4.1
+* Updated the underlying iOS SDK version to 24.4.1
 
 ## 24.4.0
 * ! Minor breaking change ! Tracking of foreground and background time for APM is disabled by default
