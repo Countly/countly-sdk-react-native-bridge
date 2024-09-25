@@ -6,7 +6,7 @@
     "editor.formatOnSave": true,
     "cSpell.words": ["Countly"],
     "[javascript]": {
-        "editor.defaultFormatter": "vscode.typescript-language-features"
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
     "java.configuration.updateBuildConfiguration": "interactive"
 }
