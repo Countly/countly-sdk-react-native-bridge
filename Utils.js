@@ -136,22 +136,46 @@ function configToJson(config) {
         }
         // Limits -----------------------------------------------
         if (config.limits.maxKeyLength) {
-            json.maxKeyLength = config.limits.maxKeyLength;
+            if (config.limits.maxKeyLength < 1) {
+                L.w(`configToJson, Provided value for maxKeyLength is invalid!`)
+            } else {
+                json.maxKeyLength = config.limits.maxKeyLength;
+            }
         }
         if (config.limits.maxValueSize) {
-            json.maxValueSize = config.limits.maxValueSize;
+            if (config.limits.maxValueSize < 1) {
+                L.w(`configToJson, Provided value for maxValueSize is invalid!`)
+            } else {
+                json.maxValueSize = config.limits.maxValueSize;
+            }
         }
         if (config.limits.maxSegmentationValues) {
-            json.maxSegmentationValues = config.limits.maxSegmentationValues;
+            if (config.limits.maxSegmentationValues < 1) {
+                L.w(`configToJson, Provided value for maxSegmentationValues is invalid!`)
+            } else {
+                json.maxSegmentationValues = config.limits.maxSegmentationValues;
+            }
         }
         if (config.limits.maxBreadcrumbCount) {
-            json.maxBreadcrumbCount = config.limits.maxBreadcrumbCount;
+            if (config.limits.maxBreadcrumbCount < 1) {
+                L.w(`configToJson, Provided value for maxBreadcrumbCount is invalid!`)
+            } else {
+                json.maxBreadcrumbCount = config.limits.maxBreadcrumbCount;
+            }
         }
         if (config.limits.maxStackTraceLinesPerThread) {
-            json.maxStackTraceLinesPerThread = config.limits.maxStackTraceLinesPerThread;
+            if (config.limits.maxStackTraceLinesPerThread < 1) {
+                L.w(`configToJson, Provided value for maxStackTraceLinesPerThread is invalid!`)
+            } else {
+                json.maxStackTraceLinesPerThread = config.limits.maxStackTraceLinesPerThread;
+            }
         }
         if (config.limits.maxStackTraceLineLength) {
-            json.maxStackTraceLineLength = config.limits.maxStackTraceLineLength;
+            if (config.limits.maxStackTraceLineLength < 1) {
+                L.w(`configToJson, Provided value for maxStackTraceLineLength is invalid!`)
+            } else {
+                json.maxStackTraceLineLength = config.limits.maxStackTraceLineLength;
+            }
         }
         // Limits End --------------------------------------------
     } catch (err) {

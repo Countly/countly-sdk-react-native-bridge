@@ -113,14 +113,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     private static String pushNotificationCallbackName = "pushNotificationCallback";
     private List<CountlyFeedbackWidget> retrievedWidgetList = null;
 
-    // SDK Limit Defaults
-    final int maxKeyLengthDefault = 128;
-    final int maxValueSizeDefault = 256;
-    final int maxSegmentationValuesDefault = 100;
-    final int maxBreadcrumbCountDefault = 100;
-    final int maxStackTraceLinesPerThreadDefault = 30;
-    final int maxStackTraceLineLengthDefault = 200;
-
     private final Set<String> validConsentFeatureNames = new HashSet<>(Arrays.asList(
         Countly.CountlyFeatureNames.sessions,
         Countly.CountlyFeatureNames.events,
@@ -245,64 +237,22 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             // APM END --------------------------------------------
             // Limits -----------------------------------------------
             if(_config.has("maxKeyLength")) {
-                if (_config.getInt("maxKeyLength") < 1) {
-                    log("[Init] provided 'maxKeyLength' is less than '1'. Setting it to '1'.", LogLevel.WARNING);
-                    config.limits.setMaxKeyLength(1);
-                }
                 config.limits.setMaxKeyLength(_config.getInt("maxKeyLength"));
             }
-            else {
-                config.limits.setMaxKeyLength(maxKeyLengthDefault);
-            }
             if(_config.has("maxValueSize")) {
-                if (_config.getInt("maxValueSize") < 1) {
-                    log("[Init] provided 'maxValueSize' is less than '1'. Setting it to '1'.", LogLevel.WARNING);
-                    config.limits.setMaxValueSize(1);
-                }
                 config.limits.setMaxValueSize(_config.getInt("maxValueSize"));
             }
-            else {
-                config.limits.setMaxValueSize(maxValueSizeDefault);
-            }
             if(_config.has("maxSegmentationValues")) {
-                if (_config.getInt("maxSegmentationValues") < 1) {
-                    log("[Init] provided 'maxSegmentationValues' is less than '1'. Setting it to '1'.", LogLevel.WARNING);
-                    config.limits.setMaxSegmentationValues(1);
-                }
                 config.limits.setMaxSegmentationValues(_config.getInt("maxSegmentationValues"));
             }
-            else {
-                config.limits.setMaxSegmentationValues(maxSegmentationValuesDefault);
-            }
             if(_config.has("maxBreadcrumbCount")) {
-                if (_config.getInt("maxBreadcrumbCount") < 1) {
-                    log("[Init] provided 'maxBreadcrumbCount' is less than '1'. Setting it to '1'.", LogLevel.WARNING);
-                    config.limits.setMaxBreadcrumbCount(1);
-                }
                 config.limits.setMaxBreadcrumbCount(_config.getInt("maxBreadcrumbCount"));
             }
-            else {
-                config.limits.setMaxBreadcrumbCount(maxBreadcrumbCountDefault);
-            }
             if(_config.has("maxStackTraceLinesPerThread")) {
-                if (_config.getInt("maxStackTraceLinesPerThread") < 1) {
-                    log("[Init] provided 'maxStackTraceLinesPerThread' is less than '1'. Setting it to '1'.", LogLevel.WARNING);
-                    config.limits.setMaxStackTraceLinesPerThread(1);
-                }
                 config.limits.setMaxStackTraceLinesPerThread(_config.getInt("maxStackTraceLinesPerThread"));
             }
-            else {
-                config.limits.setMaxStackTraceLinesPerThread(maxStackTraceLinesPerThreadDefault);
-            }
             if(_config.has("maxStackTraceLineLength")) {
-                if (_config.getInt("maxStackTraceLineLength") < 1) {
-                    log("[Init] provided 'maxStackTraceLineLength' is less than '1'. Setting it to '1'.", LogLevel.WARNING);
-                    config.limits.setMaxStackTraceLineLength(1);
-                }
                 config.limits.setMaxStackTraceLineLength(_config.getInt("maxStackTraceLineLength"));
-            }
-            else {
-                config.limits.setMaxStackTraceLineLength(maxStackTraceLineLengthDefault);
             }
             // Limits End -------------------------------------------
             if (_config.has("crashReporting")) {
