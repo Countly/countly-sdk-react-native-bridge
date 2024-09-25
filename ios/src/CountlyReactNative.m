@@ -50,6 +50,14 @@ NSString *const widgetClosedCallbackName = @"widgetClosedCallback";
 NSString *const ratingWidgetCallbackName = @"ratingWidgetCallback";
 NSString *const pushNotificationCallbackName = @"pushNotificationCallback";
 
+// SDK Limit Defaults
+const int maxKeyLengthDefault = 150;
+const int maxValueSizeDefault = 200;
+const int maxSegmentationValuesDefault = 120;
+const int maxBreadcrumbCountDefault = 120;
+const int maxStackTraceLinesPerThreadDefault = 50;
+const int maxStackTraceLineLengthDefault = 300;
+
 @implementation CountlyReactNative
 NSString *const kCountlyNotificationPersistencyKey = @"kCountlyNotificationPersistencyKey";
 
@@ -147,7 +155,67 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
     if (json[@"starRatingTextMessage"]) {
         config.starRatingMessage = json[@"starRatingTextMessage"];
     }
+    // Limits -----------------------------------------------
+    // maxKeyLength
+    if (json[@"maxKeyLength"]) {
+        if ([[_config objectForKey:@"maxKeyLength"] intValue] < 1) {
+            [config.limits setMaxKeyLength:1];
+        }
+        [config.limits setMaxKeyLength:[[_config objectForKey:@"maxKeyLength"] intValue]];
+    } else {
+        [config.limits setMaxKeyLength:maxKeyLengthDefault];
+    }
 
+    // maxValueSize
+    if (json[@"maxValueSize"]) {
+        if ([[_config objectForKey:@"maxValueSize"] intValue] < 1) {
+            [config.limits setMaxValueSize:1];
+        }
+        [config.limits setMaxValueSize:[[_config objectForKey:@"maxValueSize"] intValue]];
+    } else {
+        [config.limits setMaxValueSize:maxValueSizeDefault];
+    }
+
+    // maxSegmentationValues
+    if (json[@"maxSegmentationValues"]) {
+        if ([[_config objectForKey:@"maxSegmentationValues"] intValue] < 1) {
+            [config.limits setMaxSegmentationValues:1];
+        }
+        [config.limits setMaxSegmentationValues:[[_config objectForKey:@"maxSegmentationValues"] intValue]];
+    } else {
+        [config.limits setMaxSegmentationValues:maxSegmentationValuesDefault];
+    }
+
+    // maxBreadcrumbCount
+    if (json[@"maxBreadcrumbCount"]) {
+        if ([[_config objectForKey:@"maxBreadcrumbCount"] intValue] < 1) {
+            [config.limits setMaxBreadcrumbCount:1];
+        }
+        [config.limits setMaxBreadcrumbCount:[[_config objectForKey:@"maxBreadcrumbCount"] intValue]];
+    } else {
+        [config.limits setMaxBreadcrumbCount:maxBreadcrumbCountDefault];
+    }
+
+    // maxStackTraceLinesPerThread
+    if (json[@"maxStackTraceLinesPerThread"]) {
+        if ([[_config objectForKey:@"maxStackTraceLinesPerThread"] intValue] < 1) {
+            [config.limits setMaxStackTraceLinesPerThread:1];
+        }
+        [config.limits setMaxStackTraceLinesPerThread:[[_config objectForKey:@"maxStackTraceLinesPerThread"] intValue]];
+    } else {
+        [config.limits setMaxStackTraceLinesPerThread:maxStackTraceLinesPerThreadDefault];
+    }
+
+    // maxStackTraceLineLength
+    if (json[@"maxStackTraceLineLength"]) {
+        if ([[_config objectForKey:@"maxStackTraceLineLength"] intValue] < 1) {
+            [config.limits setMaxStackTraceLineLength:1];
+        }
+        [config.limits setMaxStackTraceLineLength:[[_config objectForKey:@"maxStackTraceLineLength"] intValue]];
+    } else {
+        [config.limits setMaxStackTraceLineLength:maxStackTraceLineLengthDefault];
+    }
+    // Limits End -------------------------------------------
     // APM ------------------------------------------------
     NSNumber *enableForegroundBackground = json[@"enableForegroundBackground"];
     if (enableForegroundBackground) {
