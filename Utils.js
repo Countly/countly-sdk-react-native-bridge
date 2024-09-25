@@ -17,19 +17,19 @@ const DeviceIdType = {
 function intToDeviceIDType(deviceIdType) {
     let result = null;
     switch (deviceIdType) {
-    case 10101:
-        result = DeviceIdType.SDK_GENERATED;
-        break;
-    case 20202:
-        result = DeviceIdType.DEVELOPER_SUPPLIED;
-        break;
-    case 30303:
-        result = DeviceIdType.TEMPORARY_ID;
-        break;
-    default:
-        L.e("_getDeviceIdType, " + `unexpected deviceIdType [${deviceIdType}] from native side`);
-        result = DeviceIdType.SDK_GENERATED;
-        break;
+        case 10101:
+            result = DeviceIdType.SDK_GENERATED;
+            break;
+        case 20202:
+            result = DeviceIdType.DEVELOPER_SUPPLIED;
+            break;
+        case 30303:
+            result = DeviceIdType.TEMPORARY_ID;
+            break;
+        default:
+            L.e("_getDeviceIdType, " + `unexpected deviceIdType [${deviceIdType}] from native side`);
+            result = DeviceIdType.SDK_GENERATED;
+            break;
     }
     L.d(`_getDeviceIdType, DeviceIDType: ${result}`);
     return result;
@@ -134,6 +134,26 @@ function configToJson(config) {
         if (config.attributionValues) {
             json.attributionValues = config.attributionValues;
         }
+        // Limits -----------------------------------------------
+        if (config.limits.maxKeyLength) {
+            json.maxKeyLength = config.limits.maxKeyLength;
+        }
+        if (config.limits.maxValueSize) {
+            json.maxValueSize = config.limits.maxValueSize;
+        }
+        if (config.limits.maxSegmentationValues) {
+            json.maxSegmentationValues = config.limits.maxSegmentationValues;
+        }
+        if (config.limits.maxBreadcrumbCount) {
+            json.maxBreadcrumbCount = config.limits.maxBreadcrumbCount;
+        }
+        if (config.limits.maxStackTraceLinesPerThread) {
+            json.maxStackTraceLinesPerThread = config.limits.maxStackTraceLinesPerThread;
+        }
+        if (config.limits.maxStackTraceLineLength) {
+            json.maxStackTraceLineLength = config.limits.maxStackTraceLineLength;
+        }
+        // Limits End --------------------------------------------
     } catch (err) {
         L.e(`configToJson, Exception occured during converting config to json.${err.toString()}`);
     }

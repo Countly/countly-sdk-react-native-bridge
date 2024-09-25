@@ -1,5 +1,6 @@
 import { initialize } from "./Logger.js";
 import CountlyConfigApm from "./lib/configuration_interfaces/countly_config_apm.js";
+import CountlyConfigSDKInternalLimits from "./lib/configuration_interfaces/countly_config_limits.js";
 /**
  * Countly SDK React Native Bridge
  * https://github.com/Countly/countly-sdk-react-native-bridge
@@ -18,6 +19,7 @@ class CountlyConfig {
         this.serverURL = serverURL;
         this.appKey = appKey;
         this._countlyConfigApmInstance = new CountlyConfigApm();
+        this._countlyConfigSDKLimitsInstance = new CountlyConfigSDKInternalLimits();
     }
 
     /**
@@ -25,6 +27,10 @@ class CountlyConfig {
      */
     get apm() {
         return this._countlyConfigApmInstance;
+    }
+
+    get limits() {
+        return this._countlyConfigSDKLimitsInstance;
     }
 
     /**
