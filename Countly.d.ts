@@ -1187,7 +1187,7 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
       /**
      * getter for CountlySDKLimits instance that is used to access CountlyConfigSDKInternalLimits methods
      */
-      limits: CountlyConfigSDKInternalLimits;
+      sdkInternalLimits: CountlyConfigSDKInternalLimits;
 
       /**
      * Method to set the server url
