@@ -86,7 +86,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
 
     public static final String TAG = "CountlyRNPlugin";
     private String COUNTLY_RN_SDK_VERSION_STRING = "24.4.1";
-    private String COUNTLY_RN_SDK_NAME = "js-rnb-android";
+    private String COUNTLY_RN_SDK_NAME = "js-rnb-android-np";
 
     private static final CountlyConfig config = new CountlyConfig();
     private static Countly.CountlyMessagingMode messagingMode = Countly.CountlyMessagingMode.PRODUCTION;
