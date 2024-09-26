@@ -237,22 +237,22 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             // APM END --------------------------------------------
             // Limits -----------------------------------------------
             if(_config.has("maxKeyLength")) {
-                config.limits.setMaxKeyLength(_config.getInt("maxKeyLength"));
+                config.sdkInternalLimits.setMaxKeyLength(_config.getInt("maxKeyLength"));
             }
             if(_config.has("maxValueSize")) {
-                config.limits.setMaxValueSize(_config.getInt("maxValueSize"));
+                config.sdkInternalLimits.setMaxValueSize(_config.getInt("maxValueSize"));
             }
             if(_config.has("maxSegmentationValues")) {
-                config.limits.setMaxSegmentationValues(_config.getInt("maxSegmentationValues"));
+                config.sdkInternalLimits.setMaxSegmentationValues(_config.getInt("maxSegmentationValues"));
             }
             if(_config.has("maxBreadcrumbCount")) {
-                config.limits.setMaxBreadcrumbCount(_config.getInt("maxBreadcrumbCount"));
+                config.sdkInternalLimits.setMaxBreadcrumbCount(_config.getInt("maxBreadcrumbCount"));
             }
             if(_config.has("maxStackTraceLinesPerThread")) {
-                config.limits.setMaxStackTraceLinesPerThread(_config.getInt("maxStackTraceLinesPerThread"));
+                config.sdkInternalLimits.setMaxStackTraceLinesPerThread(_config.getInt("maxStackTraceLinesPerThread"));
             }
             if(_config.has("maxStackTraceLineLength")) {
-                config.limits.setMaxStackTraceLineLength(_config.getInt("maxStackTraceLineLength"));
+                config.sdkInternalLimits.setMaxStackTraceLineLength(_config.getInt("maxStackTraceLineLength"));
             }
             // Limits End -------------------------------------------
             if (_config.has("crashReporting")) {
