@@ -29,7 +29,7 @@ class CountlyConfig {
         return this._countlyConfigApmInstance;
     }
 
-    get limits() {
+    get sdkInternalLimits() {
         return this._countlyConfigSDKLimitsInstance;
     }
 
