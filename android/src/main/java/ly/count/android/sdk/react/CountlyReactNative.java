@@ -85,7 +85,7 @@ class CountlyReactException extends Exception {
 public class CountlyReactNative extends ReactContextBaseJavaModule implements LifecycleEventListener {
 
     public static final String TAG = "CountlyRNPlugin";
-    private String COUNTLY_RN_SDK_VERSION_STRING = "24.4.0";
+    private String COUNTLY_RN_SDK_VERSION_STRING = "24.4.1";
     private String COUNTLY_RN_SDK_NAME = "js-rnb-android";
 
     private static final CountlyConfig config = new CountlyConfig();
@@ -231,6 +231,26 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 config.setRecordAppStartTime(_config.getBoolean("enableApm"));
             }
             // APM END --------------------------------------------
+            // Limits -----------------------------------------------
+            if(_config.has("maxKeyLength")) {
+                config.sdkInternalLimits.setMaxKeyLength(_config.getInt("maxKeyLength"));
+            }
+            if(_config.has("maxValueSize")) {
+                config.sdkInternalLimits.setMaxValueSize(_config.getInt("maxValueSize"));
+            }
+            if(_config.has("maxSegmentationValues")) {
+                config.sdkInternalLimits.setMaxSegmentationValues(_config.getInt("maxSegmentationValues"));
+            }
+            if(_config.has("maxBreadcrumbCount")) {
+                config.sdkInternalLimits.setMaxBreadcrumbCount(_config.getInt("maxBreadcrumbCount"));
+            }
+            if(_config.has("maxStackTraceLinesPerThread")) {
+                config.sdkInternalLimits.setMaxStackTraceLinesPerThread(_config.getInt("maxStackTraceLinesPerThread"));
+            }
+            if(_config.has("maxStackTraceLineLength")) {
+                config.sdkInternalLimits.setMaxStackTraceLineLength(_config.getInt("maxStackTraceLineLength"));
+            }
+            // Limits End -------------------------------------------
             if (_config.has("crashReporting")) {
                 config.enableCrashReporting();
             }
