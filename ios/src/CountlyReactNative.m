@@ -149,28 +149,29 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
     }
     // Limits -----------------------------------------------
     // maxKeyLength
-    if (json[@"maxKeyLength"]) {
-        [config.limits setMaxKeyLength:[[_config objectForKey:@"maxKeyLength"] intValue]];
+    NSNumber *maxKeyLength = json[@"maxKeyLength"];
+    if (maxKeyLength) {
+        [config.sdkInternalLimits setMaxKeyLength:[maxKeyLength intValue]];
     }
-    // maxValueSize
-    if (json[@"maxValueSize"]) {
-        [config.limits setMaxValueSize:[[_config objectForKey:@"maxValueSize"] intValue]];
+    NSNumber *maxValueSize = json[@"maxValueSize"];
+    if (maxValueSize) {
+        [config.sdkInternalLimits setMaxValueSize:[maxValueSize intValue]];
     }
-    // maxSegmentationValues
-    if (json[@"maxSegmentationValues"]) {
-        [config.limits setMaxSegmentationValues:[[_config objectForKey:@"maxSegmentationValues"] intValue]];
+    NSNumber *maxSegmentationValues = json[@"maxSegmentationValues"];
+    if (maxSegmentationValues) {
+        [config.sdkInternalLimits setMaxSegmentationValues:[maxSegmentationValues intValue]];
     }
-    // maxBreadcrumbCount
-    if (json[@"maxBreadcrumbCount"]) {
-        [config.limits setMaxBreadcrumbCount:[[_config objectForKey:@"maxBreadcrumbCount"] intValue]];
+    NSNumber *maxBreadcrumbCount = json[@"maxBreadcrumbCount"];
+    if (maxBreadcrumbCount) {
+        [config.sdkInternalLimits setMaxBreadcrumbCount:[maxBreadcrumbCount intValue]];
     }
-    // maxStackTraceLinesPerThread
-    if (json[@"maxStackTraceLinesPerThread"]) {
-        [config.limits setMaxStackTraceLinesPerThread:[[_config objectForKey:@"maxStackTraceLinesPerThread"] intValue]];
+    NSNumber *maxStackTraceLineLength = json[@"maxStackTraceLineLength"];
+    if (maxStackTraceLineLength) {
+        [config.sdkInternalLimits setMaxStackTraceLineLength:[maxStackTraceLineLength intValue]];
     }
-    // maxStackTraceLineLength
-    if (json[@"maxStackTraceLineLength"]) {
-        [config.limits setMaxStackTraceLineLength:[[_config objectForKey:@"maxStackTraceLineLength"] intValue]];
+    NSNumber *maxStackTraceLinesPerThread = json[@"maxStackTraceLinesPerThread"];
+    if (maxStackTraceLinesPerThread) {
+        [config.sdkInternalLimits setMaxStackTraceLinesPerThread:[maxStackTraceLinesPerThread intValue]];
     }
     // Limits End -------------------------------------------
     // APM ------------------------------------------------
