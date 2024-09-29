@@ -17,19 +17,19 @@ const DeviceIdType = {
 function intToDeviceIDType(deviceIdType) {
     let result = null;
     switch (deviceIdType) {
-    case 10101:
-        result = DeviceIdType.SDK_GENERATED;
-        break;
-    case 20202:
-        result = DeviceIdType.DEVELOPER_SUPPLIED;
-        break;
-    case 30303:
-        result = DeviceIdType.TEMPORARY_ID;
-        break;
-    default:
-        L.e("_getDeviceIdType, " + `unexpected deviceIdType [${deviceIdType}] from native side`);
-        result = DeviceIdType.SDK_GENERATED;
-        break;
+        case 10101:
+            result = DeviceIdType.SDK_GENERATED;
+            break;
+        case 20202:
+            result = DeviceIdType.DEVELOPER_SUPPLIED;
+            break;
+        case 30303:
+            result = DeviceIdType.TEMPORARY_ID;
+            break;
+        default:
+            L.e("_getDeviceIdType, " + `unexpected deviceIdType [${deviceIdType}] from native side`);
+            result = DeviceIdType.SDK_GENERATED;
+            break;
     }
     L.d(`_getDeviceIdType, DeviceIDType: ${result}`);
     return result;
@@ -134,6 +134,50 @@ function configToJson(config) {
         if (config.attributionValues) {
             json.attributionValues = config.attributionValues;
         }
+        // Limits -----------------------------------------------
+        if (config.sdkInternalLimits.maxKeyLength) {
+            if (config.sdkInternalLimits.maxKeyLength < 1) {
+                L.w(`configToJson, Provided value for maxKeyLength is invalid!`)
+            } else {
+                json.maxKeyLength = config.sdkInternalLimits.maxKeyLength;
+            }
+        }
+        if (config.sdkInternalLimits.maxValueSize) {
+            if (config.sdkInternalLimits.maxValueSize < 1) {
+                L.w(`configToJson, Provided value for maxValueSize is invalid!`)
+            } else {
+                json.maxValueSize = config.sdkInternalLimits.maxValueSize;
+            }
+        }
+        if (config.sdkInternalLimits.maxSegmentationValues) {
+            if (config.sdkInternalLimits.maxSegmentationValues < 1) {
+                L.w(`configToJson, Provided value for maxSegmentationValues is invalid!`)
+            } else {
+                json.maxSegmentationValues = config.sdkInternalLimits.maxSegmentationValues;
+            }
+        }
+        if (config.sdkInternalLimits.maxBreadcrumbCount) {
+            if (config.sdkInternalLimits.maxBreadcrumbCount < 1) {
+                L.w(`configToJson, Provided value for maxBreadcrumbCount is invalid!`)
+            } else {
+                json.maxBreadcrumbCount = config.sdkInternalLimits.maxBreadcrumbCount;
+            }
+        }
+        if (config.sdkInternalLimits.maxStackTraceLinesPerThread) {
+            if (config.sdkInternalLimits.maxStackTraceLinesPerThread < 1) {
+                L.w(`configToJson, Provided value for maxStackTraceLinesPerThread is invalid!`)
+            } else {
+                json.maxStackTraceLinesPerThread = config.sdkInternalLimits.maxStackTraceLinesPerThread;
+            }
+        }
+        if (config.sdkInternalLimits.maxStackTraceLineLength) {
+            if (config.sdkInternalLimits.maxStackTraceLineLength < 1) {
+                L.w(`configToJson, Provided value for maxStackTraceLineLength is invalid!`)
+            } else {
+                json.maxStackTraceLineLength = config.sdkInternalLimits.maxStackTraceLineLength;
+            }
+        }
+        // Limits End --------------------------------------------
     } catch (err) {
         L.e(`configToJson, Exception occured during converting config to json.${err.toString()}`);
     }
