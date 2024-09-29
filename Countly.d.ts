@@ -1129,6 +1129,44 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
       setAppStartTimestampOverride(timestamp: number): CountlyConfigApm;
   }
 
+  class CountlyConfigSDKInternalLimits {
+    /**
+     * Limits the maximum size of all string keys
+     * @param keyLengthLimit - maximum char size of all string keys (default 128 chars)
+     */
+    setMaxKeyLength(keyLengthLimit: number) : CountlyConfigSDKInternalLimits;
+
+    /**
+     * Limits the size of all values in segmentation key-value pairs
+     * @param valueSizeLimit - the maximum char size of all values in our key-value pairs (default 256 chars)
+     */
+    setMaxValueSize(valueSizeLimit: number) : CountlyConfigSDKInternalLimits;
+
+    /**
+     * Limits the max amount of custom segmentation in one event
+     * @param segmentationAmountLimit - the maximum amount of custom segmentation in one event (default 100 key-value pairs)
+     */
+    setMaxSegmentationValues(segmentationAmountLimit: number) : CountlyConfigSDKInternalLimits;
+
+    /**
+     * Limits the max amount of breadcrumbs that can be recorded before the oldest one is deleted
+     * @param breadcrumbCountLimit - the maximum amount of breadcrumbs that can be recorded before the oldest one is deleted (default 100)
+     */
+    setMaxBreadcrumbCount(breadcrumbCountLimit: number) : CountlyConfigSDKInternalLimits;
+
+    /**
+     * Limits the max amount of stack trace lines to be recorded per thread
+     * @param stackTraceLinesPerThreadLimit - maximum amount of stack trace lines to be recorded per thread (default 30)
+     */
+    setMaxStackTraceLinesPerThread(stackTraceLinesPerThreadLimit: number) : CountlyConfigSDKInternalLimits;
+
+    /**
+     * Limits the max characters allowed per stack trace lines. Also limits the crash message length
+     * @param stackTraceLineLengthLimit - maximum length of each stack trace line (default 200)
+     */
+    setMaxStackTraceLineLength(stackTraceLineLengthLimit: number) : CountlyConfigSDKInternalLimits;
+  }
+
   /**
    *
    * Config object for Countly Init
@@ -1146,6 +1184,10 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
      * getter for CountlyConfigApm instance that is used to access CountlyConfigApm methods
      */
       apm: CountlyConfigApm;
+      /**
+     * getter for CountlySDKLimits instance that is used to access CountlyConfigSDKInternalLimits methods
+     */
+      sdkInternalLimits: CountlyConfigSDKInternalLimits;
 
       /**
      * Method to set the server url

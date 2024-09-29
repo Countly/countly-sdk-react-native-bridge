@@ -30,4 +30,13 @@ const countlyConfig = new CountlyConfig(COUNTLY_SERVER_KEY, COUNTLY_APP_KEY).set
 //   .enableManualAppLoadedTrigger()
 //   .setAppStartTimestampOverride(11223344);
 
+// Countly SDK Limits ========================================
+// countlyConfig.limits
+// .setMaxKeyLength()
+// .setMaxValueSize()
+// .setMaxSegmentationValues()
+// .setMaxBreadcrumbCount()
+// .setMaxStackTraceLineLength()
+// .setMaxStackTraceLinesPerThread();
+
 export default countlyConfig;

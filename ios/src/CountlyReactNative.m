@@ -24,7 +24,7 @@
 + (CountlyFeedbackWidget *)createWithDictionary:(NSDictionary *)dictionary;
 @end
 
-NSString *const kCountlyReactNativeSDKVersion = @"24.4.0";
+NSString *const kCountlyReactNativeSDKVersion = @"24.4.1";
 NSString *const kCountlyReactNativeSDKName = @"js-rnb-ios";
 
 CLYPushTestMode const CLYPushTestModeProduction = @"CLYPushTestModeProduction";
@@ -147,7 +147,33 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
     if (json[@"starRatingTextMessage"]) {
         config.starRatingMessage = json[@"starRatingTextMessage"];
     }
-
+    // Limits -----------------------------------------------
+    // maxKeyLength
+    NSNumber *maxKeyLength = json[@"maxKeyLength"];
+    if (maxKeyLength) {
+        [config.sdkInternalLimits setMaxKeyLength:[maxKeyLength intValue]];
+    }
+    NSNumber *maxValueSize = json[@"maxValueSize"];
+    if (maxValueSize) {
+        [config.sdkInternalLimits setMaxValueSize:[maxValueSize intValue]];
+    }
+    NSNumber *maxSegmentationValues = json[@"maxSegmentationValues"];
+    if (maxSegmentationValues) {
+        [config.sdkInternalLimits setMaxSegmentationValues:[maxSegmentationValues intValue]];
+    }
+    NSNumber *maxBreadcrumbCount = json[@"maxBreadcrumbCount"];
+    if (maxBreadcrumbCount) {
+        [config.sdkInternalLimits setMaxBreadcrumbCount:[maxBreadcrumbCount intValue]];
+    }
+    NSNumber *maxStackTraceLineLength = json[@"maxStackTraceLineLength"];
+    if (maxStackTraceLineLength) {
+        [config.sdkInternalLimits setMaxStackTraceLineLength:[maxStackTraceLineLength intValue]];
+    }
+    NSNumber *maxStackTraceLinesPerThread = json[@"maxStackTraceLinesPerThread"];
+    if (maxStackTraceLinesPerThread) {
+        [config.sdkInternalLimits setMaxStackTraceLinesPerThread:[maxStackTraceLinesPerThread intValue]];
+    }
+    // Limits End -------------------------------------------
     // APM ------------------------------------------------
     NSNumber *enableForegroundBackground = json[@"enableForegroundBackground"];
     if (enableForegroundBackground) {
