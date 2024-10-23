@@ -1,3 +1,36 @@
+## 24.7.3
+* Added current view names to event segmentation based on the `enablePreviousNameRecording` (Experimental!)
+* Updated the SDK to ensure compatibility with the latest server response models
+
+## 24.7.2
+* Automatic view pause/resumes are changed with stop/start for better data consistency.
+* Added the config interface 'experimental' to group experimental features.
+* Added a flag (enablePreviousNameRecording) to add previous event and view names as segmentation. (Experimental!)
+* Added a flag (enableVisibilityTracking) to add app visibility info to views 
+* Added Content feature methods:
+	- enterContentZone, to start Content checks(Experimental!)
+	- exitContentZone, to stop content checks (Experimental!)
+
+## 24.7.1
+* Added `enableTemporaryDeviceIDMode` config and post-initialization methods to enable temporary device ID mode
+* Orientation info is now also sent during initialization
+* Mitigated an issue where consent information was not sent when no consent was given during initialization
+* Mitigated an issue where a session could have started if the SDK was initialized on the background and automatic session tracking was enabled
+* Mitigated an issue where a session did not end when session consent was removed
+* Mitigated an issue where disabling location did not work
+
+## 24.7.0
+* Implemented automatic sending of user properties to the server without requiring an explicit call to the `save` method
+* Added `setID` method for changing device ID based on the device ID type
+* Enhanced segmentation values to include additional supported data types beyond `NSString`
+* Fixed web view caching issue for widgets
+
+* Mitigated an issue where the terms and conditions URL (`tc` key) was sent without double quotes
+* Mitigated an issue where remote config values are not updated after enrolling to a variant
+
+## 24.4.2
+* Improved crash filtering capabilities to include modifications on the crash report
+
 ## 24.4.1
 * Added support for Feedback Widget terms and conditions
 

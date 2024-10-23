@@ -12,6 +12,7 @@
 #import "CountlyRemoteConfig.h"
 #import "CountlyFeedbackWidget.h"
 #import "CountlyViewTracking.h"
+#import "CountlyContentBuilder.h"
 #import "Resettable.h"
 #if (TARGET_OS_IOS || TARGET_OS_OSX)
 #import <UserNotifications/UserNotifications.h>
@@ -186,6 +187,15 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (void)changeDeviceIDWithoutMerge:(NSString * _Nullable)deviceID;
 
+- (void)setID:(NSString *)deviceID;
+
+/**
+ * This menthod will enable temporary device ID mode 
+ * @discussion All requests will be on hold, but they will be persistently stored.
+ * @discussion When in temporary device ID mode, method calls for presenting feedback widgets and updating remote config will be ignored.
+ */
+- (void)enableTemporaryDeviceIDMode;
+
 
 #pragma mark - Consents
 
@@ -291,7 +301,7 @@ NS_ASSUME_NONNULL_BEGIN
  * @param key Event key, a non-zero length valid string
  * @param segmentation Segmentation key-value pairs of event
  */
-- (void)recordEvent:(NSString *)key segmentation:(NSDictionary<NSString *, NSString *> * _Nullable)segmentation;
+- (void)recordEvent:(NSString *)key segmentation:(NSDictionary<NSString *, id> * _Nullable)segmentation;
 
 /**
  * Records event with given key, segmentation and count.
@@ -302,7 +312,7 @@ NS_ASSUME_NONNULL_BEGIN
  * @param segmentation Segmentation key-value pairs of event
  * @param count Count of event occurrences
  */
-- (void)recordEvent:(NSString *)key segmentation:(NSDictionary<NSString *, NSString *> * _Nullable)segmentation count:(NSUInteger)count;
+- (void)recordEvent:(NSString *)key segmentation:(NSDictionary<NSString *, id> * _Nullable)segmentation count:(NSUInteger)count;
 
 /**
  * Records event with given key, segmentation, count and sum.
@@ -314,7 +324,7 @@ NS_ASSUME_NONNULL_BEGIN
  * @param count Count of event occurrences
  * @param sum Sum of any specific value for event
  */
-- (void)recordEvent:(NSString *)key segmentation:(NSDictionary<NSString *, NSString *> * _Nullable)segmentation count:(NSUInteger)count sum:(double)sum;
+- (void)recordEvent:(NSString *)key segmentation:(NSDictionary<NSString *, id> * _Nullable)segmentation count:(NSUInteger)count sum:(double)sum;
 
 /**
  * Records event with given key, segmentation, count, sum and duration.
@@ -327,7 +337,7 @@ NS_ASSUME_NONNULL_BEGIN
  * @param sum Sum of any specific value for event
  * @param duration Duration of event in seconds
  */
-- (void)recordEvent:(NSString *)key segmentation:(NSDictionary<NSString *, NSString *> * _Nullable)segmentation count:(NSUInteger)count sum:(double)sum duration:(NSTimeInterval)duration;
+- (void)recordEvent:(NSString *)key segmentation:(NSDictionary<NSString *, id> * _Nullable)segmentation count:(NSUInteger)count sum:(double)sum duration:(NSTimeInterval)duration;
 
 /**
  * Starts a timed event with given key to be ended later. Duration of timed event will be calculated on ending.
@@ -354,7 +364,7 @@ NS_ASSUME_NONNULL_BEGIN
  * @param count Count of event occurrences
  * @param sum Sum of any specific value for event
  */
-- (void)endEvent:(NSString *)key segmentation:(NSDictionary<NSString *, NSString *> * _Nullable)segmentation count:(NSUInteger)count sum:(double)sum;
+- (void)endEvent:(NSString *)key segmentation:(NSDictionary<NSString *, id> * _Nullable)segmentation count:(NSUInteger)count sum:(double)sum;
 
 /**
  * Cancels a previously started timed event with given key.
@@ -463,7 +473,7 @@ NS_ASSUME_NONNULL_BEGIN
  * @param stackTrace Stack trace to be recorded
  * @param segmentation Crash segmentation to override @c crashSegmentation set on initial configuration
  */
-- (void)recordException:(NSException *)exception isFatal:(BOOL)isFatal stackTrace:(NSArray * _Nullable)stackTrace segmentation:(NSDictionary<NSString *, NSString *> * _Nullable)segmentation;
+- (void)recordException:(NSException *)exception isFatal:(BOOL)isFatal stackTrace:(NSArray * _Nullable)stackTrace segmentation:(NSDictionary<NSString *, id> * _Nullable)segmentation;
 
 /**
  * Records a Swift error with given stack trace.
@@ -481,7 +491,7 @@ NS_ASSUME_NONNULL_BEGIN
  * @param stackTrace Stack trace to be recorded
  * @param segmentation Crash segmentation to override @c crashSegmentation set on initial configuration
  */
-- (void)recordError:(NSString *)errorName isFatal:(BOOL)isFatal stackTrace:(NSArray * _Nullable)stackTrace segmentation:(NSDictionary<NSString *, NSString *> * _Nullable)segmentation;
+- (void)recordError:(NSString *)errorName isFatal:(BOOL)isFatal stackTrace:(NSArray * _Nullable)stackTrace segmentation:(NSDictionary<NSString *, id> * _Nullable)segmentation;
 
 /**
  * Records a handled exception manually.
@@ -540,7 +550,7 @@ NS_ASSUME_NONNULL_BEGIN
  * @param viewName Name of the view visited, a non-zero length valid string
  * @param segmentation Custom segmentation key-value pairs
  */
-- (void)recordView:(NSString *)viewName segmentation:(NSDictionary<NSString *, NSString *> *)segmentation DEPRECATED_MSG_ATTRIBUTE("Use '[views startView/startAutoStoppedView:]' method instead!");
+- (void)recordView:(NSString *)viewName segmentation:(NSDictionary<NSString *, id> *)segmentation DEPRECATED_MSG_ATTRIBUTE("Use '[views startView/startAutoStoppedView:]' method instead!");
 
 #if (TARGET_OS_IOS || TARGET_OS_TV)
 /**
@@ -667,6 +677,14 @@ NS_ASSUME_NONNULL_BEGIN
  * @param completionHandler A completion handler block to be executed when list is fetched successfully or there is an error.
  */
 - (void)getFeedbackWidgets:(void (^)(NSArray <CountlyFeedbackWidget *> * __nullable feedbackWidgets, NSError * __nullable error))completionHandler;
+
+
+/**
+ * This is an experimental feature and it can have breaking changes
+ * Interface variable to access content  functionalities.
+ * @discussion Content interface for developer to interact with SDK.
+ */
+- (CountlyContentBuilder *_Nonnull) content;
 
 #endif
 
