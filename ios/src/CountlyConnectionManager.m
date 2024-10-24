@@ -830,7 +830,7 @@ static dispatch_once_t onceToken;
 
 - (NSMutableData *)pictureUploadDataForQueryString:(NSString *)queryString
 {
-#if (TARGET_OS_IOS || TARGET_OS_VISION)
+#if (TARGET_OS_IOS)
     NSString* localPicturePath = nil;
 
     NSString* userDetails = [queryString cly_valueForQueryStringKey:kCountlyQSKeyUserDetails];

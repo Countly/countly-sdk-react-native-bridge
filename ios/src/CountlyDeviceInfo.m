@@ -65,7 +65,7 @@ static dispatch_once_t onceToken;
 #endif
 #endif
 
-#if (TARGET_OS_IOS || TARGET_OS_VISION || TARGET_OS_TV)
+#if (TARGET_OS_IOS || TARGET_OS_TV)
         self.isInBackground = (UIApplication.sharedApplication.applicationState == UIApplicationStateBackground);
 
         [NSNotificationCenter.defaultCenter addObserver:self
@@ -107,7 +107,7 @@ static dispatch_once_t onceToken;
     if (deviceID.length)
         return deviceID;
 
-#if (TARGET_OS_IOS || TARGET_OS_VISION || TARGET_OS_TV)
+#if (TARGET_OS_IOS || TARGET_OS_TV)
     return UIDevice.currentDevice.identifierForVendor.UUIDString;
 #else
     NSString* UUID = [CountlyPersistency.sharedInstance retrieveNSUUID];
@@ -182,8 +182,6 @@ static dispatch_once_t onceToken;
     return @"smarttv";
 #elif (TARGET_OS_OSX)
     return @"desktop";
-#elif (TARGET_OS_VISION)
-    return @"vr";
 #endif
 
     return nil;
@@ -220,8 +218,6 @@ static dispatch_once_t onceToken;
     return @"tvOS";
 #elif (TARGET_OS_OSX)
     return @"macOS";
-#elif (TARGET_OS_VISION)
-    return @"visionOS";
 #endif
 
     return nil;
@@ -229,7 +225,7 @@ static dispatch_once_t onceToken;
 
 + (NSString *)osVersion
 {
-#if (TARGET_OS_IOS || TARGET_OS_VISION || TARGET_OS_TV)
+#if (TARGET_OS_IOS || TARGET_OS_TV)
     return UIDevice.currentDevice.systemVersion;
 #elif (TARGET_OS_WATCH)
     return WKInterfaceDevice.currentDevice.systemVersion;
@@ -264,35 +260,34 @@ static dispatch_once_t onceToken;
 
 + (NSString *)resolution
 {
-    CGRect bounds;
-    CGFloat scale;
 #if (TARGET_OS_IOS || TARGET_OS_TV)
-    bounds = UIScreen.mainScreen.bounds;
-    scale = UIScreen.mainScreen.scale;
+    CGRect bounds = UIScreen.mainScreen.bounds;
+    CGFloat scale = UIScreen.mainScreen.scale;
 #elif (TARGET_OS_WATCH)
-    bounds = WKInterfaceDevice.currentDevice.screenBounds;
-    scale = WKInterfaceDevice.currentDevice.screenScale;
+    CGRect bounds = WKInterfaceDevice.currentDevice.screenBounds;
+    CGFloat scale = WKInterfaceDevice.currentDevice.screenScale;
 #elif (TARGET_OS_OSX)
-    bounds = NSScreen.mainScreen.frame;
-    scale = NSScreen.mainScreen.backingScaleFactor;
+    NSRect bounds = NSScreen.mainScreen.frame;
+    CGFloat scale = NSScreen.mainScreen.backingScaleFactor;
 #else
     return nil;
 #endif
+
     return [NSString stringWithFormat:@"%gx%g", bounds.size.width * scale, bounds.size.height * scale];
 }
 
 + (NSString *)density
 {
-    CGFloat scale;
 #if (TARGET_OS_IOS || TARGET_OS_TV)
-    scale = UIScreen.mainScreen.scale;
+    CGFloat scale = UIScreen.mainScreen.scale;
 #elif (TARGET_OS_WATCH)
-    scale = WKInterfaceDevice.currentDevice.screenScale;
+    CGFloat scale = WKInterfaceDevice.currentDevice.screenScale;
 #elif (TARGET_OS_OSX)
-    scale = NSScreen.mainScreen.backingScaleFactor;
+    CGFloat scale = NSScreen.mainScreen.backingScaleFactor;
 #else
     return nil;
 #endif
+
     return [NSString stringWithFormat:@"@%dx", (int)scale];
 }
 
@@ -414,7 +409,7 @@ static dispatch_once_t onceToken;
 // If it is not possible to retrieve a valid value then it will return a -1.
 + (NSInteger)batteryLevel
 {
-#if (TARGET_OS_IOS || TARGET_OS_VISION)
+#if (TARGET_OS_IOS)
     // If battey state is "unknown" that means that battery monitoring is not enabled.
     // In that case we will not able to retrieve a battery level.
     if (UIDevice.currentDevice.batteryState == UIDeviceBatteryStateUnknown)

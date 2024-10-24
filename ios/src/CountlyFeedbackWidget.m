@@ -52,20 +52,6 @@ NSString* const kCountlyFBKeyShown          = @"shown";
 - (void)presentWithAppearBlock:(void(^ __nullable)(void))appearBlock andDismissBlock:(void(^ __nullable)(void))dismissBlock
 {
     CLY_LOG_I(@"%s %@ %@", __FUNCTION__, appearBlock, dismissBlock);
-    [self presentWithCallback:^(WidgetState widgetState) {
-        if(appearBlock && widgetState == WIDGET_APPEARED) {
-            appearBlock();
-        }
-        
-        if(dismissBlock && widgetState == WIDGET_CLOSED) {
-            dismissBlock();
-        }
-    }];
-}
-
-- (void)presentWithCallback:(WidgetCallback) widgetCallback;
-{
-    CLY_LOG_I(@"%s %@", __FUNCTION__, widgetCallback);
     if (!CountlyConsentManager.sharedInstance.consentForFeedback)
         return;
     __block CLYInternalViewController* webVC = CLYInternalViewController.new;
@@ -89,20 +75,15 @@ NSString* const kCountlyFBKeyShown          = @"shown";
     {
         [webVC dismissViewControllerAnimated:YES completion:^
         {
-            CLY_LOG_D(@"Feedback widget dismissed. Widget ID: %@, Name: %@", self.ID, self.name);
-            if (widgetCallback)
-                widgetCallback(WIDGET_CLOSED);
+            if (dismissBlock)
+                dismissBlock();
             webVC = nil;
         }];
         [self recordReservedEventForDismissing];
     };
     [webView addSubview:dismissButton];
     [dismissButton positionToTopRight];
-    [CountlyCommon.sharedInstance tryPresentingViewController:webVC withCompletion:^{
-        CLY_LOG_D(@"Feedback widget presented. Widget ID: %@, Name: %@", self.ID, self.name);
-        if(widgetCallback)
-            widgetCallback(WIDGET_APPEARED);
-    }];
+    [CountlyCommon.sharedInstance tryPresentingViewController:webVC withCompletion:appearBlock];
 }
 
 - (void)getWidgetData:(void (^)(NSDictionary * __nullable widgetData, NSError * __nullable error))completionHandler
@@ -193,58 +174,46 @@ NSString* const kCountlyFBKeyShown          = @"shown";
     }
 }
 
-- (NSURLRequest *)displayRequest {
-    // Create the base URL with endpoint and feedback type
-    NSMutableString *URL = [NSMutableString stringWithFormat:@"%@%@/%@",
-                            CountlyConnectionManager.sharedInstance.host,
-                            kCountlyEndpointFeedback,
-                            self.type];
+- (NSURLRequest *)displayRequest
+{
+    NSString* queryString = [NSString stringWithFormat:@"%@=%@&%@=%@&%@=%@&%@=%@&%@=%@&%@=%@&%@=%@",
+                             kCountlyQSKeyAppKey, CountlyConnectionManager.sharedInstance.appKey.cly_URLEscaped,
+                             kCountlyQSKeyDeviceID, CountlyDeviceInfo.sharedInstance.deviceID.cly_URLEscaped,
+                             kCountlyQSKeySDKName, CountlyCommon.sharedInstance.SDKName,
+                             kCountlyQSKeySDKVersion, CountlyCommon.sharedInstance.SDKVersion,
+                             kCountlyFBKeyAppVersion, CountlyDeviceInfo.appVersion,
+                             kCountlyFBKeyPlatform, CountlyDeviceInfo.osName,
+                             kCountlyFBKeyWidgetID, self.ID];
     
-    // Create a dictionary for query parameters
-    NSDictionary *queryParams = @{
-        kCountlyQSKeyAppKey: CountlyConnectionManager.sharedInstance.appKey.cly_URLEscaped,
-        kCountlyQSKeyDeviceID: CountlyDeviceInfo.sharedInstance.deviceID.cly_URLEscaped,
-        kCountlyQSKeySDKName: CountlyCommon.sharedInstance.SDKName,
-        kCountlyQSKeySDKVersion: CountlyCommon.sharedInstance.SDKVersion,
-        kCountlyFBKeyAppVersion: CountlyDeviceInfo.appVersion,
-        kCountlyFBKeyPlatform: CountlyDeviceInfo.osName,
-        kCountlyFBKeyWidgetID: self.ID,
-        kCountlyAppVersionKey: CountlyDeviceInfo.appVersion,
-    };
+    queryString = [queryString stringByAppendingFormat:@"&%@=%@",
+                   kCountlyAppVersionKey, CountlyDeviceInfo.appVersion];
     
-    // Create the query string
-    NSMutableArray *queryItems = [NSMutableArray array];
-    [queryParams enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
-        [queryItems addObject:[NSString stringWithFormat:@"%@=%@", key, obj]];
-    }];
-    
-    NSString *queryString = [queryItems componentsJoinedByString:@"&"];
-    
-    // Append checksum to the query string
     queryString = [CountlyConnectionManager.sharedInstance appendChecksum:queryString];
     
-    // Add the query string to the URL
+    NSMutableString* URL = CountlyConnectionManager.sharedInstance.host.mutableCopy;
+    [URL appendString:kCountlyEndpointFeedback];
+    NSString* feedbackTypeEndpoint = [@"/" stringByAppendingString:self.type];
+    [URL appendString:feedbackTypeEndpoint];
     [URL appendFormat:@"?%@", queryString];
     
-    // Create custom parameters
+    // customParams is an NSDictionary containing the custom key-value pairs
     NSDictionary *customParams = @{@"tc": @"1"};
     
-    // Create JSON data from custom parameters
-    NSError *error;
-    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:customParams options:0 error:&error];
+    // Build custom parameter string
+    NSMutableString *customString = [NSMutableString stringWithString:@"&custom="];
+    [customString appendString:@"{"];
+    [customParams enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
+        [customString appendFormat:@"\"%@\":%@,", key, obj];
+    }];
+    [customString deleteCharactersInRange:NSMakeRange(customString.length - 1, 1)]; // Remove the last comma
+    [customString appendString:@"}"];
     
-    if (!jsonData) {
-        NSLog(@"Failed to serialize JSON: %@", error);
-    } else {
-        NSString *customString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
-        // Append the custom parameter to the URL
-        [URL appendFormat:@"&custom=%@", customString.cly_URLEscaped];
-    }
+    // Append custom parameter
+    [URL appendString:customString];
     
-    // Create and return the NSURLRequest
-    return [NSURLRequest requestWithURL:[NSURL URLWithString:URL]];
+    NSURLRequest* request = [NSURLRequest requestWithURL:[NSURL URLWithString:URL]];
+    return request;
 }
-
 
 - (void)recordReservedEventForDismissing
 {

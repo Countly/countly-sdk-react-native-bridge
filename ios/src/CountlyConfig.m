@@ -17,7 +17,7 @@
 @implementation CountlyConfig
 
 //NOTE: Countly features
-#if (TARGET_OS_IOS || TARGET_OS_VISION)
+#if (TARGET_OS_IOS)
 CLYFeature const CLYPushNotifications   = @"CLYPushNotifications";
 CLYFeature const CLYCrashReporting      = @"CLYCrashReporting";
 // CLYAutoViewTracking is deprecated, Use 'config.enableAutomaticViewTracking' instead
