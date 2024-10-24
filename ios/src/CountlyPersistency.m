@@ -266,31 +266,42 @@ static dispatch_once_t onceToken;
 {
     @synchronized (self.recordedEvents)
     {
+        if([Countly.user hasUnsyncedChanges])
+        {
+            [Countly.user save];
+        }
+        
         [self.recordedEvents addObject:event];
-
+        
         if (self.recordedEvents.count >= self.eventSendThreshold)
+        {
             [CountlyConnectionManager.sharedInstance sendEvents];
+        }
     }
 }
 
 - (NSString *)serializedRecordedEvents
 {
-    NSMutableArray* tempArray = NSMutableArray.new;
-
+    NSMutableArray *tempArray = NSMutableArray.new;
+    
     @synchronized (self.recordedEvents)
     {
         if (self.recordedEvents.count == 0)
             return nil;
-
-        for (CountlyEvent* event in self.recordedEvents.copy)
+        
+        NSArray *eventsCopy = self.recordedEvents.copy;
+        
+        for (CountlyEvent *event in eventsCopy)
         {
             [tempArray addObject:[event dictionaryRepresentation]];
-            [self.recordedEvents removeObject:event];
         }
+        
+        [self.recordedEvents removeObjectsInArray:eventsCopy];
     }
-
+    
     return [tempArray cly_JSONify];
 }
+
 
 - (void)flushEvents
 {
@@ -303,7 +314,7 @@ static dispatch_once_t onceToken;
 - (void)resetInstance:(BOOL) clearStorage 
 {
     CLY_LOG_I(@"%s Clear Storage: %d", __FUNCTION__, clearStorage);
-    [CountlyConnectionManager.sharedInstance sendEvents];
+    [CountlyConnectionManager.sharedInstance sendEventsWithSaveIfNeeded];
     [self flushEvents];
     [self clearAllTimedEvents];
     [self flushQueue];
