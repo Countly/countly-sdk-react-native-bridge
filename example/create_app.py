@@ -19,7 +19,9 @@ def setup_react_native_app():
     print("Setting up React Native app...")
     
     # Set up React Native app
-    os.system("npx @react-native-community/cli@latest init AwesomeProject")
+    # Latest version of the react-native can experience issues because of unstability
+    # Because of that it's preferred to use a stabile version of react-native here
+    os.system("npx @react-native-community/cli@latest init AwesomeProject --version 0.74.0")
 
     print("Copying contents of CountlyRNExample to AwesomeProject...")
 
