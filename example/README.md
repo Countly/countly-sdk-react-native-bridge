@@ -26,7 +26,9 @@ For more information you can check [here](https://reactnative.dev/docs/getting-s
 If you want to set up the app manually instead, then you should run:
 
 ```bash
-npx @react-native-community/cli@latest init AwesomeProject
+npx @react-native-community/cli@latest init AwesomeProject --version 0.74.0
+# Version here may vary but make sure to use a stabile version of the react-native
+# Latest versions can experience issues because of unstability
 ```
 
 Then copy the contents of CountlyRNExample into the AwesomeProject and let it replace the App.tsx there.
