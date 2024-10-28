@@ -19,7 +19,7 @@ def setup_react_native_app():
     print("Setting up React Native app...")
     
     # Set up React Native app
-    os.system("npx react-native@latest init AwesomeProject")
+    os.system("npx @react-native-community/cli@latest init AwesomeProject")
 
     print("Copying contents of CountlyRNExample to AwesomeProject...")
 
