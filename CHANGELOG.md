@@ -1,3 +1,8 @@
+## XX.X.X
+* Added Content feature methods:
+  * enterContentZone, to start Content checks (Experimental!)
+  * exitContentZone, to stop Content checks (Experimental!)
+
 ## 24.4.1
 * Added support for Feedback Widget terms and conditions
 * Added six new configuration options under the 'sdkInternalLimits' interface of 'CountlyConfig':
