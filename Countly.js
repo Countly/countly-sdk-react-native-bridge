@@ -32,6 +32,8 @@ let _isCrashReportingEnabled = false;
 Countly.userData = {}; // userData interface
 Countly.userDataBulk = {}; // userDataBulk interface
 
+Countly.contents = {}; // content interface
+
 let _isPushInitialized = false;
 
 /*
@@ -2176,6 +2178,34 @@ Countly.setCustomMetrics = async function (customMetric) {
     if (args.length != 0) {
         CountlyReactNative.setCustomMetrics(args);
     }
+};
+
+/**
+ * Opt in user for the content fetching and updates
+ * 
+ * NOTE: This is an EXPERIMENTAL feature, and it can have breaking changes
+ */
+Countly.contents.enterContentZone = function() {
+    if (!_state.isInitialized) {
+        const message = "'init' must be called before 'enterContentZone'";
+        L.e(`enterContentZone, ${message}`);
+        return message;
+    }
+    CountlyReactNative.enterContentZone();
+};
+
+/**
+ * Opt out user from the content fetching and updates
+ * 
+ * NOTE: This is an EXPERIMENTAL feature, and it can have breaking changes
+ */
+Countly.contents.exitContentZone = function() {
+    if (!_state.isInitialized) {
+        const message = "'init' must be called before 'exitContentZone'";
+        L.e(`exitContentZone, ${message}`);
+        return message;
+    }
+    CountlyReactNative.exitContentZone();
 };
 
 export default Countly;

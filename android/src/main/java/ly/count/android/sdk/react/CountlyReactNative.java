@@ -125,7 +125,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         Countly.CountlyFeatureNames.starRating,
         Countly.CountlyFeatureNames.apm,
         Countly.CountlyFeatureNames.feedback,
-        Countly.CountlyFeatureNames.remoteConfig
+        Countly.CountlyFeatureNames.remoteConfig,
+        Countly.CountlyFeatureNames.content
     ));
 
     public CountlyReactNative(ReactApplicationContext reactContext) {
@@ -1597,6 +1598,16 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     @ReactMethod
     public void appLoadingFinished() {
         Countly.sharedInstance().apm().setAppIsLoaded();
+    }
+
+    @ReactMethod
+    public void enterContentZone() {
+        Countly.sharedInstance().contents().enterContentZone();
+    }
+
+    @ReactMethod
+    public void exitContentZone() {
+        Countly.sharedInstance().contents().exitContentZone();
     }
 
     @ReactMethod

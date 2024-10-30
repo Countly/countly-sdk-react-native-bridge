@@ -177,6 +177,21 @@ declare module "countly-sdk-react-native-bridge" {
     }
 
     /**
+     * Countly Content Module
+     */
+    namespace contents {
+      /**
+       * Opt in user for the content fetching and updates
+       */
+      export function enterContentZone(): void;
+
+      /**
+       * Opt out user from the content fetching and updates
+       */
+      export function exitContentZone(): void;
+    }
+
+    /**
      * Initialize Countly
      *
      * @deprecated in 23.02.0 : use 'initWithConfig' instead of 'init'.
