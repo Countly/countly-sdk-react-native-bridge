@@ -53,6 +53,9 @@ typedef void (^Result)(id _Nullable result);
 - (void)appLoadingFinished;
 - (void)disablePushNotifications;
 
+- (void)enterContentZone;
+- (void)exitContentZone;
+
 #ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
 - (void)notificationCallback:(NSString *_Nullable)notificationJson;
 + (void)startObservingNotifications;

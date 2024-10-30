@@ -179,7 +179,7 @@ declare module "countly-sdk-react-native-bridge" {
     /**
      * Countly Content Module
      */
-    namespace contents {
+    namespace content {
       /**
        * Opt in user for the content fetching and updates
        */

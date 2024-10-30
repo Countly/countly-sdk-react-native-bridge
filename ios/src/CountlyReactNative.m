@@ -1285,6 +1285,18 @@ RCT_EXPORT_METHOD(setCustomMetrics : (NSArray *)arguments) {
     });
 }
 
+RCT_EXPORT_METHOD(enterContentZone) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      [Countly.sharedInstance.content enterContentZone];
+    });
+}
+
+RCT_EXPORT_METHOD(exitContentZone) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      [Countly.sharedInstance.content exitContentZone];
+    });
+}
+
 - (void)addCountlyFeature:(CLYFeature)feature {
     if (countlyFeatures == nil) {
         countlyFeatures = [[NSMutableArray alloc] init];

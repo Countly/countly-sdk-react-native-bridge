@@ -32,7 +32,7 @@ let _isCrashReportingEnabled = false;
 Countly.userData = {}; // userData interface
 Countly.userDataBulk = {}; // userDataBulk interface
 
-Countly.contents = {}; // content interface
+Countly.content = {}; // content interface
 
 let _isPushInitialized = false;
 
@@ -2185,7 +2185,7 @@ Countly.setCustomMetrics = async function (customMetric) {
  * 
  * NOTE: This is an EXPERIMENTAL feature, and it can have breaking changes
  */
-Countly.contents.enterContentZone = function() {
+Countly.content.enterContentZone = function() {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'enterContentZone'";
         L.e(`enterContentZone, ${message}`);
@@ -2199,7 +2199,7 @@ Countly.contents.enterContentZone = function() {
  * 
  * NOTE: This is an EXPERIMENTAL feature, and it can have breaking changes
  */
-Countly.contents.exitContentZone = function() {
+Countly.content.exitContentZone = function() {
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'exitContentZone'";
         L.e(`exitContentZone, ${message}`);
