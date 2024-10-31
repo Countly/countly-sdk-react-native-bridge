@@ -10,6 +10,7 @@ import CountlyConfig from "./CountlyConfig.js";
 import CountlyState from "./CountlyState.js";
 import Feedback from "./Feedback.js";
 import Event from "./Event.js";
+import DeviceId from "./DeviceId.js";
 import * as L from "./Logger.js";
 import * as Utils from "./Utils.js";
 import * as Validate from "./Validators.js";
@@ -26,6 +27,7 @@ CountlyState.eventEmitter = eventEmitter;
 
 Countly.feedback = new Feedback(CountlyState);
 Countly.events = new Event(CountlyState);
+Countly.deviceId = new DeviceId(CountlyState);
 
 let _isCrashReportingEnabled = false;
 
@@ -458,7 +460,8 @@ Countly.disableLocation = function () {
 };
 
 /**
- *
+ * @deprecated use 'Countly.deviceId.getCurrentDeviceId' instead of 'Countly.getCurrentDeviceId'
+ * 
  * Get currently used device Id.
  * Should be called after Countly init
  *
@@ -476,6 +479,8 @@ Countly.getCurrentDeviceId = async function () {
 };
 
 /**
+ * @deprecated use 'Countly.deviceId.getDeviceIDType' instead of 'Countly.getDeviceIDType'
+ * 
  * Get currently used device Id type.
  * Should be called after Countly init
  *
@@ -492,6 +497,8 @@ Countly.getDeviceIDType = async function () {
 };
 
 /**
+ * @deprecated use 'Countly.deviceId.changeDeviceId' instead of 'Countly.changeDeviceId'
+ * 
  * Change the current device id
  *
  * @param {string} newDeviceID id new device id

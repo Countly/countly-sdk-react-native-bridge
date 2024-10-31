@@ -7,6 +7,10 @@
   * enterContentZone, to start Content checks (Experimental!)
   * exitContentZone, to stop Content checks (Experimental!)
 * Mitigated an issue where a session could have started while the app was in the background when the device ID was changed (non-merge).
+* Deprecated following SDK calls:
+  * Countly.getCurrentDeviceId (replaced with: Countly.deviceId.getCurrentDeviceId)
+  * Countly.getDeviceIDType (replaced with: Countly.deviceId.getDeviceIDType)
+  * Countly.changeDeviceId (replaced with: Countly.deviceId.changeDeviceId)
 
 * Android Specific Changes:
   * ! Minor breaking change ! Unsupported types for user properties will now be omitted, they won't be converted to strings.

@@ -402,7 +402,8 @@ declare module "countly-sdk-react-native-bridge" {
     export function disableLocation(): string | void;
 
     /**
-     *
+     * @deprecated use 'Countly.deviceId.getCurrentDeviceId' instead of 'Countly.getCurrentDeviceId'
+     * 
      * Get currently used device Id.
      * Should be called after Countly init
      *
@@ -411,6 +412,8 @@ declare module "countly-sdk-react-native-bridge" {
     export function getCurrentDeviceId(): Promise<string> | string;
 
     /**
+     * @deprecated use 'Countly.deviceId.getDeviceIDType' instead of 'Countly.getDeviceIDType'
+     * 
      * Get currently used device Id type.
      * Should be called after Countly init
      *
@@ -419,6 +422,8 @@ declare module "countly-sdk-react-native-bridge" {
     export function getDeviceIDType(): Promise<DeviceIdType> | null;
 
     /**
+     * @deprecated use 'Countly.deviceId.changeDeviceId' instead of 'Countly.changeDeviceId' 
+     * 
      * Change the current device id
      *
      * @param {string} newDeviceID id new device id
@@ -426,6 +431,36 @@ declare module "countly-sdk-react-native-bridge" {
      * @return {string | void} error message or void
      */
     export function changeDeviceId(newDeviceID: string, onServer: boolean): string | void;
+
+    namespace deviceId {
+      /**
+       * 
+       * Get currently used device Id.
+       * Should be called after Countly init
+       *
+       * @return {string} device id or error message
+       */
+      export function getCurrentDeviceId(): Promise<string> | string;
+
+      /**
+       * 
+       * Get currently used device Id type.
+       * Should be called after Countly init
+       *
+       * @return {DeviceIdType | null} deviceIdType or null
+       */
+      export function getDeviceIDType(): Promise<DeviceIdType> | null;
+
+      /**
+       * 
+       * Change the current device id
+       *
+       * @param {string} newDeviceID id new device id
+       * @param {boolean} onServer merge device id
+       * @return {string | void} error message or void
+       */
+      export function changeDeviceId(newDeviceID: string, onServer: boolean): string | void;
+    }
 
     /**
      *
