@@ -460,6 +460,14 @@ declare module "countly-sdk-react-native-bridge" {
        * @return {string | void} error message or void
        */
       export function changeDeviceId(newDeviceID: string, onServer: boolean): string | void;
+
+      /**
+       * Sets device ID according to the device ID Type.
+       * If previous ID was Developer Supplied sets it without merge, otherwise with merge.
+       *
+       * @param {string} newDeviceID device id to set
+       */
+      export function setId(newDeviceID: string): void;
     }
 
     /**

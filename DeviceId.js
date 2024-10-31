@@ -70,6 +70,25 @@ class DeviceId {
         newDeviceID = newDeviceID.toString();
         this.#state.CountlyReactNative.changeDeviceId([newDeviceID, onServer]);
     };
+
+    /**
+     * Sets device ID according to the device ID Type.
+     * If previous ID was Developer Supplied sets it without merge, otherwise with merge.
+     *
+     * @param {string} newDeviceID device id to set
+     */
+    setId = function(newDeviceID) {
+        if (!this.#state.isInitialized) {
+            const msg = "'init' must be called before 'setId'";
+            L.e(`setId, ${msg}`);
+            return msg;
+        }
+
+        L.d(`setId, Setting device id as: [${newDeviceID}]`);
+
+        newDeviceID = newDeviceID.toString();
+        this.#state.CountlyReactNative.setId([newDeviceID]);
+    };
 }
 
 export default DeviceId;
