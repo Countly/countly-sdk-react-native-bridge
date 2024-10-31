@@ -11,9 +11,6 @@
 * Android Specific Changes:
   * ! Minor breaking change ! Unsupported types for user properties will now be omitted, they won't be converted to strings.
   * Disabled caching for webviews.
-  * Added support for array, List and JSONArray to all user given segmentations. They will support only mutable and ummutable versions of the primitive types. Which are:
-    * String, Integer, int, Boolean, bool, Float, float, Double, double, Long, long
-    * Keep in mind that float array will be converted to the double array by the JSONArray
   * Mitigated an issue in the upload plugin that prevented the upload of a symbol file
   * Resolved a problem where revoked consents were sent after changes without merging.
   * Fixed a bug that caused the device ID to be incorrectly set after changes with merging.
@@ -23,9 +20,7 @@
   * Added visionOS build support
   * Mitigated an issue with the feedback widget URL encoding on iOS 16 and earlier, which prevented the widget from displaying
   * Mitigated an issue with content fetch URL encoding on iOS 16 and earlier, which caused the request to fail
-  * Improved crash filtering capabilities to include modifications on the crash report
   * Mitigated an issue where the terms and conditions URL (`tc` key) was sent without double quotes
-  * Enhanced segmentation values to include additional supported data types beyond `NSString`
   * Orientation info is now also sent during initialization
   * Mitigated an issue where consent information was not sent when no consent was given during initialization
   * Mitigated an issue where a session did not end when session consent was removed
