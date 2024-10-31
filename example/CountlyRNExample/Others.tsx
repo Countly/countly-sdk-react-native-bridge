@@ -51,11 +51,11 @@ const recordIndirectAttribution = () => {
 };
 
 const enterContentZone = () => {
-    Countly.contents.enterContentZone();
+    Countly.content.enterContentZone();
 }
 
 const exitContentZone = () => {
-    Countly.contents.exitContentZone();
+    Countly.content.exitContentZone();
 }
 
 function OthersScreen({ navigation }) {
