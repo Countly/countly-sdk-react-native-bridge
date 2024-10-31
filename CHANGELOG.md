@@ -1,3 +1,34 @@
+## XX.X.X
+* ! Minor breaking change ! User properties will now be automatically saved under the following conditions:
+  * When an event is recorded
+  * During an internal timer tick
+  * Upon flushing the event queue
+* Added Content feature methods:
+  * enterContentZone, to start Content checks (Experimental!)
+  * exitContentZone, to stop Content checks (Experimental!)
+* Mitigated an issue where a session could have started while the app was in the background when the device ID was changed (non-merge).
+
+* Android Specific Changes:
+  * ! Minor breaking change ! Unsupported types for user properties will now be omitted, they won't be converted to strings.
+  * Disabled caching for webviews.
+  * Mitigated an issue in the upload plugin that prevented the upload of a symbol file
+  * Resolved a problem where revoked consents were sent after changes without merging.
+  * Fixed a bug that caused the device ID to be incorrectly set after changes with merging.
+  * Mitigated an issue where on consent revoke, remote config values were cleared, not anymore.
+
+* iOS Specific Changes:
+  * Added visionOS build support
+  * Mitigated an issue with the feedback widget URL encoding on iOS 16 and earlier, which prevented the widget from displaying
+  * Mitigated an issue with content fetch URL encoding on iOS 16 and earlier, which caused the request to fail
+  * Mitigated an issue where the terms and conditions URL (`tc` key) was sent without double quotes
+  * Orientation info is now also sent during initialization
+  * Mitigated an issue where consent information was not sent when no consent was given during initialization
+  * Mitigated an issue where a session did not end when session consent was removed
+  * Updated the SDK to ensure compatibility with the latest server response models
+
+* Updated the underlying Android SDK version to 24.7.4
+* Updated the underlying iOS SDK version to 24.7.4
+
 ## 24.4.1
 * Added support for Feedback Widget terms and conditions
 * Added six new configuration options under the 'sdkInternalLimits' interface of 'CountlyConfig':
