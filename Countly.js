@@ -497,7 +497,7 @@ Countly.getDeviceIDType = async function () {
 };
 
 /**
- * @deprecated use 'Countly.deviceId.changeDeviceId' instead of 'Countly.changeDeviceId'
+ * @deprecated
  * 
  * Change the current device id
  *

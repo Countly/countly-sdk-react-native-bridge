@@ -18,11 +18,10 @@ class DeviceId {
      */
     getID = async function () {
         if (!this.#state.isInitialized) {
-            const message = "'init' must be called before 'getCurrentDeviceId'";
-            L.e(`getCurrentDeviceId, ${message}`);
-            return message;
+            L.e("getID, 'init' must be called before 'getID'");
+            return null;
         }
-        L.d("getCurrentDeviceId, Getting current device id");
+        L.d("getID, Getting current device id");
         const result = await this.#state.CountlyReactNative.getCurrentDeviceId();
         return result;
     };
@@ -35,40 +34,12 @@ class DeviceId {
      */
     getType = async function () {
         if (!this.#state.isInitialized) {
-            L.e("getDeviceIDType, 'init' must be called before 'getDeviceIDType'");
+            L.e("getType, 'init' must be called before 'getType'");
             return null;
         }
-        L.d("getDeviceIDType, Getting device id type");
+        L.d("getType, Getting device id type");
         const result = await this.#state.CountlyReactNative.getDeviceIDType();
         return Utils.intToDeviceIDType(result);
-    };
-    
-    /**
-     * Change the current device id
-     *
-     * @param {string} newDeviceID id new device id
-     * @param {boolean} onServer merge device id
-     * @return {string | void} error message or void
-     */
-    changeDeviceId = function (newDeviceID, onServer) {
-        if (!this.#state.isInitialized) {
-            const msg = "'init' must be called before 'changeDeviceId'";
-            L.e(`changeDeviceId, ${msg}`);
-            return msg;
-        }
-        const message = Validate.String(newDeviceID, "newDeviceID", "changeDeviceId");
-        if (message) {
-            return message;
-        }
-
-        L.d(`changeDeviceId, Changing to new device id: [${newDeviceID}], with merge: [${onServer}]`);
-        if (!onServer) {
-            onServer = "0";
-        } else {
-            onServer = "1";
-        }
-        newDeviceID = newDeviceID.toString();
-        this.#state.CountlyReactNative.changeDeviceId([newDeviceID, onServer]);
     };
 
     /**
