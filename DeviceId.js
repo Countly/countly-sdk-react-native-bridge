@@ -16,7 +16,7 @@ class DeviceId {
      *
      * @return {string} device id or error message
      */
-    getCurrentDeviceId = async function () {
+    getID = async function () {
         if (!this.#state.isInitialized) {
             const message = "'init' must be called before 'getCurrentDeviceId'";
             L.e(`getCurrentDeviceId, ${message}`);
@@ -33,7 +33,7 @@ class DeviceId {
      *
      * @return {DeviceIdType | null} deviceIdType or null
      */
-    getDeviceIDType = async function () {
+    getType = async function () {
         if (!this.#state.isInitialized) {
             L.e("getDeviceIDType, 'init' must be called before 'getDeviceIDType'");
             return null;
