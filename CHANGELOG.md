@@ -10,7 +10,7 @@
 * Deprecated following SDK calls:
   * Countly.getCurrentDeviceId (replaced with: Countly.deviceId.getCurrentDeviceId)
   * Countly.getDeviceIDType (replaced with: Countly.deviceId.getDeviceIDType)
-  * Countly.changeDeviceId (replaced with: Countly.deviceId.changeDeviceId)
+  * Countly.changeDeviceId
 
 * Android Specific Changes:
   * ! Minor breaking change ! Unsupported types for user properties will now be omitted, they won't be converted to strings.

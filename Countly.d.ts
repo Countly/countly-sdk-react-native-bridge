@@ -422,7 +422,7 @@ declare module "countly-sdk-react-native-bridge" {
     export function getDeviceIDType(): Promise<DeviceIdType> | null;
 
     /**
-     * @deprecated use 'Countly.deviceId.changeDeviceId' instead of 'Countly.changeDeviceId' 
+     * @deprecated
      * 
      * Change the current device id
      *
@@ -450,16 +450,6 @@ declare module "countly-sdk-react-native-bridge" {
        * @return {DeviceIdType | null} deviceIdType or null
        */
       export function getType(): Promise<DeviceIdType> | null;
-
-      /**
-       * 
-       * Change the current device id
-       *
-       * @param {string} newDeviceID id new device id
-       * @param {boolean} onServer merge device id
-       * @return {string | void} error message or void
-       */
-      export function changeDeviceId(newDeviceID: string, onServer: boolean): string | void;
     }
 
     /**
