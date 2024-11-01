@@ -14,7 +14,7 @@ const changeDeviceId = () => {
 };
 
 const setDeviceId = () => {
-    Countly.deviceId.setId("TestingDeviceIDValue");
+    Countly.deviceId.setID("TestingDeviceIDValue");
 };
 
 function DeviceIDScreen({ navigation }) {

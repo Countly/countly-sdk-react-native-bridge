@@ -1,5 +1,4 @@
 import * as L from "./Logger.js";
-import * as Validate from "./Validators.js";
 import * as Utils from "./Utils.js";
 
 class DeviceId {
@@ -48,17 +47,14 @@ class DeviceId {
      *
      * @param {string} newDeviceID device id to set
      */
-    setId = function(newDeviceID) {
+    setID = function(newDeviceID) {
         if (!this.#state.isInitialized) {
-            const msg = "'init' must be called before 'setId'";
-            L.e(`setId, ${msg}`);
-            return msg;
+            L.e("setID, 'init' must be called before 'setID'");
+            return;
         }
-
-        L.d(`setId, Setting device id as: [${newDeviceID}]`);
-
+        L.d(`setID, Setting device id as: [${newDeviceID}]`);
         newDeviceID = newDeviceID.toString();
-        this.#state.CountlyReactNative.setId([newDeviceID]);
+        this.#state.CountlyReactNative.setID(newDeviceID);
     };
 }
 

@@ -1611,7 +1611,7 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     }
 
     @ReactMethod
-    public void setId(String newDeviceID) {
+    public void setID(String newDeviceID) {
         Countly.sharedInstance().deviceId().setID(newDeviceID);
     }
 
