@@ -460,7 +460,7 @@ Countly.disableLocation = function () {
 };
 
 /**
- * @deprecated use 'Countly.deviceId.getCurrentDeviceId' instead of 'Countly.getCurrentDeviceId'
+ * @deprecated use 'Countly.deviceId.getID' instead of 'Countly.getCurrentDeviceId'
  * 
  * Get currently used device Id.
  * Should be called after Countly init
@@ -479,7 +479,7 @@ Countly.getCurrentDeviceId = async function () {
 };
 
 /**
- * @deprecated use 'Countly.deviceId.getDeviceIDType' instead of 'Countly.getDeviceIDType'
+ * @deprecated use 'Countly.deviceId.getType' instead of 'Countly.getDeviceIDType'
  * 
  * Get currently used device Id type.
  * Should be called after Countly init

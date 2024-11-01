@@ -402,7 +402,7 @@ declare module "countly-sdk-react-native-bridge" {
     export function disableLocation(): string | void;
 
     /**
-     * @deprecated use 'Countly.deviceId.getCurrentDeviceId' instead of 'Countly.getCurrentDeviceId'
+     * @deprecated use 'Countly.deviceId.getID' instead of 'Countly.getCurrentDeviceId'
      * 
      * Get currently used device Id.
      * Should be called after Countly init
@@ -412,7 +412,7 @@ declare module "countly-sdk-react-native-bridge" {
     export function getCurrentDeviceId(): Promise<string> | string;
 
     /**
-     * @deprecated use 'Countly.deviceId.getDeviceIDType' instead of 'Countly.getDeviceIDType'
+     * @deprecated use 'Countly.deviceId.getType' instead of 'Countly.getDeviceIDType'
      * 
      * Get currently used device Id type.
      * Should be called after Countly init
@@ -440,7 +440,7 @@ declare module "countly-sdk-react-native-bridge" {
        *
        * @return {string} device id or error message
        */
-      export function getCurrentDeviceId(): Promise<string> | string;
+      export function getID(): Promise<string> | string;
 
       /**
        * 
@@ -449,7 +449,7 @@ declare module "countly-sdk-react-native-bridge" {
        *
        * @return {DeviceIdType | null} deviceIdType or null
        */
-      export function getDeviceIDType(): Promise<DeviceIdType> | null;
+      export function getType(): Promise<DeviceIdType> | null;
 
       /**
        * 
