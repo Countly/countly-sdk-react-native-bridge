@@ -12,7 +12,6 @@
   * `Countly.getCurrentDeviceId` (replaced with: `Countly.deviceId.getID`)
   * `Countly.getDeviceIDType` (replaced with: `Countly.deviceId.getType`)
   * `Countly.changeDeviceId` (replaced with: `Countly.deviceId.setID`)
-
 * Android Specific Changes:
   * ! Minor breaking change ! Unsupported types for user properties will now be omitted, they won't be converted to strings.
   * Disabled caching for webviews.
