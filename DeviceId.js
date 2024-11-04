@@ -10,33 +10,33 @@ class DeviceId {
 
     /**
      *
-     * Get currently used device Id.
+     * Get currently used device ID.
      * Should be called after Countly init
      *
-     * @returns {string | null} device id or null
+     * @returns {string | null} device ID or null
      */
     getID = async function () {
         if (!this.#state.isInitialized) {
-            L.e("getID, 'init' must be called before 'getID'");
+            L.w("getID, 'init' must be called before 'getID'");
             return null;
         }
-        L.d("getID, Getting current device id");
+        L.d("getID, Getting current device ID");
         const result = await this.#state.CountlyReactNative.getCurrentDeviceId();
         return result;
     };
 
     /**
-     * Get currently used device Id type.
+     * Get currently used device ID type.
      * Should be called after Countly init
      *
      * @return {DeviceIdType | null} deviceIdType or null
      */
     getType = async function () {
         if (!this.#state.isInitialized) {
-            L.e("getType, 'init' must be called before 'getType'");
+            L.w("getType, 'init' must be called before 'getType'");
             return null;
         }
-        L.d("getType, Getting device id type");
+        L.d("getType, Getting device ID type");
         const result = await this.#state.CountlyReactNative.getDeviceIDType();
         return Utils.intToDeviceIDType(result);
     };
@@ -45,16 +45,16 @@ class DeviceId {
      * Sets device ID according to the device ID Type.
      * If previous ID was Developer Supplied sets it without merge, otherwise with merge.
      *
-     * @param {string} newDeviceID device id to set
+     * @param {string} newDeviceID - device ID to set
      */
-    setID = function(newDeviceID) {
+    setID = function (newDeviceID) {
         if (!this.#state.isInitialized) {
-            L.e("setID, 'init' must be called before 'setID'");
+            L.w("setID, 'init' must be called before 'setID'");
             return;
         }
         // Check if newDeviceID is not a string
-        if (typeof newDeviceID !== 'string') {
-            L.w("setID, provided device ID is not a string.");
+        if (!newDeviceID || typeof newDeviceID !== "string" || newDeviceID.length === 0) {
+            L.w("setID, provided device ID is not a valid string:[" + newDeviceID + "]");
             return;
         }
         L.d(`setID, Setting device id as: [${newDeviceID}]`);
