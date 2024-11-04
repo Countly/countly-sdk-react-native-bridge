@@ -435,16 +435,16 @@ declare module "countly-sdk-react-native-bridge" {
     namespace deviceId {
       /**
        * 
-       * Get currently used device Id.
+       * Get currently used device ID.
        * Should be called after Countly init
        *
-       * @returns {string | null} device id or null
+       * @returns {string | null} device ID or null
        */
       export function getID(): Promise<string> | string;
 
       /**
        * 
-       * Get currently used device Id type.
+       * Get currently used device ID type.
        * Should be called after Countly init
        *
        * @return {DeviceIdType | null} deviceIdType or null
@@ -455,7 +455,7 @@ declare module "countly-sdk-react-native-bridge" {
        * Sets device ID according to the device ID Type.
        * If previous ID was Developer Supplied sets it without merge, otherwise with merge.
        *
-       * @param {string} newDeviceID device id to set
+       * @param {string} newDeviceID device ID to set
        */
       export function setID(newDeviceID: string): void;
     }

@@ -497,9 +497,9 @@ Countly.getDeviceIDType = async function () {
 };
 
 /**
- * @deprecated
+ * @deprecated use 'Countly.deviceId.setID' instead of 'Countly.changeDeviceId' for setting device ID.
  * 
- * Change the current device id
+ * Change the current device ID
  *
  * @param {string} newDeviceID id new device id
  * @param {boolean} onServer merge device id
