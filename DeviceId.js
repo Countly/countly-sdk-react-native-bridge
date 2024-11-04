@@ -52,8 +52,12 @@ class DeviceId {
             L.e("setID, 'init' must be called before 'setID'");
             return;
         }
+        // Check if newDeviceID is not a string
+        if (typeof newDeviceID !== 'string') {
+            L.w("setID, provided device ID is not a string.");
+            return;
+        }
         L.d(`setID, Setting device id as: [${newDeviceID}]`);
-        newDeviceID = newDeviceID.toString();
         this.#state.CountlyReactNative.setID(newDeviceID);
     };
 }
