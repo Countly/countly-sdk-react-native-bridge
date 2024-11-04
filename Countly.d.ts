@@ -438,7 +438,7 @@ declare module "countly-sdk-react-native-bridge" {
        * Get currently used device Id.
        * Should be called after Countly init
        *
-       * @return {string} device id or null
+       * @returns {string | null} device id or null
        */
       export function getID(): Promise<string> | string;
 

@@ -14,7 +14,7 @@ class DeviceId {
      * Get currently used device Id.
      * Should be called after Countly init
      *
-     * @return {string} device id or null
+     * @returns {string | null} device id or null
      */
     getID = async function () {
         if (!this.#state.isInitialized) {
