@@ -257,6 +257,12 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
     }
 }
 
+RCT_EXPORT_METHOD(setID : (NSString *)newDeviceID) { 
+    dispatch_async(dispatch_get_main_queue(), ^{ 
+        [Countly.sharedInstance setID:newDeviceID];
+    });
+}
+
 RCT_EXPORT_METHOD(recordEvent : (NSDictionary *)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^{
         NSString *eventName = [arguments objectForKey:@"n"];

@@ -402,7 +402,8 @@ declare module "countly-sdk-react-native-bridge" {
     export function disableLocation(): string | void;
 
     /**
-     *
+     * @deprecated use 'Countly.deviceId.getID' instead of 'Countly.getCurrentDeviceId'
+     * 
      * Get currently used device Id.
      * Should be called after Countly init
      *
@@ -411,6 +412,8 @@ declare module "countly-sdk-react-native-bridge" {
     export function getCurrentDeviceId(): Promise<string> | string;
 
     /**
+     * @deprecated use 'Countly.deviceId.getType' instead of 'Countly.getDeviceIDType'
+     * 
      * Get currently used device Id type.
      * Should be called after Countly init
      *
@@ -419,6 +422,8 @@ declare module "countly-sdk-react-native-bridge" {
     export function getDeviceIDType(): Promise<DeviceIdType> | null;
 
     /**
+     * @deprecated use 'Countly.deviceId.setID' instead of 'Countly.changeDeviceId'
+     * 
      * Change the current device id
      *
      * @param {string} newDeviceID id new device id
@@ -426,6 +431,34 @@ declare module "countly-sdk-react-native-bridge" {
      * @return {string | void} error message or void
      */
     export function changeDeviceId(newDeviceID: string, onServer: boolean): string | void;
+
+    namespace deviceId {
+      /**
+       * 
+       * Get currently used device ID.
+       * Should be called after Countly init
+       *
+       * @returns {string | null} device ID or null
+       */
+      export function getID(): Promise<string> | string;
+
+      /**
+       * 
+       * Get currently used device ID type.
+       * Should be called after Countly init
+       *
+       * @return {DeviceIdType | null} deviceIdType or null
+       */
+      export function getType(): Promise<DeviceIdType> | null;
+
+      /**
+       * Sets device ID according to the device ID Type.
+       * If previous ID was Developer Supplied sets it without merge, otherwise with merge.
+       *
+       * @param {string} newDeviceID device ID to set
+       */
+      export function setID(newDeviceID: string): void;
+    }
 
     /**
      *
