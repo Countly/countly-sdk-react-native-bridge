@@ -56,6 +56,8 @@ typedef void (^Result)(id _Nullable result);
 - (void)enterContentZone;
 - (void)exitContentZone;
 
+- (void)setID;
+
 #ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
 - (void)notificationCallback:(NSString *_Nullable)notificationJson;
 + (void)startObservingNotifications;
