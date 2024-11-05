@@ -580,17 +580,113 @@ declare module "countly-sdk-react-native-bridge" {
     export function setUserData(userData: CountlyUserData): string | Promise<void>;
 
     namespace userProfile {
+      /**
+       * 
+       * Set custom key and value pair for the current user
+       * 
+       * @param {string} keyName - user property key
+       * @param {object} keyValue - user property value
+       * @returns {void}
+       */
       export function setProperty(keyName: string, keyValue: any): Promise<void>;
+      
+      /**
+       * 
+       * Set predefined and/or custom key and value pairs for the current user
+       * 
+       * @param {object} userData - custom key value pairs
+       * @returns {void}
+       */
       export function setProperties(userData: CountlyUserData): Promise<void>;
+      
+      /**
+       * 
+       * Increment custom user data by 1
+       * 
+       * @param {string} keyName - user property key
+       * @returns {void}
+       */
       export function increment(keyName: string): Promise<void>;
+      
+      /**
+       * 
+       * Increment custom user data by a specified value
+       * 
+       * @param {string} keyName - user property key
+       * @param {number} keyValue - value to increment user property by
+       * @returns {void}
+       */
       export function incrementBy(keyName: string, keyValue: any): Promise<void>;
+      
+      /**
+       * 
+       * Multiply custom user data by a specified value
+       * 
+       * @param {string} keyName - user property key
+       * @param {number} keyValue - value to multiply user property by
+       * @returns {void}
+       */
       export function multiply(keyName: string, keyValue: any): Promise<void>;
+      
+      /**
+       * 
+       * Save the max value between current and provided value
+       * 
+       * @param {string} keyName - user property key
+       * @param {number} keyValue - user property value
+       * @returns {void}
+       */
       export function saveMax(keyName: string, keyValue: any): Promise<void>;
+      
+      /**
+       * 
+       * Save the min value between current and provided value
+       * 
+       * @param {string} keyName - user property key
+       * @param {number} keyValue - user property value
+       * @returns {void}
+       */
       export function saveMin(keyName: string, keyValue: any): Promise<void>;
+      
+      /**
+       * 
+       * Set the property value if it does not exist
+       * 
+       * @param {string} keyName - user property key
+       * @param {string} keyValue - user property value
+       * @returns {void}
+       */
       export function setOnce(keyName: string, keyValue: any): Promise<void>;
-      export function pushUniqueValue(keyName: string, keyValue: any): Promise<void>;
-      export function pushValue(keyName: string, keyValue: any): Promise<void>;
-      export function pullValue(keyName: string, keyValue: any): Promise<void>;
+      
+      /**
+       * 
+       * Add value to custom property (array) if value does not exist within
+       * 
+       * @param {string} keyName user property key
+       * @param {string} keyValue user property value
+       * @returns {void}
+       */
+      export function pushUnique(keyName: string, keyValue: any): Promise<void>;
+      
+      /**
+       * 
+       * Add value to custom property (array)
+       * 
+       * @param {string} keyName user property key
+       * @param {string} keyValue user property value
+       * @returns {void}
+       */
+      export function push(keyName: string, keyValue: any): Promise<void>;
+      
+      /**
+       * 
+       * Remove value from custom property (array)
+       * 
+       * @param {string} keyName user property key
+       * @param {string} keyValue user property value
+       * @returns {void}
+       */
+      export function pull(keyName: string, keyValue: any): Promise<void>;
     }
 
     namespace userData {
