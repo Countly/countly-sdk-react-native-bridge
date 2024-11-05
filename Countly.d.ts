@@ -579,6 +579,20 @@ declare module "countly-sdk-react-native-bridge" {
      */
     export function setUserData(userData: CountlyUserData): string | Promise<void>;
 
+    namespace userProfile {
+      export function setProperty(keyName: string, keyValue: any): Promise<void>;
+      export function setProperties(userData: CountlyUserData): Promise<void>;
+      export function increment(keyName: string): Promise<void>;
+      export function incrementBy(keyName: string, keyValue: any): Promise<void>;
+      export function multiply(keyName: string, keyValue: any): Promise<void>;
+      export function saveMax(keyName: string, keyValue: any): Promise<void>;
+      export function saveMin(keyName: string, keyValue: any): Promise<void>;
+      export function setOnce(keyName: string, keyValue: any): Promise<void>;
+      export function pushUniqueValue(keyName: string, keyValue: any): Promise<void>;
+      export function pushValue(keyName: string, keyValue: any): Promise<void>;
+      export function pullValue(keyName: string, keyValue: any): Promise<void>;
+    }
+
     namespace userData {
       /**
        *

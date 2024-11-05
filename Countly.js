@@ -11,6 +11,7 @@ import CountlyState from "./CountlyState.js";
 import Feedback from "./Feedback.js";
 import Event from "./Event.js";
 import DeviceId from "./DeviceId.js";
+import UserProfile from "./UserProfile.js";
 import * as L from "./Logger.js";
 import * as Utils from "./Utils.js";
 import * as Validate from "./Validators.js";
@@ -28,6 +29,7 @@ CountlyState.eventEmitter = eventEmitter;
 Countly.feedback = new Feedback(CountlyState);
 Countly.events = new Event(CountlyState);
 Countly.deviceId = new DeviceId(CountlyState);
+Countly.userProfile = new UserProfile(CountlyState);
 
 let _isCrashReportingEnabled = false;
 
