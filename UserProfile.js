@@ -8,7 +8,7 @@ class UserProfile {
         this.#state = state;
     }
 
-    #isValidUserProfileCall = function (keyName, keyValue, functionName) {
+    isValidUserProfileCall = function (keyName, keyValue, functionName) {
         if (!this.#state.isInitialized) {
             L.w(`${functionName}, 'init' must be called before ${functionName}`);
             return false;
@@ -111,7 +111,7 @@ class UserProfile {
             L.w("increment, 'init' must be called before 'increment'");
             return;
         }
-        if (typeof keyName !== 'string' || keyName === null) {
+        if (!keyName || typeof keyName !== 'string') {
             L.w("increment, provided keyName is not a valid string");
             return;
         }
