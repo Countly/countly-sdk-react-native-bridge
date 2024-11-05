@@ -311,10 +311,10 @@ RCT_EXPORT_METHOD(setLoggingEnabled : (NSArray *)arguments) {
     });
 }
 
-RCT_REMAP_METHOD(setUserData, params : (NSArray *)arguments setUserDataWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
+RCT_REMAP_METHOD(setProperties, params : (NSArray *)arguments setPropertiesWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
       NSDictionary *userData = [arguments objectAtIndex:0];
-      [self setUserDataIntenral:userData];
+      [self setPropertiesInternal:userData];
       [Countly.user save];
       resolve(@"Success");
     });
@@ -776,7 +776,7 @@ RCT_REMAP_METHOD(userData_pullValue, params : (NSArray *)arguments userDataPullV
 
 RCT_REMAP_METHOD(userDataBulk_setUserProperties, params : (NSDictionary *)userProperties userDataBulkSetUserPropertiesWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      [self setUserDataIntenral:userProperties];
+      [self setPropertiesInternal:userProperties];
       NSDictionary *customeProperties = [self removePredefinedUserProperties:userProperties];
       Countly.user.custom = customeProperties;
       resolve(@"Success");
@@ -1346,7 +1346,7 @@ void CountlyRNInternalLog(NSString *format, ...) {
     return userProperties;
 }
 
-- (void)setUserDataIntenral:(NSDictionary *__nullable)userData {
+- (void)setPropertiesInternal:(NSDictionary *__nullable)userData {
     NSString *name = userData[NAME_KEY];
     NSString *username = userData[USERNAME_KEY];
     NSString *email = userData[EMAIL_KEY];
@@ -1379,6 +1379,20 @@ void CountlyRNInternalLog(NSString *format, ...) {
     }
     if (byear) {
         Countly.user.birthYear = @([byear integerValue]);
+    }
+
+    // Handle custom fields
+    NSMutableDictionary *customFields = [NSMutableDictionary dictionary];
+    NSArray *predefinedKeys = @[NAME_KEY, USERNAME_KEY, EMAIL_KEY, ORG_KEY, PHONE_KEY, PICTURE_KEY, GENDER_KEY, BYEAR_KEY];
+
+    for (NSString *key in userData) {
+        if (![predefinedKeys containsObject:key]) {
+            customFields[key] = userData[key];
+        }
+    }
+
+    if (customFields.count > 0) {
+        Countly.user.custom = customFields;
     }
 }
 

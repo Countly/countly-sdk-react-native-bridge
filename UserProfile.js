@@ -30,8 +30,55 @@ class UserProfile {
     };
 
     setProperties = async function (userData) {
-        // set predefined and custom user property
-    };
+        if (!this.#state.isInitialized) {
+            L.w("setProperties, 'init' must be called before 'setProperties'");
+            return;
+        }
+        if (!userData) {
+            L.w("setProperties, User profile data should not be null or undefined");
+            return;
+        }
+        if (typeof userData !== "object") {
+            L.w(`setProperties, unsupported data type of user data '${typeof userData}'`);
+            return;
+        }
+        L.d(`setProperties, Setting properties: [${JSON.stringify(userData)}]`);
+    
+        const predefinedKeys = {
+            name: "string",
+            username: "string",
+            email: "string",
+            organization: "string",
+            phone: "string",
+            picture: "string",
+            picturePath: "string",
+            gender: "string",
+            byear: "number",
+        };
+    
+        const userProfile = {};
+    
+        for (const key in userData) {
+            const value = userData[key];
+            const expectedType = predefinedKeys[key];
+    
+            if (expectedType) {
+                if (typeof value === expectedType || (key === "byear" && typeof value === "number")) {
+                    userProfile[key] = key === "byear" ? value.toString() : value;
+                } else {
+                    L.w(`setProperties, skipping key '${key}' due to type mismatch (expected: ${expectedType}, got: ${typeof value})`);
+                }
+            } else {
+                if (Validate.isValidPrimitiveOrArray(value)) {
+                    userProfile[key] = value;
+                } else {
+                    L.w(`setProperties, skipping custom key '${key}' due to unsupported data type '${typeof value}'`);
+                }
+            }
+        }
+    
+        await this.#state.CountlyReactNative.setProperties([userProfile]);
+    };    
 
     increment = async function (keyName) {
         // Increment custom user data by 1

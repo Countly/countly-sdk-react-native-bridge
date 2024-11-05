@@ -794,6 +794,22 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
     }
 
     @ReactMethod
+    public void setProperties(ReadableArray args, Promise promise) {
+        Countly.sharedInstance();
+        ReadableMap userData = args.getMap(0);
+        Map<String, Object> userDataObjectMap = userData.toHashMap();
+
+        for (Map.Entry<String, Object> entry : userDataObjectMap.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+            userDataObjectMap.put(key, value);
+        }
+        Countly.sharedInstance().userProfile().setProperties(userDataObjectMap);
+        Countly.sharedInstance().userProfile().save();
+        promise.resolve("Success");
+    }
+    
+    @ReactMethod
     public void sendPushToken(ReadableArray args) {
         String pushToken = args.getString(0);
         CountlyPush.onTokenRefresh(pushToken);
