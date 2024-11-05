@@ -837,7 +837,7 @@ Countly.setUserData = async function (userData) {
 };
 
 /**
- *
+ * @deprecated 'Countly.userData.setProperty' is deprecated, use 'Countly.userProfile.setProperty' instead.
  * Set custom key and value pair for the current user.
  *
  * @param {string} keyName user property key
@@ -868,7 +868,7 @@ Countly.userData.setProperty = async function (keyName, keyValue) {
 };
 
 /**
- *
+ * @deprecated 'Countly.userData.increment' is deprecated, use 'Countly.userProfile.increment' instead.
  * Increment custom user data by 1
  *
  * @param {string} keyName user property key
@@ -892,7 +892,7 @@ Countly.userData.increment = async function (keyName) {
 };
 
 /**
- *
+ * @deprecated 'Countly.userData.incrementBy' is deprecated, use 'Countly.userProfile.incrementBy' instead.
  * Increment custom user data by a specified value
  *
  * @param {string} keyName user property key
@@ -919,7 +919,7 @@ Countly.userData.incrementBy = async function (keyName, keyValue) {
 };
 
 /**
- *
+ * @deprecated 'Countly.userData.multiply' is deprecated, use 'Countly.userProfile.multiply' instead.
  * Multiply custom user data by a specified value
  *
  * @param {string} keyName user property key
@@ -946,7 +946,7 @@ Countly.userData.multiply = async function (keyName, keyValue) {
 };
 
 /**
- *
+ * @deprecated 'Countly.userData.saveMax' is deprecated, use 'Countly.userProfile.saveMax' instead.
  * Save the max value between current and provided value.
  *
  * @param {string} keyName user property key
@@ -973,7 +973,7 @@ Countly.userData.saveMax = async function (keyName, keyValue) {
 };
 
 /**
- *
+ * @deprecated 'Countly.userData.saveMin' is deprecated, use 'Countly.userProfile.saveMin' instead.
  * Save the min value between current and provided value.
  *
  * @param {string} keyName user property key
@@ -1000,7 +1000,7 @@ Countly.userData.saveMin = async function (keyName, keyValue) {
 };
 
 /**
- *
+ * @deprecated 'Countly.userData.setOnce' is deprecated, use 'Countly.userProfile.setOnce' instead.
  * Set the property value if it does not exist.
  *
  * @param {string} keyName user property key
@@ -1029,7 +1029,7 @@ Countly.userData.setOnce = async function (keyName, keyValue) {
 };
 
 /**
- *
+ * @deprecated 'Countly.userData.pushUniqueValue' is deprecated, use 'Countly.userProfile.pushUnique' instead.
  * Add value to custom property (array) if value does not exist within.
  *
  * @param {string} keyName user property key
@@ -1058,7 +1058,7 @@ Countly.userData.pushUniqueValue = async function (keyName, keyValue) {
 };
 
 /**
- *
+ * @deprecated 'Countly.userData.pushValue' is deprecated, use 'Countly.userProfile.push' instead.
  * Add value to custom property (array).
  *
  * @param {string} keyName user property key
@@ -1087,7 +1087,7 @@ Countly.userData.pushValue = async function (keyName, keyValue) {
 };
 
 /**
- *
+ * @deprecated 'Countly.userData.pullValue' is deprecated, use 'Countly.userProfile.pull' instead.
  * Remove value to custom property (array).
  *
  * @param {string} keyName user property key

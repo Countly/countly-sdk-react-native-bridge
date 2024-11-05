@@ -572,6 +572,7 @@ declare module "countly-sdk-react-native-bridge" {
 
     /**
      *
+     * @deprecated 'setUserData' is deprecated use 'Countly.userProfile.setProperties' instead.
      * Used to send user data
      *
      * @param {object} userData user data
@@ -691,7 +692,7 @@ declare module "countly-sdk-react-native-bridge" {
 
     namespace userData {
       /**
-       *
+       * @deprecated 'Countly.userData.setProperty' is deprecated, use 'Countly.userProfile.setProperty' instead.
        * Set custom key and value pair for the current user.
        *
        * @param {string} keyName user property key
@@ -701,7 +702,7 @@ declare module "countly-sdk-react-native-bridge" {
       export function setProperty(keyName: string, keyValue: any): Promise<void> | string;
 
       /**
-       *
+       * @deprecated 'Countly.userData.increment' is deprecated, use 'Countly.userProfile.increment' instead.
        * Increment custom user data by 1
        *
        * @param {string} keyName user property key
@@ -710,7 +711,7 @@ declare module "countly-sdk-react-native-bridge" {
       export function increment(keyName: string): Promise<void> | string;
 
       /**
-       *
+       * @deprecated 'Countly.userData.incrementBy' is deprecated, use 'Countly.userProfile.incrementBy' instead.
        * Increment custom user data by a specified value
        *
        * @param {string} keyName user property key
@@ -720,7 +721,7 @@ declare module "countly-sdk-react-native-bridge" {
       export function incrementBy(keyName: string, keyValue: any): Promise<void> | string;
 
       /**
-       *
+       * @deprecated 'Countly.userData.multiply' is deprecated, use 'Countly.userProfile.multiply' instead.
        * Multiply custom user data by a specified value
        *
        * @param {string} keyName user property key
@@ -730,7 +731,7 @@ declare module "countly-sdk-react-native-bridge" {
       export function multiply(keyName: string, keyValue: any): Promise<void> | string;
 
       /**
-       *
+       * @deprecated 'Countly.userData.saveMax' is deprecated, use 'Countly.userProfile.saveMax' instead.
        * Save the max value between current and provided value.
        *
        * @param {string} keyName user property key
@@ -740,7 +741,7 @@ declare module "countly-sdk-react-native-bridge" {
       export function saveMax(keyName: string, keyValue: any): Promise<void> | string;
 
       /**
-       *
+       * @deprecated 'Countly.userData.saveMin' is deprecated, use 'Countly.userProfile.saveMin' instead.
        * Save the min value between current and provided value.
        *
        * @param {string} keyName user property key
@@ -750,7 +751,7 @@ declare module "countly-sdk-react-native-bridge" {
       export function saveMin(keyName: string, keyValue: any): Promise<void> | string;
 
       /**
-       *
+       * @deprecated 'Countly.userData.setOnce' is deprecated, use 'Countly.userProfile.setOnce' instead.
        * Set the property value if it does not exist.
        *
        * @param {string} keyName user property key
@@ -760,7 +761,7 @@ declare module "countly-sdk-react-native-bridge" {
       export function setOnce(keyName: string, keyValue: any): Promise<void> | string;
 
       /**
-       *
+       * @deprecated 'Countly.userData.pushUniqueValue' is deprecated, use 'Countly.userProfile.pushUnique' instead.
        * Add value to custom property (array) if value does not exist within.
        *
        * @param {string} keyName user property key
@@ -770,7 +771,7 @@ declare module "countly-sdk-react-native-bridge" {
       export function pushUniqueValue(keyName: string, keyValue: any): Promise<void> | string;
 
       /**
-       *
+       * @deprecated 'Countly.userData.pushValue' is deprecated, use 'Countly.userProfile.push' instead.
        * Add value to custom property (array).
        *
        * @param {string} keyName user property key
@@ -780,7 +781,7 @@ declare module "countly-sdk-react-native-bridge" {
       export function pushValue(keyName: string, keyValue: any): Promise<void> | string;
 
       /**
-       *
+       * @deprecated 'Countly.userData.pullValue' is deprecated, use 'Countly.userProfile.pull' instead.
        * Remove value to custom property (array).
        *
        * @param {string} keyName user property key
