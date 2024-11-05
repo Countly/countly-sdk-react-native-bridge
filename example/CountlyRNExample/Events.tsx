@@ -16,6 +16,15 @@ const eventWithSegment = () => {
     // example for event with segment
     Countly.events.recordEvent("Event With Segment", { Country: "Paris", Age: 28 }, 1, undefined);
     Countly.events.recordEvent("Event With Segment", { Country: "France", Age: 38 }, 1, undefined);
+    Countly.events.recordEvent("Event With Segment With Mixed Types", { 
+        Country: "UK",
+        Active: true,
+        JerseyNo: 11,
+        Names: ["James", "Bond"],
+        AgeRange: [25, 30],
+        Bools: [true, false, false],
+        Preferences: ["Music", 42, true]
+    }, 1, undefined);
 };
 const eventWithSumAndSegment = () => {
     // example for event with segment and sum

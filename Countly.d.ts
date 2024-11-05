@@ -1,5 +1,7 @@
+type SegmentationValue = number | string | boolean | SegmentationValue[]; 
+
 interface Segmentation {
-  [key: string]: number | string | boolean;
+    [key: string]: SegmentationValue;
 }
 
 interface CountlyEventOptions {

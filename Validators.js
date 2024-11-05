@@ -134,28 +134,30 @@ function areEventParametersValid(functionName, eventName, segmentation, eventCou
         return false;
     }
 
-    // validate segmentation values
     if (segmentation) {
         for (const key in segmentation) {
             const value = segmentation[key];
             const valueType = typeof value;
-            if (value && valueType !== "string" && valueType !== "number" && valueType !== "boolean") {
-                L.w(`${functionName}, segmentation value: [${value}] for the key: [${key}] must be a number, string or boolean!`);
+            if (Array.isArray(value)) {
+                // check array elements
+                if (!value.every(item => ["string", "number", "boolean"].includes(typeof item))) {
+                    L.w(`${functionName}, segmentation value: [${value}] for the key: [${key}] must contain only strings, numbers, or booleans in the array!`);
+                    return false;
+                }
+            } else if (value && valueType !== "string" && valueType !== "number" && valueType !== "boolean") {
+                L.w(`${functionName}, segmentation value: [${value}] for the key: [${key}] must be a number, string, boolean, or an array of these types!`);
                 return false;
             }
         }
     }
-
     if (eventCount && (typeof eventCount !== "number" || eventCount < 0)) {
         L.w(`${functionName}, provided eventCount: [${eventCount}]. It must be a positive number!`);
         return false;
     }
-
     if (eventSum && typeof eventSum !== "number") {
         L.w(`${functionName}, provided eventSum: [${eventSum}]. It must be a number!`);
         return false;
     }
-
     return true;
 }
 

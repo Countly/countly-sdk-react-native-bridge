@@ -1680,6 +1680,30 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                             segmentation.put(key, doubleValue);
                         }
                         break;
+                    case Array:
+                        ReadableArray arrayValue = segments.getArray(i + 1);
+                        List<Object> arrayList = new ArrayList<>();
+                        for (int j = 0; j < arrayValue.size(); j++) {
+                            ReadableType elementType = arrayValue.getType(j);
+                            switch (elementType) {
+                                case String:
+                                    arrayList.add(arrayValue.getString(j));
+                                    break;
+                                case Boolean:
+                                    arrayList.add(arrayValue.getBoolean(j));
+                                    break;
+                                case Number:
+                                    double elemDouble = arrayValue.getDouble(j);
+                                    int elemInt = (int) elemDouble;
+                                    arrayList.add(elemDouble == elemInt ? elemInt : elemDouble);
+                                    break;
+                                default:
+                                    // Skip non-primitive types
+                                    break;
+                            }
+                        }
+                        segmentation.put(key, arrayList);
+                        break;
                     default:
                         // Skip other types
                         break;
