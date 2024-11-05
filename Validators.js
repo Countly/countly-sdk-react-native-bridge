@@ -144,8 +144,8 @@ function areEventParametersValid(functionName, eventName, segmentation, eventCou
                     L.w(`${functionName}, segmentation value: [${value}] for the key: [${key}] must contain only strings, numbers, or booleans in the array!`);
                     return false;
                 }
-            } else if (value && valueType !== "string" && valueType !== "number" && valueType !== "boolean") {
-                L.w(`${functionName}, segmentation value: [${value}] for the key: [${key}] must be a number, string, boolean, or an array of these types!`);
+            } else if (value && !["string", "number", "boolean"].includes(typeof value)) {
+                L.w(`${functionName}, segmentation value: [${value}] for the key: [${key}] must be a string, number, or boolean!`);
                 return false;
             }
         }
