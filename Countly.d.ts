@@ -690,6 +690,9 @@ declare module "countly-sdk-react-native-bridge" {
       export function pull(keyName: string, keyValue: any): Promise<void>;
     }
 
+    /**
+     * @deprecated Countly.userData is deprecated, use Countly.userProfile instead
+     */
     namespace userData {
       /**
        * @deprecated 'Countly.userData.setProperty' is deprecated, use 'Countly.userProfile.setProperty' instead.

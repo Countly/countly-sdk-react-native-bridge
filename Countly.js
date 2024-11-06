@@ -33,6 +33,9 @@ Countly.userProfile = new UserProfile(CountlyState);
 
 let _isCrashReportingEnabled = false;
 
+/**
+ * @deprecated Countly.userData is deprecated, use Countly.userProfile instead
+ */
 Countly.userData = {}; // userData interface
 Countly.userDataBulk = {}; // userDataBulk interface
 
