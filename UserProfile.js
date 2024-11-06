@@ -38,7 +38,7 @@ class UserProfile {
      * @returns {void}
      */
     setProperty = async function (keyName, keyValue) {
-        if(!isValidUserProfileCall(keyName, keyValue, "setProperty")) {
+        if(!this.isValidUserProfileCall(keyName, keyValue, "setProperty")) {
             return;
         }
         let formattedKeyValue = keyValue.toString();
@@ -128,7 +128,7 @@ class UserProfile {
      * @returns {void}
      */
     incrementBy = async function (keyName, keyValue) {
-        if(!isValidUserProfileCall(keyName, keyValue, "incrementBy")) {
+        if(!this.isValidUserProfileCall(keyName, keyValue, "incrementBy")) {
             return;
         }
         L.d(`incrementBy, Incrementing user property: [${keyName}, ${keyValue}]`);
@@ -145,7 +145,7 @@ class UserProfile {
      * @returns {void}
      */
     multiply = async function (keyName, keyValue) {
-        if(!isValidUserProfileCall(keyName, keyValue, "multiply")) {
+        if(!this.isValidUserProfileCall(keyName, keyValue, "multiply")) {
             return;
         }
         L.d(`multiply, Multiplying user property: [${keyName}, ${keyValue}]`);
@@ -162,7 +162,7 @@ class UserProfile {
      * @returns {void}
      */
     saveMax = async function (keyName, keyValue) {
-        if(!isValidUserProfileCall(keyName, keyValue, "saveMax")) {
+        if(!this.isValidUserProfileCall(keyName, keyValue, "saveMax")) {
             return;
         }
         L.d(`saveMax, Saving max user property: [${keyName}, ${keyValue}]`);
@@ -179,7 +179,7 @@ class UserProfile {
      * @returns {void}
      */
     saveMin = async function (keyName, keyValue) {
-        if(!isValidUserProfileCall(keyName, keyValue, "saveMin")) {
+        if(!this.isValidUserProfileCall(keyName, keyValue, "saveMin")) {
             return;
         }
         L.d(`saveMin, Saving min user property: [${keyName}, ${keyValue}]`);
@@ -196,7 +196,7 @@ class UserProfile {
      * @returns {void}
      */
     setOnce = async function (keyName, keyValue) {
-        if(!isValidUserProfileCall(keyName, keyValue, "setOnce")) {
+        if(!this.isValidUserProfileCall(keyName, keyValue, "setOnce")) {
             return;
         }
         keyValue = keyValue.toString();
@@ -213,7 +213,7 @@ class UserProfile {
      * @returns {void}
      */
     pushUnique = async function (keyName, keyValue) {
-        if(!isValidUserProfileCall(keyName, keyValue, "pushUnique")) {
+        if(!this.isValidUserProfileCall(keyName, keyValue, "pushUnique")) {
             return;
         }
         keyValue = keyValue.toString();
@@ -230,7 +230,7 @@ class UserProfile {
      * @returns {void}
      */
     push = async function (keyName, keyValue) {
-        if(!isValidUserProfileCall(keyName, keyValue, "push")) {
+        if(!this.isValidUserProfileCall(keyName, keyValue, "push")) {
             return;
         }
         keyValue = keyValue.toString();
@@ -247,7 +247,7 @@ class UserProfile {
      * @returns {void}
      */
     pull = async function (keyName, keyValue) {
-        if(!isValidUserProfileCall(keyName, keyValue, "push")) {
+        if(!this.isValidUserProfileCall(keyName, keyValue, "push")) {
             return;
         }
         keyValue = keyValue.toString();

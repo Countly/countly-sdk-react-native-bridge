@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from 'react';
 import { ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Countly from "countly-sdk-react-native-bridge";
@@ -135,24 +135,102 @@ const userData_pullValue = () => {
     Countly.userData.pullValue("type", "morning");
 };
 
+const onSetProperty = () => {
+    Countly.userProfile.setProperty("Griselda", ["Conway", "Benny", "Westside Gunn"]);
+};
+
+const onSetProperties = () => {
+    const userData = {
+        name: "John Doe",                  // predefined key, valid type (string)
+        username: "johndoe123",            // predefined key, valid type (string)
+        email: "john.doe@example.com",     // predefined key, valid type (string)
+        organization: "Example Corp",      // predefined key, valid type (string)
+        phone: "+1234567890",              // predefined key, valid type (string)
+        picture: "https://example.com/avatar.jpg",  // predefined key, valid type (string)
+        gender: "M",                       // predefined key, valid type (string)
+        byear: 1985,                       // predefined key, valid type (integer)
+        customKey1: "Custom Value 1",      // custom key
+        customKey2: 42,                    // custom key
+        customKey3: ["item1", "item2"],    // custom key (array)
+    };
+    Countly.userProfile.setProperties(userData);
+}
+
+const onIncrement = () => {
+    Countly.userProfile.increment("IncrementValue");
+}
+
+const onIncrementBy = () => {
+    Countly.userProfile.incrementBy("IncrementByValue", 2);
+}
+
+const onMultiply = () => {
+    Countly.userProfile.multiply("MultiplyValue", 3);
+}
+
+const onMax = () => {
+    Countly.userProfile.saveMax("Max", 4);
+}
+
+const onMin = () => {
+    Countly.userProfile.saveMin("Min", 5);
+}
+
+const onSetOnce = () => {
+    Countly.userProfile.setOnce("Once", 6);
+}
+
+const onPushUnique = () => {
+    Countly.userProfile.pushUnique("Unique", 7);
+}
+
+const onPush = () => {
+    Countly.userProfile.push("push", 8);
+}
+
+const onPull = () => {
+    Countly.userProfile.pull("pull", 9);
+}
+
 function UserProfilesScreen({ navigation }) {
-    return (
+    const [showDeprecated, setShowDeprecated] = useState(false);
+
+    const toggleDeprecated = () => {
+        setShowDeprecated(prevState => !prevState);
+    };
+    return (    
         <SafeAreaView>
             <ScrollView>
-                <CountlyButton onPress={onSendUserData} title="Send Users Data" color="#00b5ad" />
-                <CountlyButton onPress={onUpdateUserData} title="Update Users Data" color="#00b5ad" />
-                <CountlyButton onPress={userData_setProperty} title="UserData.setProperty" color="#00b5ad" />
-                <CountlyButton onPress={userData_increment} title="UserData.increment" color="#00b5ad" />
-                <CountlyButton onPress={userData_incrementBy} title="UserData.incrementBy" color="#00b5ad" />
-                <CountlyButton onPress={userData_multiply} title="UserData.multiply" color="#00b5ad" />
-                <CountlyButton onPress={userData_saveMax} title="UserData.saveMax" color="#00b5ad" />
-                <CountlyButton onPress={userData_saveMin} title="UserData.saveMin" color="#00b5ad" />
-                <CountlyButton onPress={userData_setOnce} title="UserData.setOnce" color="#00b5ad" />
-                <CountlyButton onPress={userData_pushUniqueValue} title="UserData.pushUniqueValue" color="#00b5ad" />
-                <CountlyButton onPress={userData_pushValue} title="UserData.pushValue" color="#00b5ad" />
-                <CountlyButton onPress={userData_pullValue} title="UserData.pullValue" color="#00b5ad" />
-                <CountlyButton onPress={onSetUserProperties} title="Set Users Properties" color="#00b5ad" />
-                <CountlyButton onPress={onSendUserDataBulk} title="Send Users Data Bulk" color="#00b5ad" />
+                <CountlyButton onPress={onSetProperty} title="Set Property" color="#00b5ad" />
+                <CountlyButton onPress={onSetProperties} title="Set Properties" color="#00b5ad" />
+                <CountlyButton onPress={onIncrement} title="Increment" color="#00b5ad" />
+                <CountlyButton onPress={onIncrementBy} title="Increment By" color="#00b5ad" />
+                <CountlyButton onPress={onMultiply} title="Multiply" color="#00b5ad" />
+                <CountlyButton onPress={onMax} title="Save Max" color="#00b5ad" />
+                <CountlyButton onPress={onMin} title="Save Min" color="#00b5ad" />
+                <CountlyButton onPress={onSetOnce} title="Set Once" color="#00b5ad" />
+                <CountlyButton onPress={onPushUnique} title="Push Unique" color="#00b5ad" />
+                <CountlyButton onPress={onPush} title="Push" color="#00b5ad" />
+                <CountlyButton onPress={onPull} title="Pull" color="#00b5ad" />
+                <CountlyButton onPress={toggleDeprecated} title="Deprecated Calls" color="#00b5ad" />
+                {showDeprecated && (
+                    <ScrollView>
+                        <CountlyButton onPress={onSendUserData} title="Send Users Data" color="#00b5ad" />
+                        <CountlyButton onPress={onUpdateUserData} title="Update Users Data" color="#00b5ad" />
+                        <CountlyButton onPress={userData_setProperty} title="UserData.setProperty" color="#00b5ad" />
+                        <CountlyButton onPress={userData_increment} title="UserData.increment" color="#00b5ad" />
+                        <CountlyButton onPress={userData_incrementBy} title="UserData.incrementBy" color="#00b5ad" />
+                        <CountlyButton onPress={userData_multiply} title="UserData.multiply" color="#00b5ad" />
+                        <CountlyButton onPress={userData_saveMax} title="UserData.saveMax" color="#00b5ad" />
+                        <CountlyButton onPress={userData_saveMin} title="UserData.saveMin" color="#00b5ad" />
+                        <CountlyButton onPress={userData_setOnce} title="UserData.setOnce" color="#00b5ad" />
+                        <CountlyButton onPress={userData_pushUniqueValue} title="UserData.pushUniqueValue" color="#00b5ad" />
+                        <CountlyButton onPress={userData_pushValue} title="UserData.pushValue" color="#00b5ad" />
+                        <CountlyButton onPress={userData_pullValue} title="UserData.pullValue" color="#00b5ad" />
+                        <CountlyButton onPress={onSetUserProperties} title="Set Users Properties" color="#00b5ad" />
+                        <CountlyButton onPress={onSendUserDataBulk} title="Send Users Data Bulk" color="#00b5ad" />
+                    </ScrollView>
+                )}
             </ScrollView>
         </SafeAreaView>
     );
