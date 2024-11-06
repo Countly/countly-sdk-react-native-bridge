@@ -7,6 +7,18 @@
   * `enterContentZone`, to start Content checks (Experimental!)
   * `exitContentZone`, to stop Content checks (Experimental!)
 * Added `Countly.deviceId.setID` method for changing device ID based on the device ID type
+* Deprecated `Countly.setUserData` and replaced with `Countly.userProfile.setProperties`
+* Deprecated `Countly.userData` and replaced with `Countly.userProfile`, also following calls are deprecated and replaced:
+  * `Countly.userData.setProperty` (replaced with: `Countly.userProfile.setProperty`)
+  * `Countly.userData.increment` (replaced with: `Countly.userProfile.increment`)
+  * `Countly.userData.incrementBy` (replaced with: `Countly.userProfile.incrementBy`)
+  * `Countly.userData.multiply` (replaced with: `Countly.userProfile.multiply`)
+  * `Countly.userData.saveMax` (replaced with: `Countly.userProfile.saveMax`)
+  * `Countly.userData.saveMin` (replaced with: `Countly.userProfile.saveMin`)
+  * `Countly.userData.setOnce` (replaced with: `Countly.userProfile.setOnce`)
+  * `Countly.userData.pushUniqueValue` (replaced with: `Countly.userProfile.pushUnique`)
+  * `Countly.userData.pushValue` (replaced with: `Countly.userProfile.push`)
+  * `Countly.userData.pullValue` (replaced with: `Countly.userProfile.pull`)
 * Mitigated an issue where a session could have started while the app was in the background when the device ID was changed (non-merge).
 * Deprecated following SDK calls:
   * `Countly.getCurrentDeviceId` (replaced with: `Countly.deviceId.getID`)
