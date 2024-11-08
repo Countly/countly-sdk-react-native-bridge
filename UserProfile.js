@@ -191,8 +191,8 @@ class UserProfile {
      * 
      * Set the property value if it does not exist
      * 
-     * @param {string} keyName - user property key
-     * @param {string} keyValue - user property value
+     * @param {string} keyName - The user property key.
+     * @param {boolean | number | string} keyValue - The user property value.
      * @returns {void}
      */
     setOnce = async function (keyName, keyValue) {
@@ -208,8 +208,8 @@ class UserProfile {
      * 
      * Add value to custom property (array) if value does not exist within
      * 
-     * @param {string} keyName user property key
-     * @param {string} keyValue user property value
+     * @param {string} keyName - The user property key.
+     * @param {boolean | number | string} keyValue - The user property value.
      * @returns {void}
      */
     pushUnique = async function (keyName, keyValue) {
@@ -223,10 +223,10 @@ class UserProfile {
 
     /**
      * 
-     * Add value to custom property (array)
+     * Add a value to a custom property (array).
      * 
-     * @param {string} keyName user property key
-     * @param {string} keyValue user property value
+     * @param {string} keyName - The user property key.
+     * @param {boolean | number | string} keyValue - The user property value.
      * @returns {void}
      */
     push = async function (keyName, keyValue) {
@@ -242,8 +242,8 @@ class UserProfile {
      * 
      * Remove value from custom property (array)
      * 
-     * @param {string} keyName user property key
-     * @param {string} keyValue user property value
+     * @param {string} keyName - The user property key.
+     * @param {boolean | number | string} keyValue - The user property value.
      * @returns {void}
      */
     pull = async function (keyName, keyValue) {

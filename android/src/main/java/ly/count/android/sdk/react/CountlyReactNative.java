@@ -805,7 +805,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             userDataObjectMap.put(key, value);
         }
         Countly.sharedInstance().userProfile().setProperties(userDataObjectMap);
-        Countly.sharedInstance().userProfile().save();
         promise.resolve("Success");
     }
     
