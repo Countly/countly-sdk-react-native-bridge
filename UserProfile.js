@@ -8,6 +8,18 @@ class UserProfile {
         this.#state = state;
     }
 
+    static predefinedKeys = {
+        name: "string",
+        username: "string",
+        email: "string",
+        organization: "string",
+        phone: "string",
+        picture: "string",
+        picturePath: "string",
+        gender: "string",
+        byear: "number",
+    };
+
     isValidUserProfileCall = function (keyName, keyValue, functionName) {
         if (!this.#state.isInitialized) {
             L.w(`${functionName}, 'init' must be called before ${functionName}`);
@@ -15,6 +27,7 @@ class UserProfile {
         }
         // validate keyName
         if(!keyName) {
+            L.w(`${functionName}, provided keyName is null`);
             return false;
         }
         if (typeof keyName !== 'string' || keyName.trim() === '') {
@@ -67,21 +80,10 @@ class UserProfile {
             return;
         }
         L.d(`setProperties, Setting properties: [${JSON.stringify(userData)}]`);
-        const predefinedKeys = {
-            name: "string",
-            username: "string",
-            email: "string",
-            organization: "string",
-            phone: "string",
-            picture: "string",
-            picturePath: "string",
-            gender: "string",
-            byear: "number",
-        };
         const userProfile = {};
         for (const key in userData) {
             const value = userData[key];
-            const expectedType = predefinedKeys[key];
+            const expectedType = this.predefinedKeys[key];
             if (expectedType) {
                 if (typeof value === expectedType || (key === "byear" && typeof value === "number")) {
                     userProfile[key] = key === "byear" ? value.toString() : value;
@@ -97,7 +99,7 @@ class UserProfile {
             }
         }
         await this.#state.CountlyReactNative.setProperties([userProfile]);
-    };    
+    };
 
     /**
      * 
