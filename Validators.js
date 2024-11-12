@@ -137,15 +137,8 @@ function areEventParametersValid(functionName, eventName, segmentation, eventCou
     if (segmentation) {
         for (const key in segmentation) {
             const value = segmentation[key];
-            const valueType = typeof value;
-            if (Array.isArray(value)) {
-                // check array elements
-                if (!value.every(item => ["string", "number", "boolean"].includes(typeof item))) {
-                    L.w(`${functionName}, segmentation value: [${value}] for the key: [${key}] must contain only strings, numbers, or booleans in the array!`);
-                    return false;
-                }
-            } else if (value && !["string", "number", "boolean"].includes(typeof value)) {
-                L.w(`${functionName}, segmentation value: [${value}] for the key: [${key}] must be a string, number, or boolean!`);
+            if (!value) {
+                L.w(`${functionName}, provided value for the key: [${key}] is null!`);
                 return false;
             }
         }
