@@ -35,7 +35,7 @@ class UserProfile {
             return false;
         }
         // validate keyValue
-        if (keyValue === null || !Validate.isValidPrimitiveOrArray(keyValue)) {
+        if (keyValue === null) {
             L.w(`${functionName}, provided keyValue is not valid`);
             return false;
         }
@@ -91,10 +91,10 @@ class UserProfile {
                     L.w(`setProperties, skipping key '${key}' due to type mismatch (expected: ${expectedType}, got: ${typeof value})`);
                 }
             } else {
-                if (Validate.isValidPrimitiveOrArray(value)) {
+                if (value) {
                     userProfile[key] = value;
                 } else {
-                    L.w(`setProperties, skipping custom key '${key}' due to unsupported data type '${typeof value}'`);
+                    L.w(`setProperties, skipping custom key '${key}' due to provided value is null`);
                 }
             }
         }

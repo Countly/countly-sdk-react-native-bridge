@@ -159,17 +159,4 @@ function areEventParametersValid(functionName, eventName, segmentation, eventCou
     return true;
 }
 
-function isValidPrimitiveOrArray(value) {
-    return (
-        typeof value === 'string' ||
-        typeof value === 'number' ||
-        typeof value === 'boolean' ||
-        Array.isArray(value) && value.every(item => (
-            typeof item === 'string' || 
-            typeof item === 'number' || 
-            typeof item === 'boolean'
-        ))
-    );
-};
-
-export { validateUserDataValue as UserDataValue, validateString as String, validateParseInt as ParseInt, validateValidUserData as ValidUserData, validateUserDataType as UserDataType, areEventParametersValid, isValidPrimitiveOrArray };
+export { validateUserDataValue as UserDataValue, validateString as String, validateParseInt as ParseInt, validateValidUserData as ValidUserData, validateUserDataType as UserDataType, areEventParametersValid };
