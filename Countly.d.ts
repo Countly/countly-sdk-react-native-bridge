@@ -1,4 +1,4 @@
-type SegmentationValue = number | string | boolean | SegmentationValue[]; 
+type SegmentationValue = number | string | boolean | SegmentationValue[] | { [key: string]: SegmentationValue };
 
 interface Segmentation {
   [key: string]: SegmentationValue;
