@@ -82,7 +82,13 @@ class UserProfile {
         const userProfile = {};
         for (const key in userData) {
             const value = userData[key];
-            const expectedType = this.predefinedKeys[key];
+            let expectedType = null;
+
+            // To check if the key exists in predefinedKeys
+            if (Object.hasOwn(UserProfile.predefinedKeys, key)) {
+                expectedType = UserProfile.predefinedKeys[key];
+            }
+
             if (expectedType) {
                 if (typeof value === expectedType || (key === "byear" && typeof value === "number")) {
                     userProfile[key] = key === "byear" ? value.toString() : value;
@@ -90,11 +96,7 @@ class UserProfile {
                     L.w(`setProperties, skipping key '${key}' due to type mismatch (expected: ${expectedType}, got: ${typeof value})`);
                 }
             } else {
-                if (value) {
-                    userProfile[key] = value;
-                } else {
-                    L.w(`setProperties, skipping custom key '${key}' due to provided value is null`);
-                }
+                userProfile[key] = value;
             }
         }
         await this.#state.CountlyReactNative.setProperties([userProfile]);
