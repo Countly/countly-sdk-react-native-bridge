@@ -15,7 +15,6 @@ const countlyConfig = new CountlyConfig(COUNTLY_SERVER_KEY, COUNTLY_APP_KEY).set
 // .giveConsent(['location', 'sessions', 'attribution', 'push', 'events', 'views', 'crashes', 'users', 'push', 'star-rating', 'apm', 'feedback', 'remote-config']) // give consent for specific features before init.
 // .setLocation('TR', 'Istanbul', '41.0082,28.9784', '10.2.33.12') // Set user initial location.
 // .enableParameterTamperingProtection('salt') // Set the optional salt to be used for calculating the checksum of requested data which will be sent with each request
-// .pinnedCertificates("count.ly.cer") // It will ensure that connection is made with one of the public keys specified
 // .setHttpPostForced(false) // Set to "true" if you want HTTP POST to be used for all requests
 // .pushTokenType(Countly.messagingMode.DEVELOPMENT, 'ChannelName', 'ChannelDescription') // Set messaging mode for push notifications
 // .configureIntentRedirectionCheck(['MainActivity'], ['com.countly.demo'])
@@ -38,5 +37,10 @@ const countlyConfig = new CountlyConfig(COUNTLY_SERVER_KEY, COUNTLY_APP_KEY).set
 // .setMaxBreadcrumbCount()
 // .setMaxStackTraceLineLength()
 // .setMaxStackTraceLinesPerThread();
+
+// Countly Experimental features ==============================
+// countlyConfig.experimental
+// .enablePreviousNameRecording()
+// .enableVisibilityTracking();
 
 export default countlyConfig;
