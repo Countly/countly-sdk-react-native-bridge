@@ -10,12 +10,17 @@
 #if (TARGET_OS_IOS || TARGET_OS_TV)
 @property (nonatomic) NSMutableSet* automaticViewTrackingExclusionList;
 #endif
-@property (nonatomic) NSMutableDictionary<NSString*, CountlyViewData *> * viewDataDictionary;
+@property (nonatomic, strong) NSMutableDictionary<NSString*, CountlyViewData *> * viewDataDictionary;
 @property (nonatomic) NSMutableDictionary* viewSegmentation;
 @property (nonatomic) BOOL isFirstView;
 @end
 
 NSString* const kCountlyReservedEventView = @"[CLY]_view";
+
+NSString* const kCountlyCurrentView = @"cly_cvn";
+NSString* const kCountlyPreviousView = @"cly_pvn";
+
+NSString* const kCountlyPreviousEventName = @"cly_pen";
 
 NSString* const kCountlyVTKeyName     = @"name";
 NSString* const kCountlyVTKeySegment  = @"segment";
@@ -129,7 +134,8 @@ NSString* const kCountlyVTKeyDur      = @"dur";
     CLY_LOG_I(@"%s %@", __FUNCTION__, segmentation);
     NSMutableDictionary *mutableSegmentation = segmentation.mutableCopy;
     [mutableSegmentation removeObjectsForKeys:self.reservedViewTrackingSegmentationKeys];
-    self.viewSegmentation = mutableSegmentation;
+    NSDictionary *filteredSegmentation = mutableSegmentation.cly_filterSupportedDataTypes;
+    self.viewSegmentation = filteredSegmentation.mutableCopy;
     
 }
 
@@ -142,7 +148,8 @@ NSString* const kCountlyVTKeyDur      = @"dur";
     
     NSMutableDictionary *mutableSegmentation = segmentation.mutableCopy;
     [mutableSegmentation removeObjectsForKeys:self.reservedViewTrackingSegmentationKeys];
-    [self.viewSegmentation addEntriesFromDictionary:mutableSegmentation];
+    NSDictionary *filteredSegmentation = mutableSegmentation.cly_filterSupportedDataTypes;
+    [self.viewSegmentation addEntriesFromDictionary:filteredSegmentation];
 }
 
 - (NSString *)startView:(NSString *)viewName segmentation:(NSDictionary *)segmentation
@@ -360,7 +367,8 @@ NSString* const kCountlyVTKeyDur      = @"dur";
         {
             NSMutableDictionary* mutableCustomSegmentation = customSegmentation.mutableCopy;
             [mutableCustomSegmentation removeObjectsForKeys:self.reservedViewTrackingSegmentationKeys];
-            [segmentation addEntriesFromDictionary:mutableCustomSegmentation];
+            NSDictionary *filteredSegmentation = mutableCustomSegmentation.cly_filterSupportedDataTypes;
+            [segmentation addEntriesFromDictionary:filteredSegmentation];
         }
         
         NSDictionary* segmentationTruncated = [segmentation cly_truncated:@"View segmentation"];
@@ -369,10 +377,10 @@ NSString* const kCountlyVTKeyDur      = @"dur";
         segmentation[kCountlyVTKeyName] = viewData.viewName;
         segmentation[kCountlyVTKeySegment] = CountlyDeviceInfo.osName;
         
-        NSTimeInterval duration = viewData.duration;
+        NSInteger duration = viewData.duration;
         [Countly.sharedInstance recordReservedEvent:kCountlyReservedEventView segmentation:segmentation count:1 sum:0 duration:duration ID:viewData.viewID timestamp:CountlyCommon.sharedInstance.uniqueTimestamp];
         
-        CLY_LOG_D(@"%s View tracking ended: %@ duration: %.17g", __FUNCTION__, viewData.viewName, duration);
+        CLY_LOG_D(@"%s View tracking ended: %@ duration: %ld", __FUNCTION__, viewData.viewName, (long)duration);
         if (!autoPaused) {
             [self.viewDataDictionary removeObjectForKey:viewKey];
         }
@@ -417,7 +425,8 @@ NSString* const kCountlyVTKeyDur      = @"dur";
     {
         NSMutableDictionary* mutableCustomSegmentation = customSegmentation.mutableCopy;
         [mutableCustomSegmentation removeObjectsForKeys:self.reservedViewTrackingSegmentationKeys];
-        [segmentation addEntriesFromDictionary:mutableCustomSegmentation];
+        NSDictionary *filteredSegmentation = mutableCustomSegmentation.cly_filterSupportedDataTypes;
+        [segmentation addEntriesFromDictionary:filteredSegmentation];
     }
     
     NSDictionary* segmentationTruncated = [segmentation cly_truncated:@"View segmentation"];
@@ -427,7 +436,7 @@ NSString* const kCountlyVTKeyDur      = @"dur";
     segmentation[kCountlyVTKeySegment] = CountlyDeviceInfo.osName;
     segmentation[kCountlyVTKeyVisit] = @1;
     
-    if (self.isFirstView)
+    if (self.isFirstView && [CountlyConnectionManager.sharedInstance isSessionStarted])
     {
         self.isFirstView = NO;
         segmentation[kCountlyVTKeyStart] = @1;
@@ -436,7 +445,11 @@ NSString* const kCountlyVTKeyDur      = @"dur";
     self.previousViewID = self.currentViewID;
     self.currentViewID = CountlyCommon.sharedInstance.randomEventID;
     
+    self.previousViewName = self.currentViewName;
+    self.currentViewName = viewName;
+    
     CountlyViewData *viewData = [[CountlyViewData alloc] initWithID:self.currentViewID viewName:viewName];
+    viewData.startSegmentation = customSegmentation.mutableCopy;
     viewData.isAutoStoppedView = isAutoStoppedView;
     self.viewDataDictionary[self.currentViewID] = viewData;
     
@@ -498,7 +511,7 @@ NSString* const kCountlyVTKeyDur      = @"dur";
 - (void)stopAutoStoppedView
 {
     CountlyViewData* currentView = self.currentView;
-    if (currentView && currentView.isAutoStoppedView)
+    if (currentView && currentView.isAutoStoppedView && !currentView.willStartAgain)
     {
         [self stopViewWithIDInternal:self.currentView.viewID customSegmentation:nil];
     }
@@ -514,41 +527,54 @@ NSString* const kCountlyVTKeyDur      = @"dur";
 }
 
 
-- (void)pauseAllViewsInternal
+- (void)stopRunningViewsInternal
 {
     [self.viewDataDictionary enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, CountlyViewData * _Nonnull viewData, BOOL * _Nonnull stop) {
-        [self pauseViewInternal:viewData autoPaused:YES];
+        viewData.willStartAgain = YES;
+        [self stopViewWithIDInternal:viewData.viewID customSegmentation:nil autoPaused:YES];
     }];
 }
 
 - (void)pauseViewInternal:(CountlyViewData*) viewData
 {
-    [self pauseViewInternal:viewData autoPaused:NO];
-}
-
-- (void)pauseViewInternal:(CountlyViewData*) viewData autoPaused:(BOOL) autoPaused
-{
-    if (autoPaused) {
-        [viewData autoPauseView];
-    }
-    else {
-        [viewData pauseView];
-    }
     [self stopViewWithIDInternal:viewData.viewID customSegmentation:nil autoPaused:YES];
+    [viewData pauseView];
 }
 
-- (void)resumeAllViewsInternal
+- (void)startStoppedViewsInternal
 {
+    // Create an array to store keys for views that need to be removed
+    NSMutableArray<NSString *> *keysToRemove = [NSMutableArray array];
+    NSMutableArray<NSString *> *keysToStart = [NSMutableArray array];
+    
+    // Collect keys without modifying the dictionary
     [self.viewDataDictionary enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, CountlyViewData * _Nonnull viewData, BOOL * _Nonnull stop) {
-        if (viewData.isAutoPaused)
+        if (viewData.willStartAgain)
         {
-            [viewData resumeView];
+            [keysToStart addObject:key];
+            [keysToRemove addObject:viewData.viewID];
         }
     }];
+    
+    // Start the collected views after enumeration
+    for (NSString *key in keysToStart)
+    {
+        CountlyViewData *viewData = self.viewDataDictionary[key];
+        NSString *viewID = [self startViewInternal:viewData.viewName customSegmentation:viewData.startSegmentation isAutoStoppedView:viewData.isAutoStoppedView];
+        
+        // Retrieve and update the newly created viewData
+        CountlyViewData *viewDataNew = self.viewDataDictionary[viewID];
+        viewDataNew.segmentation = viewData.segmentation.mutableCopy;
+    }
+    
+    // Remove the entries from the dictionary
+    [self.viewDataDictionary removeObjectsForKeys:keysToRemove];
 }
+
 
 - (void)stopAllViewsInternal:(NSDictionary *)segmentation
 {
+    // TODO: Should apply all the segmenation operations here at one place instead of doing it for individual view
     if (!CountlyConsentManager.sharedInstance.consentForViewTracking)
         return;
     [self.viewDataDictionary enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, CountlyViewData * _Nonnull viewData, BOOL * _Nonnull stop) {
@@ -598,11 +624,12 @@ NSString* const kCountlyVTKeyDur      = @"dur";
     {
         NSMutableDictionary *mutableSegmentation = segmentation.mutableCopy;
         [mutableSegmentation removeObjectsForKeys:self.reservedViewTrackingSegmentationKeys];
-        if(mutableSegmentation) {
+        NSDictionary *filteredSegmentation = mutableSegmentation.cly_filterSupportedDataTypes;
+        if(filteredSegmentation) {
             if(!viewData.segmentation) {
                 viewData.segmentation = NSMutableDictionary.new;
             }
-            [viewData.segmentation addEntriesFromDictionary:mutableSegmentation];
+            [viewData.segmentation addEntriesFromDictionary:filteredSegmentation];
         }
         [self.viewDataDictionary setObject:viewData forKey:viewID];
     }
@@ -710,27 +737,24 @@ NSString* const kCountlyVTKeyDur      = @"dur";
 #pragma mark - Public function for application state
 
 - (void)applicationWillEnterForeground {
-#if (TARGET_OS_IOS || TARGET_OS_TV)
-    if (self.isAutoViewTrackingActive) {
-        
-    }
-    else {
-        [self resumeAllViewsInternal];
+#if (TARGET_OS_IOS  || TARGET_OS_VISION || TARGET_OS_TV)
+    if (!self.isAutoViewTrackingActive) {
+        [self startStoppedViewsInternal];
     }
 #else
-    [self resumeAllViewsInternal];
+    [self startStoppedViewsInternal];
 #endif
 }
 - (void)applicationDidEnterBackground {
-#if (TARGET_OS_IOS || TARGET_OS_TV)
+#if (TARGET_OS_IOS || TARGET_OS_VISION || TARGET_OS_TV)
     if (self.isAutoViewTrackingActive) {
         [self stopCurrentView];
     }
     else {
-        [self pauseAllViewsInternal];
+        [self stopRunningViewsInternal];
     }
 #else
-    [self pauseAllViewsInternal];
+    [self stopRunningViewsInternal];
 #endif
 }
 
@@ -741,7 +765,7 @@ NSString* const kCountlyVTKeyDur      = @"dur";
 
 - (void)resetFirstView
 {
-    self.isFirstView = NO;
+    self.isFirstView = YES;
 }
 
 

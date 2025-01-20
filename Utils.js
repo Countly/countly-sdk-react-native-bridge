@@ -52,87 +52,121 @@ function configToJson(config) {
 
         if (config.loggingEnabled) {
             json.loggingEnabled = config.loggingEnabled;
+            L.i(`init configuration, Enabled logging in ${__DEV__ ? "development" : "production"} mode`)
         }
-        if (config.crashReporting) {
-            json.crashReporting = config.crashReporting;
+        if (config._crashReporting) {
+            json.crashReporting = true;
+            L.i(`init configuration, Enabled crash reporting`)
         }
         if (config.shouldRequireConsent) {
             json.shouldRequireConsent = config.shouldRequireConsent;
+            L.i(`init configuration, Require consent`)
         }
         if (config.consents) {
             json.consents = config.consents;
+            L.i(`init configuration, Consents: ${JSON.stringify(config.consents)}`)
         }
         if (config.locationCountryCode) {
             json.locationCountryCode = config.locationCountryCode;
+            L.i(`init configuration, Location country code: ${config.locationCountryCode}`)
         }
         if (config.locationCity) {
             json.locationCity = config.locationCity;
+            L.i(`init configuration, Location city: ${config.locationCity}`)
         }
         if (config.locationGpsCoordinates) {
             json.locationGpsCoordinates = config.locationGpsCoordinates;
+            L.i(`init configuration, Location gps coordinates: ${config.locationGpsCoordinates}`)
         }
         if (config.locationIpAddress) {
             json.locationIpAddress = config.locationIpAddress;
+            L.i(`init configuration, Location ip address: ${config.locationIpAddress}`)
         }
         if (config.tamperingProtectionSalt) {
             json.tamperingProtectionSalt = config.tamperingProtectionSalt;
+            L.i(`init configuration, Tampering protection salt: ${config.tamperingProtectionSalt}`)
         }
         // APM ------------------------------------------------
         if (config.apm.enableForegroundBackground) {
             json.enableForegroundBackground = config.apm.enableForegroundBackground;
+            L.i(`init configuration, APM enabled foreground background`)
         }
         if (config.apm.enableManualAppLoaded) {
             json.enableManualAppLoaded = config.apm.enableManualAppLoaded;
+            L.i(`init configuration, APM enabled manual app loaded`)
         }
         if (config.apm.startTSOverride) {
             json.startTSOverride = config.apm.startTSOverride;
+            L.i(`init configuration, APM start timestamp override: ${config.apm.startTSOverride}`)
         }
         if (config.apm.trackAppStartTime) {
             json.trackAppStartTime = config.apm.trackAppStartTime;
+            L.i(`init configuration, APM track app start time`)
         }
         // Legacy APM
-        if (config.enableApm) {
-            json.enableApm = config.enableApm;
+        if (config._apmLegacy) {
+            json.enableApm = true;
+            L.i(`init configuration, APM start time recording enabled`)
         }
         // APM END --------------------------------------------
-        if (config.disableAdditionalIntentRedirectionChecks) {
-            json["disableAdditionalIntentRedirectionChecks"] = config.disableAdditionalIntentRedirectionChecks;
+        if (config.experimental.enablePreviousNameRecording) {
+            json.enablePreviousNameRecording = true;
+            L.i(`init configuration, Enabled previous name recording`)
+        }
+        if (config.experimental.enableVisibilityTracking) {
+            json.enableVisibilityTracking = true;
+            L.i(`init configuration, Enabled visibility tracking`)
+        }
+        if (config._disableIntentRedirectionCheck) {
+            json.disableAdditionalIntentRedirectionChecks = true;
+            L.i(`init configuration, Disabled additional intent redirection checks`)
         }
         const pushNotification = {};
         if (config.tokenType) {
             pushNotification.tokenType = config.tokenType;
+            L.i(`init configuration, Token type: ${config.tokenType}`)
         }
         if (config.channelName) {
             pushNotification.channelName = config.channelName;
+            L.i(`init configuration, Channel name: ${config.channelName}`)
         }
         if (config.channelDescription) {
             pushNotification.channelDescription = config.channelDescription;
+            L.i(`init configuration, Channel description: ${config.channelDescription}`)
         }
         if (config.accentColor) {
             pushNotification.accentColor = config.accentColor;
+            L.i(`init configuration, Accent color: ${config.accentColor}`)
         }
         json.pushNotification = pushNotification;
         if (config.allowedIntentClassNames) {
             json.allowedIntentClassNames = config.allowedIntentClassNames;
+            L.i(`init configuration, Allowed intent class names: ${config.allowedIntentClassNames}`)
         }
         if (config.allowedIntentClassNames) {
             json.allowedIntentPackageNames = config.allowedIntentPackageNames;
+            L.i(`init configuration, Allowed intent package names: ${config.allowedIntentPackageNames}`)
         }
         if (config.starRatingTextTitle) {
             json.starRatingTextTitle = config.starRatingTextTitle;
+            L.i(`init configuration, Star rating text title: ${config.starRatingTextTitle}`)
         }
         if (config.starRatingTextMessage) {
             json.starRatingTextMessage = config.starRatingTextMessage;
+            L.i(`init configuration, Star rating text message: ${config.starRatingTextMessage}`)
         }
         if (config.starRatingTextDismiss) {
             json.starRatingTextDismiss = config.starRatingTextDismiss;
+            L.i(`init configuration, Star rating text dismiss: ${config.starRatingTextDismiss}`)
         }
         if (config.campaignType) {
             json.campaignType = config.campaignType;
             json.campaignData = config.campaignData;
+            L.i(`init configuration, Campaign type: ${config.campaignType}, Campaign data: ${config.campaignData}`)
         }
         if (config.attributionValues) {
             json.attributionValues = config.attributionValues;
+            L.i(`init configuration, Attribution values: ${config.attributionValues}`)
         }
         // Limits -----------------------------------------------
         if (config.sdkInternalLimits.maxKeyLength) {
@@ -140,6 +174,7 @@ function configToJson(config) {
                 L.w(`configToJson, Provided value for maxKeyLength is invalid!`)
             } else {
                 json.maxKeyLength = config.sdkInternalLimits.maxKeyLength;
+                L.i(`init configuration, Max key length: ${config.sdkInternalLimits.maxKeyLength}`)
             }
         }
         if (config.sdkInternalLimits.maxValueSize) {
@@ -147,6 +182,7 @@ function configToJson(config) {
                 L.w(`configToJson, Provided value for maxValueSize is invalid!`)
             } else {
                 json.maxValueSize = config.sdkInternalLimits.maxValueSize;
+                L.i(`init configuration, Max value size: ${config.sdkInternalLimits.maxValueSize}`)
             }
         }
         if (config.sdkInternalLimits.maxSegmentationValues) {
@@ -154,6 +190,7 @@ function configToJson(config) {
                 L.w(`configToJson, Provided value for maxSegmentationValues is invalid!`)
             } else {
                 json.maxSegmentationValues = config.sdkInternalLimits.maxSegmentationValues;
+                L.i(`init configuration, Max segmentation values: ${config.sdkInternalLimits.maxSegmentationValues}`)
             }
         }
         if (config.sdkInternalLimits.maxBreadcrumbCount) {
@@ -161,6 +198,7 @@ function configToJson(config) {
                 L.w(`configToJson, Provided value for maxBreadcrumbCount is invalid!`)
             } else {
                 json.maxBreadcrumbCount = config.sdkInternalLimits.maxBreadcrumbCount;
+                L.i(`init configuration, Max breadcrumb count: ${config.sdkInternalLimits.maxBreadcrumbCount}`)
             }
         }
         if (config.sdkInternalLimits.maxStackTraceLinesPerThread) {
@@ -168,6 +206,7 @@ function configToJson(config) {
                 L.w(`configToJson, Provided value for maxStackTraceLinesPerThread is invalid!`)
             } else {
                 json.maxStackTraceLinesPerThread = config.sdkInternalLimits.maxStackTraceLinesPerThread;
+                L.i(`init configuration, Max stack trace lines per thread: ${config.sdkInternalLimits.maxStackTraceLinesPerThread}`)
             }
         }
         if (config.sdkInternalLimits.maxStackTraceLineLength) {
@@ -175,6 +214,7 @@ function configToJson(config) {
                 L.w(`configToJson, Provided value for maxStackTraceLineLength is invalid!`)
             } else {
                 json.maxStackTraceLineLength = config.sdkInternalLimits.maxStackTraceLineLength;
+                L.i(`init configuration, Max stack trace line length: ${config.sdkInternalLimits.maxStackTraceLineLength}`)
             }
         }
         // Limits End --------------------------------------------

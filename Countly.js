@@ -10,6 +10,7 @@ import CountlyConfig from "./CountlyConfig.js";
 import CountlyState from "./CountlyState.js";
 import Feedback from "./Feedback.js";
 import Event from "./Event.js";
+import DeviceId from "./DeviceId.js";
 import * as L from "./Logger.js";
 import * as Utils from "./Utils.js";
 import * as Validate from "./Validators.js";
@@ -26,11 +27,14 @@ CountlyState.eventEmitter = eventEmitter;
 
 Countly.feedback = new Feedback(CountlyState);
 Countly.events = new Event(CountlyState);
+Countly.deviceId = new DeviceId(CountlyState);
 
 let _isCrashReportingEnabled = false;
 
 Countly.userData = {}; // userData interface
 Countly.userDataBulk = {}; // userDataBulk interface
+
+Countly.content = {}; // content interface
 
 let _isPushInitialized = false;
 
@@ -479,7 +483,8 @@ Countly.disableLocation = function () {
 };
 
 /**
- *
+ * @deprecated use 'Countly.deviceId.getID' instead of 'Countly.getCurrentDeviceId'
+ * 
  * Get currently used device Id.
  * Should be called after Countly init
  *
@@ -497,6 +502,8 @@ Countly.getCurrentDeviceId = async function () {
 };
 
 /**
+ * @deprecated use 'Countly.deviceId.getType' instead of 'Countly.getDeviceIDType'
+ * 
  * Get currently used device Id type.
  * Should be called after Countly init
  *
@@ -513,7 +520,9 @@ Countly.getDeviceIDType = async function () {
 };
 
 /**
- * Change the current device id
+ * @deprecated use 'Countly.deviceId.setID' instead of 'Countly.changeDeviceId' for setting device ID.
+ * 
+ * Change the current device ID
  *
  * @param {string} newDeviceID id new device id
  * @param {boolean} onServer merge device id
@@ -2199,6 +2208,36 @@ Countly.setCustomMetrics = async function (customMetric) {
     if (args.length != 0) {
         CountlyReactNative.setCustomMetrics(args);
     }
+};
+
+/**
+ * Opt in user for the content fetching and updates
+ * 
+ * NOTE: This is an EXPERIMENTAL feature, and it can have breaking changes
+ */
+Countly.content.enterContentZone = function() {
+    L.i("enterContentZone, opting for content fetching.");
+    if (!_state.isInitialized) {
+        const message = "'init' must be called before 'enterContentZone'";
+        L.e(`enterContentZone, ${message}`);
+        return;
+    }
+    CountlyReactNative.enterContentZone();
+};
+
+/**
+ * Opt out user from the content fetching and updates
+ * 
+ * NOTE: This is an EXPERIMENTAL feature, and it can have breaking changes
+ */
+Countly.content.exitContentZone = function() {
+    L.i("exitContentZone, opting out from content fetching.");
+    if (!_state.isInitialized) {
+        const message = "'init' must be called before 'exitContentZone'";
+        L.e(`exitContentZone, ${message}`);
+        return;
+    }
+    CountlyReactNative.exitContentZone();
 };
 
 export default Countly;
