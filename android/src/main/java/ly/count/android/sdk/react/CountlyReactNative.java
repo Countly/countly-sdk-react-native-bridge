@@ -89,7 +89,7 @@ class CountlyReactException extends Exception {
 public class CountlyReactNative extends ReactContextBaseJavaModule implements LifecycleEventListener {
 
     public static final String TAG = "CountlyRNPlugin";
-    private String COUNTLY_RN_SDK_VERSION_STRING = "24.4.1";
+    private String COUNTLY_RN_SDK_VERSION_STRING = "25.1.0";
     private String COUNTLY_RN_SDK_NAME = "js-rnb-android";
 
     private static final CountlyConfig config = new CountlyConfig();
@@ -236,6 +236,12 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                 config.setRecordAppStartTime(_config.getBoolean("enableApm"));
             }
             // APM END --------------------------------------------
+            if (_config.has("enablePreviousNameRecording")) {
+                config.experimental.enablePreviousNameRecording();
+            }
+            if (_config.has("enableVisibilityTracking")) {
+                config.experimental.enableVisibilityTracking();
+            }
             // Limits -----------------------------------------------
             if(_config.has("maxKeyLength")) {
                 config.sdkInternalLimits.setMaxKeyLength(_config.getInt("maxKeyLength"));
@@ -789,7 +795,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         }
 
         Countly.sharedInstance().userProfile().setProperties(userDataMap);
-        Countly.sharedInstance().userProfile().save();
         promise.resolve("Success");
     }
 
@@ -952,7 +957,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         String keyName = args.getString(0);
         String keyValue = args.getString(1);
         Countly.sharedInstance().userProfile().setProperty(keyName, keyValue);
-        Countly.sharedInstance().userProfile().save();
         promise.resolve("Success");
     }
 
@@ -961,7 +965,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         Countly.sharedInstance();
         String keyName = args.getString(0);
         Countly.sharedInstance().userProfile().increment(keyName);
-        Countly.sharedInstance().userProfile().save();
         promise.resolve("Success");
     }
 
@@ -971,7 +974,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         String keyName = args.getString(0);
         int keyIncrement = Integer.parseInt(args.getString(1));
         Countly.sharedInstance().userProfile().incrementBy(keyName, keyIncrement);
-        Countly.sharedInstance().userProfile().save();
         promise.resolve("Success");
     }
 
@@ -981,7 +983,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         String keyName = args.getString(0);
         int multiplyValue = Integer.parseInt(args.getString(1));
         Countly.sharedInstance().userProfile().multiply(keyName, multiplyValue);
-        Countly.sharedInstance().userProfile().save();
         promise.resolve("Success");
     }
 
@@ -991,7 +992,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         String keyName = args.getString(0);
         int maxScore = Integer.parseInt(args.getString(1));
         Countly.sharedInstance().userProfile().saveMax(keyName, maxScore);
-        Countly.sharedInstance().userProfile().save();
         promise.resolve("Success");
     }
 
@@ -1001,7 +1001,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         String keyName = args.getString(0);
         int minScore = Integer.parseInt(args.getString(1));
         Countly.sharedInstance().userProfile().saveMin(keyName, minScore);
-        Countly.sharedInstance().userProfile().save();
         promise.resolve("Success");
     }
 
@@ -1011,7 +1010,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         String keyName = args.getString(0);
         String minScore = args.getString(1);
         Countly.sharedInstance().userProfile().setOnce(keyName, minScore);
-        Countly.sharedInstance().userProfile().save();
         promise.resolve("Success");
     }
 
@@ -1021,7 +1019,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         String keyName = args.getString(0);
         String keyValue = args.getString(1);
         Countly.sharedInstance().userProfile().pushUnique(keyName, keyValue);
-        Countly.sharedInstance().userProfile().save();
         promise.resolve("Success");
     }
 
@@ -1031,7 +1028,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         String keyName = args.getString(0);
         String keyValue = args.getString(1);
         Countly.sharedInstance().userProfile().push(keyName, keyValue);
-        Countly.sharedInstance().userProfile().save();
         promise.resolve("Success");
     }
 
@@ -1041,7 +1037,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
         String keyName = args.getString(0);
         String keyValue = args.getString(1);
         Countly.sharedInstance().userProfile().pull(keyName, keyValue);
-        Countly.sharedInstance().userProfile().save();
         promise.resolve("Success");
     }
 
@@ -1684,6 +1679,33 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
                         } else {
                             segmentation.put(key, doubleValue);
                         }
+                        break;
+                    case Array:
+                        ReadableArray array = segments.getArray(i + 1);
+                        List<Object> list = new ArrayList<>();
+                        for (int j = 0; j < array.size(); j++) {
+                            ReadableType arrayValueType = array.getType(j);
+                            switch (arrayValueType) {
+                                case String:
+                                    list.add(array.getString(j));
+                                    break;
+                                case Number:
+                                    double arrayDoubleValue = array.getDouble(j);
+                                    int arrayIntValue = (int) arrayDoubleValue; // casting to int will remove the decimal part
+                                    if (arrayDoubleValue == arrayIntValue) {
+                                        list.add(arrayIntValue);
+                                    } else {
+                                        list.add(arrayDoubleValue);
+                                    }
+                                    break;
+                                case Boolean:
+                                    list.add(array.getBoolean(j));
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                        segmentation.put(key, list);
                         break;
                     default:
                         // Skip other types

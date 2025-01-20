@@ -8,6 +8,76 @@ class Feedback {
     }
 
     /**
+     * Shows the first available NPS widget that meets the criteria.
+     * @param {String} [nameIDorTag] - name, id, or tag of the widget to show (optional)
+     * @param {callback} [callback] - called when the widget is closed (optional)
+     */
+    showNPS(nameIDorTag, callback) {
+        L.i(`showNPS, Will show NPS widget with name, id, or tag: [${nameIDorTag}], callback provided: [${typeof callback === "function"}]`);
+        this.#showInternalFeedback("nps", nameIDorTag, callback);
+    }
+    /**
+     * Shows the first available Survey widget that meets the criteria.
+     * @param {String} [nameIDorTag] - name, id, or tag of the widget to show (optional) 
+     * @param {callback} [callback] - called when the widget is closed (optional)
+     */
+    showSurvey(nameIDorTag, callback) {
+        L.i(`showSurvey, Will show Survey widget with name, id, or tag: [${nameIDorTag}], callback provided: [${typeof callback === "function"}]`);
+        this.#showInternalFeedback("survey", nameIDorTag, callback);
+    }
+
+    /**
+     * Shows the first available Rating widget that meets the criteria.
+     * @param {String} [nameIDorTag] - name, id, or tag of the widget to show (optional)
+     * @param {callback} [callback] - called when the widget is closed (optional)
+     */
+    showRating(nameIDorTag, callback) {
+        L.i(`showRating, Will show Rating widget with name, id, or tag: [${nameIDorTag}], callback provided: [${typeof callback === "function"}]`);
+        this.#showInternalFeedback("rating", nameIDorTag, callback);
+    }
+
+    #showInternalFeedback(widgetType, nameIDorTag, callback) {
+        if (!this.#state.isInitialized) {
+            L.e(`showInternalFeedback, 'init' must be called before 'showInternalFeedback'`);
+            return;
+        }
+        if (typeof nameIDorTag !== "string") {
+            L.d(`showInternalFeedback, unsupported data type of nameIDorTag or its not given : [${typeof nameIDorTag}]`);
+        }
+        this.getAvailableFeedbackWidgets((retrievedWidgets, error) => {
+            if (error) {
+                L.e(`showInternalFeedback, ${error}`);
+                return;
+            }
+            if (!retrievedWidgets || retrievedWidgets.length === 0) {
+                L.d(`showInternalFeedback, no feedback widgets found`);
+                return;
+            }
+            L.d(`showInternalFeedback, Found [${retrievedWidgets.length}] feedback widgets`);
+            let widget = retrievedWidgets.find(w => w.type === widgetType);
+            try {
+                if (nameIDorTag && typeof nameIDorTag === 'string') {
+                    const matchedWidget = retrievedWidgets.find(w =>
+                        w.type === widgetType && (w.name === nameIDorTag || w.id === nameIDorTag || w.tags.includes(nameIDorTag))
+                    );
+                    if (matchedWidget) {
+                        widget = matchedWidget;
+                        L.v(`showInternalFeedback, Found ${widgetType} widget by name, id, or tag: [${JSON.stringify(matchedWidget)}]`);
+                    }
+                }
+            } catch (error) {
+                L.e(`showInternalFeedback, Error while finding widget: ${error}`);   
+            }
+
+            if (!widget) {
+                L.d(`showInternalFeedback, No ${widgetType} widget found.`);
+                return;
+            }
+            this.presentFeedbackWidget(widget, null, null, callback);
+        });
+    }
+
+    /**
      * Get a list of available feedback widgets as an array of objects.
      * @param {callback} [onFinished] - returns (retrievedWidgets, error). This parameter is optional.
      * @return {object} object {error: String or null, data: Array or null }
@@ -19,7 +89,7 @@ class Feedback {
             return { error: message, data: null };
         }
 
-        L.d("getAvailableFeedbackWidgets, getAvailableFeedbackWidgets");
+        L.d("getAvailableFeedbackWidgets, fetching available feedback widgets");
         let result = null;
         let error = null;
         try {

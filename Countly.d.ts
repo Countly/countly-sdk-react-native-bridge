@@ -1,5 +1,5 @@
 interface Segmentation {
-  [key: string]: number | string | boolean;
+  [key: string]: number | string | boolean | (number | string | boolean)[];
 }
 
 interface CountlyEventOptions {
@@ -89,6 +89,29 @@ declare module "countly-sdk-react-native-bridge" {
      * Countly Feedback Module
      */
     namespace feedback {
+
+      /**
+       * Shows the first available NPS widget that meets the criteria.
+       * @param {String} [nameIDorTag] - name, id, or tag of the widget to show (optional)
+       * @param {callback} [widgetClosedCallback] - called when the widget is closed (optional)
+       */
+      export function showNPS(nameIDorTag?: string, widgetClosedCallback?: WidgetCallback): void;
+
+      /**
+       * Shows the first available survey widget that meets the criteria.
+       * @param {String} [nameIDorTag] - name, id, or tag of the widget to show (optional)
+       * @param {callback} [widgetClosedCallback] - called when the widget is closed (optional)
+       */
+      export function showSurvey(nameIDorTag?: string, widgetClosedCallback?: WidgetCallback): void;
+
+      /**
+       * Shows the first available rating widget that meets the criteria.
+       * @param {String} [nameIDorTag] - name, id, or tag of the widget to show (optional)
+       * @param {callback} [widgetClosedCallback] - called when the widget is closed (optional)
+       */
+      export function showRating(nameIDorTag?: string, widgetClosedCallback?: WidgetCallback): void;
+
+
       /**
        * Get a list of available feedback widgets as an array of objects.
        * @param {FeedbackWidgetCallback} [onFinished] - returns (retrievedWidgets, error). This parameter is optional.
@@ -106,7 +129,7 @@ declare module "countly-sdk-react-native-bridge" {
        *
        * @return {ErrorObject} object {error: string or null}
        */
-      export function presentFeedbackWidget(feedbackWidget: FeedbackWidget, closeButtonText: string, widgetShownCallback: callback, widgetClosedCallback: callback): ErrorObject;
+      export function presentFeedbackWidget(feedbackWidget: FeedbackWidget, closeButtonText: string, widgetShownCallback: WidgetCallback, widgetClosedCallback: WidgetCallback): ErrorObject;
 
       /**
        * Get a feedback widget's data as an object.
@@ -1145,6 +1168,18 @@ declare module "countly-sdk-react-native-bridge" {
 }
 
 declare module "countly-sdk-react-native-bridge/CountlyConfig" {
+  interface experimental {
+    /**
+     * Enables previous name recording for views and events
+     */
+    enablePreviousNameRecording(): this;
+
+    /**
+     * Enables app visibility tracking with events.
+     */
+    enableVisibilityTracking(): this;
+  }
+
   /**
    *
    * This class holds APM specific configurations to be used with 
@@ -1236,6 +1271,11 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
      * getter for CountlySDKLimits instance that is used to access CountlyConfigSDKInternalLimits methods
      */
       sdkInternalLimits: CountlyConfigSDKInternalLimits;
+
+      /**
+       * getter for experimental features
+       */
+      experimental: experimental;
 
       /**
      * Method to set the server url
