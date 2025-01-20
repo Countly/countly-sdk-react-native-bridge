@@ -1,6 +1,7 @@
 import { initialize } from "./Logger.js";
 import CountlyConfigApm from "./lib/configuration_interfaces/countly_config_apm.js";
 import CountlyConfigSDKInternalLimits from "./lib/configuration_interfaces/countly_config_limits.js";
+import CountlyConfigExp from "./lib/configuration_interfaces/countly_config_experimental.js";
 /**
  * Countly SDK React Native Bridge
  * https://github.com/Countly/countly-sdk-react-native-bridge
@@ -15,11 +16,15 @@ import CountlyConfigSDKInternalLimits from "./lib/configuration_interfaces/count
  * @param {String} appKey application key
  */
 class CountlyConfig {
+    #crashReporting = false;
+    #apmLegacy = false;
+    #disableIntentRedirectionCheck = false;
     constructor(serverURL, appKey) {
         this.serverURL = serverURL;
         this.appKey = appKey;
         this._countlyConfigApmInstance = new CountlyConfigApm();
         this._countlyConfigSDKLimitsInstance = new CountlyConfigSDKInternalLimits();
+        this._countlyConfigExpInstance = new CountlyConfigExp();
     }
 
     /**
@@ -29,8 +34,30 @@ class CountlyConfig {
         return this._countlyConfigApmInstance;
     }
 
+    /**
+     * Getter to get the SDK internal limits
+     */
     get sdkInternalLimits() {
         return this._countlyConfigSDKLimitsInstance;
+    }
+
+    /**
+     * Getter to get the experimental configurations
+     */
+    get experimental() {
+        return this._countlyConfigExpInstance;
+    }
+
+    get _crashReporting() {
+        return this.#crashReporting;
+    }
+
+    get _apmLegacy() {
+        return this.#apmLegacy;
+    }
+
+    get _disableIntentRedirectionCheck() {
+        return this.#disableIntentRedirectionCheck;
     }
 
     /**
@@ -79,7 +106,7 @@ class CountlyConfig {
      * Method to enable crash reporting to report unhandled crashes to Countly
      */
     enableCrashReporting() {
-        this.crashReporting = true;
+        this.#crashReporting = true;
         return this;
     }
 
@@ -142,7 +169,7 @@ class CountlyConfig {
      * Method to enable application performance monitoring which includes the recording of app start time.
      */
     enableApm() {
-        this.enableApm = true;
+        this.#apmLegacy = true;
         return this;
     }
 
@@ -151,7 +178,7 @@ class CountlyConfig {
      * This method should be used to disable them.
      */
     disableAdditionalIntentRedirectionChecks() {
-        this.disableAdditionalIntentRedirectionChecks = true;
+        this.#disableIntentRedirectionCheck = true;
         return this;
     }
 

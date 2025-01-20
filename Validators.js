@@ -134,18 +134,6 @@ function areEventParametersValid(functionName, eventName, segmentation, eventCou
         return false;
     }
 
-    // validate segmentation values
-    if (segmentation) {
-        for (const key in segmentation) {
-            const value = segmentation[key];
-            const valueType = typeof value;
-            if (value && valueType !== "string" && valueType !== "number" && valueType !== "boolean") {
-                L.w(`${functionName}, segmentation value: [${value}] for the key: [${key}] must be a number, string or boolean!`);
-                return false;
-            }
-        }
-    }
-
     if (eventCount && (typeof eventCount !== "number" || eventCount < 0)) {
         L.w(`${functionName}, provided eventCount: [${eventCount}]. It must be a positive number!`);
         return false;

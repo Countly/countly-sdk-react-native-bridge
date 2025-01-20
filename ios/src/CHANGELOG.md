@@ -1,3 +1,26 @@
+## 24.7.9
+* Improved view tracking capabilities
+
+## 24.7.8
+* Added support for localization of content blocks.
+
+* Mitigated an issue where visibility could have been wrongly assigned if a view was closed while going to background. (Experimental!)
+* Mitigated an issue where the user provided URLSessionConfiguration was not applied to direct requests
+* Mitigated an issue where a concurrent modification error could have happen when starting multiple stopped views
+* Mitigated an issue that parsing internal content event segmentation.
+
+## 24.7.7
+* Changed the visibility tracking segmentation values to binary
+
+## 24.7.6
+* Mitigated an issue with experimental visibility tracking and previous name recording, ensuring they’re included even when no segmentation is provided in event or view recording.
+
+## 24.7.5
+* Mitigated an issue with content action json parsing due to json encoding
+* Mitigated an issue where pausing a view resulted in a '0' view duration.
+* Mitigated an issue where an internal timer was not reset when going to foreground for `autoStoppedViews`
+* Mitigated an issue for `autoStoppedViews` could have not started when multiple views were open at the same time while going to foreground
+
 ## 24.7.4
 * Added visionOS build support
 * Added `CountlyFeedbacks:` interface with new view methods (Access with `Countly.sharedInstance.feedback`):
