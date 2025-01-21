@@ -29,7 +29,7 @@ const countlyConfig = new CountlyConfig(COUNTLY_SERVER_KEY, COUNTLY_APP_KEY).set
 //   .setAppStartTimestampOverride(11223344);
 
 // Countly SDK Limits ========================================
-// countlyConfig.limits
+// countlyConfig.sdkInternalLimits
 // .setMaxKeyLength()
 // .setMaxValueSize()
 // .setMaxSegmentationValues()
