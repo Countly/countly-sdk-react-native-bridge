@@ -91,6 +91,17 @@ Countly.initWithConfig = async function (countlyConfig) {
         return;
     }
     L.d("initWithConfig, Initializing Countly");
+    if (countlyConfig.content.contentCallback) {
+        eventEmitter.addListener("globalContentCallback", (data) => {
+            L.d(`init configuration, Global content callback called with data: ${data}`);
+            try {
+                data = JSON.parse(data);
+                countlyConfig.content.contentCallback(data.status, data.data);
+            } catch (error) {
+                L.e(`init configuration, Error parsing global content callback data: ${error}`);                
+            }
+        });
+    }
     const args = [];
     const argsMap = Utils.configToJson(countlyConfig);
     const argsString = JSON.stringify(argsMap);
