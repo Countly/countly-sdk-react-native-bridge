@@ -174,9 +174,9 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
         [config.sdkInternalLimits setMaxStackTraceLinesPerThread:[maxStackTraceLinesPerThread intValue]];
     }
     // Limits End -------------------------------------------
-    NSNumber *setZoneTimerInterval = json[@"setZoneTimerInterval"];
-    if (setZoneTimerInterval) {
-        config.content.zoneTimerInterval = [setZoneTimerInterval intValue];
+    NSNumber *timerInt = json[@"setZoneTimerInterval"];
+    if (timerInt) {
+        [config.content setZoneTimerInterval:[timerInt intValue]];
     }
     if(json[@"setGlobalContentCallback"]) {
         [config.content setGlobalContentCallback:^(ContentStatus contentStatus, NSDictionary<NSString *,id> * _Nonnull contentData) {
