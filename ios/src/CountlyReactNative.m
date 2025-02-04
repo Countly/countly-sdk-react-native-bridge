@@ -174,6 +174,22 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
         [config.sdkInternalLimits setMaxStackTraceLinesPerThread:[maxStackTraceLinesPerThread intValue]];
     }
     // Limits End -------------------------------------------
+    NSNumber *setZoneTimerInterval = json[@"setZoneTimerInterval"];
+    if (setZoneTimerInterval) {
+        config.content.zoneTimerInterval = [setZoneTimerInterval intValue];
+    }
+    if(json[@"setGlobalContentCallback"]) {
+        [config.content setGlobalContentCallback:^(ContentStatus contentStatus, NSDictionary<NSString *,id> * _Nonnull contentData) {
+            NSMutableDictionary *contentDataDict = [[NSMutableDictionary alloc] init];
+            [contentDataDict setObject:[NSNumber numberWithInt:contentStatus] forKey:@"status"];
+            [contentDataDict setObject:contentData forKey:@"data"];
+            NSError *error;
+            NSData *contentDataJson = [NSJSONSerialization dataWithJSONObject:contentDataDict options:0 error:&error];
+            NSString *contentDataString = [[NSString alloc] initWithData:contentDataJson encoding:NSUTF8StringEncoding];
+
+            [self sendEventWithName:@"globalContentCallback" body:contentDataString];
+        }];
+    }
     // APM ------------------------------------------------
     NSNumber *enableForegroundBackground = json[@"enableForegroundBackground"];
     if (enableForegroundBackground) {
