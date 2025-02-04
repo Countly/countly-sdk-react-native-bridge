@@ -49,6 +49,7 @@ NSString *const widgetShownCallbackName = @"widgetShownCallback";
 NSString *const widgetClosedCallbackName = @"widgetClosedCallback";
 NSString *const ratingWidgetCallbackName = @"ratingWidgetCallback";
 NSString *const pushNotificationCallbackName = @"pushNotificationCallback";
+NSString *const contentCallbackName = @"globalContentCallback";
 
 @implementation CountlyReactNative
 NSString *const kCountlyNotificationPersistencyKey = @"kCountlyNotificationPersistencyKey";
@@ -70,7 +71,7 @@ NSString *const kCountlyNotificationPersistencyKey = @"kCountlyNotificationPersi
 }
 
 - (NSArray<NSString *> *)supportedEvents {
-    return @[ pushNotificationCallbackName, ratingWidgetCallbackName, widgetShownCallbackName, widgetClosedCallbackName ];
+    return @[ pushNotificationCallbackName, ratingWidgetCallbackName, widgetShownCallbackName, widgetClosedCallbackName, contentCallbackName ];
 }
 
 RCT_EXPORT_MODULE();
@@ -187,7 +188,7 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
             NSData *contentDataJson = [NSJSONSerialization dataWithJSONObject:contentDataDict options:0 error:&error];
             NSString *contentDataString = [[NSString alloc] initWithData:contentDataJson encoding:NSUTF8StringEncoding];
 
-            [self sendEventWithName:@"globalContentCallback" body:contentDataString];
+            [self sendEventWithName:contentCallbackName body:contentDataString];
         }];
     }
     // APM ------------------------------------------------
