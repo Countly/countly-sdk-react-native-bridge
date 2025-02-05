@@ -117,6 +117,14 @@ function configToJson(config) {
             json.enableVisibilityTracking = true;
             L.i(`init configuration, Enabled visibility tracking`)
         }
+        if (config.content.timerInterval) {
+            json.setZoneTimerInterval = config.content.timerInterval;
+            L.i(`init configuration, Set zone timer interval to ${config.content.timerInterval}`)
+        }
+        if (config.content.contentCallback) {
+            json.setGlobalContentCallback = true;
+            L.i(`init configuration, Set global content callback`)
+        }
         if (config._disableIntentRedirectionCheck) {
             json.disableAdditionalIntentRedirectionChecks = true;
             L.i(`init configuration, Disabled additional intent redirection checks`)
