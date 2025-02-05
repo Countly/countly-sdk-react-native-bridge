@@ -27,6 +27,8 @@ import ly.count.android.sdk.RCData;
 import ly.count.android.sdk.RCDownloadCallback;
 import ly.count.android.sdk.RemoteConfigCallback;
 import ly.count.android.sdk.FeedbackRatingCallback;
+import ly.count.android.sdk.ContentCallback;
+import ly.count.android.sdk.ContentStatus;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -237,6 +239,27 @@ public class CountlyReactNative extends ReactContextBaseJavaModule implements Li
             }
             if (_config.has("enableVisibilityTracking")) {
                 config.experimental.enableVisibilityTracking();
+            }
+            if (_config.has("setZoneTimerInterval")) {
+                config.content.setZoneTimerInterval(_config.getInt("setZoneTimerInterval"));
+            }
+            if (_config.has("setGlobalContentCallback")) {
+                config.content.setGlobalContentCallback(new ContentCallback() {
+                    @Override
+                    public void onContentCallback(ContentStatus contentStatus,Map<String, Object> contentData) {
+                        JSONObject contentMap = new JSONObject();
+                        try {
+                            contentMap.put("status", contentStatus.toString());
+                            contentMap.put("data", new JSONObject(contentData));
+                        } catch (JSONException e) {
+                            log("onContentCallback, JSON exception: ", e, LogLevel.ERROR);
+                        }
+                        
+                        ((ReactApplicationContext) _reactContext)
+                            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                            .emit("globalContentCallback", contentMap.toString());
+                    }
+                });
             }
             // Limits -----------------------------------------------
             if(_config.has("maxKeyLength")) {

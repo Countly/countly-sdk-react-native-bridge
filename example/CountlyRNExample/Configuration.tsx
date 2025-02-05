@@ -42,4 +42,9 @@ const countlyConfig = new CountlyConfig(COUNTLY_SERVER_KEY, COUNTLY_APP_KEY).set
 // .enablePreviousNameRecording()
 // .enableVisibilityTracking();
 
+// countlyConfig.content.setZoneTimerInterval(120);
+// countlyConfig.content.setGlobalContentCallback((status: string, data: object) => {
+//     console.log("Global content callback", status, data);
+// });
+
 export default countlyConfig;

@@ -1,3 +1,8 @@
+## 25.1.1-np
+
+* Updated the underlying Android SDK version to 25.1.1
+* Updated the underlying iOS SDK version to 25.1.1
+
 ## 25.1.0-np
 * ! Minor breaking change ! `Countly.userDataBulk.save()` method is now optional. SDK will save the cached data with internal triggers regularly.
 

@@ -1184,6 +1184,20 @@ declare module "countly-sdk-react-native-bridge-np/CountlyConfig" {
     enableVisibilityTracking(): this;
   }
 
+  interface content {
+    /**
+     * 
+     * @param zoneTimerInterval - the interval in seconds to check for new content
+     */
+    setZoneTimerInterval(zoneTimerInterval: number): this;
+
+    /**
+     * 
+     * @param callback - callback to be called when new content is available
+     */
+    setGlobalContentCallback(callback: Function): this;
+  }
+
   /**
    *
    * This class holds APM specific configurations to be used with 
@@ -1280,6 +1294,11 @@ declare module "countly-sdk-react-native-bridge-np/CountlyConfig" {
        * getter for experimental features
        */
       experimental: experimental;
+
+      /**
+       * getter for content features
+       */
+      content: content;
 
       /**
      * Method to set the server url

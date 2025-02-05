@@ -2,6 +2,7 @@ import { initialize } from "./Logger.js";
 import CountlyConfigApm from "./lib/configuration_interfaces/countly_config_apm.js";
 import CountlyConfigSDKInternalLimits from "./lib/configuration_interfaces/countly_config_limits.js";
 import CountlyConfigExp from "./lib/configuration_interfaces/countly_config_experimental.js";
+import CountlyConfigContent from "./lib/configuration_interfaces/countly_config_content.js";
 const BUILDING_WITH_PUSH_DISABLED = true;
 /**
  * Countly SDK React Native Bridge
@@ -25,6 +26,7 @@ class CountlyConfig {
         this._countlyConfigApmInstance = new CountlyConfigApm();
         this._countlyConfigSDKLimitsInstance = new CountlyConfigSDKInternalLimits();
         this._countlyConfigExpInstance = new CountlyConfigExp();
+        this._countlyConfigContentInstance = new CountlyConfigContent();
     }
 
     /**
@@ -50,6 +52,13 @@ class CountlyConfig {
      */
     get experimental() {
         return this._countlyConfigExpInstance;
+    }
+
+    /**
+     * Getter to get the content specific configurations
+     */
+    get content() {
+        return this._countlyConfigContentInstance;
     }
 
     get _crashReporting() {
