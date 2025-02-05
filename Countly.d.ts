@@ -1,5 +1,5 @@
 interface Segmentation {
-  [key: string]: number | string | boolean;
+  [key: string]: number | string | boolean | (number | string | boolean)[];
 }
 
 interface CountlyEventOptions {
@@ -89,6 +89,29 @@ declare module "countly-sdk-react-native-bridge" {
      * Countly Feedback Module
      */
     namespace feedback {
+
+      /**
+       * Shows the first available NPS widget that meets the criteria.
+       * @param {String} [nameIDorTag] - name, id, or tag of the widget to show (optional)
+       * @param {callback} [widgetClosedCallback] - called when the widget is closed (optional)
+       */
+      export function showNPS(nameIDorTag?: string, widgetClosedCallback?: WidgetCallback): void;
+
+      /**
+       * Shows the first available survey widget that meets the criteria.
+       * @param {String} [nameIDorTag] - name, id, or tag of the widget to show (optional)
+       * @param {callback} [widgetClosedCallback] - called when the widget is closed (optional)
+       */
+      export function showSurvey(nameIDorTag?: string, widgetClosedCallback?: WidgetCallback): void;
+
+      /**
+       * Shows the first available rating widget that meets the criteria.
+       * @param {String} [nameIDorTag] - name, id, or tag of the widget to show (optional)
+       * @param {callback} [widgetClosedCallback] - called when the widget is closed (optional)
+       */
+      export function showRating(nameIDorTag?: string, widgetClosedCallback?: WidgetCallback): void;
+
+
       /**
        * Get a list of available feedback widgets as an array of objects.
        * @param {FeedbackWidgetCallback} [onFinished] - returns (retrievedWidgets, error). This parameter is optional.
@@ -106,7 +129,7 @@ declare module "countly-sdk-react-native-bridge" {
        *
        * @return {ErrorObject} object {error: string or null}
        */
-      export function presentFeedbackWidget(feedbackWidget: FeedbackWidget, closeButtonText: string, widgetShownCallback: callback, widgetClosedCallback: callback): ErrorObject;
+      export function presentFeedbackWidget(feedbackWidget: FeedbackWidget, closeButtonText: string, widgetShownCallback: WidgetCallback, widgetClosedCallback: WidgetCallback): ErrorObject;
 
       /**
        * Get a feedback widget's data as an object.
@@ -174,6 +197,21 @@ declare module "countly-sdk-react-native-bridge" {
      * @return {void}
      */
       export function cancelEvent(eventName: string): void;
+    }
+
+    /**
+     * Countly Content Module
+     */
+    namespace content {
+      /**
+       * Opt in user for the content fetching and updates
+       */
+      export function enterContentZone(): void;
+
+      /**
+       * Opt out user from the content fetching and updates
+       */
+      export function exitContentZone(): void;
     }
 
     /**
@@ -387,7 +425,8 @@ declare module "countly-sdk-react-native-bridge" {
     export function disableLocation(): string | void;
 
     /**
-     *
+     * @deprecated use 'Countly.deviceId.getID' instead of 'Countly.getCurrentDeviceId'
+     * 
      * Get currently used device Id.
      * Should be called after Countly init
      *
@@ -396,6 +435,8 @@ declare module "countly-sdk-react-native-bridge" {
     export function getCurrentDeviceId(): Promise<string> | string;
 
     /**
+     * @deprecated use 'Countly.deviceId.getType' instead of 'Countly.getDeviceIDType'
+     * 
      * Get currently used device Id type.
      * Should be called after Countly init
      *
@@ -404,6 +445,8 @@ declare module "countly-sdk-react-native-bridge" {
     export function getDeviceIDType(): Promise<DeviceIdType> | null;
 
     /**
+     * @deprecated use 'Countly.deviceId.setID' instead of 'Countly.changeDeviceId'
+     * 
      * Change the current device id
      *
      * @param {string} newDeviceID id new device id
@@ -411,6 +454,34 @@ declare module "countly-sdk-react-native-bridge" {
      * @return {string | void} error message or void
      */
     export function changeDeviceId(newDeviceID: string, onServer: boolean): string | void;
+
+    namespace deviceId {
+      /**
+       * 
+       * Get currently used device ID.
+       * Should be called after Countly init
+       *
+       * @returns {string | null} device ID or null
+       */
+      export function getID(): Promise<string> | string;
+
+      /**
+       * 
+       * Get currently used device ID type.
+       * Should be called after Countly init
+       *
+       * @return {DeviceIdType | null} deviceIdType or null
+       */
+      export function getType(): Promise<DeviceIdType> | null;
+
+      /**
+       * Sets device ID according to the device ID Type.
+       * If previous ID was Developer Supplied sets it without merge, otherwise with merge.
+       *
+       * @param {string} newDeviceID device ID to set
+       */
+      export function setID(newDeviceID: string): void;
+    }
 
     /**
      *
@@ -1097,6 +1168,32 @@ declare module "countly-sdk-react-native-bridge" {
 }
 
 declare module "countly-sdk-react-native-bridge/CountlyConfig" {
+  interface experimental {
+    /**
+     * Enables previous name recording for views and events
+     */
+    enablePreviousNameRecording(): this;
+
+    /**
+     * Enables app visibility tracking with events.
+     */
+    enableVisibilityTracking(): this;
+  }
+
+  interface content {
+    /**
+     * 
+     * @param zoneTimerInterval - the interval in seconds to check for new content
+     */
+    setZoneTimerInterval(zoneTimerInterval: number): this;
+
+    /**
+     * 
+     * @param callback - callback to be called when new content is available
+     */
+    setGlobalContentCallback(callback: Function): this;
+  }
+
   /**
    *
    * This class holds APM specific configurations to be used with 
@@ -1188,6 +1285,16 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
      * getter for CountlySDKLimits instance that is used to access CountlyConfigSDKInternalLimits methods
      */
       sdkInternalLimits: CountlyConfigSDKInternalLimits;
+
+      /**
+       * getter for experimental features
+       */
+      experimental: experimental;
+
+      /**
+       * getter for content features
+       */
+      content: content;
 
       /**
      * Method to set the server url
