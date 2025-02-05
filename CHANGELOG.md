@@ -1,4 +1,17 @@
 ## 25.1.1
+* Improved content size management of content blocks.
+* Added init time config options:
+  * `.content.setZoneTimerInterval` to set the frequency of content update calls in seconds.
+  * `.content.setGlobalContentCallback` to provide a callback that is called when a content is closed.
+
+* Android Specific Changes:
+  * Improved the custom CertificateTrustManager to handle domain-specific configurations by supporting hostname-aware checkServerTrusted calls.
+  * Mitigated an issue where after closing a content, they were not being fetched again.
+  * Mitigated an issue where, the action bar was overlapping with the content display.
+
+* iOS Specific Changes:
+  * Added dynamic resizing functionality for the content zone
+  * Fixed an issue where the build UUID and executable name were missing from crash reports
 
 * Updated the underlying Android SDK version to 25.1.1
 * Updated the underlying iOS SDK version to 25.1.1
