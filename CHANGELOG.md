@@ -4,7 +4,6 @@
   * `.content.setZoneTimerInterval` to set the frequency of content update calls in seconds.
   * `.content.setGlobalContentCallback` to provide a callback that is called when a content is closed.
 
-
 * Android Specific Changes:
   * Improved the custom CertificateTrustManager to handle domain-specific configurations by supporting hostname-aware checkServerTrusted calls.
   * Mitigated an issue where after closing a content, they were not being fetched again.

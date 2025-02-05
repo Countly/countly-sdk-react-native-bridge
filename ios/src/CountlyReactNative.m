@@ -27,7 +27,7 @@
 
 BOOL BUILDING_WITH_PUSH_DISABLED = true;
 
-NSString *const kCountlyReactNativeSDKVersion = @"25.1.0";
+NSString *const kCountlyReactNativeSDKVersion = @"25.1.1";
 NSString *const kCountlyReactNativeSDKName = @"js-rnb-ios";
 NSString *const kCountlyReactNativeSDKNameNoPush = @"js-rnbnp-ios";
 
