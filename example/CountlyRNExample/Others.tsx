@@ -46,6 +46,14 @@ const recordIndirectAttribution = () => {
     Countly.recordIndirectAttribution(attributionValues);
 };
 
+const enterContentZone = () => {
+    Countly.content.enterContentZone();
+}
+
+const exitContentZone = () => {
+    Countly.content.exitContentZone();
+}
+
 function OthersScreen({ navigation }) {
     return (
         <SafeAreaView>
@@ -55,6 +63,8 @@ function OthersScreen({ navigation }) {
                 <CountlyButton onPress={setCustomMetrics} title="Set Custom Metrics" color="#00b5ad" />
                 <CountlyButton onPress={recordDirectAttribution} title="Record Direct Attribution" color="#1b1c1d" lightText={true} />
                 <CountlyButton onPress={recordIndirectAttribution} title="Record Indirect Attribution" color="#1b1c1d" lightText={true} />
+                <CountlyButton onPress={enterContentZone} title="Enter Content Zone" color="#1b1c1d" lightText={true} />
+                <CountlyButton onPress={exitContentZone} title="Exit Content Zone" color="#1b1c1d" lightText={true} />
             </ScrollView>
         </SafeAreaView>
     );

@@ -27,8 +27,7 @@
 
 BOOL BUILDING_WITH_PUSH_DISABLED = true;
 
-NSString *const kCountlyReactNativeSDKVersion = @"24.4.1";
-
+NSString *const kCountlyReactNativeSDKVersion = @"25.1.1";
 NSString *const kCountlyReactNativeSDKName = @"js-rnb-ios";
 NSString *const kCountlyReactNativeSDKNameNoPush = @"js-rnbnp-ios";
 
@@ -54,6 +53,7 @@ NSString *const widgetShownCallbackName = @"widgetShownCallback";
 NSString *const widgetClosedCallbackName = @"widgetClosedCallback";
 NSString *const ratingWidgetCallbackName = @"ratingWidgetCallback";
 NSString *const pushNotificationCallbackName = @"pushNotificationCallback";
+NSString *const contentCallbackName = @"globalContentCallback";
 
 @implementation CountlyReactNative
 NSString *const kCountlyNotificationPersistencyKey = @"kCountlyNotificationPersistencyKey";
@@ -75,7 +75,7 @@ NSString *const kCountlyNotificationPersistencyKey = @"kCountlyNotificationPersi
 }
 
 - (NSArray<NSString *> *)supportedEvents {
-    return @[ pushNotificationCallbackName, ratingWidgetCallbackName, widgetShownCallbackName, widgetClosedCallbackName ];
+    return @[ pushNotificationCallbackName, ratingWidgetCallbackName, widgetShownCallbackName, widgetClosedCallbackName, contentCallbackName ];
 }
 
 RCT_EXPORT_MODULE();
@@ -180,6 +180,22 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
         [config.sdkInternalLimits setMaxStackTraceLinesPerThread:[maxStackTraceLinesPerThread intValue]];
     }
     // Limits End -------------------------------------------
+    NSNumber *timerInt = json[@"setZoneTimerInterval"];
+    if (timerInt) {
+        [config.content setZoneTimerInterval:[timerInt intValue]];
+    }
+    if(json[@"setGlobalContentCallback"]) {
+        [config.content setGlobalContentCallback:^(ContentStatus contentStatus, NSDictionary<NSString *,id> * _Nonnull contentData) {
+            NSMutableDictionary *contentDataDict = [[NSMutableDictionary alloc] init];
+            [contentDataDict setObject:[NSNumber numberWithInt:contentStatus] forKey:@"status"];
+            [contentDataDict setObject:contentData forKey:@"data"];
+            NSError *error;
+            NSData *contentDataJson = [NSJSONSerialization dataWithJSONObject:contentDataDict options:0 error:&error];
+            NSString *contentDataString = [[NSString alloc] initWithData:contentDataJson encoding:NSUTF8StringEncoding];
+
+            [self sendEventWithName:contentCallbackName body:contentDataString];
+        }];
+    }
     // APM ------------------------------------------------
     NSNumber *enableForegroundBackground = json[@"enableForegroundBackground"];
     if (enableForegroundBackground) {
@@ -202,6 +218,12 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
         config.enablePerformanceMonitoring = YES;
     }
     // APM END --------------------------------------------
+    if (json[@"enablePreviousNameRecording"]) {
+        config.experimental.enablePreviousNameRecording = YES;
+    }
+    if (json[@"enableVisibilityTracking"]) {
+        config.experimental.enableVisibiltyTracking = YES;
+    }
 
     if (json[@"crashReporting"]) {
         [self addCountlyFeature:CLYCrashReporting];
@@ -263,6 +285,12 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
     }
 }
 
+RCT_EXPORT_METHOD(setID : (NSString *)newDeviceID) { 
+    dispatch_async(dispatch_get_main_queue(), ^{ 
+        [Countly.sharedInstance setID:newDeviceID];
+    });
+}
+
 RCT_EXPORT_METHOD(recordEvent : (NSDictionary *)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^{
         NSString *eventName = [arguments objectForKey:@"n"];
@@ -315,7 +343,6 @@ RCT_REMAP_METHOD(setUserData, params : (NSArray *)arguments setUserDataWithResol
     dispatch_async(dispatch_get_main_queue(), ^{
       NSDictionary *userData = [arguments objectAtIndex:0];
       [self setUserDataIntenral:userData];
-      [Countly.user save];
       resolve(@"Success");
     });
 }
@@ -667,7 +694,6 @@ RCT_REMAP_METHOD(userData_setProperty, params : (NSArray *)arguments userDataSet
       NSString *keyValue = [arguments objectAtIndex:1];
 
       [Countly.user set:keyName value:keyValue];
-      [Countly.user save];
       resolve(@"Success");
     });
 }
@@ -677,7 +703,6 @@ RCT_REMAP_METHOD(userData_increment, params : (NSArray *)arguments userDataIncre
       NSString *keyName = [arguments objectAtIndex:0];
 
       [Countly.user increment:keyName];
-      [Countly.user save];
       resolve(@"Success");
     });
 }
@@ -689,7 +714,6 @@ RCT_REMAP_METHOD(userData_incrementBy, params : (NSArray *)arguments userDataInc
       int keyValueInteger = [keyValue intValue];
 
       [Countly.user incrementBy:keyName value:[NSNumber numberWithInt:keyValueInteger]];
-      [Countly.user save];
       resolve(@"Success");
     });
 }
@@ -701,7 +725,6 @@ RCT_REMAP_METHOD(userData_multiply, params : (NSArray *)arguments userDataMultip
       int keyValueInteger = [keyValue intValue];
 
       [Countly.user multiply:keyName value:[NSNumber numberWithInt:keyValueInteger]];
-      [Countly.user save];
       resolve(@"Success");
     });
 }
@@ -713,7 +736,6 @@ RCT_REMAP_METHOD(userData_saveMax, params : (NSArray *)arguments userDataSaveMax
       int keyValueInteger = [keyValue intValue];
 
       [Countly.user max:keyName value:[NSNumber numberWithInt:keyValueInteger]];
-      [Countly.user save];
       resolve(@"Success");
     });
 }
@@ -725,7 +747,6 @@ RCT_REMAP_METHOD(userData_saveMin, params : (NSArray *)arguments userDataSaveMin
       int keyValueInteger = [keyValue intValue];
 
       [Countly.user min:keyName value:[NSNumber numberWithInt:keyValueInteger]];
-      [Countly.user save];
       resolve(@"Success");
     });
 }
@@ -736,7 +757,6 @@ RCT_REMAP_METHOD(userData_setOnce, params : (NSArray *)arguments userDataSetOnce
       NSString *keyValue = [arguments objectAtIndex:1];
 
       [Countly.user setOnce:keyName value:keyValue];
-      [Countly.user save];
       resolve(@"Success");
     });
 }
@@ -747,7 +767,6 @@ RCT_REMAP_METHOD(userData_pushUniqueValue, params : (NSArray *)arguments userDat
       NSString *keyValue = [arguments objectAtIndex:1];
 
       [Countly.user pushUnique:keyName value:keyValue];
-      [Countly.user save];
       resolve(@"Success");
     });
 }
@@ -758,7 +777,6 @@ RCT_REMAP_METHOD(userData_pushValue, params : (NSArray *)arguments userDataPushV
       NSString *keyValue = [arguments objectAtIndex:1];
 
       [Countly.user push:keyName value:keyValue];
-      [Countly.user save];
       resolve(@"Success");
     });
 }
@@ -769,7 +787,6 @@ RCT_REMAP_METHOD(userData_pullValue, params : (NSArray *)arguments userDataPullV
       NSString *keyValue = [arguments objectAtIndex:1];
 
       [Countly.user pull:keyName value:keyValue];
-      [Countly.user save];
       resolve(@"Success");
     });
 }
@@ -1288,6 +1305,18 @@ RCT_EXPORT_METHOD(setCustomMetrics : (NSArray *)arguments) {
           }
       }
       config.customMetrics = metrics;
+    });
+}
+
+RCT_EXPORT_METHOD(enterContentZone) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      [Countly.sharedInstance.content enterContentZone];
+    });
+}
+
+RCT_EXPORT_METHOD(exitContentZone) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      [Countly.sharedInstance.content exitContentZone];
     });
 }
 

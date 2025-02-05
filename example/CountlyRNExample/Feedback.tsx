@@ -104,50 +104,16 @@ const presentRatingWidgetUsingEditBox = function () {
 };
 
 const showSurvey = () => {
-    Countly.getFeedbackWidgets((retrivedWidgets, error) => {
-        if (error != null) {
-            console.log(`showSurvey Error : ${error}`);
-        } else {
-            console.log(`showSurvey Success : ${retrivedWidgets.length}`);
-            const surveyWidget = retrivedWidgets.find((x) => x.type === "survey");
-            if (surveyWidget) {
-                Countly.presentFeedbackWidgetObject(
-                    surveyWidget,
-                    "Close",
-                    function () {
-                        console.log("showSurvey presentFeedbackWidgetObject : " + "Widgetshown");
-                    },
-                    function () {
-                        console.log("showSurvey presentFeedbackWidgetObject : " + "Widgetclosed");
-                    }
-                );
-            }
-        }
-    });
+    Countly.feedback.showSurvey(undefined, () => {console.log(`Survey shown`);});
 };
 
 const showNPS = () => {
-    Countly.getFeedbackWidgets((retrivedWidgets, error) => {
-        if (error != null) {
-            console.log(`showNPS Error : ${error}`);
-        } else {
-            console.log(`showNPS Success : ${retrivedWidgets.length}`);
-            const npsWidget = retrivedWidgets.find((x) => x.type === "nps");
-            if (npsWidget) {
-                Countly.presentFeedbackWidgetObject(
-                    npsWidget,
-                    "Close",
-                    function () {
-                        console.log("showNPS presentFeedbackWidgetObject : " + "Widgetshown");
-                    },
-                    function () {
-                        console.log("showNPS presentFeedbackWidgetObject : " + "Widgetclosed");
-                    }
-                );
-            }
-        }
-    });
+    Countly.feedback.showNPS(undefined, () => {console.log(`NPS shown`);});
 };
+
+const showRating = () => {
+    Countly.feedback.showRating(undefined, () => {console.log(`Rating shown`);});
+}
 
 const styles = StyleSheet.create({
     inputRoundedBorder: {
@@ -267,6 +233,7 @@ function FeedbackScreen({ navigation }) {
                 <CountlyButton disabled={!state.ratingId} onPress={presentRatingWidgetUsingEditBox} title="Show Feedback using EditBox" color="#00b5ad" />
                 <CountlyButton onPress={showSurvey} title="Show Survey" color="#00b5ad" />
                 <CountlyButton onPress={showNPS} title="Show NPS" color="#00b5ad" />
+                <CountlyButton onPress={showRating} title="Show Rating" color="#00b5ad" />
                 <CountlyButton onPress={setStarRatingDialogTexts} title="Set Star Rating Dialog Texts" color="#00b5ad" />
             </ScrollView>
         </SafeAreaView>
