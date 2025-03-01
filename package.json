@@ -54,7 +54,7 @@
         "jest-config": "29.7.0",
         "metro-react-native-babel-preset": "0.76.7",
         "node-notifier": "10.0.1",
-        "prettier": "3.2.5",
+        "prettier": "3.5.2",
         "react-test-renderer": "18.2.0",
         "ts-node": "10.9.1",
         "typescript": "5.2.2",
