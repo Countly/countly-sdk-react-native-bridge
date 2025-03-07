@@ -87,12 +87,12 @@ function configToJson(config) {
             L.i(`init configuration, Tampering protection salt: ${config.tamperingProtectionSalt}`)
         }
         // APM ------------------------------------------------
-        if (config.apm.enableForegroundBackground) {
-            json.enableForegroundBackground = config.apm.enableForegroundBackground;
+        if (config.apm.foregroundBackground) {
+            json.enableForegroundBackground = true;
             L.i(`init configuration, APM enabled foreground background`)
         }
-        if (config.apm.enableManualAppLoaded) {
-            json.enableManualAppLoaded = config.apm.enableManualAppLoaded;
+        if (config.apm.manualAppLoaded) {
+            json.enableManualAppLoaded = true;
             L.i(`init configuration, APM enabled manual app loaded`)
         }
         if (config.apm.startTSOverride) {
@@ -109,11 +109,11 @@ function configToJson(config) {
             L.i(`init configuration, APM start time recording enabled`)
         }
         // APM END --------------------------------------------
-        if (config.experimental.enablePreviousNameRecording) {
+        if (config.experimental.previousNameRecording) {
             json.enablePreviousNameRecording = true;
             L.i(`init configuration, Enabled previous name recording`)
         }
-        if (config.experimental.enableVisibilityTracking) {
+        if (config.experimental.visibilityTracking) {
             json.enableVisibilityTracking = true;
             L.i(`init configuration, Enabled visibility tracking`)
         }

@@ -1,3 +1,9 @@
+## 25.1.2
+* Mitigated an issue where the visibility tracking could have been enabled by default
+
+* Underlying Android SDK version is 25.1.1
+* Underlying iOS SDK version is 25.1.1
+
 ## 25.1.1
 * Improved content size management of content blocks.
 * Added init time config options:
