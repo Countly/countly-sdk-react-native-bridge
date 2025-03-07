@@ -1,6 +1,6 @@
 {
     "name": "countly-sdk-react-native-bridge-np",
-    "version": "25.1.1",
+    "version": "25.1.2",
     "author": "Countly <hello@count.ly> (https://count.ly/)",
     "bugs": {
         "url": "https://github.com/Countly/countly-sdk-react-native-bridge/issues"

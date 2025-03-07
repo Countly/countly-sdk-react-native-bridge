@@ -87,7 +87,7 @@ class CountlyReactException extends Exception {
 public class CountlyReactNative extends ReactContextBaseJavaModule implements LifecycleEventListener {
 
     public static final String TAG = "CountlyRNPlugin";
-    private String COUNTLY_RN_SDK_VERSION_STRING = "25.1.1";
+    private String COUNTLY_RN_SDK_VERSION_STRING = "25.1.2";
     private String COUNTLY_RN_SDK_NAME = "js-rnb-android-np";
 
     private static final CountlyConfig config = new CountlyConfig();
