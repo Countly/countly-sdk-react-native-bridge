@@ -1,29 +1,43 @@
 package ly.count.android.sdk.react;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
-import com.facebook.react.ReactPackage;
+import androidx.annotation.Nullable;
+import java.util.HashMap;
+import java.util.Map;
 import com.facebook.react.bridge.NativeModule;
 import com.facebook.react.bridge.ReactApplicationContext;
-import com.facebook.react.uimanager.ViewManager;
-import com.facebook.react.bridge.JavaScriptModule;
+import com.facebook.react.module.model.ReactModuleInfo;
+import com.facebook.react.module.model.ReactModuleInfoProvider;
+import com.facebook.react.TurboReactPackage;
 
-public class CountlyReactNativePackage implements ReactPackage {
+public class CountlyReactNativePackage extends TurboReactPackage {
 
+    @Nullable
     @Override
-    public List<NativeModule> createNativeModules(ReactApplicationContext reactApplicationContext) {
-        return Collections.<NativeModule>singletonList(new CountlyReactNative(reactApplicationContext));
+    public NativeModule getModule(String name, ReactApplicationContext reactContext) {
+      if (name.equals(CountlyReactNativeImpl.NAME)) {
+        return new CountlyReactNative(reactContext);
+      } else {
+        return null;
+      }
     }
-
-    public List<Class<? extends JavaScriptModule>> createJSModules() {
-        return Collections.emptyList();
-    }
-
+  
     @Override
-    public List<ViewManager> createViewManagers(ReactApplicationContext reactApplicationContext) {
-        return Collections.emptyList();
+    public ReactModuleInfoProvider getReactModuleInfoProvider() {
+      return () -> {
+        final Map<String, ReactModuleInfo> map = new HashMap<>();
+        boolean isTurboModule = BuildConfig.IS_NEW_ARCHITECTURE_ENABLED;
+        map.put(
+            CountlyReactNativeImpl.NAME,
+            new ReactModuleInfo(
+                CountlyReactNativeImpl.NAME,
+                CountlyReactNativeImpl.NAME,
+                false, // canOverrideExistingModule
+                false, // needsEagerInit
+                true, // hasConstants
+                false, // isCxxModule
+                isTurboModule // isTurboModule
+        ));
+        return map;
+      };
     }
-
 }

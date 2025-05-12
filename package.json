@@ -59,5 +59,13 @@
         "ts-node": "10.9.1",
         "typescript": "5.2.2",
         "utf-8-validate": "6.0.3"
+    },
+    "codegenConfig": {
+        "name": "CountlyReactNativeSpec",
+        "type": "all",
+        "jsSrcsDir": "src",
+        "android": {
+            "javaPackageName": "ly.count.android.sdk.react"
+        }
     }
 }
