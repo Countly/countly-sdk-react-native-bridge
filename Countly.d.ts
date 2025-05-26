@@ -79,10 +79,13 @@ declare module "countly-sdk-react-native-bridge" {
     string;
     string;
     export const TemporaryDeviceIDString: string;
-    export interface messagingMode {
-      DEVELOPMENT: string;
-      PRODUCTION: string;
-      ADHOC: string;
+    /**
+     * Messaging modes for push notifications
+     */
+    namespace messagingMode {
+      const DEVELOPMENT: string;
+      const PRODUCTION: string;
+      const ADHOC: string;
     }
 
     /**
