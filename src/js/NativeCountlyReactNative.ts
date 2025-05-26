@@ -2,65 +2,6 @@ import type { TurboModule } from "react-native";
 import { TurboModuleRegistry } from "react-native";
 import type { UnsafeObject } from 'react-native/Libraries/Types/CodegenTypes';
 
-/*
- * 
-public void init(ReadableArray args, Promise promise)
-public void setLoggingEnabled(ReadableArray args)
-public void isLoggingEnabled(final Promise promise)
-public void isInitialized(Promise promise)
-public void hasBeenCalledOnStart(Promise promise)
-public void getCurrentDeviceId(Promise promise)
-public void getDeviceIDType(Promise promise)
-public void changeDeviceId(ReadableArray args)
-public void setHttpPostForced(ReadableArray args)
-public void enableParameterTamperingProtection(ReadableArray args)
-public void pinnedCertificates(ReadableArray args)
-public void setLocationInit(ReadableArray args)
-public void setLocation(ReadableArray args)
-public void disableLocation()
-public void enableCrashReporting()
-public void addCrashLog(ReadableArray args)
-public void logException(ReadableArray args)
-public void logJSException(String err, String message, String stack)
-public void setCustomCrashSegments(ReadableArray args)
-public void recordEvent(ReadableMap args)
-public void startEvent(ReadableArray args)
-public void cancelEvent(ReadableArray args)
-public void endEvent(ReadableMap args)
-public void recordView(ReadableArray args)
-public void setUserData(ReadableArray args, Promise promise)
-public void sendPushToken(ReadableArray args)
-public void pushTokenType(ReadableArray args)
-public static void onNotification(Map<String, String> notification)
-public void registerForNotification(ReadableArray args)
-public void askForNotificationPermission(ReadableArray args)
-public void configureIntentRedirectionCheck(ReadableArray intentClassNames, ReadableArray intentPackageNames, boolean useAdditionalIntentRedirectionChecks)
-public void userData_setProperty(ReadableArray args, Promise promise)
-public void userData_increment(ReadableArray args, Promise promise)
-public void userData_incrementBy(ReadableArray args, Promise promise)
-public void userData_multiply(ReadableArray args, Promise promise)
-public void userData_saveMax(ReadableArray args, Promise promise)
-public void userData_saveMin(ReadableArray args, Promise promise)
-public void userData_setOnce(ReadableArray args, Promise promise)
-public void userData_pushUniqueValue(ReadableArray args, Promise promise)
-public void userData_pushValue(ReadableArray args, Promise promise)
-public void userData_pullValue(ReadableArray args, Promise promise)
-public void userDataBulk_setUserProperties(ReadableMap userData, Promise promise)
-public void userDataBulk_save(ReadableArray args, Promise promise)
-public void userDataBulk_setProperty(ReadableArray args, Promise promise)
-public void userDataBulk_increment(ReadableArray args, Promise promise)
-public void userDataBulk_incrementBy(ReadableArray args, Promise promise)
-public void userDataBulk_multiply(ReadableArray args, Promise promise)
-public void userDataBulk_saveMax(ReadableArray args, Promise promise)
-public void userDataBulk_saveMin(ReadableArray args, Promise promise)
-public void userDataBulk_setOnce(ReadableArray args, Promise promise)
-public void userDataBulk_pushUniqueValue(ReadableArray args, Promise promise)
-public void userDataBulk_pushValue(ReadableArray args, Promise promise)
-public void userDataBulk_pullValue(ReadableArray args, Promise promise)
-public void setRequiresConsent(ReadableArray args)
-public void giveConsentInit(ReadableArray featureNames)
-public void giveConsent(ReadableArray featureNames)
- */
 export interface Spec extends TurboModule {
     init(args: Array<UnsafeObject>): Promise<void>;
     setLoggingEnabled(args: Array<boolean>): void;
@@ -117,6 +58,40 @@ export interface Spec extends TurboModule {
     setRequiresConsent(args: Array<string>): void;
     giveConsentInit(featureNames: Array<string>): void;
     giveConsent(featureNames: Array<string>): void;
+    removeConsent(featureNames: Array<string>): void;
+    giveAllConsent(): void;
+    removeAllConsent(): void;
+    remoteConfigUpdate(args: Array<UnsafeObject>, callback: () => void): void;
+    updateRemoteConfigForKeysOnly(args: Array<UnsafeObject>, callback: () => void): void;
+    updateRemoteConfigExceptKeys(args: Array<UnsafeObject>, callback: () => void): void;
+    getRemoteConfigValueForKey(args: Array<string>, callback: () => void): void;
+    getRemoteConfigValueForKeyP(keyName: string): Promise<UnsafeObject>;
+    remoteConfigClearValues(): Promise<void>;
+    setStarRatingDialogTexts(args: Array<string>): void;
+    showStarRating(args: Array<string>, callback: () => void): void;
+    presentRatingWidgetWithID(args: Array<string>): void;
+    getFeedbackWidgets(): Promise<UnsafeObject>;
+    getFeedbackWidgetData(args: Array<string>): Promise<UnsafeObject>;
+    reportFeedbackWidgetManually(args: Array<string>): Promise<void>;
+    getAvailableFeedbackWidgets(): Promise<UnsafeObject>;
+    presentFeedbackWidget(args: Array<string>): Promise<void>;
+    replaceAllAppKeysInQueueWithCurrentAppKey(): void;
+    removeDifferentAppKeysFromQueue(): void;
+    setEventSendThreshold(args: Array<number>): void;
+    startTrace(args: Array<string>): void;
+    cancelTrace(args: Array<string>): void;
+    clearAllTraces(args: Array<string>): void;
+    endTrace(args: Array<string>): void;
+    recordNetworkTrace(args: Array<string>): void;
+    enableApm(args: Array<string>): void;
+    recordAttributionID(args: Array<string>): void;
+    recordIndirectAttribution(args: Array<string>): void;
+    recordDirectAttribution(args: Array<string>): void;
+    appLoadingFinished(): void;
+    enterContentZone(): void;
+    exitContentZone(): void;
+    setID(newDeviceID: string): void;
+    setCustomMetrics(args: Array<UnsafeObject>): void;
 }
 
 export default TurboModuleRegistry.getEnforcing<Spec>("CountlyReactNative");

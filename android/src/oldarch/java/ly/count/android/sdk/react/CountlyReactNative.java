@@ -7,6 +7,7 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.bridge.Callback;
 
 public class CountlyReactNative extends ReactContextBaseJavaModule {
     private final CountlyReactNativeImpl impl;
@@ -298,5 +299,176 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void giveConsent(ReadableArray featureNames) {
         this.impl.giveConsent(featureNames);
+    }
+
+    
+    @ReactMethod
+    public void giveAllConsent() {
+        this.impl.giveAllConsent();
+    }
+
+    @ReactMethod
+    public void removeAllConsent() {
+        this.impl.removeAllConsent();
+    }
+
+    @ReactMethod
+    public void removeConsent(ReadableArray featureNames) {
+        this.impl.removeConsent(featureNames);
+    }
+
+    @ReactMethod
+    public void remoteConfigUpdate(ReadableArray args, final Callback myCallback) {
+        this.impl.remoteConfigUpdate(args, myCallback);
+    }
+
+    @ReactMethod
+    public void updateRemoteConfigForKeysOnly(ReadableArray args, final Callback myCallback) {
+        this.impl.updateRemoteConfigForKeysOnly(args, myCallback);
+    }
+
+    @ReactMethod
+    public void updateRemoteConfigExceptKeys(ReadableArray args, final Callback myCallback) {
+        this.impl.updateRemoteConfigExceptKeys(args, myCallback);
+    }
+
+    @ReactMethod
+    public void getRemoteConfigValueForKey(ReadableArray args, final Callback myCallback) {
+        this.impl.getRemoteConfigValueForKey(args, myCallback);
+    }
+
+    @ReactMethod
+    public void getRemoteConfigValueForKeyP(String keyName, Promise promise) {
+        this.impl.getRemoteConfigValueForKeyP(keyName, promise);
+    }
+
+    @ReactMethod
+    public void remoteConfigClearValues(Promise promise) {
+        this.impl.remoteConfigClearValues(promise);
+    }
+
+    @ReactMethod
+    public void setStarRatingDialogTexts(ReadableArray args) {
+        this.impl.setStarRatingDialogTexts(args);
+    }
+
+    @ReactMethod
+    public void showStarRating(ReadableArray args, final Callback callback) {
+        this.impl.showStarRating(args, callback);
+    }
+
+    @ReactMethod
+    public void presentRatingWidgetWithID(ReadableArray args) {
+        this.impl.presentRatingWidgetWithID(args);
+    }
+
+    @ReactMethod
+    public void getFeedbackWidgets(final Promise promise) {
+        this.impl.getFeedbackWidgets(promise);
+    }
+
+
+    @ReactMethod
+    public void getFeedbackWidgetData(ReadableArray args, final Promise promise) {
+        this.impl.getFeedbackWidgetData(args, promise);
+    }
+    @ReactMethod
+    public void reportFeedbackWidgetManually(ReadableArray args, final Promise promise) {
+        this.impl.reportFeedbackWidgetManually(args, promise);
+    }
+
+    @ReactMethod
+    public void getAvailableFeedbackWidgets(final Promise promise) {
+        this.impl.getAvailableFeedbackWidgets(promise);
+    }
+
+    @ReactMethod
+    public void presentFeedbackWidget(ReadableArray args, final Promise promise) {
+        this.impl.presentFeedbackWidget(args, promise);
+    }
+
+    @ReactMethod
+    public void replaceAllAppKeysInQueueWithCurrentAppKey() {
+        this.impl.replaceAllAppKeysInQueueWithCurrentAppKey();
+    }
+
+    @ReactMethod
+    public void removeDifferentAppKeysFromQueue() {
+        this.impl.removeDifferentAppKeysFromQueue();
+    }
+
+    @ReactMethod
+    public void setEventSendThreshold(ReadableArray args) {
+        this.impl.setEventSendThreshold(args);
+    }
+
+    @ReactMethod
+    public void startTrace(ReadableArray args) {
+        this.impl.startTrace(args);
+    }
+
+    @ReactMethod
+    public void cancelTrace(ReadableArray args) {
+        this.impl.cancelTrace(args);
+    }
+
+    @ReactMethod
+    public void clearAllTraces(ReadableArray args) {
+        this.impl.clearAllTraces(args);
+    }
+
+    @ReactMethod
+    public void endTrace(ReadableArray args) {
+        this.impl.endTrace(args);
+    }
+
+    @ReactMethod
+    public void recordNetworkTrace(ReadableArray args) {
+        this.impl.recordNetworkTrace(args);
+    }
+
+    @ReactMethod
+    public void enableApm(ReadableArray args) {
+        this.impl.enableApm(args);
+    }
+
+    @ReactMethod
+    public void recordAttributionID(ReadableArray args) {
+        this.impl.recordAttributionID(args);
+    }
+
+    @ReactMethod
+    public void recordIndirectAttribution(ReadableArray args) {
+        this.impl.recordIndirectAttribution(args);
+    }
+
+    @ReactMethod
+    public void recordDirectAttribution(ReadableArray args) {
+        this.impl.recordDirectAttribution(args);
+    }
+
+    @ReactMethod
+    public void appLoadingFinished() {
+        this.impl.appLoadingFinished();
+    }
+
+    @ReactMethod
+    public void enterContentZone() {
+        this.impl.enterContentZone();
+    }
+
+    @ReactMethod
+    public void exitContentZone() {
+        this.impl.exitContentZone();
+    }
+
+    @ReactMethod
+    public void setID(String newDeviceID) {
+        this.impl.setID(newDeviceID);
+    }
+
+    @ReactMethod
+    public void setCustomMetrics(ReadableArray args) {
+        this.impl.setCustomMetrics(args);
     }
 }

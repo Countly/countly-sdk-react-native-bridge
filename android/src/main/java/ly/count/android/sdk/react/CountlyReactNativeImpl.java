@@ -924,18 +924,22 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         }
         CountlyPush.init(configPush);
         try {
+            log("Will initialize Firebase", LogLevel.INFO);
             FirebaseApp.initializeApp(context);
+            log("Firebase initialized", LogLevel.INFO);
             FirebaseMessaging firebaseMessagingInstance = FirebaseMessaging.getInstance();
+            log("FirebaseMessaging instance initialized", LogLevel.INFO);
             if (firebaseMessagingInstance == null) {
                 log("askForNotificationPermission, firebaseMessagingInstance is null", LogLevel.WARNING);
                 return;
             }
             Task<String> firebaseMessagingTokenTask = firebaseMessagingInstance.getToken();
+            log("FirebaseMessaging token task initialized", LogLevel.INFO);
             if (firebaseMessagingTokenTask == null) {
                 log("askForNotificationPermission, firebaseMessagingTokenTask is null", LogLevel.WARNING);
                 return;
             }
-
+            
             firebaseMessagingTokenTask.addOnCompleteListener(new OnCompleteListener<String>() {
                 @Override
                 public void onComplete(@NonNull Task<String> task) {

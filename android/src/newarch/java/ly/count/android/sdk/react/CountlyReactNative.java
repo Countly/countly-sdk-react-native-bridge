@@ -6,64 +6,100 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.bridge.Callback;
 
 /*
- * public void init(ReadableArray args, Promise promise)
-public void setLoggingEnabled(ReadableArray args)
-public void isLoggingEnabled(final Promise promise)
-public void isInitialized(Promise promise)
-public void hasBeenCalledOnStart(Promise promise)
-public void getCurrentDeviceId(Promise promise)
-public void getDeviceIDType(Promise promise)
-public void changeDeviceId(ReadableArray args)
-public void setHttpPostForced(ReadableArray args)
-public void enableParameterTamperingProtection(ReadableArray args)
-public void pinnedCertificates(ReadableArray args)
-public void setLocationInit(ReadableArray args)
-public void setLocation(ReadableArray args)
-public void disableLocation()
-public void enableCrashReporting()
-public void addCrashLog(ReadableArray args)
-public void logException(ReadableArray args)
-public void logJSException(String err, String message, String stack)
-public void setCustomCrashSegments(ReadableArray args)
-public void recordEvent(ReadableMap args)
-public void startEvent(ReadableArray args)
-public void cancelEvent(ReadableArray args)
-public void endEvent(ReadableMap args)
-public void recordView(ReadableArray args)
-public void setUserData(ReadableArray args, Promise promise)
-public void sendPushToken(ReadableArray args)
-public void pushTokenType(ReadableArray args)
-public static void onNotification(Map<String, String> notification)
-public void registerForNotification(ReadableArray args)
-public void askForNotificationPermission(ReadableArray args)
-public void configureIntentRedirectionCheck(ReadableArray intentClassNames, ReadableArray intentPackageNames, boolean useAdditionalIntentRedirectionChecks)
-public void userData_setProperty(ReadableArray args, Promise promise)
-public void userData_increment(ReadableArray args, Promise promise)
-public void userData_incrementBy(ReadableArray args, Promise promise)
-public void userData_multiply(ReadableArray args, Promise promise)
-public void userData_saveMax(ReadableArray args, Promise promise)
-public void userData_saveMin(ReadableArray args, Promise promise)
-public void userData_setOnce(ReadableArray args, Promise promise)
-public void userData_pushUniqueValue(ReadableArray args, Promise promise)
-public void userData_pushValue(ReadableArray args, Promise promise)
-public void userData_pullValue(ReadableArray args, Promise promise)
-public void userDataBulk_setUserProperties(ReadableMap userData, Promise promise)
-public void userDataBulk_save(ReadableArray args, Promise promise)
-public void userDataBulk_setProperty(ReadableArray args, Promise promise)
-public void userDataBulk_increment(ReadableArray args, Promise promise)
-public void userDataBulk_incrementBy(ReadableArray args, Promise promise)
-public void userDataBulk_multiply(ReadableArray args, Promise promise)
-public void userDataBulk_saveMax(ReadableArray args, Promise promise)
-public void userDataBulk_saveMin(ReadableArray args, Promise promise)
-public void userDataBulk_setOnce(ReadableArray args, Promise promise)
-public void userDataBulk_pushUniqueValue(ReadableArray args, Promise promise)
-public void userDataBulk_pushValue(ReadableArray args, Promise promise)
-public void userDataBulk_pullValue(ReadableArray args, Promise promise)
-public void setRequiresConsent(ReadableArray args)
-public void giveConsentInit(ReadableArray featureNames)
-public void giveConsent(ReadableArray featureNames)
+init(ReadableArray args, Promise promise)
+setLoggingEnabled(ReadableArray args)
+isLoggingEnabled(final Promise promise)
+isInitialized(Promise promise)
+hasBeenCalledOnStart(Promise promise)
+getCurrentDeviceId(Promise promise)
+getDeviceIDType(Promise promise)
+changeDeviceId(ReadableArray args)
+setHttpPostForced(ReadableArray args)
+enableParameterTamperingProtection(ReadableArray args)
+pinnedCertificates(ReadableArray args)
+setLocationInit(ReadableArray args)
+setLocation(ReadableArray args)
+disableLocation()
+enableCrashReporting()
+addCrashLog(ReadableArray args)
+logException(ReadableArray args)
+logJSException(String err, String message, String stack)
+setCustomCrashSegments(ReadableArray args)
+recordEvent(ReadableMap args)
+startEvent(ReadableArray args)
+cancelEvent(ReadableArray args)
+endEvent(ReadableMap args)
+recordView(ReadableArray args)
+setUserData(ReadableArray args, Promise promise)
+sendPushToken(ReadableArray args)
+pushTokenType(ReadableArray args)
+onNotification(Map<String, String> notification)
+registerForNotification(ReadableArray args)
+askForNotificationPermission(ReadableArray args)
+configureIntentRedirectionCheck(ReadableArray intentClassNames, ReadableArray intentPackageNames, boolean useAdditionalIntentRedirectionChecks)
+userData_setProperty(ReadableArray args, Promise promise)
+userData_increment(ReadableArray args, Promise promise)
+userData_incrementBy(ReadableArray args, Promise promise)
+userData_multiply(ReadableArray args, Promise promise)
+userData_saveMax(ReadableArray args, Promise promise)
+userData_saveMin(ReadableArray args, Promise promise)
+userData_setOnce(ReadableArray args, Promise promise)
+userData_pushUniqueValue(ReadableArray args, Promise promise)
+userData_pushValue(ReadableArray args, Promise promise)
+userData_pullValue(ReadableArray args, Promise promise)
+userDataBulk_setUserProperties(ReadableMap userData, Promise promise)
+userDataBulk_save(ReadableArray args, Promise promise)
+userDataBulk_setProperty(ReadableArray args, Promise promise)
+userDataBulk_increment(ReadableArray args, Promise promise)
+userDataBulk_incrementBy(ReadableArray args, Promise promise)
+userDataBulk_multiply(ReadableArray args, Promise promise)
+userDataBulk_saveMax(ReadableArray args, Promise promise)
+userDataBulk_saveMin(ReadableArray args, Promise promise)
+userDataBulk_setOnce(ReadableArray args, Promise promise)
+userDataBulk_pushUniqueValue(ReadableArray args, Promise promise)
+userDataBulk_pushValue(ReadableArray args, Promise promise)
+userDataBulk_pullValue(ReadableArray args, Promise promise)
+setRequiresConsent(ReadableArray args)
+giveConsentInit(ReadableArray featureNames)
+giveConsent(ReadableArray featureNames)
+removeConsent(ReadableArray featureNames)
+giveAllConsent()
+removeAllConsent()
+remoteConfigUpdate(ReadableArray args, final Callback myCallback)
+updateRemoteConfigForKeysOnly(ReadableArray args, final Callback myCallback)
+updateRemoteConfigExceptKeys(ReadableArray args, final Callback myCallback)
+getRemoteConfigValueForKey(ReadableArray args, final Callback myCallback)
+getRemoteConfigValueForKeyP(String keyName, Promise promise)
+remoteConfigClearValues(Promise promise)
+setStarRatingDialogTexts(ReadableArray args)
+showStarRating(ReadableArray args, final Callback callback)
+presentRatingWidgetWithID(ReadableArray args)
+getFeedbackWidgets(final Promise promise)
+getFeedbackWidget(String widgetId)
+getFeedbackWidgetData(ReadableArray args, final Promise promise)
+reportFeedbackWidgetManually(ReadableArray args, final Promise promise)
+getAvailableFeedbackWidgets(final Promise promise)
+presentFeedbackWidget(ReadableArray args, final Promise promise)
+replaceAllAppKeysInQueueWithCurrentAppKey()
+removeDifferentAppKeysFromQueue()
+setEventSendThreshold(ReadableArray args)
+startTrace(ReadableArray args)
+cancelTrace(ReadableArray args)
+clearAllTraces(ReadableArray args)
+endTrace(ReadableArray args)
+recordNetworkTrace(ReadableArray args)
+enableApm(ReadableArray args)
+recordAttributionID(ReadableArray args)
+recordIndirectAttribution(ReadableArray args)
+recordDirectAttribution(ReadableArray args)
+appLoadingFinished()
+enterContentZone()
+exitContentZone()
+setID(String newDeviceID)
+setCustomMetrics(ReadableArray args)
  */
 
 public class CountlyReactNative extends NativeCountlyReactNativeSpec {
@@ -357,5 +393,174 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     @Override
     public void giveConsent(ReadableArray featureNames) {
         this.impl.giveConsent(featureNames);
+    }
+
+    @Override
+    public void giveAllConsent() {
+        this.impl.giveAllConsent();
+    }
+
+    @Override
+    public void removeAllConsent() {
+        this.impl.removeAllConsent();
+    }
+
+    @Override
+    public void removeConsent(ReadableArray featureNames) {
+        this.impl.removeConsent(featureNames);
+    }
+
+    @Override
+    public void remoteConfigUpdate(ReadableArray args, final Callback myCallback) {
+        this.impl.remoteConfigUpdate(args, myCallback);
+    }
+
+    @Override
+    public void updateRemoteConfigForKeysOnly(ReadableArray args, final Callback myCallback) {
+        this.impl.updateRemoteConfigForKeysOnly(args, myCallback);
+    }
+
+    @Override
+    public void updateRemoteConfigExceptKeys(ReadableArray args, final Callback myCallback) {
+        this.impl.updateRemoteConfigExceptKeys(args, myCallback);
+    }
+
+    @Override
+    public void getRemoteConfigValueForKey(ReadableArray args, final Callback myCallback) {
+        this.impl.getRemoteConfigValueForKey(args, myCallback);
+    }
+
+    @Override
+    public void getRemoteConfigValueForKeyP(String keyName, Promise promise) {
+        this.impl.getRemoteConfigValueForKeyP(keyName, promise);
+    }
+
+    @Override
+    public void remoteConfigClearValues(Promise promise) {
+        this.impl.remoteConfigClearValues(promise);
+    }
+
+    @Override
+    public void setStarRatingDialogTexts(ReadableArray args) {
+        this.impl.setStarRatingDialogTexts(args);
+    }
+
+    @Override
+    public void showStarRating(ReadableArray args, final Callback callback) {
+        this.impl.showStarRating(args, callback);
+    }
+
+    @Override
+    public void presentRatingWidgetWithID(ReadableArray args) {
+        this.impl.presentRatingWidgetWithID(args);
+    }
+
+    @Override
+    public void getFeedbackWidgets(final Promise promise) {
+        this.impl.getFeedbackWidgets(promise);
+    }
+
+    @Override
+    public void getFeedbackWidgetData(ReadableArray args, final Promise promise) {
+        this.impl.getFeedbackWidgetData(args, promise);
+    }
+    @Override
+    public void reportFeedbackWidgetManually(ReadableArray args, final Promise promise) {
+        this.impl.reportFeedbackWidgetManually(args, promise);
+    }
+
+    @Override
+    public void getAvailableFeedbackWidgets(final Promise promise) {
+        this.impl.getAvailableFeedbackWidgets(promise);
+    }
+
+    @Override
+    public void presentFeedbackWidget(ReadableArray args, final Promise promise) {
+        this.impl.presentFeedbackWidget(args, promise);
+    }
+
+    @Override
+    public void replaceAllAppKeysInQueueWithCurrentAppKey() {
+        this.impl.replaceAllAppKeysInQueueWithCurrentAppKey();
+    }
+
+    @Override
+    public void removeDifferentAppKeysFromQueue() {
+        this.impl.removeDifferentAppKeysFromQueue();
+    }
+
+    @Override
+    public void setEventSendThreshold(ReadableArray args) {
+        this.impl.setEventSendThreshold(args);
+    }
+
+    @Override
+    public void startTrace(ReadableArray args) {
+        this.impl.startTrace(args);
+    }
+
+    @Override
+    public void cancelTrace(ReadableArray args) {
+        this.impl.cancelTrace(args);
+    }
+
+    @Override
+    public void clearAllTraces(ReadableArray args) {
+        this.impl.clearAllTraces(args);
+    }
+
+    @Override
+    public void endTrace(ReadableArray args) {
+        this.impl.endTrace(args);
+    }
+
+    @Override
+    public void recordNetworkTrace(ReadableArray args) {
+        this.impl.recordNetworkTrace(args);
+    }
+
+    @Override
+    public void enableApm(ReadableArray args) {
+        this.impl.enableApm(args);
+    }
+
+    @Override
+    public void recordAttributionID(ReadableArray args) {
+        this.impl.recordAttributionID(args);
+    }
+
+    @Override
+    public void recordIndirectAttribution(ReadableArray args) {
+        this.impl.recordIndirectAttribution(args);
+    }
+
+    @Override
+    public void recordDirectAttribution(ReadableArray args) {
+        this.impl.recordDirectAttribution(args);
+    }
+
+    @Override
+    public void appLoadingFinished() {
+        this.impl.appLoadingFinished();
+    }
+
+    @Override
+    public void enterContentZone() {
+        this.impl.enterContentZone();
+    }
+
+    @Override
+    public void exitContentZone() {
+        this.impl.exitContentZone();
+    }
+
+    @Override
+    public void setID(String newDeviceID) {
+        this.impl.setID(newDeviceID);
+    }
+
+    @Override
+    public void setCustomMetrics(ReadableArray args) {
+        this.impl.setCustomMetrics(args);
     }
 }
