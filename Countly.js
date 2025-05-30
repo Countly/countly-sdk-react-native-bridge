@@ -4,7 +4,7 @@
  * @Countly
  */
 
-import { Platform, NativeModules, NativeEventEmitter } from "react-native";
+import { Platform, NativeModules, NativeEventEmitter, TurboModuleRegistry } from "react-native";
 
 import CountlyConfig from "./CountlyConfig.js";
 import CountlyState from "./CountlyState.js";
@@ -15,14 +15,17 @@ import * as L from "./Logger.js";
 import * as Utils from "./Utils.js";
 import * as Validate from "./Validators.js";
 
-const { CountlyReactNative } = NativeModules;
-const eventEmitter = new NativeEventEmitter(CountlyReactNative);
+const CountlyNativeModule =
+  TurboModuleRegistry.get('CountlyReactNative') ??
+  NativeModules.CountlyReactNative;
+
+const eventEmitter = new NativeEventEmitter(CountlyNativeModule);
 
 const Countly = {};
 Countly.serverUrl = "";
 Countly.appKey = "";
 let _state = CountlyState;
-CountlyState.CountlyReactNative = CountlyReactNative;
+CountlyState.CountlyReactNative = CountlyNativeModule;
 CountlyState.eventEmitter = eventEmitter;
 
 Countly.feedback = new Feedback(CountlyState);
@@ -106,7 +109,7 @@ Countly.initWithConfig = async function (countlyConfig) {
     const argsMap = Utils.configToJson(countlyConfig);
     const argsString = JSON.stringify(argsMap);
     args.push(argsString);
-    await CountlyReactNative.init(args);
+    await CountlyNativeModule.init(args);
     _state.isInitialized = true;
 };
 
@@ -117,7 +120,7 @@ Countly.initWithConfig = async function (countlyConfig) {
  * @return {boolean} if true, countly sdk has been initialized
  */
 Countly.isInitialized = async function () {
-    _state.isInitialized = await CountlyReactNative.isInitialized();
+    _state.isInitialized = await CountlyNativeModule.isInitialized();
     L.d(`isInitialized, isInitialized: [${_state.isInitialized}]`);
     return _state.isInitialized;
 };
@@ -137,7 +140,7 @@ Countly.hasBeenCalledOnStart = function () {
         return message;
     }
     L.w("hasBeenCalledOnStart, This call is deprecated and will be removed with no replacement.");
-    return CountlyReactNative.hasBeenCalledOnStart();
+    return CountlyNativeModule.hasBeenCalledOnStart();
 };
 
 /**
@@ -204,7 +207,7 @@ Countly.recordView = function (recordView, segments) {
         args.push(key);
         args.push(segments[key]);
     }
-    CountlyReactNative.recordView(args);
+    CountlyNativeModule.recordView(args);
 };
 
 /**
@@ -221,7 +224,7 @@ Countly.disablePushNotifications = function () {
         return "disablePushNotifications : To be implemented";
     }
     L.d("disablePushNotifications, Disabling push notifications");
-    CountlyReactNative.disablePushNotifications();
+    CountlyNativeModule.disablePushNotifications();
 };
 
 /**
@@ -242,7 +245,7 @@ Countly.pushTokenType = function (tokenType, channelName, channelDescription) {
     args.push(tokenType);
     args.push(channelName || "");
     args.push(channelDescription || "");
-    CountlyReactNative.pushTokenType(args);
+    CountlyNativeModule.pushTokenType(args);
 };
 
 /**
@@ -257,7 +260,7 @@ Countly.sendPushToken = function (options) {
     L.d(`sendPushToken, Sending push token: [${JSON.stringify(options)}]`);
     const args = [];
     args.push(options.token || "");
-    CountlyReactNative.sendPushToken(args);
+    CountlyNativeModule.sendPushToken(args);
 };
 
 /**
@@ -276,7 +279,7 @@ Countly.askForNotificationPermission = function (customSoundPath = "null") {
         return message;
     }
     L.d(`askForNotificationPermission, Asking for notification permission at: [${customSoundPath}]`);
-    CountlyReactNative.askForNotificationPermission([customSoundPath]);
+    CountlyNativeModule.askForNotificationPermission([customSoundPath]);
     _isPushInitialized = true;
 };
 
@@ -289,7 +292,7 @@ Countly.askForNotificationPermission = function (customSoundPath = "null") {
 Countly.registerForNotification = function (theListener) {
     L.d("registerForNotification, Registering for notification");
     const event = eventEmitter.addListener(pushNotificationCallbackName, theListener);
-    CountlyReactNative.registerForNotification([]);
+    CountlyNativeModule.registerForNotification([]);
     return event;
 };
 
@@ -347,7 +350,7 @@ Countly.configureIntentRedirectionCheck = function (allowedIntentClassNames = []
         }
     }
 
-    CountlyReactNative.configureIntentRedirectionCheck(_allowedIntentClassNames, _allowedIntentPackageNames, useAdditionalIntentRedirectionChecks);
+    CountlyNativeModule.configureIntentRedirectionCheck(_allowedIntentClassNames, _allowedIntentPackageNames, useAdditionalIntentRedirectionChecks);
 };
 
 /**
@@ -382,7 +385,7 @@ Countly.stop = function () {
 
 Countly.enableLogging = function () {
     L.w("enableLogging, enableLogging is deprecated, use countlyConfig.enableLogging instead");
-    CountlyReactNative.setLoggingEnabled([true]);
+    CountlyNativeModule.setLoggingEnabled([true]);
 };
 
 /**
@@ -395,7 +398,7 @@ Countly.enableLogging = function () {
  */
 Countly.disableLogging = function () {
     L.w("disableLogging, disableLogging is deprecated, use countlyConfig.enableLogging instead");
-    CountlyReactNative.setLoggingEnabled([false]);
+    CountlyNativeModule.setLoggingEnabled([false]);
 };
 
 /**
@@ -407,7 +410,7 @@ Countly.disableLogging = function () {
 Countly.setLoggingEnabled = function (enabled = true) {
     // TODO: init check
     L.d(`setLoggingEnabled, Setting logging enabled to: [${enabled}]`);
-    CountlyReactNative.setLoggingEnabled([enabled]);
+    CountlyNativeModule.setLoggingEnabled([enabled]);
 };
 
 /**
@@ -427,7 +430,7 @@ Countly.setLocationInit = function (countryCode, city, location, ipAddress) {
     args.push(city || "null");
     args.push(location || "null");
     args.push(ipAddress || "null");
-    CountlyReactNative.setLocationInit(args);
+    CountlyNativeModule.setLocationInit(args);
 };
 
 /**
@@ -451,7 +454,7 @@ Countly.setLocation = function (countryCode, city, location, ipAddress) {
     args.push(city || "null");
     args.push(location || "null");
     args.push(ipAddress || "null");
-    CountlyReactNative.setLocation(args);
+    CountlyNativeModule.setLocation(args);
 };
 
 /**
@@ -467,7 +470,7 @@ Countly.disableLocation = function () {
         return message;
     }
     L.d("disableLocation, Disabling location");
-    CountlyReactNative.disableLocation();
+    CountlyNativeModule.disableLocation();
 };
 
 /**
@@ -485,7 +488,7 @@ Countly.getCurrentDeviceId = async function () {
         return message;
     }
     L.d("getCurrentDeviceId, Getting current device id");
-    const result = await CountlyReactNative.getCurrentDeviceId();
+    const result = await CountlyNativeModule.getCurrentDeviceId();
     return result;
 };
 
@@ -503,7 +506,7 @@ Countly.getDeviceIDType = async function () {
         return null;
     }
     L.d("getDeviceIDType, Getting device id type");
-    const result = await CountlyReactNative.getDeviceIDType();
+    const result = await CountlyNativeModule.getDeviceIDType();
     return Utils.intToDeviceIDType(result);
 };
 
@@ -534,7 +537,7 @@ Countly.changeDeviceId = function (newDeviceID, onServer) {
         onServer = "1";
     }
     newDeviceID = newDeviceID.toString();
-    CountlyReactNative.changeDeviceId([newDeviceID, onServer]);
+    CountlyNativeModule.changeDeviceId([newDeviceID, onServer]);
 };
 
 /**
@@ -547,7 +550,7 @@ Countly.setHttpPostForced = function (boolean = true) {
     L.d(`setHttpPostForced, Setting http post forced to: [${boolean}]`);
     const args = [];
     args.push(boolean ? "1" : "0");
-    CountlyReactNative.setHttpPostForced(args);
+    CountlyNativeModule.setHttpPostForced(args);
 };
 
 /**
@@ -558,7 +561,7 @@ Countly.setHttpPostForced = function (boolean = true) {
  */
 Countly.enableCrashReporting = async function () {
     L.w("enableCrashReporting, enableCrashReporting is deprecated, use countlyConfig.enableCrashReporting instead");
-    CountlyReactNative.enableCrashReporting();
+    CountlyNativeModule.enableCrashReporting();
     if (ErrorUtils && !_isCrashReportingEnabled) {
         L.i("enableCrashReporting, Adding Countly JS error handler.");
         const previousHandler = ErrorUtils.getGlobalHandler();
@@ -589,7 +592,7 @@ Countly.enableCrashReporting = async function () {
                 stackArr = stackArr.join("\n");
             }
 
-            CountlyReactNative.logJSException(errorTitle, error.message.trim(), stackArr);
+            CountlyNativeModule.logJSException(errorTitle, error.message.trim(), stackArr);
 
             if (previousHandler) {
                 previousHandler(error, isFatal);
@@ -613,7 +616,7 @@ Countly.addCrashLog = function (crashLog) {
         return message;
     }
     L.d(`addCrashLog, Adding crash log: [${crashLog}]`);
-    CountlyReactNative.addCrashLog([crashLog]);
+    CountlyNativeModule.addCrashLog([crashLog]);
 };
 
 /**
@@ -644,7 +647,7 @@ Countly.logException = function (exception, nonfatal, segments) {
         args.push(key);
         args.push(segments[key].toString());
     }
-    CountlyReactNative.logException(args);
+    CountlyNativeModule.logException(args);
 };
 
 /**
@@ -660,7 +663,7 @@ Countly.setCustomCrashSegments = function (segments) {
         args.push(key.toString());
         args.push(segments[key].toString());
     }
-    CountlyReactNative.setCustomCrashSegments(args);
+    CountlyNativeModule.setCustomCrashSegments(args);
 };
 
 /**
@@ -676,7 +679,7 @@ Countly.startSession = function () {
         return message;
     }
     L.d("startSession, Starting session");
-    CountlyReactNative.startSession();
+    CountlyNativeModule.startSession();
 };
 
 /**
@@ -692,7 +695,7 @@ Countly.endSession = function () {
         return message;
     }
     L.d("endSession, Ending session");
-    CountlyReactNative.endSession();
+    CountlyNativeModule.endSession();
 };
 
 /**
@@ -710,7 +713,7 @@ Countly.enableParameterTamperingProtection = function (salt) {
         return message;
     }
     L.w(`enableParameterTamperingProtection, enableParameterTamperingProtection is deprecated, use countlyConfig.enableParameterTamperingProtection instead. Salt : [${salt}]`);
-    CountlyReactNative.enableParameterTamperingProtection([salt.toString()]);
+    CountlyNativeModule.enableParameterTamperingProtection([salt.toString()]);
 };
 
 /**
@@ -726,7 +729,7 @@ Countly.pinnedCertificates = function (certificateName) {
         return message;
     }
     L.d(`pinnedCertificates, Setting pinned certificates: [${certificateName}]`);
-    CountlyReactNative.pinnedCertificates([certificateName]);
+    CountlyNativeModule.pinnedCertificates([certificateName]);
 };
 
 /**
@@ -842,7 +845,7 @@ Countly.setUserData = async function (userData) {
     }
     args.push(userData);
 
-    await CountlyReactNative.setUserData(args);
+    await CountlyNativeModule.setUserData(args);
 };
 
 /**
@@ -872,7 +875,7 @@ Countly.userData.setProperty = async function (keyName, keyValue) {
     keyName = keyName.toString();
     keyValue = keyValue.toString();
     if (keyName && (keyValue || keyValue == "")) {
-        await CountlyReactNative.userData_setProperty([keyName, keyValue]);
+        await CountlyNativeModule.userData_setProperty([keyName, keyValue]);
     }
 };
 
@@ -896,7 +899,7 @@ Countly.userData.increment = async function (keyName) {
     }
     keyName = keyName.toString();
     if (keyName) {
-        await CountlyReactNative.userData_increment([keyName]);
+        await CountlyNativeModule.userData_increment([keyName]);
     }
 };
 
@@ -924,7 +927,7 @@ Countly.userData.incrementBy = async function (keyName, keyValue) {
         return message;
     }
     const intValue = parseInt(keyValue, 10).toString();
-    await CountlyReactNative.userData_incrementBy([keyName, intValue]);
+    await CountlyNativeModule.userData_incrementBy([keyName, intValue]);
 };
 
 /**
@@ -951,7 +954,7 @@ Countly.userData.multiply = async function (keyName, keyValue) {
         return message;
     }
     const intValue = parseInt(keyValue, 10).toString();
-    await CountlyReactNative.userData_multiply([keyName, intValue]);
+    await CountlyNativeModule.userData_multiply([keyName, intValue]);
 };
 
 /**
@@ -978,7 +981,7 @@ Countly.userData.saveMax = async function (keyName, keyValue) {
         return message;
     }
     const intValue = parseInt(keyValue, 10).toString();
-    await CountlyReactNative.userData_saveMax([keyName, intValue]);
+    await CountlyNativeModule.userData_saveMax([keyName, intValue]);
 };
 
 /**
@@ -1005,7 +1008,7 @@ Countly.userData.saveMin = async function (keyName, keyValue) {
         return message;
     }
     const intValue = parseInt(keyValue, 10).toString();
-    await CountlyReactNative.userData_saveMin([keyName, intValue]);
+    await CountlyNativeModule.userData_saveMin([keyName, intValue]);
 };
 
 /**
@@ -1033,7 +1036,7 @@ Countly.userData.setOnce = async function (keyName, keyValue) {
     }
     keyValue = keyValue.toString();
     if (keyValue || keyValue == "") {
-        await CountlyReactNative.userData_setOnce([keyName, keyValue]);
+        await CountlyNativeModule.userData_setOnce([keyName, keyValue]);
     }
 };
 
@@ -1062,7 +1065,7 @@ Countly.userData.pushUniqueValue = async function (keyName, keyValue) {
     }
     keyValue = keyValue.toString();
     if (keyValue || keyValue == "") {
-        await CountlyReactNative.userData_pushUniqueValue([keyName, keyValue]);
+        await CountlyNativeModule.userData_pushUniqueValue([keyName, keyValue]);
     }
 };
 
@@ -1091,7 +1094,7 @@ Countly.userData.pushValue = async function (keyName, keyValue) {
     }
     keyValue = keyValue.toString();
     if (keyValue || keyValue == "") {
-        await CountlyReactNative.userData_pushValue([keyName, keyValue]);
+        await CountlyNativeModule.userData_pushValue([keyName, keyValue]);
     }
 };
 
@@ -1120,7 +1123,7 @@ Countly.userData.pullValue = async function (keyName, keyValue) {
     }
     keyValue = keyValue.toString();
     if (keyValue || keyValue == "") {
-        await CountlyReactNative.userData_pullValue([keyName, keyValue]);
+        await CountlyNativeModule.userData_pullValue([keyName, keyValue]);
     }
 };
 
@@ -1167,7 +1170,7 @@ Countly.userDataBulk.setUserProperties = async function (customAndPredefined) {
         customAndPredefined.byear = customAndPredefined.byear.toString();
     }
 
-    await CountlyReactNative.userDataBulk_setUserProperties(customAndPredefined);
+    await CountlyNativeModule.userDataBulk_setUserProperties(customAndPredefined);
 };
 
 /**
@@ -1183,7 +1186,7 @@ Countly.userDataBulk.save = async function () {
         return msg;
     }
     L.d("save, Saving user data");
-    await CountlyReactNative.userDataBulk_save([]);
+    await CountlyNativeModule.userDataBulk_save([]);
 };
 
 /**
@@ -1214,7 +1217,7 @@ Countly.userDataBulk.setProperty = async function (keyName, keyValue) {
     keyName = keyName.toString();
     keyValue = keyValue.toString();
     if (keyName && (keyValue || keyValue == "")) {
-        await CountlyReactNative.userDataBulk_setProperty([keyName, keyValue]);
+        await CountlyNativeModule.userDataBulk_setProperty([keyName, keyValue]);
     }
 };
 
@@ -1239,7 +1242,7 @@ Countly.userDataBulk.increment = async function (keyName) {
     }
     keyName = keyName.toString();
     if (keyName) {
-        await CountlyReactNative.userDataBulk_increment([keyName]);
+        await CountlyNativeModule.userDataBulk_increment([keyName]);
     }
 };
 
@@ -1268,7 +1271,7 @@ Countly.userDataBulk.incrementBy = async function (keyName, keyValue) {
         return message;
     }
     const intValue = parseInt(keyValue, 10).toString();
-    await CountlyReactNative.userDataBulk_incrementBy([keyName, intValue]);
+    await CountlyNativeModule.userDataBulk_incrementBy([keyName, intValue]);
 };
 
 /**
@@ -1296,7 +1299,7 @@ Countly.userDataBulk.multiply = async function (keyName, keyValue) {
         return message;
     }
     const intValue = parseInt(keyValue, 10).toString();
-    await CountlyReactNative.userDataBulk_multiply([keyName, intValue]);
+    await CountlyNativeModule.userDataBulk_multiply([keyName, intValue]);
 };
 
 /**
@@ -1324,7 +1327,7 @@ Countly.userDataBulk.saveMax = async function (keyName, keyValue) {
         return message;
     }
     const intValue = parseInt(keyValue, 10).toString();
-    await CountlyReactNative.userDataBulk_saveMax([keyName, intValue]);
+    await CountlyNativeModule.userDataBulk_saveMax([keyName, intValue]);
 };
 
 /**
@@ -1352,7 +1355,7 @@ Countly.userDataBulk.saveMin = async function (keyName, keyValue) {
         return message;
     }
     const intValue = parseInt(keyValue, 10).toString();
-    await CountlyReactNative.userDataBulk_saveMin([keyName, intValue]);
+    await CountlyNativeModule.userDataBulk_saveMin([keyName, intValue]);
 };
 
 /**
@@ -1381,7 +1384,7 @@ Countly.userDataBulk.setOnce = async function (keyName, keyValue) {
     }
     keyValue = keyValue.toString();
     if (keyValue || keyValue == "") {
-        await CountlyReactNative.userDataBulk_setOnce([keyName, keyValue]);
+        await CountlyNativeModule.userDataBulk_setOnce([keyName, keyValue]);
     }
 };
 
@@ -1411,7 +1414,7 @@ Countly.userDataBulk.pushUniqueValue = async function (keyName, keyValue) {
     }
     keyValue = keyValue.toString();
     if (keyValue || keyValue == "") {
-        await CountlyReactNative.userDataBulk_pushUniqueValue([keyName, keyValue]);
+        await CountlyNativeModule.userDataBulk_pushUniqueValue([keyName, keyValue]);
     }
 };
 
@@ -1441,7 +1444,7 @@ Countly.userDataBulk.pushValue = async function (keyName, keyValue) {
     }
     keyValue = keyValue.toString();
     if (keyValue || keyValue == "") {
-        await CountlyReactNative.userDataBulk_pushValue([keyName, keyValue]);
+        await CountlyNativeModule.userDataBulk_pushValue([keyName, keyValue]);
     }
 };
 
@@ -1471,7 +1474,7 @@ Countly.userDataBulk.pullValue = async function (keyName, keyValue) {
     }
     keyValue = keyValue.toString();
     if (keyValue || keyValue == "") {
-        await CountlyReactNative.userDataBulk_pullValue([keyName, keyValue]);
+        await CountlyNativeModule.userDataBulk_pullValue([keyName, keyValue]);
     }
 };
 
@@ -1485,7 +1488,7 @@ Countly.userDataBulk.pullValue = async function (keyName, keyValue) {
  */
 Countly.setRequiresConsent = function (flag) {
     L.w(`setRequiresConsent, setRequiresConsent is deprecated, use countlyConfig.setRequiresConsent instead. Flag : [${flag}]`);
-    CountlyReactNative.setRequiresConsent([flag]);
+    CountlyNativeModule.setRequiresConsent([flag]);
 };
 
 /**
@@ -1509,7 +1512,7 @@ Countly.giveConsent = function (args) {
     } else {
         features = args;
     }
-    CountlyReactNative.giveConsent(features);
+    CountlyNativeModule.giveConsent(features);
 };
 
 /**
@@ -1530,7 +1533,7 @@ Countly.giveConsentInit = async function (args) {
     } else {
         L.w("giveConsentInit " + `unsupported data type '${typeof args}'`);
     }
-    await CountlyReactNative.giveConsentInit(features);
+    await CountlyNativeModule.giveConsentInit(features);
 };
 
 /**
@@ -1554,7 +1557,7 @@ Countly.removeConsent = function (args) {
     } else {
         features = args;
     }
-    CountlyReactNative.removeConsent(features);
+    CountlyNativeModule.removeConsent(features);
 };
 
 /**
@@ -1571,7 +1574,7 @@ Countly.giveAllConsent = function () {
         return message;
     }
     L.d("giveAllConsent, Giving consent for all features");
-    CountlyReactNative.giveAllConsent();
+    CountlyNativeModule.giveAllConsent();
 };
 
 /**
@@ -1588,7 +1591,7 @@ Countly.removeAllConsent = function () {
         return message;
     }
     L.d("removeAllConsent, Removing consent for all features");
-    CountlyReactNative.removeAllConsent();
+    CountlyNativeModule.removeAllConsent();
 };
 
 /**
@@ -1606,7 +1609,7 @@ Countly.remoteConfigUpdate = function (callback) {
         return message;
     }
     L.d("remoteConfigUpdate, Updating remote config");
-    CountlyReactNative.remoteConfigUpdate([], (stringItem) => {
+    CountlyNativeModule.remoteConfigUpdate([], (stringItem) => {
         callback(stringItem);
     });
 };
@@ -1632,7 +1635,7 @@ Countly.updateRemoteConfigForKeysOnly = function (keyNames, callback) {
         for (let i = 0, il = keyNames.length; i < il; i++) {
             args.push(keyNames[i]);
         }
-        CountlyReactNative.updateRemoteConfigForKeysOnly(args, (stringItem) => {
+        CountlyNativeModule.updateRemoteConfigForKeysOnly(args, (stringItem) => {
             callback(stringItem);
         });
     }
@@ -1659,7 +1662,7 @@ Countly.updateRemoteConfigExceptKeys = function (keyNames, callback) {
         for (let i = 0, il = keyNames.length; i < il; i++) {
             args.push(keyNames[i]);
         }
-        CountlyReactNative.updateRemoteConfigExceptKeys(args, (stringItem) => {
+        CountlyNativeModule.updateRemoteConfigExceptKeys(args, (stringItem) => {
             callback(stringItem);
         });
     }
@@ -1680,7 +1683,7 @@ Countly.getRemoteConfigValueForKey = function (keyName, callback) {
         callback(message);
         return message;
     }
-    CountlyReactNative.getRemoteConfigValueForKey([keyName.toString() || ""], (value) => {
+    CountlyNativeModule.getRemoteConfigValueForKey([keyName.toString() || ""], (value) => {
         if (Platform.OS == "android") {
             try {
                 value = JSON.parse(value);
@@ -1710,7 +1713,7 @@ Countly.getRemoteConfigValueForKeyP = function (keyName) {
     if (Platform.OS != "android") {
         return "To be implemented";
     }
-    const promise = CountlyReactNative.getRemoteConfigValueForKeyP(keyName);
+    const promise = CountlyNativeModule.getRemoteConfigValueForKeyP(keyName);
     return promise
         .then((value) => {
             if (Platform.OS == "android") {
@@ -1741,7 +1744,7 @@ Countly.remoteConfigClearValues = async function () {
         return message;
     }
     L.d("remoteConfigClearValues, Clearing remote config values");
-    const result = await CountlyReactNative.remoteConfigClearValues();
+    const result = await CountlyNativeModule.remoteConfigClearValues();
     return result;
 };
 
@@ -1761,7 +1764,7 @@ Countly.setStarRatingDialogTexts = function (starRatingTextTitle, starRatingText
     args.push(starRatingTextTitle);
     args.push(starRatingTextMessage);
     args.push(starRatingTextDismiss);
-    CountlyReactNative.setStarRatingDialogTexts(args);
+    CountlyNativeModule.setStarRatingDialogTexts(args);
 };
 
 /**
@@ -1782,7 +1785,7 @@ Countly.showStarRating = function (callback) {
     if (!callback) {
         callback = function () {};
     }
-    CountlyReactNative.showStarRating([], callback);
+    CountlyNativeModule.showStarRating([], callback);
 };
 
 /**
@@ -1816,7 +1819,7 @@ Countly.presentRatingWidgetWithID = function (widgetId, closeButtonText, ratingW
             _ratingWidgetListener.remove();
         });
     }
-    CountlyReactNative.presentRatingWidgetWithID([widgetId.toString() || "", closeButtonText.toString() || "Done"]);
+    CountlyNativeModule.presentRatingWidgetWithID([widgetId.toString() || "", closeButtonText.toString() || "Done"]);
 };
 
 /**
@@ -1834,7 +1837,7 @@ Countly.getFeedbackWidgets = async function (onFinished) {
     let result = [];
     let error = null;
     try {
-        result = await CountlyReactNative.getFeedbackWidgets();
+        result = await CountlyNativeModule.getFeedbackWidgets();
     } catch (e) {
         error = e.message;
     }
@@ -1898,7 +1901,7 @@ Countly.presentFeedbackWidgetObject = async function (feedbackWidget, closeButto
 
     feedbackWidget.name = feedbackWidget.name || "";
     closeButtonText = closeButtonText || "";
-    CountlyReactNative.presentFeedbackWidget([feedbackWidget.id, feedbackWidget.type, feedbackWidget.name, closeButtonText]);
+    CountlyNativeModule.presentFeedbackWidget([feedbackWidget.id, feedbackWidget.type, feedbackWidget.name, closeButtonText]);
 };
 
 /**
@@ -1908,7 +1911,7 @@ Countly.presentFeedbackWidgetObject = async function (feedbackWidget, closeButto
  * @param {number} size - event count
  */
 Countly.setEventSendThreshold = function (size) {
-    CountlyReactNative.setEventSendThreshold([size.toString() || ""]);
+    CountlyNativeModule.setEventSendThreshold([size.toString() || ""]);
 };
 
 /**
@@ -1927,7 +1930,7 @@ Countly.startTrace = function (traceKey) {
     L.d(`startTrace, Starting trace: [${traceKey}]`);
     const args = [];
     args.push(traceKey);
-    CountlyReactNative.startTrace(args);
+    CountlyNativeModule.startTrace(args);
 };
 
 /**
@@ -1946,7 +1949,7 @@ Countly.cancelTrace = function (traceKey) {
     L.d(`cancelTrace, Canceling trace: [${traceKey}]`);
     const args = [];
     args.push(traceKey);
-    CountlyReactNative.cancelTrace(args);
+    CountlyNativeModule.cancelTrace(args);
 };
 
 /**
@@ -1963,7 +1966,7 @@ Countly.clearAllTraces = function () {
     }
     L.d("clearAllTraces, Clearing all traces");
     const args = [];
-    CountlyReactNative.clearAllTraces(args);
+    CountlyNativeModule.clearAllTraces(args);
 };
 
 /**
@@ -1988,7 +1991,7 @@ Countly.endTrace = function (traceKey, customMetric) {
         args.push(key.toString());
         args.push(customMetric[key].toString());
     }
-    CountlyReactNative.endTrace(args);
+    CountlyNativeModule.endTrace(args);
 };
 
 /**
@@ -2022,7 +2025,7 @@ Countly.recordNetworkTrace = function (networkTraceKey, responseCode, requestPay
     args.push(responsePayloadSize.toString());
     args.push(startTime.toString());
     args.push(endTime.toString());
-    CountlyReactNative.recordNetworkTrace(args);
+    CountlyNativeModule.recordNetworkTrace(args);
 };
 
 /**
@@ -2034,7 +2037,7 @@ Countly.recordNetworkTrace = function (networkTraceKey, responseCode, requestPay
 Countly.enableApm = function () {
     L.w("enableApm, enableApm is deprecated, use countlyConfig.apm interface instead.");
     const args = [];
-    CountlyReactNative.enableApm(args);
+    CountlyNativeModule.enableApm(args);
 };
 
 /**
@@ -2078,7 +2081,7 @@ Countly.recordAttributionID = function (attributionID) {
     }
     const args = [];
     args.push(attributionID);
-    CountlyReactNative.recordAttributionID(args);
+    CountlyNativeModule.recordAttributionID(args);
 };
 
 /**
@@ -2094,7 +2097,7 @@ Countly.replaceAllAppKeysInQueueWithCurrentAppKey = function () {
         return message;
     }
     L.d("replaceAllAppKeysInQueueWithCurrentAppKey, Replacing all app keys in queue with current app key");
-    CountlyReactNative.replaceAllAppKeysInQueueWithCurrentAppKey();
+    CountlyNativeModule.replaceAllAppKeysInQueueWithCurrentAppKey();
 };
 
 /**
@@ -2113,7 +2116,7 @@ Countly.recordDirectAttribution = function (campaignType, campaignData) {
     const args = [];
     args.push(campaignType);
     args.push(campaignData);
-    CountlyReactNative.recordDirectAttribution(args);
+    CountlyNativeModule.recordDirectAttribution(args);
 };
 
 /**
@@ -2130,7 +2133,7 @@ Countly.recordIndirectAttribution = function (attributionValues) {
     L.d(`recordIndirectAttribution, Recording indirect attribution: [${attributionValues}]`);
     const args = [];
     args.push(attributionValues);
-    CountlyReactNative.recordIndirectAttribution(args);
+    CountlyNativeModule.recordIndirectAttribution(args);
 };
 
 /**
@@ -2146,7 +2149,7 @@ Countly.removeDifferentAppKeysFromQueue = function () {
         return message;
     }
     L.d("removeDifferentAppKeysFromQueue, Removing all requests with a different app key in request queue");
-    CountlyReactNative.removeDifferentAppKeysFromQueue();
+    CountlyNativeModule.removeDifferentAppKeysFromQueue();
 };
 
 /**
@@ -2161,7 +2164,7 @@ Countly.appLoadingFinished = async function () {
         return message;
     }
     L.d("appLoadingFinished, App loading finished");
-    CountlyReactNative.appLoadingFinished();
+    CountlyNativeModule.appLoadingFinished();
 };
 
 /**
@@ -2194,7 +2197,7 @@ Countly.setCustomMetrics = async function (customMetric) {
         }
     }
     if (args.length != 0) {
-        CountlyReactNative.setCustomMetrics(args);
+        CountlyNativeModule.setCustomMetrics(args);
     }
 };
 
@@ -2210,7 +2213,7 @@ Countly.content.enterContentZone = function() {
         L.e(`enterContentZone, ${message}`);
         return;
     }
-    CountlyReactNative.enterContentZone();
+    CountlyNativeModule.enterContentZone();
 };
 
 /**
@@ -2225,7 +2228,7 @@ Countly.content.exitContentZone = function() {
         L.e(`exitContentZone, ${message}`);
         return;
     }
-    CountlyReactNative.exitContentZone();
+    CountlyNativeModule.exitContentZone();
 };
 
 export default Countly;

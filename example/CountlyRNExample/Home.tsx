@@ -22,6 +22,7 @@ async function initialize() {
     Countly.registerForNotification((theNotification: string) => {
         const jsonString = JSON.stringify(JSON.parse(theNotification));
         console.log(`Just received this notification data: ${jsonString}`);
+        // you can display the notification nicely with title and message. Just an alert for demo purposes.
         Alert.alert(`theNotification: ${jsonString}`);
     }); // Set callback to receive push notifications
     Countly.askForNotificationPermission("android.resource://com.countly.demo/raw/notif_sample"); // This method will ask for permission, enables push notification and send push token to countly server.
