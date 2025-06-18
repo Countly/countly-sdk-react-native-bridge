@@ -1,3 +1,26 @@
+## 25.4.2
+* Added fullscreen support for feedback widgets.
+* Added "disableSDKBehaviorSettingsUpdates" init config parameter to disable server config updates.
+* Improved request queue handling with a built-in backoff mechanism which is enabled by default.
+* Added "disableBackoffMechanism" init config parameter to disable backoff behavior.
+* Added support for SDK health checks after initialization
+
+## 25.4.1
+* Mitigated an issue that could occur while serializing events to improve stability, performance and memory usage.
+
+## 25.4.0
+* ! Minor breaking change ! Removed UIDevice.currentDevice.identifierForVendor usage in device id generation. The SDK now exclusively uses random UUIDs for device id generation.
+* ! Minor breaking change ! Server Configuration is now enabled by default. Changes made on SDK Manager > SDK Configuration on your server will affect SDK behavior directly.
+
+* Added a Content feature method "refreshContentZone" that does a manual refresh.
+* Extended server configuration capabilities of the SDK.
+* Added a config parameter to provide server config in the initialization "sdkBehaviorSettings: NSString".
+
+* Deprecated the experimental configuration function enableServerConfiguration and it will do nothing.
+
+## 25.1.2
+* Mitigated an issue where the safe area resolution was not correctly calculated for the content zone on certain iOS devices.
+
 ## 25.1.1
 * Mitigated an issue while setting zone timer interval for content.
 
