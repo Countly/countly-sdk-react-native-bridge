@@ -1,3 +1,9 @@
+## 25.4.0
+* Added `refreshContentZone()` method for probing content
+* Added `setSDKBehaviorSettings` init config method for providing server config settings
+* Added `disableBackoffMechanism` init config method for disabling request backoff logic
+* Added `disableSDKBehaviorSettingsUpdates` init config method for disabling server config sync requests
+
 ## 25.1.2
 * Mitigated an issue where the visibility tracking could have been enabled by default
 

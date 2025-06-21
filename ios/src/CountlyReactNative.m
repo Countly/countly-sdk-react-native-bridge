@@ -278,6 +278,16 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
     if (json[@"attributionValues"]) {
         config.indirectAttribution = json[@"attributionValues"];
     }
+
+    if (json[@"disableSDKBehaviorSettingsUpdates"]) {
+        config.disableSDKBehaviorSettingsUpdates = [json[@"disableSDKBehaviorSettingsUpdates"] boolValue];
+    }
+    if (json[@"disableBackoffMechanism"]) {
+        config.disableBackoffMechanism = [json[@"disableBackoffMechanism"] boolValue];
+    }
+    if (json[@"sdkBehaviorSettings"]) {
+        config.sdkBehaviorSettings = json[@"sdkBehaviorSettings"];
+    }
 }
 
 RCT_EXPORT_METHOD(setID : (NSString *)newDeviceID) { 
@@ -1306,6 +1316,12 @@ RCT_EXPORT_METHOD(setCustomMetrics : (NSArray *)arguments) {
 RCT_EXPORT_METHOD(enterContentZone) {
     dispatch_async(dispatch_get_main_queue(), ^{
       [Countly.sharedInstance.content enterContentZone];
+    });
+}
+
+RCT_EXPORT_METHOD(refreshContentZone) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      [Countly.sharedInstance.content refreshContentZone];
     });
 }
 

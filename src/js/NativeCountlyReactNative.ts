@@ -89,6 +89,7 @@ export interface Spec extends TurboModule {
     recordDirectAttribution(args: Array<string>): void;
     appLoadingFinished(): void;
     enterContentZone(): void;
+    refreshContentZone(): void;
     exitContentZone(): void;
     setID(newDeviceID: string): void;
     setCustomMetrics(args: Array<UnsafeObject>): void;

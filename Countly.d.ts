@@ -212,6 +212,11 @@ declare module "countly-sdk-react-native-bridge" {
       export function enterContentZone(): void;
 
       /**
+       *  Refreshes the content zone.
+       */
+      export function refreshContentZone(): void;
+
+      /**
        * Opt out user from the content fetching and updates
        */
       export function exitContentZone(): void;
@@ -1454,6 +1459,26 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
      * @param {object} attributionValues attribution values
      */
       recordIndirectAttribution(attributionValues: object): CountlyConfig;
+
+      /**
+       * Method to disable SDK behavior settings updates requests.
+       * @return {CountlyConfig}
+       */
+      disableSDKBehaviorSettingsUpdates(): CountlyConfig;
+
+      /**
+       * Method to disable backoff mechanism for requests.
+       * @return {CountlyConfig}
+       */
+      disableBackoffMechanism(): CountlyConfig;
+
+      /**
+       * Method to set SDK behavior settings.
+       *
+       * @param {object} settingsObject settings object
+       * @return {CountlyConfig}
+       */
+      setSDKBehaviorSettings(settingsObject: object): CountlyConfig;
   }
 
   export default CountlyConfig;

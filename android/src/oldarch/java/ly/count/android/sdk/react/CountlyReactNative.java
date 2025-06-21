@@ -458,6 +458,11 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void refreshContentZone() {
+        this.impl.refreshContentZone();
+    }
+
+    @ReactMethod
     public void exitContentZone() {
         this.impl.exitContentZone();
     }

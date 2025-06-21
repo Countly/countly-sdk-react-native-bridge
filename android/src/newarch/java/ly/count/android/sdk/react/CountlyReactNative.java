@@ -550,6 +550,11 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     }
 
     @Override
+    public void refreshContentZone() {
+        this.impl.refreshContentZone();
+    }
+
+    @Override
     public void exitContentZone() {
         this.impl.exitContentZone();
     }
