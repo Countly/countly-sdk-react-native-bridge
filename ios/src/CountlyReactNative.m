@@ -24,7 +24,7 @@
 + (CountlyFeedbackWidget *)createWithDictionary:(NSDictionary *)dictionary;
 @end
 
-NSString *const kCountlyReactNativeSDKVersion = @"25.1.2";
+NSString *const kCountlyReactNativeSDKVersion = @"25.4.0";
 NSString *const kCountlyReactNativeSDKName = @"js-rnb-ios";
 
 CLYPushTestMode const CLYPushTestModeProduction = @"CLYPushTestModeProduction";
@@ -286,7 +286,17 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
         config.disableBackoffMechanism = [json[@"disableBackoffMechanism"] boolValue];
     }
     if (json[@"sdkBehaviorSettings"]) {
-        config.sdkBehaviorSettings = json[@"sdkBehaviorSettings"];
+        if (![json[@"sdkBehaviorSettings"] isKindOfClass:[NSString class]]) {
+            NSError *error;
+            NSData *jsonData = [NSJSONSerialization dataWithJSONObject:json[@"sdkBehaviorSettings"] options:0 error:&error];
+            if (error) {
+                COUNTLY_RN_LOG(@"Error serializing sdkBehaviorSettings: %@", error.localizedDescription);
+            } else {
+                config.sdkBehaviorSettings = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+            }
+        } else {
+            config.sdkBehaviorSettings = json[@"sdkBehaviorSettings"];
+        }
     }
 }
 
