@@ -92,7 +92,7 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
 
     public static final String NAME = "CountlyReactNative";
     public static final String TAG = "CountlyRNPlugin";
-    private String COUNTLY_RN_SDK_VERSION_STRING = "25.1.2";
+    private String COUNTLY_RN_SDK_VERSION_STRING = "25.4.0";
     private String COUNTLY_RN_SDK_NAME = "js-rnb-android";
 
     private static final CountlyConfig config = new CountlyConfig();
@@ -363,6 +363,23 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
                 } else {
                     log("RecordIndirectAttribution: failure, no attribution values provided", LogLevel.DEBUG);
                 }
+            }
+            if (_config.has("disableSDKBehaviorSettingsUpdates")) {
+                boolean disableUpdates = _config.getBoolean("disableSDKBehaviorSettingsUpdates");
+                if (disableUpdates) {
+                    config.disableSDKBehaviorSettingsUpdates();
+                }
+            }
+            if (_config.has("disableBackoffMechanism")) {
+                boolean disableBackoff = _config.getBoolean("disableBackoffMechanism");
+                if (disableBackoff) {
+                    config.disableBackoffMechanism();
+                }
+            }
+            if (_config.has("sdkBehaviorSettings")) {
+                JSONObject sdkBehaviorSettings = _config.getJSONObject("sdkBehaviorSettings");
+                String sdkBehaviorSettingsString = sdkBehaviorSettings.toString();
+                config.setSDKBehaviorSettings(sdkBehaviorSettingsString);
             }
         } catch (Exception e) {
             log(e.toString(), LogLevel.DEBUG);
@@ -1626,6 +1643,10 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     
     public void enterContentZone() {
         Countly.sharedInstance().contents().enterContentZone();
+    }
+
+    public void refreshContentZone() {
+        Countly.sharedInstance().contents().refreshContentZone();
     }
 
     

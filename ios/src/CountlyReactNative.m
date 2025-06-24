@@ -24,7 +24,7 @@
 + (CountlyFeedbackWidget *)createWithDictionary:(NSDictionary *)dictionary;
 @end
 
-NSString *const kCountlyReactNativeSDKVersion = @"25.1.2";
+NSString *const kCountlyReactNativeSDKVersion = @"25.4.0";
 NSString *const kCountlyReactNativeSDKName = @"js-rnb-ios";
 
 CLYPushTestMode const CLYPushTestModeProduction = @"CLYPushTestModeProduction";
@@ -277,6 +277,26 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
 
     if (json[@"attributionValues"]) {
         config.indirectAttribution = json[@"attributionValues"];
+    }
+
+    if (json[@"disableSDKBehaviorSettingsUpdates"]) {
+        config.disableSDKBehaviorSettingsUpdates = [json[@"disableSDKBehaviorSettingsUpdates"] boolValue];
+    }
+    if (json[@"disableBackoffMechanism"]) {
+        config.disableBackoffMechanism = [json[@"disableBackoffMechanism"] boolValue];
+    }
+    if (json[@"sdkBehaviorSettings"]) {
+        if (![json[@"sdkBehaviorSettings"] isKindOfClass:[NSString class]]) {
+            NSError *error;
+            NSData *jsonData = [NSJSONSerialization dataWithJSONObject:json[@"sdkBehaviorSettings"] options:0 error:&error];
+            if (error) {
+                COUNTLY_RN_LOG(@"Error serializing sdkBehaviorSettings: %@", error.localizedDescription);
+            } else {
+                config.sdkBehaviorSettings = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+            }
+        } else {
+            config.sdkBehaviorSettings = json[@"sdkBehaviorSettings"];
+        }
     }
 }
 
@@ -1306,6 +1326,12 @@ RCT_EXPORT_METHOD(setCustomMetrics : (NSArray *)arguments) {
 RCT_EXPORT_METHOD(enterContentZone) {
     dispatch_async(dispatch_get_main_queue(), ^{
       [Countly.sharedInstance.content enterContentZone];
+    });
+}
+
+RCT_EXPORT_METHOD(refreshContentZone) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      [Countly.sharedInstance.content refreshContentZone];
     });
 }
 

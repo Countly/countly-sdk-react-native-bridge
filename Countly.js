@@ -2204,7 +2204,6 @@ Countly.setCustomMetrics = async function (customMetric) {
 /**
  * Opt in user for the content fetching and updates
  * 
- * NOTE: This is an EXPERIMENTAL feature, and it can have breaking changes
  */
 Countly.content.enterContentZone = function() {
     L.i("enterContentZone, opting for content fetching.");
@@ -2217,9 +2216,21 @@ Countly.content.enterContentZone = function() {
 };
 
 /**
+ * Refreshes the content zone.
+ */
+Countly.content.refreshContentZone = function() {
+    L.i("refreshContentZone, refreshing content zone.");
+    if (!_state.isInitialized) {
+        const message = "'init' must be called before 'refreshContentZone'";
+        L.e(`refreshContentZone, ${message}`);
+        return;
+    }
+    CountlyNativeModule.refreshContentZone();
+};
+
+/**
  * Opt out user from the content fetching and updates
  * 
- * NOTE: This is an EXPERIMENTAL feature, and it can have breaking changes
  */
 Countly.content.exitContentZone = function() {
     L.i("exitContentZone, opting out from content fetching.");
