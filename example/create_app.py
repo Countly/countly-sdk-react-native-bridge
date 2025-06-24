@@ -45,10 +45,11 @@ def setup_react_native_app():
 
     # If on iOS, run pod install
     if platform.system() == "Darwin":
-        print("Running pod install")
-        os.chdir("ios")
-        os.system("pod install")
-        os.chdir("..")
+        if choice.lower() == "react":
+            print("Running pod install")
+            os.chdir("ios")
+            os.system("pod install")
+            os.chdir("..")
 
 if __name__ == "__main__":
     setup_react_native_app()
