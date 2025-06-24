@@ -22,3 +22,5 @@ countly-sdk-react-native-bridge-*.tgz
 example/AwesomeProject
 coverage/
 package-lock.json
+example/AwesomeProject/*
+example/ExpoProject/*
