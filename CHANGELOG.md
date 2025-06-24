@@ -15,8 +15,8 @@
 * Mitigated an issue that could occur while serializing events to improve stability, performance and memory usage in iOS
 * Mitigated an issue where the safe area resolution was not correctly calculated for the content zone on certain iOS devices.
 
-* Updated the underlying Android SDK version to 25.4.1
-* Updated the underlying iOS SDK version to 25.4.2
+* Updated the underlying Android SDK version to 25.4.2
+* Updated the underlying iOS SDK version to 25.4.3
 
 ## 25.1.2
 * Mitigated an issue where the visibility tracking could have been enabled by default
