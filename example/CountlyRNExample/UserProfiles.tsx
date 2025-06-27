@@ -58,25 +58,25 @@ const onSetUserProperties = () => {
 };
 
 const onSendUserDataBulk = () => {
-    // Promise.allSettled([Countly.userDataBulk.setProperty("key", "value"),
-    //   Countly.userDataBulk.setProperty("increment", 5),
-    //   Countly.userDataBulk.increment("increment"),
-    //   Countly.userDataBulk.setProperty("incrementBy", 5),
-    //   Countly.userDataBulk.incrementBy("incrementBy", 10),
-    //   Countly.userDataBulk.setProperty("multiply", 5),
-    //   Countly.userDataBulk.multiply("multiply", 20),
-    //   Countly.userDataBulk.setProperty("saveMax", 5),
-    //   Countly.userDataBulk.saveMax("saveMax", 100),
-    //   Countly.userDataBulk.setProperty("saveMin", 5),
-    //   Countly.userDataBulk.saveMin("saveMin", 50),
-    //   Countly.userDataBulk.setOnce("setOnce", 200),
-    //   Countly.userDataBulk.pushUniqueValue("type", "morning"),
-    //   Countly.userDataBulk.pushValue("type", "morning"),
-    //   Countly.userDataBulk.pullValue("type", "morning")])
-    //   .then(values => {
-    //     // We need to call the "save" in then block else it will cause a race condition and "save" may call before all the user profiles calls are completed
-    //     Countly.userDataBulk.save();
-    // })
+    Promise.allSettled([Countly.userDataBulk.setProperty("key", "value"),
+      Countly.userDataBulk.setProperty("increment", 5),
+      Countly.userDataBulk.increment("increment"),
+      Countly.userDataBulk.setProperty("incrementBy", 5),
+      Countly.userDataBulk.incrementBy("incrementBy", 10),
+      Countly.userDataBulk.setProperty("multiply", 5),
+      Countly.userDataBulk.multiply("multiply", 20),
+      Countly.userDataBulk.setProperty("saveMax", 5),
+      Countly.userDataBulk.saveMax("saveMax", 100),
+      Countly.userDataBulk.setProperty("saveMin", 5),
+      Countly.userDataBulk.saveMin("saveMin", 50),
+      Countly.userDataBulk.setOnce("setOnce", 200),
+      Countly.userDataBulk.pushUniqueValue("type", "morning"),
+      Countly.userDataBulk.pushValue("type", "morning"),
+      Countly.userDataBulk.pullValue("type", "morning")])
+      .then(values => {
+        // We need to call the "save" in then block else it will cause a race condition and "save" may call before all the user profiles calls are completed
+        Countly.userDataBulk.save();
+    })
 };
 
 const onUpdateUserData = () => {

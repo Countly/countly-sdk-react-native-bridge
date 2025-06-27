@@ -9,14 +9,25 @@ buildscript {
     }
 }
 
-apply plugin: 'com.android.library'
+def isNewArchitectureEnabled() {
+    return project.hasProperty("newArchEnabled") && project.newArchEnabled == "true"
+}
 
 def safeExtGet(prop, fallback) {
     rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
 }
 
+apply plugin: 'com.android.library'
+if (isNewArchitectureEnabled()) {
+    apply plugin: 'com.facebook.react'
+}
+
 android {
     compileSdkVersion safeExtGet('compileSdkVersion', 35)
+
+    if (project.android.hasProperty("namespace")) {
+        namespace = "ly.count.android.sdk.react"
+    }
 
     defaultConfig {
         minSdkVersion safeExtGet('minSdkVersion', 21)
@@ -24,9 +35,22 @@ android {
 
         versionCode 2
         versionName "1.1"
+        ndk {
+            abiFilters "x86", "armeabi-v7a", "x86_64", "arm64-v8a"
+        }
+        buildConfigField "boolean", "IS_NEW_ARCHITECTURE_ENABLED", isNewArchitectureEnabled().toString()
     }
     lintOptions {
        warning 'InvalidPackage', 'MissingPermission'
+    }
+    sourceSets {
+        main {
+            if (isNewArchitectureEnabled()) {
+                java.srcDirs += 'src/newarch'
+            } else {
+                java.srcDirs += 'src/oldarch'
+            }
+        }
     }
 }
 
@@ -41,7 +65,7 @@ repositories {
 
 dependencies {
     implementation "com.facebook.react:react-native:${safeExtGet('reactNativeVersion', '+')}"
-    implementation 'ly.count.android:sdk:25.1.1'
+    implementation 'ly.count.android:sdk:25.4.2'
 
     // Import the BoM for the Firebase platform
     // The BoM version of 28.4.2 is the newest release that will target firebase-messaging version 22

@@ -54,6 +54,7 @@ typedef void (^Result)(id _Nullable result);
 - (void)disablePushNotifications;
 
 - (void)enterContentZone;
+- (void)refreshContentZone;
 - (void)exitContentZone;
 
 - (void)setID;

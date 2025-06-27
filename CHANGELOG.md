@@ -1,3 +1,29 @@
+## 25.4.0
+* ! Minor breaking change ! The SDK now exclusively uses random UUIDs for device id generation instead of platform specific OpenUDID or IDFV
+* ! Minor breaking change ! Server Configuration is now enabled by default. Changes made on SDK Manager > SDK Configuration on your server will affect SDK behavior directly
+
+* Added `refreshContentZone()` method for manual refresh of content zone
+* Added `disableBackoffMechanism()` init config method for disabling request backoff logic
+* Added `disableSDKBehaviorSettingsUpdates()` init config method for disabling server config sync requests
+* Added `setSDKBehaviorSettings(settingsObject: object)` init config method for providing server config settings
+* Added New Architecture (Turbo Modules) support
+* Added fullscreen support for feedback widgets
+* Added support for SDK health checks in iOS
+* Added a built-in backoff mechanism when server responses are slow
+
+* Mitigated an issue that caused PN message data collision if two message with same ID was received in Android
+* Mitigated an issue that could occur while serializing events to improve stability, performance and memory usage in iOS
+* Mitigated an issue where the safe area resolution was not correctly calculated for the content zone on certain iOS devices
+
+* Updated the underlying Android SDK version to 25.4.2
+* Updated the underlying iOS SDK version to 25.4.3
+
+## 25.1.2
+* Mitigated an issue where the visibility tracking could have been enabled by default
+
+* Underlying Android SDK version is 25.1.1
+* Underlying iOS SDK version is 25.1.1
+
 ## 25.1.1
 * Improved content size management of content blocks.
 * Added init time config options:

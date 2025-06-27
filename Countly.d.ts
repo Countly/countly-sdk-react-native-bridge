@@ -79,10 +79,13 @@ declare module "countly-sdk-react-native-bridge" {
     string;
     string;
     export const TemporaryDeviceIDString: string;
-    export interface messagingMode {
-      DEVELOPMENT: string;
-      PRODUCTION: string;
-      ADHOC: string;
+    /**
+     * Messaging modes for push notifications
+     */
+    namespace messagingMode {
+      const DEVELOPMENT: string;
+      const PRODUCTION: string;
+      const ADHOC: string;
     }
 
     /**
@@ -207,6 +210,11 @@ declare module "countly-sdk-react-native-bridge" {
        * Opt in user for the content fetching and updates
        */
       export function enterContentZone(): void;
+
+      /**
+       *  Refreshes the content zone.
+       */
+      export function refreshContentZone(): void;
 
       /**
        * Opt out user from the content fetching and updates
@@ -1451,6 +1459,26 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
      * @param {object} attributionValues attribution values
      */
       recordIndirectAttribution(attributionValues: object): CountlyConfig;
+
+      /**
+       * Method to disable SDK behavior settings updates requests.
+       * @return {CountlyConfig}
+       */
+      disableSDKBehaviorSettingsUpdates(): CountlyConfig;
+
+      /**
+       * Method to disable backoff mechanism for requests.
+       * @return {CountlyConfig}
+       */
+      disableBackoffMechanism(): CountlyConfig;
+
+      /**
+       * Method to set SDK behavior settings.
+       *
+       * @param {object} settingsObject settings object
+       * @return {CountlyConfig}
+       */
+      setSDKBehaviorSettings(settingsObject: object): CountlyConfig;
   }
 
   export default CountlyConfig;

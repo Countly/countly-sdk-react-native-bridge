@@ -18,8 +18,17 @@ import CountlyConfigContent from "./lib/configuration_interfaces/countly_config_
  */
 class CountlyConfig {
     #crashReporting = false;
+
     #apmLegacy = false;
+
     #disableIntentRedirectionCheck = false;
+
+    #disableSDKBehaviorSettingsUpdates = false;
+
+    #disableBackoff = false;
+
+    #sdkBehaviorSettings;
+
     constructor(serverURL, appKey) {
         this.serverURL = serverURL;
         this.appKey = appKey;
@@ -67,6 +76,18 @@ class CountlyConfig {
 
     get _disableIntentRedirectionCheck() {
         return this.#disableIntentRedirectionCheck;
+    }
+
+    get _disableSDKBehaviorSettingsUpdates() {
+        return this.#disableSDKBehaviorSettingsUpdates;
+    }
+
+    get _disableBackoff() {
+        return this.#disableBackoff;
+    }
+
+    get _sdkBehaviorSettings() {
+        return this.#sdkBehaviorSettings;
     }
 
     /**
@@ -188,6 +209,31 @@ class CountlyConfig {
      */
     disableAdditionalIntentRedirectionChecks() {
         this.#disableIntentRedirectionCheck = true;
+        return this;
+    }
+
+    /**
+     * Disables SDK behavior settings update requests.
+     */
+    disableSDKBehaviorSettingsUpdates() {
+        this.#disableSDKBehaviorSettingsUpdates = true;
+        return this;
+    }
+
+    /**
+     * Disables the request backoff mechanism.
+     */
+    disableBackoffMechanism() {
+        this.#disableBackoff = true;
+        return this;
+    }
+
+    /**
+     * Sets the SDK behavior settings.
+     * @param {Object} settingsObject - SDK behavior settings object you can get from Countly server
+     */
+    setSDKBehaviorSettings(settingsObject) {
+        this.#sdkBehaviorSettings = settingsObject;
         return this;
     }
 

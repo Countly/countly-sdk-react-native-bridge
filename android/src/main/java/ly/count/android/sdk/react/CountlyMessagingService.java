@@ -57,7 +57,7 @@ public class CountlyMessagingService extends FirebaseMessagingService {
             Log.d(Countly.TAG, "[CountlyMessagingService] getApplicationContext() returns null: context must be non-null to displayNotification");
             return;
         }
-        Boolean result = CountlyPush.displayNotification(context, message, context.getApplicationInfo().icon, null);
+        Boolean result = CountlyPush.displayMessage(context, message, context.getApplicationInfo().icon, null);
         if(Countly.sharedInstance().isLoggingEnabled()) {
             if (result == null) {
                 Log.i(Countly.TAG, "[CountlyMessagingService] Message wasn't sent from Countly server, so it cannot be handled by Countly SDK");
@@ -69,7 +69,7 @@ public class CountlyMessagingService extends FirebaseMessagingService {
         }
         
         // 'onNotification' should be called at the end of 'onMessageReceived'. This is due to an unknown issue that prevents showing notifications from the "killed" state for some app/hardware configurations
-        CountlyReactNative.onNotification(remoteMessage.getData());
+        CountlyReactNativeImpl.onNotification(remoteMessage.getData());
     }
 
     @Override
