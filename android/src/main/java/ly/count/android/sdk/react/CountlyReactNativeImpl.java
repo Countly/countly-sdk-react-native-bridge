@@ -92,7 +92,7 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
 
     public static final String NAME = "CountlyReactNative";
     public static final String TAG = "CountlyRNPlugin";
-    private String COUNTLY_RN_SDK_VERSION_STRING = "25.4.0";
+    private String COUNTLY_RN_SDK_VERSION_STRING = "25.4.1";
     private String COUNTLY_RN_SDK_NAME = "js-rnb-android";
 
     private static final CountlyConfig config = new CountlyConfig();
@@ -362,6 +362,14 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
                     config.setIndirectAttribution(attributionMap);
                 } else {
                     log("RecordIndirectAttribution: failure, no attribution values provided", LogLevel.DEBUG);
+                }
+            }
+            if (_config.has("requestTimeoutDuration")) {
+                int timeout = _config.getInt("requestTimeoutDuration");
+                if (timeout > 0) {
+                    config.setRequestTimeoutDuration(timeout);
+                } else {
+                    log("setRequestTimeoutDuration: failure, timeout value must be greater than 0", LogLevel.DEBUG);
                 }
             }
             if (_config.has("disableSDKBehaviorSettingsUpdates")) {
@@ -725,6 +733,16 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     public void addCrashLog(ReadableArray args) {
         String record = args.getString(0);
         Countly.sharedInstance().crashes().addCrashBreadcrumb(record);
+    }
+
+    public void recordMetrics(ReadableArray args) {
+        Map<String, String> metricsMap = new HashMap<>();
+        for (int i = 0; i < args.size(); i += 2) {
+            String key = args.getString(i);
+            String value = args.getString(i + 1);
+            metricsMap.put(key, value);
+        }
+        Countly.sharedInstance().requestQueue().recordMetrics(metricsMap);
     }
 
     
@@ -1785,5 +1803,13 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     @Override
     public void onHostDestroy() {
 
+    }
+
+    public void addListener(String eventType) {
+        log("addListener", LogLevel.ERROR);
+    }
+
+    public void removeListeners(double id) {
+        log("removeListeners", LogLevel.ERROR);
     }
 }

@@ -1,3 +1,24 @@
+## 25.4.6
+* Added the ability to record reserved events.
+* Changed default log level from "CLYInternalLogLevelDebug" to "CLYInternalLogLevelVerbose".
+
+* Mitigated a possible Health Check network log recording issue.
+
+## 25.4.5
+* Added "requestTimeoutDuration" init config parameter to change request timeout duration in seconds.
+* Added a new function "sendMetricsRequest: metricsOverride" to send a manual metrics request, accessible through the instance.
+* Added a new Consent option "CLYConsentMetrics" for controlling "sendMetricsRequest" method. (This has no effect on Session metrics.)
+
+* Mitigated a possible health check recording issue.
+
+## 25.4.4
+* Improved Health Check metric information.
+* Improved Content display mechanics.
+* Improved CPU architecture detection capabilities.
+
+* Mitigated an issue about app version info in Health Check metrics.
+* Mitigated an SBS issue while in temporary ID mode.
+
 ## 25.4.3
 * Mitigated an issue where SDK behavior settings were set to default when fetching for new config.
 * Mitigated an issue where latest fetched behavior settings were replacing the current settings instead of merging.
