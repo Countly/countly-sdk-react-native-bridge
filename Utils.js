@@ -172,6 +172,10 @@ function configToJson(config) {
             json.campaignData = config.campaignData;
             L.i(`init configuration, Campaign type: ${config.campaignType}, Campaign data: ${config.campaignData}`);
         }
+        if (config._requestTimeoutDuration) {
+            json.requestTimeoutDuration = config._requestTimeoutDuration;
+            L.i(`init configuration, Request timeout duration: ${config._requestTimeoutDuration}`);
+        }
         if (config.attributionValues) {
             json.attributionValues = config.attributionValues;
             L.i(`init configuration, Attribution values: ${config.attributionValues}`);

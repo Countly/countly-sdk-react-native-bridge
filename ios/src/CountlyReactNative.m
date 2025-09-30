@@ -27,7 +27,7 @@
 
 BOOL BUILDING_WITH_PUSH_DISABLED = true;
 
-NSString *const kCountlyReactNativeSDKVersion = @"25.4.0";
+NSString *const kCountlyReactNativeSDKVersion = @"25.4.1";
 NSString *const kCountlyReactNativeSDKName = @"js-rnb-ios";
 NSString *const kCountlyReactNativeSDKNameNoPush = @"js-rnbnp-ios";
 
@@ -282,6 +282,15 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
 
     if (json[@"attributionValues"]) {
         config.indirectAttribution = json[@"attributionValues"];
+    }
+
+    if (json[@"requestTimeoutDuration"]) {
+        NSNumber *timeout = json[@"requestTimeoutDuration"];
+        if ([timeout intValue] > 0) {
+            config.requestTimeoutDuration = [timeout intValue];
+        } else {
+            COUNTLY_RN_LOG(@"setRequestTimeoutDuration: failure, timeout value must be greater than 0");
+        }
     }
 
     if (json[@"disableSDKBehaviorSettingsUpdates"]) {
@@ -697,6 +706,18 @@ RCT_EXPORT_METHOD(logException : (NSArray *)arguments) {
       NSException *myException = [NSException exceptionWithName:@"Exception" reason:execption userInfo:dict];
 
       [Countly.sharedInstance recordHandledException:myException withStackTrace:nsException];
+    });
+}
+
+RCT_EXPORT_METHOD(recordMetrics : (NSArray *)arguments) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
+
+        for (int i = 0, il = (int)arguments.count; i < il; i += 2) {
+            dict[[arguments objectAtIndex:i]] = [arguments objectAtIndex:i + 1];
+        }
+
+        [Countly.sharedInstance recordMetrics:dict];
     });
 }
 
