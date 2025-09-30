@@ -58,6 +58,21 @@ const exitContentZone = () => {
     Countly.content.exitContentZone();
 }
 
+const recordMetrics = () => {
+    Countly.recordMetrics();
+    Countly.recordMetrics({
+        "_device" :	"name of the device",
+        "_os" : "device OS",
+        "_os_version" :	"device OS version",
+        "_resolution" :	"resolution of the device/application",
+        "_app_version" : "application version",
+        "_manufacturer" : "device manufacturer",
+        "_carrier"	: "device carrier",
+        "_orientation":	"device orientation",
+        "_has_hinge": 	"device has hinge sensor, foldable"
+    });
+}
+
 function OthersScreen({ navigation }) {
     return (
         <SafeAreaView>
@@ -70,6 +85,7 @@ function OthersScreen({ navigation }) {
                 <CountlyButton onPress={recordIndirectAttribution} title="Record Indirect Attribution" color="#1b1c1d" lightText={true} />
                 <CountlyButton onPress={enterContentZone} title="Enter Content Zone" color="#1b1c1d" lightText={true} />
                 <CountlyButton onPress={exitContentZone} title="Exit Content Zone" color="#1b1c1d" lightText={true} />
+                <CountlyButton onPress={recordMetrics} title="Record Metrics" color="#1b1c1d" lightText={true} />
             </ScrollView>
         </SafeAreaView>
     );

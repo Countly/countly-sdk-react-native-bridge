@@ -202,6 +202,11 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     }
 
     @Override
+    public void recordMetrics(ReadableArray args) {
+        this.impl.recordMetrics(args);
+    }
+
+    @Override
     public void logJSException(String err, String message, String stack) {
         this.impl.logJSException(err, message, stack);
     }
@@ -567,5 +572,15 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     @Override
     public void setCustomMetrics(ReadableArray args) {
         this.impl.setCustomMetrics(args);
+    }
+
+    @Override
+    public void addListener(String eventType) {
+        this.impl.addListener(eventType);
+    }
+
+    @Override
+    public void removeListeners(double id) {
+        this.impl.removeListeners(id);
     }
 }
