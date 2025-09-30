@@ -38,6 +38,7 @@ typedef enum : NSUInteger
 + (NSString *)appVersion;
 + (NSString *)appBuild;
 
++ (NSDictionary *)metricsDictionary;
 + (NSString *)metrics;
 
 + (NSUInteger)connectionType;
@@ -49,4 +50,5 @@ typedef enum : NSUInteger
 + (NSString *)orientation;
 + (BOOL)isJailbroken;
 + (BOOL)isInBackground;
++ (NSString *)architectureNameForCPUType:(cpu_type_t)cpuType subtype:(cpu_subtype_t)cpuSubtype;
 @end

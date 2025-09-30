@@ -20,6 +20,7 @@ const countlyConfig = new CountlyConfig(COUNTLY_SERVER_KEY, COUNTLY_APP_KEY).set
 // .setStarRatingDialogTexts('Title', 'Message', 'Dismiss')
 // .recordDirectAttribution('countly', campaignData)
 // .recordIndirectAttribution(attributionValues)
+// .setRequestTimeoutDuration(60) // Set custom request timeout duration in seconds (default is 30 seconds)
 
 // APM configuration ========================================
 // countlyConfig.apm

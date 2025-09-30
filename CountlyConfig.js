@@ -29,6 +29,8 @@ class CountlyConfig {
 
     #sdkBehaviorSettings;
 
+    #requestTimeoutDuration;
+
     constructor(serverURL, appKey) {
         this.serverURL = serverURL;
         this.appKey = appKey;
@@ -94,6 +96,10 @@ class CountlyConfig {
         return this.#sdkBehaviorSettings;
     }
 
+    get _requestTimeoutDuration() {
+        return this.#requestTimeoutDuration;
+    }
+
     /**
      * Method to set the server url
      *
@@ -121,6 +127,17 @@ class CountlyConfig {
      */
     setDeviceID(deviceID) {
         this.deviceID = deviceID;
+        return this;
+    }
+
+    /**
+     * Method to set the request timeout duration
+     *
+     * @param {Number} timeout - request timeout duration in seconds
+     * @returns {CountlyConfig} this
+     */
+    setRequestTimeoutDuration(timeout) {
+        this.#requestTimeoutDuration = timeout;
         return this;
     }
 

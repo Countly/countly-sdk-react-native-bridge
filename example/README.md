@@ -7,17 +7,23 @@ Please refer to the React Native [documentation](https://reactnative.dev/docs/se
 
 ## Automatic App Creation
 
-If you have setted up your environment correctly then you should be able to run the example app by running the create_app.py provided
+If you have set up your environment correctly then you should be able to run the example app by running the create_app.py provided
 
 ```bash
 python create_app.py
 ```
 
-Then you can start the app by:
+It will give you an option to setup Expo or Create React App as the template.
+
+Then you can start the app by going to the created folder (AwesomeProject or ExpoProject) and:
 
 ```bash
 npx react-native run-android 
 # or npx react-native run-ios
+
+# or for Expo's development mode
+npx expo run android
+# or npx expo run ios
 ```
 
 ## Manual App Creation
@@ -26,9 +32,7 @@ For more information you can check [here](https://reactnative.dev/docs/getting-s
 If you want to set up the app manually instead, then you should run:
 
 ```bash
-npx @react-native-community/cli@latest init AwesomeProject --version 0.74.0
-# Version here may vary but make sure to use a stabile version of the react-native
-# Latest versions can experience issues because of unstability
+npx @react-native-community/cli@latest init AwesomeProject
 ```
 
 Then copy the contents of CountlyRNExample into the AwesomeProject and let it replace the App.tsx there.
@@ -48,15 +52,15 @@ Finally you can run:
 npx react-native run-android 
 # or npx react-native run-ios
 ```
+
 ## Debugging  
 For possible java issues you can try some of the following options:
 - changing the IDE settings.
 - changing the JAVA_HOME environment variable.
 - changing `org.gradle.java.home` in `gradle.properties`.
 
-Currently Java 17 and bigger is needed.
-
 For a ninja issue about path length you might want to download and point to a specific ninja version:
+
 ```java
 // under app level build.gradle's defaultConfig
   externalNativeBuild {

@@ -20,6 +20,7 @@ export interface Spec extends TurboModule {
     enableCrashReporting(): void;
     addCrashLog(args: Array<string>): void;
     logException(args: Array<UnsafeObject>): void;
+    recordMetrics(args: Array<UnsafeObject>): void;
     logJSException(err: string, message: string, stack: string): void;
     setCustomCrashSegments(args: Array<UnsafeObject>): void;
     recordEvent(args: UnsafeObject): void;
@@ -93,6 +94,8 @@ export interface Spec extends TurboModule {
     exitContentZone(): void;
     setID(newDeviceID: string): void;
     setCustomMetrics(args: Array<UnsafeObject>): void;
+    addListener: (eventType: string) => void;
+    removeListeners: (id: number) => void;
 }
 
 export default TurboModuleRegistry.getEnforcing<Spec>("CountlyReactNative");

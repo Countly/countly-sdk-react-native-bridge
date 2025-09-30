@@ -7,11 +7,6 @@ import countlyConfig from "./Configuration";
 import { lightGreen, navigationName } from "./Constants";
 
 async function initialize() {
-    if (await Countly.isInitialized()) {
-        console.warn("Countly is already initialized");
-        return;
-    }
-
     await Countly.initWithConfig(countlyConfig); // Initialize the countly SDK.
     Countly.appLoadingFinished();
 }

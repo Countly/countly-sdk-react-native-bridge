@@ -13,7 +13,7 @@ extern NSString* const kCountlySCKeySC;
 + (instancetype)sharedInstance;
 
 - (void)fetchServerConfig:(CountlyConfig *)config;
-- (void)retrieveServerConfigFromStorage:(NSString*) sdkBehaviorSettings;
+- (void)retrieveServerConfigFromStorage:(CountlyConfig *)config;
 - (void)fetchServerConfigIfTimeIsUp;
 - (void)disableSDKBehaviourSettings;
 
@@ -44,5 +44,6 @@ extern NSString* const kCountlySCKeySC;
 - (double)bomRQPercentage;
 - (NSInteger)bomRequestAge;
 - (NSInteger)bomDuration;
+- (NSInteger)requestTimeoutDuration;
 @end
 
