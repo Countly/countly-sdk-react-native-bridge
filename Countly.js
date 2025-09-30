@@ -620,6 +620,29 @@ Countly.addCrashLog = function (crashLog) {
 };
 
 /**
+ * Record a metrics request to be sent to the server
+ *
+ * @param {object} [metricsOverride] - optional metrics override map
+ */
+Countly.recordMetrics = function (metricsOverride = {}) {
+    if (!_state.isInitialized) {
+        L.e(`recordMetrics, 'init' must be called before 'recordMetrics'`);
+    }
+    L.d(`recordMetrics, Sending metrics request with override: [${JSON.stringify(metricsOverride)}]`);
+    if (metricsOverride && typeof metricsOverride !== "object") {
+        L.w(`recordMetrics, ignoring non-object metricsOverride of type '${typeof metricsOverride}'`);
+        metricsOverride = {};
+    }
+
+    const args = [];
+    for (const key in metricsOverride) {
+        args.push(key.toString());
+        args.push(metricsOverride[key].toString());
+    }
+    CountlyNativeModule.recordMetrics(args);
+};
+
+/**
  *
  * Log exception for Countly
  *

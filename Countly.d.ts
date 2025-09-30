@@ -516,6 +516,13 @@ declare module "countly-sdk-react-native-bridge" {
      */
     export function addCrashLog(crashLog: string): string | void;
 
+
+    /**
+     * Record a metrics request to be sent to the server
+     * @param {Record<string, string>} [metricsOverride] - optional metrics override map
+     */
+    export function recordMetrics(metricsOverride?: Record<string, string>): void;
+
     /**
      *
      * Log exception for Countly
@@ -1353,7 +1360,7 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
      *
      * @param {string[]} consents consents e.g ['location', 'sessions',
      * 'attribution', 'push', 'events', 'views', 'crashes', 'users', 'push',
-     * 'star-rating', 'apm', 'feedback', 'remote-config']
+     * 'star-rating', 'apm', 'feedback', 'remote-config', 'metrics']
      */
       giveConsent(consents: readonly string[]): CountlyConfig;
 
@@ -1479,6 +1486,14 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
        * @return {CountlyConfig}
        */
       setSDKBehaviorSettings(settingsObject: object): CountlyConfig;
+
+      /**
+       * Method to set the request timeout duration
+       *
+       * @param {number} requestTimeoutDuration - request timeout duration in seconds
+       * @return {CountlyConfig}
+       */
+      setRequestTimeoutDuration(requestTimeoutDuration: number): CountlyConfig;
   }
 
   export default CountlyConfig;

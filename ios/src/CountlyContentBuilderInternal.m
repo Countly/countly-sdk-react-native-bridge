@@ -15,6 +15,7 @@ NSString* const kCountlyCBFetchContent  = @"queue";
     BOOL _isCurrentlyContentShown;
     NSTimer *_requestTimer;
     NSTimer *_minuteTimer;
+    dispatch_queue_t _contentQueue;
 }
 
 NSInteger const contentInitialDelay = 4;
@@ -36,15 +37,37 @@ NSInteger const contentInitialDelay = 4;
         self.zoneTimerInterval = 30.0;
         _requestTimer = nil;
         _isCurrentlyContentShown = NO;
+        _contentQueue = dispatch_queue_create("ly.countly.content.queue", DISPATCH_QUEUE_SERIAL);
     }
     
     return self;
 }
 
+- (BOOL)isRequestQueueLockedThreadSafe {
+    __block BOOL locked = NO;
+    if (!_contentQueue) {
+        return _isRequestQueueLocked;
+    }
+    dispatch_sync(_contentQueue, ^{
+        locked = self->_isRequestQueueLocked;
+    });
+    return locked;
+}
+
+- (void)setRequestQueueLockedThreadSafe:(BOOL)locked {
+    if (!_contentQueue) {
+        _isRequestQueueLocked = locked;
+        return;
+    }
+    dispatch_async(_contentQueue, ^{
+        self->_isRequestQueueLocked = locked;
+    });
+}
+
 - (void)enterContentZone {
     
     if(_isCurrentlyContentShown){
-        CLY_LOG_I(@"%s, a content is already shown, skipping" ,__FUNCTION__);
+        CLY_LOG_I(@"%s a content is already shown, skipping" ,__FUNCTION__);
     }
     
     [self enterContentZone:@[]];
@@ -58,7 +81,7 @@ NSInteger const contentInitialDelay = 4;
         return;
     
     if(_requestTimer != nil) {
-        CLY_LOG_I(@"%s, Already entered for content zone, please exit from content zone first to start again", __FUNCTION__);
+        CLY_LOG_I(@"%s already entered for content zone, please exit from content zone first to start again", __FUNCTION__);
         return;
     }
     
@@ -97,7 +120,7 @@ NSInteger const contentInitialDelay = 4;
         return;
     }
     if(_isCurrentlyContentShown){
-        CLY_LOG_I(@"%s, a content is already shown, skipping" ,__FUNCTION__);
+        CLY_LOG_I(@"%s a content is already shown, skipping" ,__FUNCTION__);
     }
     
     [self exitContentZone];
@@ -119,7 +142,7 @@ NSInteger const contentInitialDelay = 4;
     [_minuteTimer invalidate];
     _minuteTimer = nil;
     self.currentTags = nil;
-    _isRequestQueueLocked = NO;
+    [self setRequestQueueLockedThreadSafe:NO];
 }
 
 - (void)fetchContents {
@@ -128,16 +151,16 @@ NSInteger const contentInitialDelay = 4;
 
     if (!CountlyServerConfig.sharedInstance.networkingEnabled)
         return;
-    if  (_isRequestQueueLocked) {
+    if ([self isRequestQueueLockedThreadSafe]) {
         return;
     }
     
-    _isRequestQueueLocked = YES;
+    [self setRequestQueueLockedThreadSafe:YES];
     
     NSURLSessionTask *dataTask = [[NSURLSession sharedSession] dataTaskWithRequest:[self fetchContentsRequest] completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         if (error) {
-            CLY_LOG_I(@"%s, Fetch content details failed: %@", __FUNCTION__, error);
-            self->_isRequestQueueLocked = NO;
+            CLY_LOG_I(@"%s fetch content details failed: [%@]", __FUNCTION__, error);
+            [self setRequestQueueLockedThreadSafe:NO];
             return;
         }
         
@@ -145,14 +168,14 @@ NSInteger const contentInitialDelay = 4;
         NSDictionary *jsonResponse = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
         
         if (jsonError) {
-            CLY_LOG_I(@"%s, Failed to parse JSON: %@", __FUNCTION__, jsonError);
-            self->_isRequestQueueLocked = NO;
+            CLY_LOG_I(@"%s failed to parse JSON: [%@]", __FUNCTION__, jsonError);
+            [self setRequestQueueLockedThreadSafe:NO];
             return;
         }
         
         if (!jsonResponse) {
-            CLY_LOG_I(@"%s, Received empty or null response.", __FUNCTION__);
-            self->_isRequestQueueLocked = NO;
+            CLY_LOG_I(@"%s received empty or null response.", __FUNCTION__);
+            [self setRequestQueueLockedThreadSafe:NO];
             return;
         }
         
@@ -161,7 +184,7 @@ NSInteger const contentInitialDelay = 4;
         if(pathToHtml) {
             [self showContentWithHtmlPath:pathToHtml placementCoordinates:placementCoordinates];
         }
-        self->_isRequestQueueLocked = NO;
+    [self setRequestQueueLockedThreadSafe:NO];
     }];
     
     [dataTask resume];
@@ -206,7 +229,7 @@ NSInteger const contentInitialDelay = 4;
         @"landscape": @{@"height": @(lHpW), @"width": @(lWpH)}
     };
     
-    CLY_LOG_D(@"%s, %@", __FUNCTION__, resolutionDict);
+    CLY_LOG_D(@"%s, resolutionDict: [%@]", __FUNCTION__, resolutionDict);
     
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:resolutionDict options:0 error:nil];
     return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
@@ -217,7 +240,7 @@ NSInteger const contentInitialDelay = 4;
     NSURL *url = [NSURL URLWithString:urlString];
     
     if (!url || !url.scheme || !url.host) {
-        CLY_LOG_E(@"%s, The URL is not valid: %@", __FUNCTION__, urlString);
+        CLY_LOG_E(@"%s the URL is not valid: [%@]", __FUNCTION__, urlString);
         return;
     }
 
@@ -238,18 +261,14 @@ NSInteger const contentInitialDelay = 4;
         CGRect frame = CGRectMake(x, y, width, height);
         
         // Log the URL and the frame
-        CLY_LOG_I(@"%s, Showing content from URL: %@", __FUNCTION__, url);
-        CLY_LOG_I(@"%s, Placement frame: %@", __FUNCTION__, NSStringFromCGRect(frame));
-        
+        CLY_LOG_I(@"%s showing content from URL: [%@], frame: [%@]", __FUNCTION__, url, NSStringFromCGRect(frame));
         CountlyWebViewManager* webViewManager =  CountlyWebViewManager.new;
             [webViewManager createWebViewWithURL:url frame:frame appearBlock:^
              {
-                CLY_LOG_I(@"%s, Webview appeared", __FUNCTION__);
-                self->_isCurrentlyContentShown = YES;
-                [self clearContentState];
+                CLY_LOG_I(@"%s webview should be appeared", __FUNCTION__);
             } dismissBlock:^
              {
-                CLY_LOG_I(@"%s, Webview dismissed", __FUNCTION__);
+                CLY_LOG_I(@"%s webview dismissed", __FUNCTION__);
                 self->_isCurrentlyContentShown = NO;
                 self->_minuteTimer = [NSTimer scheduledTimerWithTimeInterval:self->_zoneTimerInterval
                                                                  target:self
@@ -260,6 +279,9 @@ NSInteger const contentInitialDelay = 4;
                     self.contentCallback(CLOSED, NSDictionary.new);
                 }
             }];
+            CLY_LOG_I(@"%s webview initiated pausing content calls ", __FUNCTION__);
+            self->_isCurrentlyContentShown = YES;
+            [self clearContentState];
     });
 }
 #endif

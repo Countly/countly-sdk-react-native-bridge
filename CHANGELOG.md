@@ -1,3 +1,28 @@
+## 25.4.1
+* Improved Content display mechanics.
+* Added "setRequestTimeoutDuration" init config parameter to change request timeout duration in seconds.
+* Added a new function "recordMetrics(metricsOverride)" to send a manual metrics requests.
+* Added a new Consent option "metrics" for controlling "recordMetrics" method. (This has no effect on Session metrics.)
+* Added event listener calls for new architecture (thanks @j-q-in-berlin)
+
+* Mitigated an issue in SDK limits config class initialization  (thanks @albertlaiuste) 
+
+* Android specific changes:
+  * Improved disk size calculation in crash reports.
+  * Mitigated an issue that could have happened when navigating back from a Content.
+  * Mitigated a persistency issue with init configuration provided SBS and its initial state.
+  * Mitigated an issue where SBS could have been fetched twice.
+ 
+* iOS specific changes:
+  * Improved CPU architecture detection capabilities.
+  * Added the ability to record reserved events.
+  * Changed default log level from "Debug" to "Verbose".
+  * Mitigated an SBS issue while in temporary ID mode.
+  * Mitigated a possible Health Check network log recording issue.
+
+* Updated the underlying Android SDK version to 25.4.4
+* Updated the underlying iOS SDK version to 25.4.6
+
 ## 25.4.0
 * ! Minor breaking change ! The SDK now exclusively uses random UUIDs for device id generation instead of platform specific OpenUDID or IDFV
 * ! Minor breaking change ! Server Configuration is now enabled by default. Changes made on SDK Manager > SDK Configuration on your server will affect SDK behavior directly

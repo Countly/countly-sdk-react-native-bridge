@@ -103,6 +103,11 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void recordMetrics(ReadableArray args) {
+        this.impl.recordMetrics(args);
+    }
+
+    @ReactMethod
     public void logException(ReadableArray args) {
         this.impl.logException(args);
     }
@@ -475,5 +480,15 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void setCustomMetrics(ReadableArray args) {
         this.impl.setCustomMetrics(args);
+    }
+
+    @ReactMethod
+    public void addListener(String eventType) {
+        this.impl.addListener(eventType);
+    }
+
+    @ReactMethod
+    public void removeListeners(double id) {
+        this.impl.removeListeners(id);
     }
 }
