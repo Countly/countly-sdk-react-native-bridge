@@ -6,6 +6,7 @@
 #import "Countly.h"
 
 #import "CountlyCommon.h"
+#import "CountlyPersistency.h"
 #import "CountlyPushNotifications.h"
 #import "CountlyReactNative.h"
 
@@ -13,8 +14,7 @@
 #import "CountlyRNPushNotifications.h"
 #endif
 
-@interface CountlyPersistency : NSObject
-+ (instancetype)sharedInstance;
+@interface CountlyPersistency ()
 @property (nonatomic, strong) NSMutableArray *queuedRequests;
 @property (nonatomic, strong) NSMutableArray *recordedEvents;
 @end
@@ -42,6 +42,7 @@ static NSString *const kCountlyRNHandledRequestKey = @"CountlyRNHandledRequestKe
 
 @interface CountlyFeedbackWidget ()
 + (CountlyFeedbackWidget *)createWithDictionary:(NSDictionary *)dictionary;
+@property (nonatomic, readonly) NSString *widgetVersion;
 @end
 
 NSString *const kCountlyReactNativeSDKVersion = @"26.1.0";
@@ -1418,11 +1419,12 @@ RCT_REMAP_METHOD(getFeedbackWidgets, getFeedbackWidgetsWithResolver : (RCTPromis
             feedbackWidgetList = [NSArray arrayWithArray:feedbackWidgets];
             NSMutableArray *feedbackWidgetsArray = [NSMutableArray arrayWithCapacity:feedbackWidgets.count];
             for (CountlyFeedbackWidget *retrievedWidget in feedbackWidgets) {
-                NSMutableDictionary *feedbackWidget = [NSMutableDictionary dictionaryWithCapacity:3];
+                NSMutableDictionary *feedbackWidget = [NSMutableDictionary dictionaryWithCapacity:5];
                 feedbackWidget[@"id"] = retrievedWidget.ID;
                 feedbackWidget[@"type"] = retrievedWidget.type;
                 feedbackWidget[@"name"] = retrievedWidget.name;
                 feedbackWidget[@"tags"] = retrievedWidget.tags;
+                feedbackWidget[@"widgetVersion"] = retrievedWidget.widgetVersion ?: [NSNull null];
                 [feedbackWidgetsArray addObject:feedbackWidget];
             }
             resolve(feedbackWidgetsArray);
@@ -1466,7 +1468,7 @@ RCT_REMAP_METHOD(getFeedbackWidgetData, params : (NSArray *)arguments getFeedbac
         NSString *widgetId = [arguments objectAtIndex:0];
         CountlyFeedbackWidget *feedbackWidget = [self getFeedbackWidget:widgetId];
         if (feedbackWidget == nil) {
-            NSString *errorMessage = [NSString stringWithFormat:@"No feedbackWidget is found against widget Id : '%@', always call 'getFeedbackWidgets' to get updated list of feedback widgets.", widgetId];
+            NSString *errorMessage = [NSString stringWithFormat:@"No feedbackWidget is found against widget Id : '%@', always call 'getAvailableFeedbackWidgets' to get an updated list of feedback widgets.", widgetId];
             CountlyRNInternalLog(errorMessage);
             reject(@"getFeedbackWidgetData_failure", errorMessage, nil);
         } else {
@@ -1490,7 +1492,7 @@ RCT_REMAP_METHOD(reportFeedbackWidgetManually, params : (NSArray *)arguments rep
 
         CountlyFeedbackWidget *feedbackWidget = [self getFeedbackWidget:widgetId];
         if (feedbackWidget == nil) {
-            NSString *errorMessage = [NSString stringWithFormat:@"No feedbackWidget is found against widget Id : '%@', always call 'getFeedbackWidgets' to get updated list of feedback widgets.", widgetId];
+            NSString *errorMessage = [NSString stringWithFormat:@"No feedbackWidget is found against widget Id : '%@', always call 'getAvailableFeedbackWidgets' to get an updated list of feedback widgets.", widgetId];
             CountlyRNInternalLog(errorMessage);
             reject(@"reportFeedbackWidgetManually_failure", errorMessage, nil);
         } else {
@@ -1505,12 +1507,27 @@ RCT_EXPORT_METHOD(presentFeedbackWidget : (NSArray *)arguments) {
       NSString *widgetId = [arguments objectAtIndex:0];
       NSString *widgetType = [arguments objectAtIndex:1];
       NSString *widgetName = [arguments objectAtIndex:2];
-      NSMutableDictionary *feedbackWidgetsDict = [NSMutableDictionary dictionaryWithCapacity:3];
+      NSString *widgetVersion = nil;
+      if (arguments.count > 4 && ![[arguments objectAtIndex:4] isKindOfClass:[NSNull class]]) {
+          widgetVersion = [arguments objectAtIndex:4];
+      }
 
-      feedbackWidgetsDict[@"_id"] = widgetId;
-      feedbackWidgetsDict[@"type"] = widgetType;
-      feedbackWidgetsDict[@"name"] = widgetName;
-      CountlyFeedbackWidget *feedback = [CountlyFeedbackWidget createWithDictionary:feedbackWidgetsDict];
+      CountlyFeedbackWidget *feedback = [self getFeedbackWidget:widgetId];
+      if (feedback == nil || (widgetVersion.length > 0 && feedback.widgetVersion.length == 0)) {
+          NSMutableDictionary *feedbackWidget = [NSMutableDictionary dictionaryWithCapacity:4];
+          feedbackWidget[@"_id"] = widgetId;
+          feedbackWidget[@"type"] = widgetType;
+          feedbackWidget[@"name"] = widgetName;
+          if (widgetVersion.length > 0) {
+              feedbackWidget[@"wv"] = widgetVersion;
+          }
+          feedback = [CountlyFeedbackWidget createWithDictionary:feedbackWidget];
+      }
+
+      if (feedback == nil) {
+          return;
+      }
+
       [feedback
           presentWithAppearBlock:^{
             [self sendEventWithName:widgetShownCallbackName body:nil];
