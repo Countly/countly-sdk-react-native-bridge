@@ -3,9 +3,9 @@
 #import <React/RCTLog.h>
 #import <React/RCTUtils.h>
 
-#import <Countly/Countly.h>
+#import "Countly.h"
 
-#import "CountlyBridgeCommon.h"
+#import "CountlyCommon.h"
 #import "CountlyPushNotifications.h"
 #import "CountlyReactNative.h"
 

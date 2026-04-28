@@ -31,7 +31,6 @@
   * Added support for the latest manual session handling, custom request header, content preview, and safe-area content display APIs from the native SDK.
   * Aligned the user-profile bridge with the current `Countly.user` APIs for typed custom-property setters and forwarded custom user data during `Countly.setUserData(...)` and `Countly.userDataBulk.setUserProperties(...)`.
   * Breaking change: on iOS, custom fields passed through `Countly.setUserData(...)` and `Countly.userDataBulk.setUserProperties(...)` are now forwarded to the native SDK instead of being ignored by the bridge.
-  * Updated CocoaPods integration to consume the Countly iOS SDK directly as a dependency.
 
 * Updated the underlying Android SDK version to 26.1.2
 * Updated the underlying iOS SDK version to 26.1.1
