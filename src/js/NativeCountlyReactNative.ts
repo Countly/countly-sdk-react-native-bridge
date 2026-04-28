@@ -21,6 +21,9 @@ export interface Spec extends TurboModule {
     addCrashLog(args: Array<string>): void;
     logException(args: Array<UnsafeObject>): void;
     recordMetrics(args: Array<UnsafeObject>): void;
+    startSession(): void;
+    updateSession(): void;
+    endSession(): void;
     logJSException(err: string, message: string, stack: string): void;
     setCustomCrashSegments(args: Array<UnsafeObject>): void;
     recordEvent(args: UnsafeObject): void;
@@ -71,6 +74,9 @@ export interface Spec extends TurboModule {
     setStarRatingDialogTexts(args: Array<string>): void;
     showStarRating(args: Array<string>, callback: () => void): void;
     presentRatingWidgetWithID(args: Array<string>): void;
+    presentNPS(args: Array<string>): void;
+    presentSurvey(args: Array<string>): void;
+    presentRating(args: Array<string>): void;
     getFeedbackWidgets(): Promise<UnsafeObject>;
     getFeedbackWidgetData(args: Array<string>): Promise<UnsafeObject>;
     reportFeedbackWidgetManually(args: Array<string>): Promise<void>;
@@ -79,6 +85,7 @@ export interface Spec extends TurboModule {
     replaceAllAppKeysInQueueWithCurrentAppKey(): void;
     removeDifferentAppKeysFromQueue(): void;
     setEventSendThreshold(args: Array<number>): void;
+    addCustomNetworkRequestHeaders(args: Array<string>): void;
     startTrace(args: Array<string>): void;
     cancelTrace(args: Array<string>): void;
     clearAllTraces(args: Array<string>): void;
@@ -89,8 +96,14 @@ export interface Spec extends TurboModule {
     recordIndirectAttribution(args: Array<string>): void;
     recordDirectAttribution(args: Array<string>): void;
     appLoadingFinished(): void;
+    enableRequestCapture(): Promise<void>;
+    getCapturedRequests(): Promise<Array<string>>;
+    getRequestQueue(): Promise<Array<string>>;
+    getEventQueue(): Promise<Array<string>>;
+    halt(): Promise<void>;
     enterContentZone(): void;
     refreshContentZone(): void;
+    previewContent(args: Array<string>): void;
     exitContentZone(): void;
     setID(newDeviceID: string): void;
     setCustomMetrics(args: Array<UnsafeObject>): void;

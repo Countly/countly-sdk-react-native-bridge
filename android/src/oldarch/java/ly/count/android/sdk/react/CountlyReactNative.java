@@ -108,6 +108,21 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void startSession() {
+        this.impl.startSession();
+    }
+
+    @ReactMethod
+    public void updateSession() {
+        this.impl.updateSession();
+    }
+
+    @ReactMethod
+    public void endSession() {
+        this.impl.endSession();
+    }
+
+    @ReactMethod
     public void logException(ReadableArray args) {
         this.impl.logException(args);
     }
@@ -368,6 +383,21 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void presentNPS(ReadableArray args) {
+        this.impl.presentNPS(args);
+    }
+
+    @ReactMethod
+    public void presentSurvey(ReadableArray args) {
+        this.impl.presentSurvey(args);
+    }
+
+    @ReactMethod
+    public void presentRating(ReadableArray args) {
+        this.impl.presentRating(args);
+    }
+
+    @ReactMethod
     public void getFeedbackWidgets(final Promise promise) {
         this.impl.getFeedbackWidgets(promise);
     }
@@ -405,6 +435,11 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void setEventSendThreshold(ReadableArray args) {
         this.impl.setEventSendThreshold(args);
+    }
+
+    @ReactMethod
+    public void addCustomNetworkRequestHeaders(ReadableArray args) {
+        this.impl.addCustomNetworkRequestHeaders(args);
     }
 
     @ReactMethod
@@ -458,6 +493,31 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void enableRequestCapture(Promise promise) {
+        this.impl.enableRequestCapture(promise);
+    }
+
+    @ReactMethod
+    public void getCapturedRequests(Promise promise) {
+        this.impl.getCapturedRequests(promise);
+    }
+
+    @ReactMethod
+    public void getRequestQueue(Promise promise) {
+        this.impl.getRequestQueue(promise);
+    }
+
+    @ReactMethod
+    public void getEventQueue(Promise promise) {
+        this.impl.getEventQueue(promise);
+    }
+
+    @ReactMethod
+    public void halt(Promise promise) {
+        this.impl.halt(promise);
+    }
+
+    @ReactMethod
     public void enterContentZone() {
         this.impl.enterContentZone();
     }
@@ -465,6 +525,11 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void refreshContentZone() {
         this.impl.refreshContentZone();
+    }
+
+    @ReactMethod
+    public void previewContent(ReadableArray args) {
+        this.impl.previewContent(args);
     }
 
     @ReactMethod

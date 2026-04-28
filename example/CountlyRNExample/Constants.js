@@ -5,6 +5,7 @@ const navigationName = {
     Home: "Countly RN Example",
     Feedback: "Feedback",
     Events: "Events",
+    Sessions: "Sessions",
     UserProfiles: "User Profiles",
     Views: "Views",
     Crashes: "Crashes",
@@ -13,7 +14,8 @@ const navigationName = {
     Others: "Others",
     DeviceID: "Device ID",
     RemoteConfig: "Remote Config",
-    eventLegacy: "Events Legacy"
+    IntegrationTests: "Integration Tests",
+    Legacy: "Legacy APIs",
 };
 
 export { lightOrange, navigationName, lightGreen };

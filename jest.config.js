@@ -12,6 +12,8 @@ module.exports = {
         "!**/node_modules/**",
         "!**/vendor/**",
         "!**/example/**",
+        "!**/__tests__/**",
+        "!**/coverage/**",
     ],
     testPathIgnorePatterns: ["/node_modules/", "AwesomeProject"],
     transformIgnorePatterns: [

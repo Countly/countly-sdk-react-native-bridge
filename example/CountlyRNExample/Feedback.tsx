@@ -6,114 +6,27 @@ import Countly from "countly-sdk-react-native-bridge";
 import CountlyButton from "./CountlyButton";
 import { lightOrange } from "./Constants";
 
-// This function fetches the widget list and presents the widget with the given type. (with callback)
-function getAndPresentWidgetWithCallback(widgetType: string) {
-    Countly.feedback.getAvailableFeedbackWidgets((retrivedWidgets: any[], error: any) => {
-        if (error != null) {
-            console.error(`reportRatingManually, Error [${error}]`);
-            return;
-        }
+type WidgetType = "rating" | "survey" | "nps";
 
-        console.log(`reportRatingManually, result [${JSON.stringify(retrivedWidgets)}]`);
-        const widget = retrivedWidgets.find((x: { type: string }) => x.type === widgetType);
-        if (!widget) {
-            console.error(`reportRatingManually, widget not found [${widgetType}]`);
-            return;
-        }
-
-        presentWidget(widget);
-    });
+interface FeedbackWidgetInfo {
+    id: string;
+    type: string;
+    name?: string;
+    tags?: string[];
+    widgetVersion?: string | null;
 }
 
-// This function fetches the widget list and presents the widget with the given type. (async)
-async function getAndPresentWidgetAsync(widgetType: string) {
-    const resultObject = await Countly.feedback.getAvailableFeedbackWidgets();
-    console.log(`reportRatingManually, result [${JSON.stringify(resultObject)}]`);
-    if (resultObject.error != null) {
-        console.error(`reportRatingManually, Error [${resultObject.error}]`);
-        return;
-    }
-    const widget = resultObject.data.find((x: { type: string }) => x.type === widgetType);
-    if (!widget) {
-        console.error(`reportRatingManually, widget not found [${widgetType}]`);
-        return;
+const matchesWidget = (widget: FeedbackWidgetInfo, widgetType: WidgetType, filterValue: string) => {
+    if (widget.type !== widgetType) {
+        return false;
     }
 
-    presentWidget(widget);
-}
-
-// This function presents the given widget.
-function presentWidget(widget: any) {
-    Countly.feedback.presentFeedbackWidget(
-        widget,
-        "Close",
-        function () {
-            console.log("presentWidget, Widgetshown");
-        },
-        function () {
-            console.log("presentWidget, Widgetclosed");
-        }
-    );
-}
-
-// This function fetches the widget list then widget data and then reports the widget manually.
-async function reportWidgetManually(widgetType: string) {
-    // Get widget list
-    const resultObject = await Countly.feedback.getAvailableFeedbackWidgets();
-    console.log(`reportWidgetManually, retrieved widget list result [${JSON.stringify(resultObject)}]`);
-    if (resultObject.error != null) {
-        console.error(`reportWidgetManually, Error [${resultObject.error}]`);
-        return;
+    if (!filterValue) {
+        return true;
     }
 
-    // Find widget by type
-    const widget = resultObject.data.find((x: { type: string }) => x.type === widgetType);
-    if (!widget) {
-        console.error(`reportWidgetManually, widget not found [${widgetType}]`);
-        return;
-    }
-
-    // Get widget data
-    const widgetData = await Countly.feedback.getFeedbackWidgetData(widget);
-    if (widgetData.error != null) {
-        console.error("reportWidgetManually, Error while fetching widget data");
-        return;
-    }
-
-    // Report widget manually. Third parameter is some random data for the sake of example.
-    Countly.feedback.reportFeedbackWidgetManually(widget, widgetData.data, { rating: 5, comment: "This is random" });
-}
-
-// ============================================================
-// Old methods from the example project
-// ============================================================
-const setStarRatingDialogTexts = () => {
-    Countly.setStarRatingDialogTexts();
+    return widget.id === filterValue || widget.name === filterValue || (Array.isArray(widget.tags) && widget.tags.includes(filterValue));
 };
-
-const showStarRating = () => {
-    Countly.showStarRating();
-};
-
-const presentRatingWidgetUsingEditBox = function () {
-    Countly.presentRatingWidgetWithID(state.ratingId, "Submit", (error) => {
-        if (error != null) {
-            console.log(`presentRatingWidgetUsingEditBox : ${error}`);
-        }
-    });
-};
-
-const showSurvey = () => {
-    Countly.feedback.showSurvey(undefined, () => {console.log(`Survey shown`);});
-};
-
-const showNPS = () => {
-    Countly.feedback.showNPS(undefined, () => {console.log(`NPS shown`);});
-};
-
-const showRating = () => {
-    Countly.feedback.showRating(undefined, () => {console.log(`Rating shown`);});
-}
 
 const styles = StyleSheet.create({
     inputRoundedBorder: {
@@ -123,118 +36,196 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         borderColor: "grey",
         padding: 10,
-        fontSize: 20,
+        fontSize: 16,
+    },
+    statusText: {
+        fontSize: 14,
+        marginHorizontal: 20,
+        marginTop: 10,
+        textAlign: "center",
     },
 });
 
-const state = { ratingId: "61eac4627b8ad224e37bb3f5" };
+function FeedbackScreen() {
+    const [widgetFilter, setWidgetFilter] = React.useState("");
+    const [closeButtonText, setCloseButtonText] = React.useState("Close");
+    const [status, setStatus] = React.useState("Feedback actions will appear here.");
 
-function FeedbackScreen({ navigation }) {
+    const currentFilter = widgetFilter.trim();
+    const currentCloseButtonText = closeButtonText.trim() || "Close";
+
+    const updateStatus = (message: string) => {
+        console.log(message);
+        setStatus(message);
+    };
+
+    const getAvailableWidgets = async () => {
+        const resultObject = await Countly.feedback.getAvailableFeedbackWidgets();
+
+        if (resultObject.error != null || !resultObject.data) {
+            updateStatus(`Failed to load widgets: ${String(resultObject.error)}`);
+            return [];
+        }
+
+        console.log("Available feedback widgets", resultObject.data);
+        const summary = resultObject.data.map((widget) => `${widget.type}:${widget.name || widget.id}`).join(", ");
+        updateStatus(summary ? `Loaded widgets: ${summary}` : "No feedback widgets available.");
+        return resultObject.data as FeedbackWidgetInfo[];
+    };
+
+    const findWidget = async (widgetType: WidgetType) => {
+        const widgets = await getAvailableWidgets();
+        return widgets.find((widget) => matchesWidget(widget, widgetType, currentFilter)) || null;
+    };
+
+    const presentWidgetFromList = async (widgetType: WidgetType) => {
+        const widget = await findWidget(widgetType);
+
+        if (!widget) {
+            updateStatus(`No ${widgetType} widget matched '${currentFilter || "first available widget"}'.`);
+            return;
+        }
+
+        const result = Countly.feedback.presentFeedbackWidget(
+            widget,
+            currentCloseButtonText,
+            () => updateStatus(`Lookup ${widgetType} widget shown.`),
+            () => updateStatus(`Lookup ${widgetType} widget closed.`)
+        );
+
+        if (result.error != null) {
+            updateStatus(`Failed to present ${widgetType} widget: ${result.error}`);
+            return;
+        }
+
+        updateStatus(`Requested ${widgetType} widget presentation from widget lookup.`);
+    };
+
+    const reportWidgetManually = async (widgetType: WidgetType) => {
+        const widget = await findWidget(widgetType);
+
+        if (!widget) {
+            updateStatus(`No ${widgetType} widget matched '${currentFilter || "first available widget"}'.`);
+            return;
+        }
+
+        const widgetData = await Countly.feedback.getFeedbackWidgetData(widget);
+        if (widgetData.error != null || widgetData.data == null) {
+            updateStatus(`Failed to fetch ${widgetType} widget data: ${String(widgetData.error)}`);
+            return;
+        }
+
+        const reportResult = await Countly.feedback.reportFeedbackWidgetManually(widget, widgetData.data, {
+            rating: 5,
+            comment: `Manual ${widgetType} response from CountlyRNExample`,
+        });
+
+        if (reportResult.error != null) {
+            updateStatus(`Failed to report ${widgetType} widget manually: ${reportResult.error}`);
+            return;
+        }
+
+        updateStatus(`Reported ${widgetType} widget manually.`);
+    };
+
+    const presentDirectWidget = (widgetType: WidgetType) => {
+        const lookupValue = currentFilter || undefined;
+        const onShown = () => updateStatus(`Direct ${widgetType} widget shown.`);
+        const onClosed = () => updateStatus(`Direct ${widgetType} widget closed.`);
+
+        if (widgetType === "rating") {
+            Countly.feedback.presentRating(lookupValue, onShown, onClosed);
+        } else if (widgetType === "survey") {
+            Countly.feedback.presentSurvey(lookupValue, onShown, onClosed);
+        } else {
+            Countly.feedback.presentNPS(lookupValue, onShown, onClosed);
+        }
+
+        updateStatus(`Requested direct ${widgetType} widget presentation.`);
+    };
+
+    const showDirectWidget = (widgetType: WidgetType) => {
+        const lookupValue = currentFilter || undefined;
+        const onClosed = () => updateStatus(`Show ${widgetType} widget closed.`);
+
+        if (widgetType === "rating") {
+            Countly.feedback.showRating(lookupValue, onClosed);
+        } else if (widgetType === "survey") {
+            Countly.feedback.showSurvey(lookupValue, onClosed);
+        } else {
+            Countly.feedback.showNPS(lookupValue, onClosed);
+        }
+
+        updateStatus(`Requested show ${widgetType} widget.`);
+    };
+
     return (
         <SafeAreaView>
             <ScrollView>
-                <Text style={{ fontSize: 16, fontWeight: "bold", textAlign: "center", marginTop: 20 }}>With Callback</Text>
+                <TextInput
+                    style={styles.inputRoundedBorder}
+                    placeholder="Optional widget name, id, or tag"
+                    onChangeText={setWidgetFilter}
+                    value={widgetFilter}
+                />
+                <TextInput
+                    style={styles.inputRoundedBorder}
+                    placeholder="Close button text"
+                    onChangeText={setCloseButtonText}
+                    value={closeButtonText}
+                />
+                <Text style={styles.statusText}>{status}</Text>
+                <Text style={{ fontSize: 16, fontWeight: "bold", textAlign: "center", marginTop: 20 }}>Widget Lookup APIs</Text>
+                <CountlyButton title="List Available Widgets" onPress={() => void getAvailableWidgets()} color={lightOrange} lightText={true} />
                 <CountlyButton
                     title="Present Rating Widget"
-                    onPress={() => {
-                        getAndPresentWidgetWithCallback("rating");
-                    }}
+                    onPress={() => void presentWidgetFromList("rating")}
                     color={lightOrange}
                     lightText={true}
                 />
                 <CountlyButton
                     title="Present Survey Widget"
-                    onPress={() => {
-                        getAndPresentWidgetWithCallback("survey");
-                    }}
+                    onPress={() => void presentWidgetFromList("survey")}
                     color={lightOrange}
                     lightText={true}
                 />
                 <CountlyButton
                     title="Present NPS Widget"
-                    onPress={() => {
-                        getAndPresentWidgetWithCallback("nps");
-                    }}
+                    onPress={() => void presentWidgetFromList("nps")}
                     color={lightOrange}
                     lightText={true}
                 />
-                <Text style={{ fontSize: 16, fontWeight: "bold", textAlign: "center", marginTop: 20 }}>Async Method</Text>
-                <CountlyButton
-                    title="Present Rating Widget"
-                    onPress={async () =>
-                        getAndPresentWidgetAsync("rating").catch((e) => {
-                            console.log(e);
-                        })
-                    }
-                    color={lightOrange}
-                    lightText={true}
-                />
-                <CountlyButton
-                    title="Present Survey Widget"
-                    onPress={async () =>
-                        getAndPresentWidgetAsync("survey").catch((e) => {
-                            console.log(e);
-                        })
-                    }
-                    color={lightOrange}
-                    lightText={true}
-                />
-                <CountlyButton
-                    title="Present NPS Widget"
-                    onPress={async () =>
-                        getAndPresentWidgetAsync("nps").catch((e) => {
-                            console.log(e);
-                        })
-                    }
-                    color={lightOrange}
-                    lightText={true}
-                />
-                <Text style={{ fontSize: 16, fontWeight: "bold", textAlign: "center", marginTop: 20 }}>Report Widget Manually</Text>
+                <Text style={{ fontSize: 16, fontWeight: "bold", textAlign: "center", marginTop: 20 }}>Manual Reporting</Text>
                 <CountlyButton
                     title="Report Rating Widget"
-                    onPress={async () =>
-                        reportWidgetManually("rating").catch((e) => {
-                            console.log(e);
-                        })
-                    }
+                    onPress={() => void reportWidgetManually("rating")}
                     color={lightOrange}
                     lightText={true}
                 />
                 <CountlyButton
                     title="Report Survey Widget"
-                    onPress={async () =>
-                        reportWidgetManually("survey").catch((e) => {
-                            console.log(e);
-                        })
-                    }
+                    onPress={() => void reportWidgetManually("survey")}
                     color={lightOrange}
                     lightText={true}
                 />
                 <CountlyButton
                     title="Report NPS Widget"
-                    onPress={async () =>
-                        reportWidgetManually("nps").catch((e) => {
-                            console.log(e);
-                        })
-                    }
+                    onPress={() => void reportWidgetManually("nps")}
                     color={lightOrange}
                     lightText={true}
                 />
-                <Text style={{ fontSize: 16, fontWeight: "bold", textAlign: "center", marginTop: 20 }}>Legacy Methods</Text>
-                <CountlyButton onPress={showStarRating} title="Show Star Rating Model" color="#00b5ad" />
-                <TextInput
-                    style={styles.inputRoundedBorder}
-                    placeholder="Enter a Rating ID"
-                    onChangeText={(ratingId) => {
-                        state.ratingId = ratingId;
-                    }}
-                    value={state.ratingId}
+                <Text style={{ fontSize: 16, fontWeight: "bold", textAlign: "center", marginTop: 20 }}>Direct Present APIs</Text>
+                <CountlyButton
+                    title="Present Rating"
+                    onPress={() => presentDirectWidget("rating")}
+                    color="#00b5ad"
                 />
-                <CountlyButton disabled={!state.ratingId} onPress={presentRatingWidgetUsingEditBox} title="Show Feedback using EditBox" color="#00b5ad" />
-                <CountlyButton onPress={showSurvey} title="Show Survey" color="#00b5ad" />
-                <CountlyButton onPress={showNPS} title="Show NPS" color="#00b5ad" />
-                <CountlyButton onPress={showRating} title="Show Rating" color="#00b5ad" />
-                <CountlyButton onPress={setStarRatingDialogTexts} title="Set Star Rating Dialog Texts" color="#00b5ad" />
+                <CountlyButton onPress={() => presentDirectWidget("survey")} title="Present Survey" color="#00b5ad" />
+                <CountlyButton onPress={() => presentDirectWidget("nps")} title="Present NPS" color="#00b5ad" />
+                <Text style={{ fontSize: 16, fontWeight: "bold", textAlign: "center", marginTop: 20 }}>Direct Show APIs</Text>
+                <CountlyButton onPress={() => showDirectWidget("rating")} title="Show Rating" color="#00b5ad" />
+                <CountlyButton onPress={() => showDirectWidget("survey")} title="Show Survey" color="#00b5ad" />
+                <CountlyButton onPress={() => showDirectWidget("nps")} title="Show NPS" color="#00b5ad" />
             </ScrollView>
         </SafeAreaView>
     );

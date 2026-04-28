@@ -11,6 +11,7 @@ import CountlyState from "./CountlyState.js";
 import Feedback from "./Feedback.js";
 import Event from "./Event.js";
 import DeviceId from "./DeviceId.js";
+import RemoteConfig from "./RemoteConfig.js";
 import * as L from "./Logger.js";
 import * as Utils from "./Utils.js";
 import * as Validate from "./Validators.js";
@@ -31,6 +32,7 @@ CountlyState.eventEmitter = eventEmitter;
 Countly.feedback = new Feedback(CountlyState);
 Countly.events = new Event(CountlyState);
 Countly.deviceId = new DeviceId(CountlyState);
+Countly.remoteConfig = new RemoteConfig(CountlyState);
 
 let _isCrashReportingEnabled = false;
 
@@ -39,6 +41,7 @@ Countly.userDataBulk = {}; // userDataBulk interface
 
 Countly.content = {}; // content interface
 
+Countly.test = {}; // test-only interface
 let _isPushInitialized = false;
 
 /*
@@ -48,10 +51,37 @@ let _ratingWidgetListener;
 const ratingWidgetCallbackName = "ratingWidgetCallback";
 const pushNotificationCallbackName = "pushNotificationCallback";
 
+function removeSubscription(stateKey) {
+    const subscription = _state[stateKey];
+    if (subscription && typeof subscription.remove === "function") {
+        subscription.remove();
+    }
+    _state[stateKey] = null;
+}
+
+function resetBridgeStateForTesting() {
+    removeSubscription("globalContentCallbackSubscription");
+    removeSubscription("widgetShownCallback");
+    removeSubscription("widgetClosedCallback");
+
+    if (_ratingWidgetListener && typeof _ratingWidgetListener.remove === "function") {
+        _ratingWidgetListener.remove();
+    }
+    _ratingWidgetListener = null;
+
+    _state.isInitialized = false;
+    _isPushInitialized = false;
+}
+
+function isSupportedUserPropertyValue(value) {
+    return typeof value === "string" || typeof value === "number" || typeof value === "boolean" || Array.isArray(value);
+}
+
 Countly.messagingMode = { DEVELOPMENT: "1", PRODUCTION: "0", ADHOC: "2" };
 if (/android/.exec(Platform.OS)) {
     Countly.messagingMode.DEVELOPMENT = "2";
 }
+Countly.webViewDisplayOption = { IMMERSIVE: "IMMERSIVE", SAFE_AREA: "SAFE_AREA" };
 Countly.TemporaryDeviceIDString = "TemporaryDeviceID";
 
 /**
@@ -94,8 +124,9 @@ Countly.initWithConfig = async function (countlyConfig) {
         return;
     }
     L.d("initWithConfig, Initializing Countly");
+    removeSubscription("globalContentCallbackSubscription");
     if (countlyConfig.content.contentCallback) {
-        eventEmitter.addListener("globalContentCallback", (data) => {
+        _state.globalContentCallbackSubscription = eventEmitter.addListener("globalContentCallback", (data) => {
             L.d(`init configuration, Global content callback called with data: ${data}`);
             try {
                 data = JSON.parse(data);
@@ -707,6 +738,22 @@ Countly.startSession = function () {
 
 /**
  *
+ * Update session tracking
+ *
+ * @return {string | void} error message or void
+ */
+Countly.updateSession = function () {
+    if (!_state.isInitialized) {
+        const message = "'init' must be called before 'updateSession'";
+        L.e(`updateSession, ${message}`);
+        return message;
+    }
+    L.d("updateSession, Updating session");
+    CountlyNativeModule.updateSession();
+};
+
+/**
+ *
  * End session tracking
  *
  * @return {string | void} error message or void
@@ -719,6 +766,45 @@ Countly.endSession = function () {
     }
     L.d("endSession, Ending session");
     CountlyNativeModule.endSession();
+};
+
+/**
+ * Adds or overrides custom network request headers at runtime.
+ *
+ * @param {Record<string, string>} customHeaderValues header key/value pairs
+ * @return {string | void} error message or void
+ */
+Countly.addCustomNetworkRequestHeaders = function (customHeaderValues) {
+    if (!_state.isInitialized) {
+        const message = "'init' must be called before 'addCustomNetworkRequestHeaders'";
+        L.e(`addCustomNetworkRequestHeaders, ${message}`);
+        return message;
+    }
+    if (!customHeaderValues || typeof customHeaderValues !== "object") {
+        const message = "customHeaderValues should be a key/value object";
+        L.e(`addCustomNetworkRequestHeaders, ${message}`);
+        return message;
+    }
+
+    const args = [];
+    for (const key in customHeaderValues) {
+        const value = customHeaderValues[key];
+        if (value === null || value === undefined) {
+            L.w(`addCustomNetworkRequestHeaders, skipping '${key}' due to null or undefined value`);
+            continue;
+        }
+
+        args.push(key.toString());
+        args.push(value.toString());
+    }
+
+    if (args.length === 0) {
+        L.w("addCustomNetworkRequestHeaders, no valid header values were provided");
+        return;
+    }
+
+    L.d(`addCustomNetworkRequestHeaders, Adding custom headers: [${JSON.stringify(customHeaderValues)}]`);
+    CountlyNativeModule.addCustomNetworkRequestHeaders(args);
 };
 
 /**
@@ -852,8 +938,8 @@ Countly.setUserData = async function (userData) {
     }
     const args = [];
     for (const key in userData) {
-        if (typeof userData[key] !== "string" && key.toString() != "byear") {
-            L.w("setUserData, " + `skipping value for key '${key.toString()}', due to unsupported data type '${typeof userData[key]}', its data type should be 'string'`);
+        if (key.toString() !== "byear" && !isSupportedUserPropertyValue(userData[key])) {
+            L.w("setUserData, " + `skipping value for key '${key.toString()}', due to unsupported data type '${typeof userData[key]}', its data type should be 'string', 'number', 'boolean', or an array of those types`);
         }
     }
 
@@ -896,7 +982,6 @@ Countly.userData.setProperty = async function (keyName, keyValue) {
         return message;
     }
     keyName = keyName.toString();
-    keyValue = keyValue.toString();
     if (keyName && (keyValue || keyValue == "")) {
         await CountlyNativeModule.userData_setProperty([keyName, keyValue]);
     }
@@ -1178,8 +1263,8 @@ Countly.userDataBulk.setUserProperties = async function (customAndPredefined) {
         return message;
     }
     for (const key in customAndPredefined) {
-        if (typeof customAndPredefined[key] !== "string" && key.toString() != "byear") {
-            L.w("setUserProperties, " + `skipping value for key '${key.toString()}', due to unsupported data type '${typeof customAndPredefined[key]}', its data type should be 'string'`);
+        if (key.toString() !== "byear" && !isSupportedUserPropertyValue(customAndPredefined[key])) {
+            L.w("setUserProperties, " + `skipping value for key '${key.toString()}', due to unsupported data type '${typeof customAndPredefined[key]}', its data type should be 'string', 'number', 'boolean', or an array of those types`);
         }
     }
 
@@ -1238,7 +1323,6 @@ Countly.userDataBulk.setProperty = async function (keyName, keyValue) {
         return message;
     }
     keyName = keyName.toString();
-    keyValue = keyValue.toString();
     if (keyName && (keyValue || keyValue == "")) {
         await CountlyNativeModule.userDataBulk_setProperty([keyName, keyValue]);
     }
@@ -1618,6 +1702,7 @@ Countly.removeAllConsent = function () {
 };
 
 /**
+ * @deprecated in 26.1.0 : use 'Countly.remoteConfig.update' instead of 'remoteConfigUpdate'.
  *
  * Replaces all stored Remote Config values with new values from server.
  *
@@ -1631,6 +1716,7 @@ Countly.remoteConfigUpdate = function (callback) {
         callback(message);
         return message;
     }
+    L.w("remoteConfigUpdate, remoteConfigUpdate is deprecated, use Countly.remoteConfig.update instead.");
     L.d("remoteConfigUpdate, Updating remote config");
     CountlyNativeModule.remoteConfigUpdate([], (stringItem) => {
         callback(stringItem);
@@ -1638,6 +1724,8 @@ Countly.remoteConfigUpdate = function (callback) {
 };
 
 /**
+ * @deprecated in 26.1.0 : use 'Countly.remoteConfig.updateForKeysOnly' instead of 'updateRemoteConfigForKeysOnly'.
+ *
  *
  * Replace specific Remote Config key value pairs with new values from server.
  *
@@ -1652,6 +1740,7 @@ Countly.updateRemoteConfigForKeysOnly = function (keyNames, callback) {
         callback(message);
         return message;
     }
+    L.w("updateRemoteConfigForKeysOnly, updateRemoteConfigForKeysOnly is deprecated, use Countly.remoteConfig.updateForKeysOnly instead.");
     L.d(`updateRemoteConfigForKeysOnly, Updating remote config for keys: [${keyNames}]`);
     const args = [];
     if (keyNames.length) {
@@ -1665,6 +1754,8 @@ Countly.updateRemoteConfigForKeysOnly = function (keyNames, callback) {
 };
 
 /**
+ * @deprecated in 26.1.0 : use 'Countly.remoteConfig.updateExceptKeys' instead of 'updateRemoteConfigExceptKeys'.
+ *
  *
  * Replace all except specific Remote Config key value pairs with new values from server.
  *
@@ -1679,6 +1770,7 @@ Countly.updateRemoteConfigExceptKeys = function (keyNames, callback) {
         callback(message);
         return message;
     }
+    L.w("updateRemoteConfigExceptKeys, updateRemoteConfigExceptKeys is deprecated, use Countly.remoteConfig.updateExceptKeys instead.");
     L.d(`updateRemoteConfigExceptKeys, Updating remote config except keys: [${keyNames}]`);
     const args = [];
     if (keyNames.length) {
@@ -1692,6 +1784,8 @@ Countly.updateRemoteConfigExceptKeys = function (keyNames, callback) {
 };
 
 /**
+ * @deprecated in 26.1.0 : use 'Countly.remoteConfig.getValue' instead of 'getRemoteConfigValueForKey'.
+ *
  *
  * Replace Remote Config key value for a specific key with new values from server.
  *
@@ -1706,6 +1800,7 @@ Countly.getRemoteConfigValueForKey = function (keyName, callback) {
         callback(message);
         return message;
     }
+    L.w("getRemoteConfigValueForKey, getRemoteConfigValueForKey is deprecated, use Countly.remoteConfig.getValue instead.");
     CountlyNativeModule.getRemoteConfigValueForKey([keyName.toString() || ""], (value) => {
         if (Platform.OS == "android") {
             try {
@@ -1720,6 +1815,8 @@ Countly.getRemoteConfigValueForKey = function (keyName, callback) {
 };
 
 /**
+ * @deprecated in 26.1.0 : use 'Countly.remoteConfig.getValue' instead of 'getRemoteConfigValueForKeyP'.
+ *
  *
  * Replace Remote Config key value for a specific key with new values from server.
  *
@@ -1732,6 +1829,7 @@ Countly.getRemoteConfigValueForKeyP = function (keyName) {
         L.e(`getRemoteConfigValueForKeyP, ${message}`);
         return message;
     }
+    L.w("getRemoteConfigValueForKeyP, getRemoteConfigValueForKeyP is deprecated, use Countly.remoteConfig.getValue instead.");
     L.d(`getRemoteConfigValueForKeyP, Getting remote config value for key: [${keyName}]`);
     if (Platform.OS != "android") {
         return "To be implemented";
@@ -1750,11 +1848,14 @@ Countly.getRemoteConfigValueForKeyP = function (keyName) {
             return value;
         })
         .catch((e) => {
-            L.e("getRemoteConfigValueForKeyP, Catch Error:", e);
+            L.e(`getRemoteConfigValueForKeyP, Catch Error: ${e?.message || String(e)}`);
+            return undefined;
         });
 };
 
 /**
+ * @deprecated in 26.1.0 : use 'Countly.remoteConfig.clearValues' instead of 'remoteConfigClearValues'.
+ *
  *
  * Clear all Remote Config values downloaded from the server.
  *
@@ -1766,6 +1867,7 @@ Countly.remoteConfigClearValues = async function () {
         L.e(`remoteConfigClearValues, ${message}`);
         return message;
     }
+    L.w("remoteConfigClearValues, remoteConfigClearValues is deprecated, use Countly.remoteConfig.clearValues instead.");
     L.d("remoteConfigClearValues, Clearing remote config values");
     const result = await CountlyNativeModule.remoteConfigClearValues();
     return result;
@@ -1831,9 +1933,11 @@ Countly.presentRatingWidgetWithID = function (widgetId, closeButtonText, ratingW
         L.e(`presentRatingWidgetWithID, ${message}`);
         return message;
     }
-    if (typeof closeButtonText !== "string") {
+    if (closeButtonText == null) {
         closeButtonText = "";
-        L.w("presentRatingWidgetWithID, " + `unsupported data type of closeButtonText : '${typeof args}'`);
+    } else if (typeof closeButtonText !== "string") {
+        closeButtonText = "";
+        L.w("presentRatingWidgetWithID, " + `unsupported data type of closeButtonText : '${typeof closeButtonText}'`);
     }
     if (ratingWidgetCallback) {
         // eventEmitter.addListener('ratingWidgetCallback', ratingWidgetCallback);
@@ -1904,9 +2008,11 @@ Countly.presentFeedbackWidgetObject = async function (feedbackWidget, closeButto
         L.e(`presentFeedbackWidgetObject, ${message}`);
         return message;
     }
-    if (typeof closeButtonText !== "string") {
+    if (closeButtonText == null) {
         closeButtonText = "";
-        L.w("presentFeedbackWidgetObject, " + `unsupported data type of closeButtonText : '${typeof args}'`);
+    } else if (typeof closeButtonText !== "string") {
+        closeButtonText = "";
+        L.w("presentFeedbackWidgetObject, " + `unsupported data type of closeButtonText : '${typeof closeButtonText}'`);
     }
 
     if (widgetShownCallback) {
@@ -1923,8 +2029,9 @@ Countly.presentFeedbackWidgetObject = async function (feedbackWidget, closeButto
     }
 
     feedbackWidget.name = feedbackWidget.name || "";
+    const widgetVersion = typeof feedbackWidget.widgetVersion === "string" ? feedbackWidget.widgetVersion : "";
     closeButtonText = closeButtonText || "";
-    CountlyNativeModule.presentFeedbackWidget([feedbackWidget.id, feedbackWidget.type, feedbackWidget.name, closeButtonText]);
+    CountlyNativeModule.presentFeedbackWidget([feedbackWidget.id, feedbackWidget.type, feedbackWidget.name, closeButtonText, widgetVersion]);
 };
 
 /**
@@ -2252,6 +2359,25 @@ Countly.content.refreshContentZone = function() {
 };
 
 /**
+ * Preview a specific content by ID without entering the content zone.
+ *
+ * @param {string} contentId content identifier to preview
+ */
+Countly.content.previewContent = function(contentId) {
+    const message = Validate.String(contentId, "contentId", "previewContent");
+    if (message) {
+        return message;
+    }
+    L.i(`previewContent, previewing content with ID: [${contentId}]`);
+    if (!_state.isInitialized) {
+        const initMessage = "'init' must be called before 'previewContent'";
+        L.e(`previewContent, ${initMessage}`);
+        return initMessage;
+    }
+    CountlyNativeModule.previewContent([contentId]);
+};
+
+/**
  * Opt out user from the content fetching and updates
  * 
  */
@@ -2263,6 +2389,33 @@ Countly.content.exitContentZone = function() {
         return;
     }
     CountlyNativeModule.exitContentZone();
+};
+
+/**
+ * Test-only helper methods for RN integration tests.
+ */
+Countly.test.enableRequestCapture = async function () {
+    await CountlyNativeModule.enableRequestCapture();
+};
+
+Countly.test.getCapturedRequests = async function () {
+    const requests = await CountlyNativeModule.getCapturedRequests();
+    return requests || [];
+};
+
+Countly.test.getRequestQueue = async function () {
+    const queue = await CountlyNativeModule.getRequestQueue();
+    return queue || [];
+};
+
+Countly.test.getEventQueue = async function () {
+    const queue = await CountlyNativeModule.getEventQueue();
+    return queue || [];
+};
+
+Countly.test.halt = async function () {
+    await CountlyNativeModule.halt();
+    resetBridgeStateForTesting();
 };
 
 export default Countly;

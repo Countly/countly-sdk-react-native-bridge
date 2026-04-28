@@ -207,6 +207,21 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     }
 
     @Override
+    public void startSession() {
+        this.impl.startSession();
+    }
+
+    @Override
+    public void updateSession() {
+        this.impl.updateSession();
+    }
+
+    @Override
+    public void endSession() {
+        this.impl.endSession();
+    }
+
+    @Override
     public void logJSException(String err, String message, String stack) {
         this.impl.logJSException(err, message, stack);
     }
@@ -461,6 +476,21 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     }
 
     @Override
+    public void presentNPS(ReadableArray args) {
+        this.impl.presentNPS(args);
+    }
+
+    @Override
+    public void presentSurvey(ReadableArray args) {
+        this.impl.presentSurvey(args);
+    }
+
+    @Override
+    public void presentRating(ReadableArray args) {
+        this.impl.presentRating(args);
+    }
+
+    @Override
     public void getFeedbackWidgets(final Promise promise) {
         this.impl.getFeedbackWidgets(promise);
     }
@@ -497,6 +527,11 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     @Override
     public void setEventSendThreshold(ReadableArray args) {
         this.impl.setEventSendThreshold(args);
+    }
+
+    @Override
+    public void addCustomNetworkRequestHeaders(ReadableArray args) {
+        this.impl.addCustomNetworkRequestHeaders(args);
     }
 
     @Override
@@ -550,6 +585,31 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     }
 
     @Override
+    public void enableRequestCapture(Promise promise) {
+        this.impl.enableRequestCapture(promise);
+    }
+
+    @Override
+    public void getCapturedRequests(Promise promise) {
+        this.impl.getCapturedRequests(promise);
+    }
+
+    @Override
+    public void getRequestQueue(Promise promise) {
+        this.impl.getRequestQueue(promise);
+    }
+
+    @Override
+    public void getEventQueue(Promise promise) {
+        this.impl.getEventQueue(promise);
+    }
+
+    @Override
+    public void halt(Promise promise) {
+        this.impl.halt(promise);
+    }
+
+    @Override
     public void enterContentZone() {
         this.impl.enterContentZone();
     }
@@ -557,6 +617,11 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     @Override
     public void refreshContentZone() {
         this.impl.refreshContentZone();
+    }
+
+    @Override
+    public void previewContent(ReadableArray args) {
+        this.impl.previewContent(args);
     }
 
     @Override

@@ -31,6 +31,16 @@ class CountlyConfig {
 
     #requestTimeoutDuration;
 
+    #manualSessionControl = false;
+
+    #manualSessionControlHybridMode = false;
+
+    #disableGradualRequestCleaner = false;
+
+    #disableViewRestartForManualRecording = false;
+
+    #customNetworkRequestHeaders;
+
     constructor(serverURL, appKey) {
         this.serverURL = serverURL;
         this.appKey = appKey;
@@ -96,6 +106,26 @@ class CountlyConfig {
         return this.#requestTimeoutDuration;
     }
 
+    get _manualSessionControl() {
+        return this.#manualSessionControl;
+    }
+
+    get _manualSessionControlHybridMode() {
+        return this.#manualSessionControlHybridMode;
+    }
+
+    get _disableGradualRequestCleaner() {
+        return this.#disableGradualRequestCleaner;
+    }
+
+    get _disableViewRestartForManualRecording() {
+        return this.#disableViewRestartForManualRecording;
+    }
+
+    get _customNetworkRequestHeaders() {
+        return this.#customNetworkRequestHeaders;
+    }
+
     /**
      * Method to set the server url
      *
@@ -134,6 +164,49 @@ class CountlyConfig {
      */
     setRequestTimeoutDuration(timeout) {
         this.#requestTimeoutDuration = timeout;
+        return this;
+    }
+
+    /**
+     * Enables manual session control.
+     */
+    enableManualSessionControl() {
+        this.#manualSessionControl = true;
+        return this;
+    }
+
+    /**
+     * Enables hybrid manual session control.
+     */
+    enableManualSessionControlHybridMode() {
+        this.#manualSessionControl = true;
+        this.#manualSessionControlHybridMode = true;
+        return this;
+    }
+
+    /**
+     * Adds custom headers for all outgoing network requests.
+     *
+     * @param {Object} customHeaderValues header key/value pairs
+     */
+    addCustomNetworkRequestHeaders(customHeaderValues) {
+        this.#customNetworkRequestHeaders = customHeaderValues;
+        return this;
+    }
+
+    /**
+     * Disables the gradual request queue cleaner on Android.
+     */
+    disableGradualRequestCleaner() {
+        this.#disableGradualRequestCleaner = true;
+        return this;
+    }
+
+    /**
+     * Disables automatic restart behavior for manually recorded views.
+     */
+    disableViewRestartForManualRecording() {
+        this.#disableViewRestartForManualRecording = true;
         return this;
     }
 

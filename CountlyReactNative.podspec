@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name = 'CountlyReactNative'
-  s.version = '25.4.1'
+  s.version = '26.1.0'
   s.license = {
     :type => 'COMMUNITY',
     :text => <<-LICENSE
@@ -29,12 +29,12 @@ Pod::Spec.new do |s|
     LICENSE
   }
   s.summary  = 'Countly is an innovative, real-time, open source mobile analytics platform.'
-  s.homepage = 'https://github.com/Countly/countly-sdk-ios'
+  s.homepage = 'https://github.com/Countly/countly-sdk-react-native-bridge'
   s.social_media_url = 'https://twitter.com/gocountly'
   s.author = {'Countly' => 'hello@count.ly'}
-  s.source = { :git => 'https://github.com/Countly/countly-sdk-ios.git', :tag => s.version.to_s }
-  s.source_files = 'ios/src/*.{h,m}'
-  s.public_header_files = 'ios/src/CountlyReactNative.h, ios/src/CountlyPushNotifications.h'
+  s.source = { :git => 'https://github.com/Countly/countly-sdk-react-native-bridge.git', :tag => s.version.to_s }
+  s.source_files = 'ios/src/CountlyReactNative.{h,m}', 'ios/src/CountlyRNPushNotifications.{h,m}', 'ios/src/CountlyBridgeCommon.h', 'ios/src/CountlyPushNotifications.h', 'ios/src/CountlyNotificationService.h'
+  s.public_header_files = 'ios/src/CountlyReactNative.h'
   s.requires_arc = true
   s.ios.deployment_target = '10.0'
   s.osx.deployment_target = '10.14'
@@ -44,7 +44,9 @@ Pod::Spec.new do |s|
 
   s.subspec 'NotificationService' do |ns|
     ns.source_files = 'ios/src/CountlyNotificationService.{m,h}'
+    ns.dependency 'Countly', '26.1.1'
   end
 
   s.dependency "React"
+  s.dependency 'Countly', '26.1.1'
 end

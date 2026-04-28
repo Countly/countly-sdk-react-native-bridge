@@ -1,3 +1,41 @@
+## 26.1.0
+* Added a new async `Countly.remoteConfig` interface with:
+  * `update()`
+  * `updateForKeysOnly(keyNames)`
+  * `updateExceptKeys(keyNames)`
+  * `getValue(keyName)`
+  * `clearValues()`
+* Deprecated root-level remote config methods in favor of `Countly.remoteConfig`:
+  * `Countly.remoteConfigUpdate(...)`
+  * `Countly.updateRemoteConfigForKeysOnly(...)`
+  * `Countly.updateRemoteConfigExceptKeys(...)`
+  * `Countly.getRemoteConfigValueForKey(...)`
+  * `Countly.getRemoteConfigValueForKeyP(...)`
+  * `Countly.remoteConfigClearValues()`
+* Added `Countly.remoteConfig.getValue(keyName)` as the async replacement for the older root-level remote config getters. It returns `null` when a value is missing.
+* Mitigated an issue where the new remote config interface could reject on normal runtime conditions such as missing values, invalid input, or use before SDK initialization. These calls now log and return without crashing the app.
+* Added manual session control support with `Countly.startSession()`, `Countly.updateSession()`, and `Countly.endSession()`.
+* Added `Countly.addCustomNetworkRequestHeaders(...)` for runtime request header updates.
+* Added `Countly.content.previewContent(contentId)` for direct content previews.
+* Added `Countly.webViewDisplayOption` constants and `.content.setWebViewDisplayOption(...)` for controlling content and feedback presentation.
+* Added direct `Countly.feedback.presentNPS(...)`, `Countly.feedback.presentSurvey(...)`, and `Countly.feedback.presentRating(...)` helpers backed by the latest native feedback APIs.
+* Added init config options for manual session control, hybrid manual session mode, custom network request headers, and `disableViewRestartForManualRecording()`.
+
+* Android specific changes:
+  * Added `disableGradualRequestCleaner()` init config support.
+  * Set the initial activity during SDK initialization to improve content and feedback presentation flows.
+  * Ensured Android feedback, survey, NPS, and rating presentation runs on the UI thread to avoid WebView/dialog crashes when showing widgets from the React Native bridge.
+  * Aligned the Android bridge with the current native SDK APIs for APM/crash config, preserved feedback widget version metadata for presentation, and allowed typed user-property values to pass through to the native user profile API.
+
+* iOS specific changes:
+  * Added support for the latest manual session handling, custom request header, content preview, and safe-area content display APIs from the native SDK.
+  * Aligned the user-profile bridge with the current `Countly.user` APIs for typed custom-property setters and forwarded custom user data during `Countly.setUserData(...)` and `Countly.userDataBulk.setUserProperties(...)`.
+  * Breaking change: on iOS, custom fields passed through `Countly.setUserData(...)` and `Countly.userDataBulk.setUserProperties(...)` are now forwarded to the native SDK instead of being ignored by the bridge.
+  * Updated CocoaPods integration to consume the Countly iOS SDK directly as a dependency.
+
+* Updated the underlying Android SDK version to 26.1.2
+* Updated the underlying iOS SDK version to 26.1.1
+
 ## 25.4.1
 * Improved Content display mechanics.
 * Added "setRequestTimeoutDuration" init config parameter to change request timeout duration in seconds.

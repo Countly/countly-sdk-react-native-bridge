@@ -125,6 +125,10 @@ function configToJson(config) {
             json.setGlobalContentCallback = true;
             L.i("init configuration, Set global content callback");
         }
+        if (config.content.webViewDisplayOption) {
+            json.webViewDisplayOption = config.content.webViewDisplayOption;
+            L.i(`init configuration, WebView display option: ${config.content.webViewDisplayOption}`);
+        }
         if (config._disableIntentRedirectionCheck) {
             json.disableAdditionalIntentRedirectionChecks = true;
             L.i("init configuration, Disabled additional intent redirection checks");
@@ -175,6 +179,18 @@ function configToJson(config) {
         if (config._requestTimeoutDuration) {
             json.requestTimeoutDuration = config._requestTimeoutDuration;
             L.i(`init configuration, Request timeout duration: ${config._requestTimeoutDuration}`);
+        }
+        if (config._manualSessionControl) {
+            json.manualSessionHandling = true;
+            L.i("init configuration, Enabled manual session control");
+        }
+        if (config._manualSessionControlHybridMode) {
+            json.enableManualSessionControlHybridMode = true;
+            L.i("init configuration, Enabled hybrid manual session control");
+        }
+        if (config._customNetworkRequestHeaders) {
+            json.customNetworkRequestHeaders = config._customNetworkRequestHeaders;
+            L.i(`init configuration, Custom network request headers: ${JSON.stringify(config._customNetworkRequestHeaders)}`);
         }
         if (config.attributionValues) {
             json.attributionValues = config.attributionValues;
@@ -237,6 +253,14 @@ function configToJson(config) {
         if (config._disableBackoff) {
             L.i("init configuration, disabled backoff mechanism");
             json.disableBackoffMechanism = true;
+        }
+        if (config._disableGradualRequestCleaner) {
+            L.i("init configuration, disabled gradual request cleaner");
+            json.disableGradualRequestCleaner = true;
+        }
+        if (config._disableViewRestartForManualRecording) {
+            L.i("init configuration, disabled view restart for manual recordings");
+            json.disableViewRestartForManualRecording = true;
         }
         if (config._sdkBehaviorSettings) {
             L.i(`init configuration, SDK behavior settings: ${JSON.stringify(config._sdkBehaviorSettings)}`);
