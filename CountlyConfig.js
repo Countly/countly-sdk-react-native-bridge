@@ -19,8 +19,6 @@ import CountlyConfigContent from "./lib/configuration_interfaces/countly_config_
 class CountlyConfig {
     #crashReporting = false;
 
-    #apmLegacy = false;
-
     #disableIntentRedirectionCheck = false;
 
     #disableSDKBehaviorSettingsUpdates = false;
@@ -80,10 +78,6 @@ class CountlyConfig {
 
     get _crashReporting() {
         return this.#crashReporting;
-    }
-
-    get _apmLegacy() {
-        return this.#apmLegacy;
     }
 
     get _disableIntentRedirectionCheck() {
@@ -284,16 +278,6 @@ class CountlyConfig {
     }
 
     /**
-     * @deprecated in 24.4.0 : use 'countlyConfig.apm' interface instead of 'config.enableApm'.
-     * 
-     * Method to enable application performance monitoring which includes the recording of app start time.
-     */
-    enableApm() {
-        this.#apmLegacy = true;
-        return this;
-    }
-
-    /**
      * AdditionalIntentRedirectionChecks are enabled by default.
      * This method should be used to disable them.
      */
@@ -324,23 +308,6 @@ class CountlyConfig {
      */
     setSDKBehaviorSettings(settingsObject) {
         this.#sdkBehaviorSettings = settingsObject;
-        return this;
-    }
-
-    /**
-     * Method to set the push token type
-     * @deprecated
-     * Use setPushTokenType() instead to set pushToken
-     * Use setPushNotificationChannelInformation() instead to set channel information
-     *
-     * @param {TokenType} tokenType token type
-     * @param {String} channelName channel name
-     * @param {String} channelDescription channel description
-     */
-    pushTokenType(tokenType, channelName, channelDescription) {
-        this.tokenType = tokenType;
-        this.channelName = channelName;
-        this.channelDescription = channelDescription;
         return this;
     }
 

@@ -7,17 +7,13 @@ export interface Spec extends TurboModule {
     setLoggingEnabled(args: Array<boolean>): void;
     isLoggingEnabled(): Promise<boolean>;
     isInitialized(): Promise<boolean>;
-    hasBeenCalledOnStart(): Promise<boolean>;
     getCurrentDeviceId(): Promise<string>;
     getDeviceIDType(): Promise<string>;
     changeDeviceId(args: Array<string>): void;
     setHttpPostForced(args: Array<boolean>): void;
-    enableParameterTamperingProtection(args: Array<string>): void;
     pinnedCertificates(args: Array<string>): void;
-    setLocationInit(args: Array<string | null>): void;
     setLocation(args: Array<number>): void;
     disableLocation(): void;
-    enableCrashReporting(): void;
     addCrashLog(args: Array<string>): void;
     logException(args: Array<UnsafeObject>): void;
     recordMetrics(args: Array<UnsafeObject>): void;
@@ -33,10 +29,8 @@ export interface Spec extends TurboModule {
     recordView(args: Array<string>): void;
     setUserData(args: Array<UnsafeObject>): Promise<void>;
     sendPushToken(args: Array<string>): void;
-    pushTokenType(args: Array<string>): void;
     registerForNotification(args: Array<UnsafeObject>): void;
     askForNotificationPermission(args: Array<UnsafeObject>): void;
-    configureIntentRedirectionCheck(intentClassNames: Array<string>, intentPackageNames: Array<string>, useAdditionalIntentRedirectionChecks: boolean): void;
     userData_setProperty(args: Array<UnsafeObject>): Promise<void>;
     userData_increment(args: Array<string>): Promise<void>;
     userData_incrementBy(args: Array<string | number>): Promise<void>;
@@ -59,8 +53,6 @@ export interface Spec extends TurboModule {
     userDataBulk_pushUniqueValue(args: Array<string | number | boolean>): Promise<void>;
     userDataBulk_pushValue(args: Array<string | number | boolean>): Promise<void>;
     userDataBulk_pullValue(args: Array<string | number | boolean>): Promise<void>;
-    setRequiresConsent(args: Array<string>): void;
-    giveConsentInit(featureNames: Array<string>): void;
     giveConsent(featureNames: Array<string>): void;
     removeConsent(featureNames: Array<string>): void;
     giveAllConsent(): void;
@@ -71,7 +63,6 @@ export interface Spec extends TurboModule {
     getRemoteConfigValueForKey(args: Array<string>, callback: () => void): void;
     getRemoteConfigValueForKeyP(keyName: string): Promise<UnsafeObject>;
     remoteConfigClearValues(): Promise<void>;
-    setStarRatingDialogTexts(args: Array<string>): void;
     showStarRating(args: Array<string>, callback: () => void): void;
     presentRatingWidgetWithID(args: Array<string>): void;
     presentNPS(args: Array<string>): void;
@@ -91,8 +82,6 @@ export interface Spec extends TurboModule {
     clearAllTraces(args: Array<string>): void;
     endTrace(args: Array<string>): void;
     recordNetworkTrace(args: Array<string>): void;
-    enableApm(args: Array<string>): void;
-    recordAttributionID(args: Array<string>): void;
     recordIndirectAttribution(args: Array<string>): void;
     recordDirectAttribution(args: Array<string>): void;
     appLoadingFinished(): void;

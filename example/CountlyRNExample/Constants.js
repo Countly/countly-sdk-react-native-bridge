@@ -15,7 +15,6 @@ const navigationName = {
     DeviceID: "Device ID",
     RemoteConfig: "Remote Config",
     IntegrationTests: "Integration Tests",
-    Legacy: "Legacy APIs",
 };
 
 export { lightOrange, navigationName, lightGreen };

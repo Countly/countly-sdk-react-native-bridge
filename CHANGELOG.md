@@ -19,7 +19,35 @@
 * Added `Countly.content.previewContent(contentId)` for direct content previews.
 * Added `Countly.webViewDisplayOption` constants and `.content.setWebViewDisplayOption(...)` for controlling content and feedback presentation.
 * Added direct `Countly.feedback.presentNPS(...)`, `Countly.feedback.presentSurvey(...)`, and `Countly.feedback.presentRating(...)` helpers backed by the latest native feedback APIs.
-* Added init config options for manual session control, hybrid manual session mode, custom network request headers, and `disableViewRestartForManualRecording()`.
+* Added `Countly.deviceId.changeID(newDeviceID, merge)` to the device ID interface for explicit merge control after removing the old root-level `Countly.changeDeviceId(...)` API.
+* Mitigated an inconsistency where `Countly.deviceId.setID(Countly.TemporaryDeviceIDString)` did not route temporary-device-ID mode through the dedicated native handling on Android, and now does so explicitly on both Android and iOS.
+* Added init config options for manual session control, hybrid manual session mode, custom network request headers, and disabling auto view restart.
+  * `enableManualSessionControl()`
+  * `enableManualSessionControlHybridMode()`
+  * `addCustomNetworkRequestHeaders(customHeaderValues)`
+  * `disableViewRestartForManualRecording()`
+  * Removed `Countly.init(...)`. Use `Countly.initWithConfig(countlyConfig)`.
+  * Removed `Countly.hasBeenCalledOnStart()`. No direct replacement.
+  * Removed `Countly.sendEvent(...)`. Use `Countly.events.recordEvent(...)`.
+  * Removed `Countly.pushTokenType(...)`. Use `CountlyConfig.setPushTokenType(...)` and `CountlyConfig.setPushNotificationChannelInformation(...)`.
+  * Removed `Countly.configureIntentRedirectionCheck(...)`. Use `CountlyConfig.configureIntentRedirectionCheck(...)`.
+  * Removed `Countly.start()` and `Countly.stop()`. No direct replacement; automatic session tracking is enabled by default. For manual control use `Countly.startSession()`, `Countly.updateSession()`, and `Countly.endSession()`.
+  * Removed `Countly.enableLogging()` and `Countly.disableLogging()`. Use `Countly.setLoggingEnabled(...)`.
+  * Removed `Countly.setLocationInit(...)`. Use `CountlyConfig.setLocation(...)`.
+  * Removed `Countly.getCurrentDeviceId()`. Use `Countly.deviceId.getID()`.
+  * Removed `Countly.getDeviceIDType()`. Use `Countly.deviceId.getType()`.
+  * Removed `Countly.changeDeviceId(...)`. Use `Countly.deviceId.setID(...)` for automatic merge selection or `Countly.deviceId.changeID(..., merge)` for explicit merge control.
+  * Removed `Countly.enableCrashReporting()`. Use `CountlyConfig.enableCrashReporting()` with `Countly.initWithConfig(...)`.
+  * Removed `Countly.enableParameterTamperingProtection(...)`. Use `CountlyConfig.enableParameterTamperingProtection(...)`.
+  * Removed `Countly.startEvent(...)`, `Countly.cancelEvent(...)`, and `Countly.endEvent(...)`. Use `Countly.events.startEvent(...)`, `Countly.events.cancelEvent(...)`, and `Countly.events.endEvent(...)`.
+  * Removed `Countly.setRequiresConsent(...)`. Use `CountlyConfig.setRequiresConsent(...)`.
+  * Removed `Countly.giveConsentInit(...)`. Use `CountlyConfig.giveConsent(...)`.
+  * Removed `Countly.setStarRatingDialogTexts(...)`. Use `CountlyConfig.setStarRatingDialogTexts(...)`.
+  * Removed `Countly.getFeedbackWidgets()`. Use `Countly.feedback.getAvailableFeedbackWidgets()`.
+  * Removed `Countly.presentFeedbackWidgetObject(...)`. Use `Countly.feedback.presentFeedbackWidget(...)`.
+  * Removed `Countly.enableApm()` and `CountlyConfig.enableApm()`. Use the `CountlyConfig.apm` interface, including `enableAppStartTimeTracking()`, `enableForegroundBackgroundTracking()`, and `enableManualAppLoadedTrigger()` as needed.
+  * Removed `Countly.enableAttribution(...)` and `Countly.recordAttributionID(...)`. Use `Countly.recordIndirectAttribution(...)`.
+  * Removed `CountlyConfig.pushTokenType(...)`. Use `CountlyConfig.setPushTokenType(...)` and `CountlyConfig.setPushNotificationChannelInformation(...)`.
 
 * Android specific changes:
   * Added `disableGradualRequestCleaner()` init config support.

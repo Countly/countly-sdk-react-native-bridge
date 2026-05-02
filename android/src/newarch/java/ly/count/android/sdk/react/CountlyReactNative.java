@@ -13,17 +13,13 @@ init(ReadableArray args, Promise promise)
 setLoggingEnabled(ReadableArray args)
 isLoggingEnabled(final Promise promise)
 isInitialized(Promise promise)
-hasBeenCalledOnStart(Promise promise)
 getCurrentDeviceId(Promise promise)
 getDeviceIDType(Promise promise)
 changeDeviceId(ReadableArray args)
 setHttpPostForced(ReadableArray args)
-enableParameterTamperingProtection(ReadableArray args)
 pinnedCertificates(ReadableArray args)
-setLocationInit(ReadableArray args)
 setLocation(ReadableArray args)
 disableLocation()
-enableCrashReporting()
 addCrashLog(ReadableArray args)
 logException(ReadableArray args)
 logJSException(String err, String message, String stack)
@@ -35,11 +31,9 @@ endEvent(ReadableMap args)
 recordView(ReadableArray args)
 setUserData(ReadableArray args, Promise promise)
 sendPushToken(ReadableArray args)
-pushTokenType(ReadableArray args)
 onNotification(Map<String, String> notification)
 registerForNotification(ReadableArray args)
 askForNotificationPermission(ReadableArray args)
-configureIntentRedirectionCheck(ReadableArray intentClassNames, ReadableArray intentPackageNames, boolean useAdditionalIntentRedirectionChecks)
 userData_setProperty(ReadableArray args, Promise promise)
 userData_increment(ReadableArray args, Promise promise)
 userData_incrementBy(ReadableArray args, Promise promise)
@@ -62,8 +56,6 @@ userDataBulk_setOnce(ReadableArray args, Promise promise)
 userDataBulk_pushUniqueValue(ReadableArray args, Promise promise)
 userDataBulk_pushValue(ReadableArray args, Promise promise)
 userDataBulk_pullValue(ReadableArray args, Promise promise)
-setRequiresConsent(ReadableArray args)
-giveConsentInit(ReadableArray featureNames)
 giveConsent(ReadableArray featureNames)
 removeConsent(ReadableArray featureNames)
 giveAllConsent()
@@ -74,7 +66,6 @@ updateRemoteConfigExceptKeys(ReadableArray args, final Callback myCallback)
 getRemoteConfigValueForKey(ReadableArray args, final Callback myCallback)
 getRemoteConfigValueForKeyP(String keyName, Promise promise)
 remoteConfigClearValues(Promise promise)
-setStarRatingDialogTexts(ReadableArray args)
 showStarRating(ReadableArray args, final Callback callback)
 presentRatingWidgetWithID(ReadableArray args)
 getFeedbackWidgets(final Promise promise)
@@ -91,8 +82,6 @@ cancelTrace(ReadableArray args)
 clearAllTraces(ReadableArray args)
 endTrace(ReadableArray args)
 recordNetworkTrace(ReadableArray args)
-enableApm(ReadableArray args)
-recordAttributionID(ReadableArray args)
 recordIndirectAttribution(ReadableArray args)
 recordDirectAttribution(ReadableArray args)
 appLoadingFinished()
@@ -137,11 +126,6 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     }
 
     @Override
-    public void hasBeenCalledOnStart(Promise promise) {
-        this.impl.hasBeenCalledOnStart(promise);
-    }
-
-    @Override
     public void getCurrentDeviceId(Promise promise) {
         this.impl.getCurrentDeviceId(promise);
     }
@@ -162,18 +146,8 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     }
 
     @Override
-    public void enableParameterTamperingProtection(ReadableArray args) {
-        this.impl.enableParameterTamperingProtection(args);
-    }
-
-    @Override
     public void pinnedCertificates(ReadableArray args) {
         this.impl.pinnedCertificates(args);
-    }
-
-    @Override
-    public void setLocationInit(ReadableArray args) {
-        this.impl.setLocationInit(args);
     }
 
     @Override
@@ -184,11 +158,6 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     @Override
     public void disableLocation() {
         this.impl.disableLocation();
-    }
-
-    @Override
-    public void enableCrashReporting() {
-        this.impl.enableCrashReporting();
     }
 
     @Override
@@ -266,11 +235,6 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
         this.impl.sendPushToken(args);
     }
 
-    @Override
-    public void pushTokenType(ReadableArray args) {
-        this.impl.pushTokenType(args);
-    }
-
     // public static void onNotification(Map<String, String> notification) {
     //     CountlyReactNativeImpl.onNotification(notification);
     // }
@@ -283,11 +247,6 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     @Override
     public void askForNotificationPermission(ReadableArray args) {
         this.impl.askForNotificationPermission(args);
-    }
-
-    @Override
-    public void configureIntentRedirectionCheck(ReadableArray intentClassNames, ReadableArray intentPackageNames, boolean useAdditionalIntentRedirectionChecks) {
-        this.impl.configureIntentRedirectionCheck(intentClassNames, intentPackageNames, useAdditionalIntentRedirectionChecks);
     }
 
     @Override
@@ -401,16 +360,6 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     }
 
     @Override
-    public void setRequiresConsent(ReadableArray args) {
-        this.impl.setRequiresConsent(args);
-    }
-
-    @Override
-    public void giveConsentInit(ReadableArray featureNames) {
-        this.impl.giveConsentInit(featureNames);
-    }
-
-    @Override
     public void giveConsent(ReadableArray featureNames) {
         this.impl.giveConsent(featureNames);
     }
@@ -458,11 +407,6 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     @Override
     public void remoteConfigClearValues(Promise promise) {
         this.impl.remoteConfigClearValues(promise);
-    }
-
-    @Override
-    public void setStarRatingDialogTexts(ReadableArray args) {
-        this.impl.setStarRatingDialogTexts(args);
     }
 
     @Override
@@ -557,16 +501,6 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     @Override
     public void recordNetworkTrace(ReadableArray args) {
         this.impl.recordNetworkTrace(args);
-    }
-
-    @Override
-    public void enableApm(ReadableArray args) {
-        this.impl.enableApm(args);
-    }
-
-    @Override
-    public void recordAttributionID(ReadableArray args) {
-        this.impl.recordAttributionID(args);
     }
 
     @Override

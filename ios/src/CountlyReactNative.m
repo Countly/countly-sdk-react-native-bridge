@@ -524,7 +524,11 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
 
 RCT_EXPORT_METHOD(setID : (NSString *)newDeviceID) { 
     dispatch_async(dispatch_get_main_queue(), ^{ 
-        [Countly.sharedInstance setID:newDeviceID];
+        if ([newDeviceID isEqualToString:@"TemporaryDeviceID"]) {
+            [Countly.sharedInstance enableTemporaryDeviceIDMode];
+        } else {
+            [Countly.sharedInstance setID:newDeviceID];
+        }
     });
 }
 
@@ -604,25 +608,6 @@ RCT_EXPORT_METHOD(sendPushToken : (NSArray *)arguments) {
       NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
       [request setHTTPMethod:@"GET"];
       [request setURL:[NSURL URLWithString:urlString]];
-    });
-#endif
-}
-RCT_EXPORT_METHOD(pushTokenType : (NSArray *)arguments) {
-#ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
-    dispatch_async(dispatch_get_main_queue(), ^{
-      if (config == nil) {
-          config = CountlyConfig.new;
-      }
-      config.sendPushTokenAlways = YES;
-      config.pushTestMode = CLYPushTestModeProduction;
-      NSString *tokenType = [arguments objectAtIndex:0];
-      if ([tokenType isEqualToString:@"1"]) {
-          config.pushTestMode = CLYPushTestModeDevelopment;
-      } else if ([tokenType isEqualToString:@"2"]) {
-          config.pushTestMode = CLYPushTestModeTestFlightOrAdHoc;
-      }
-
-      CountlyPushNotifications.sharedInstance.pushTestMode = config.pushTestMode;
     });
 #endif
 }
@@ -719,16 +704,6 @@ RCT_EXPORT_METHOD(setHttpPostForced : (NSArray *)arguments) {
     });
 }
 
-RCT_EXPORT_METHOD(enableParameterTamperingProtection : (NSArray *)arguments) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-      NSString *salt = [arguments objectAtIndex:0];
-      if (config == nil) {
-          config = CountlyConfig.new;
-      }
-      config.secretSalt = salt;
-    });
-}
-
 RCT_EXPORT_METHOD(pinnedCertificates : (NSArray *)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^{
       NSString *certificateName = [arguments objectAtIndex:0];
@@ -772,41 +747,6 @@ RCT_EXPORT_METHOD(endEvent : (NSDictionary *)arguments) {
             }
         }
         [[Countly sharedInstance] endEvent:eventName segmentation:dict count:countInt sum:sumFloat];
-    });
-}
-
-RCT_EXPORT_METHOD(setLocationInit : (NSArray *)arguments) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-      if (config == nil) {
-          config = CountlyConfig.new;
-      }
-      NSString *countryCode = [arguments objectAtIndex:0];
-      NSString *city = [arguments objectAtIndex:1];
-      NSString *locationString = [arguments objectAtIndex:2];
-      NSString *ipAddress = [arguments objectAtIndex:3];
-
-      if (locationString != nil && ![locationString isEqualToString:@"null"] && [locationString containsString:@","]) {
-          @try {
-              NSArray *locationArray = [locationString componentsSeparatedByString:@","];
-              NSString *latitudeString = [locationArray objectAtIndex:0];
-              NSString *longitudeString = [locationArray objectAtIndex:1];
-
-              double latitudeDouble = [latitudeString doubleValue];
-              double longitudeDouble = [longitudeString doubleValue];
-              config.location = (CLLocationCoordinate2D){latitudeDouble, longitudeDouble};
-          } @catch (NSException *exception) {
-              COUNTLY_RN_LOG(@"Invalid location: %@", locationString);
-          }
-      }
-      if (city != nil && ![city isEqualToString:@"null"]) {
-          config.city = city;
-      }
-      if (countryCode != nil && ![countryCode isEqualToString:@"null"]) {
-          config.ISOCountryCode = countryCode;
-      }
-      if (ipAddress != nil && ![ipAddress isEqualToString:@"null"]) {
-          config.IP = ipAddress;
-      }
     });
 }
 
@@ -867,15 +807,6 @@ RCT_EXPORT_METHOD(disableLocation) {
         }
     }
     return locationCoordinate;
-}
-
-RCT_EXPORT_METHOD(enableCrashReporting) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-      if (config == nil) {
-          config = CountlyConfig.new;
-      }
-      [self addCountlyFeature:CLYCrashReporting];
-    });
 }
 
 RCT_EXPORT_METHOD(addCrashLog : (NSArray *)arguments) {
@@ -1189,25 +1120,6 @@ RCT_REMAP_METHOD(userDataBulk_pullValue, params : (NSArray *)arguments userDataB
     });
 }
 
-RCT_EXPORT_METHOD(setRequiresConsent : (NSArray *)arguments) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-      if (config == nil) {
-          config = CountlyConfig.new;
-      }
-      BOOL consentFlag = [[arguments objectAtIndex:0] boolValue];
-      config.requiresConsent = consentFlag;
-    });
-}
-
-RCT_EXPORT_METHOD(giveConsentInit : (NSArray *)arguments) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-      if (config == nil) {
-          config = CountlyConfig.new;
-      }
-      config.consents = arguments;
-    });
-}
-
 RCT_EXPORT_METHOD(recordDirectAttribution : (NSArray *)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^{
         NSString *campaignType = [arguments objectAtIndex:0];
@@ -1323,13 +1235,6 @@ RCT_EXPORT_METHOD(getRemoteConfigValueForKey : (NSArray *)arguments callback : (
           NSString *value = @"ConfigKeyNotFound";
           callback(@[ value ]);
       }
-    });
-}
-
-RCT_EXPORT_METHOD(setStarRatingDialogTexts : (NSArray *)arguments) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-      NSString *starRatingTextMessage = [arguments objectAtIndex:1];
-      config.starRatingMessage = starRatingTextMessage;
     });
 }
 
@@ -1575,13 +1480,6 @@ RCT_REMAP_METHOD(isInitialized, isInitializedWithResolver : (RCTPromiseResolveBl
     });
 }
 
-RCT_REMAP_METHOD(hasBeenCalledOnStart, hasBeenCalledOnStartWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-      id result = [NSNumber numberWithBool:CountlyCommon.sharedInstance.hasStarted];
-      resolve(result);
-    });
-}
-
 RCT_EXPORT_METHOD(remoteConfigClearValues : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
       [Countly.sharedInstance.remoteConfig clearAll];
@@ -1625,25 +1523,6 @@ RCT_EXPORT_METHOD(recordNetworkTrace : (NSArray *)arguments) {
       long long startTime = [[arguments objectAtIndex:4] longLongValue];
       long long endTime = [[arguments objectAtIndex:5] longLongValue];
       [Countly.sharedInstance recordNetworkTrace:networkTraceKey requestPayloadSize:requestPayloadSize responsePayloadSize:responsePayloadSize responseStatusCode:responseCode startTime:startTime endTime:endTime];
-    });
-}
-RCT_EXPORT_METHOD(enableApm : (NSArray *)arguments) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-      config.enablePerformanceMonitoring = YES;
-    });
-}
-
-RCT_EXPORT_METHOD(recordAttributionID : (NSArray *)arguments) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-      NSString *attributionID = [arguments objectAtIndex:0];
-      if (CountlyCommon.sharedInstance.hasStarted) {
-          [Countly.sharedInstance recordAttributionID:attributionID];
-      } else {
-          if (config == nil) {
-              config = CountlyConfig.new;
-          }
-          config.attributionID = attributionID;
-      }
     });
 }
 

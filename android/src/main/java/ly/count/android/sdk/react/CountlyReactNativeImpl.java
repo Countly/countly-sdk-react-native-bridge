@@ -105,7 +105,6 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     private String COUNTLY_RN_SDK_NAME = "js-rnb-android";
 
     private static CountlyConfig config = new CountlyConfig();
-    private static Countly.CountlyMessagingMode messagingMode = Countly.CountlyMessagingMode.PRODUCTION;
     private static String channelName = "General Notifications";
     private static String channelDescription = "Receive notifications about important updates and events.";
     private static CCallback notificationListener = null;
@@ -115,7 +114,6 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     private List<String> allowedIntentClassNames = new ArrayList<>();
     private List<String> allowedIntentPackageNames = new ArrayList<>();
     private boolean useAdditionalIntentRedirectionChecks = true;
-    private boolean disableAdditionalIntentRedirectionChecksConfigSet = false;
 
     private final ReactApplicationContext _reactContext;
 
@@ -153,7 +151,6 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
 
     private void resetTestingState() {
         config = new CountlyConfig();
-        messagingMode = Countly.CountlyMessagingMode.PRODUCTION;
         channelName = "General Notifications";
         channelDescription = "Receive notifications about important updates and events.";
         notificationListener = null;
@@ -161,7 +158,6 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         allowedIntentClassNames.clear();
         allowedIntentPackageNames.clear();
         useAdditionalIntentRedirectionChecks = true;
-        disableAdditionalIntentRedirectionChecksConfigSet = false;
         retrievedWidgetList = null;
         requestCaptureEnabled = false;
         requestCaptureGeneratorInstalled = false;
@@ -513,17 +509,10 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
             if (_config.has("pushNotification")) {
                 JSONObject pushObject = _config.getJSONObject("pushNotification");
                 if (!pushObject.toString().equals("{}")) {
-                    int messagingMode = Integer.parseInt(pushObject.getString("tokenType"));
                     channelName = pushObject.getString("channelName");
                     channelDescription = pushObject.getString("channelDescription");
                     if (pushObject.has("accentColor")) {
                         setHexNotificationAccentColor(pushObject.getString("accentColor"));
-                    }
-                    
-                    if (messagingMode == 0) {
-                        CountlyReactNativeImpl.messagingMode = Countly.CountlyMessagingMode.PRODUCTION;
-                    } else {
-                    CountlyReactNativeImpl.messagingMode = Countly.CountlyMessagingMode.TEST;
                     }
                 }
             }
@@ -532,7 +521,6 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
             }
             if (_config.has("disableAdditionalIntentRedirectionChecks")) {
                 useAdditionalIntentRedirectionChecks = false;
-                disableAdditionalIntentRedirectionChecksConfigSet = true;
             }
             if (_config.has("allowedIntentClassNames")) {
                 JSONArray intentArr = _config.getJSONArray("allowedIntentClassNames");
@@ -850,12 +838,6 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     }
 
     
-    public void hasBeenCalledOnStart(Promise promise) {
-        Boolean result = Countly.sharedInstance().hasBeenCalledOnStart();
-        promise.resolve(result);
-    }
-
-    
     public void getCurrentDeviceId(Promise promise) {
         String deviceID = Countly.sharedInstance().deviceId().getID();
         if (deviceID == null) {
@@ -906,12 +888,6 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     }
 
     
-    public void enableParameterTamperingProtection(ReadableArray args) {
-        String salt = args.getString(0);
-        config.setParameterTamperingProtectionSalt(salt);
-    }
-
-    
     public void pinnedCertificates(ReadableArray args) {
         String certificateName = args.getString(0);
         config.enablePublicKeyPinning(this.readCertificate(certificateName));
@@ -946,27 +922,6 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     }
 
     
-    public void setLocationInit(ReadableArray args) {
-        String countryCode = args.getString(0);
-        String city = args.getString(1);
-        String location = args.getString(2);
-        String ipAddress = args.getString(3);
-        if ("null".equals(countryCode)) {
-            countryCode = null;
-        }
-        if ("null".equals(city)) {
-            city = null;
-        }
-        if ("null".equals(location)) {
-            location = null;
-        }
-        if ("null".equals(ipAddress)) {
-            ipAddress = null;
-        }
-        config.setLocation(countryCode, city, location, ipAddress);
-    }
-
-    
     public void setLocation(ReadableArray args) {
         String countryCode = args.getString(0);
         String city = args.getString(1);
@@ -994,11 +949,6 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         } else {
             config.setDisableLocation();
         }
-    }
-
-    
-    public void enableCrashReporting() {
-        config.crashes.enableCrashReporting();
     }
 
     
@@ -1139,20 +1089,6 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     }
 
     
-    public void pushTokenType(ReadableArray args) {
-        int messagingMode = Integer.parseInt(args.getString(0));
-        channelName = args.getString(1);
-        channelDescription = args.getString(2);
-        log("pushTokenType [" + messagingMode + "][" + channelName + "][" + channelDescription + "]", LogLevel.INFO);
-
-        if (messagingMode == 0) {
-            CountlyReactNativeImpl.messagingMode = Countly.CountlyMessagingMode.PRODUCTION;
-        } else {
-            CountlyReactNativeImpl.messagingMode = Countly.CountlyMessagingMode.TEST;
-        }
-    }
-
-    
     public static void onNotification(Map<String, String> notification) {
         JSONObject json = new JSONObject(notification);
         String notificationString = json.toString();
@@ -1265,27 +1201,6 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
             });
         } catch (Exception exception) {
             log("askForNotificationPermission, Firebase exception", exception, LogLevel.WARNING);
-        }
-    }
-
-    
-    public void configureIntentRedirectionCheck(ReadableArray intentClassNames, ReadableArray intentPackageNames, boolean useAdditionalIntentRedirectionChecks) {
-        Countly.sharedInstance();
-        // if in config you disabled this option, then you can't enable it later
-        if (disableAdditionalIntentRedirectionChecksConfigSet == false) {
-            this.useAdditionalIntentRedirectionChecks = useAdditionalIntentRedirectionChecks;
-        }
-        allowedIntentClassNames.clear();
-        allowedIntentPackageNames.clear();
-
-        for (int i = 0; i < intentClassNames.size(); i++) {
-            String className = intentClassNames.getString(i);
-            allowedIntentClassNames.add(className);
-        }
-
-        for (int i = 0; i < intentPackageNames.size(); i++) {
-            String packageName = intentPackageNames.getString(i);
-            allowedIntentPackageNames.add(packageName);
         }
     }
 
@@ -1482,25 +1397,6 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     }
 
     // GDPR
-    
-    public void setRequiresConsent(ReadableArray args) {
-        boolean consentFlag = args.getBoolean(0);
-        config.setRequiresConsent(consentFlag);
-    }
-
-    
-    public void giveConsentInit(ReadableArray featureNames) {
-        List<String> features = new ArrayList<>();
-        for (int i = 0; i < featureNames.size(); i++) {
-            String featureName = featureNames.getString(i);
-            if (validConsentFeatureNames.contains(featureName)) {
-                features.add(featureName);
-            } else {
-                log("Not a valid consent feature to add: " + featureName, LogLevel.DEBUG);
-            }
-        }
-        config.setConsentEnabled(features.toArray(new String[features.size()]));
-    }
 
     
     public void giveConsent(ReadableArray featureNames) {
@@ -1624,13 +1520,6 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     public void remoteConfigClearValues(Promise promise) {
         Countly.sharedInstance().remoteConfig().clearAll();
         promise.resolve("Remote Config Cleared.");
-    }
-
-    
-    public void setStarRatingDialogTexts(ReadableArray args) {
-        config.setStarRatingTextTitle(args.getString(0));
-        config.setStarRatingTextMessage(args.getString(1));
-        config.setStarRatingTextDismiss(args.getString(2));
     }
 
     
@@ -1972,17 +1861,6 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     }
 
     
-    public void enableApm(ReadableArray args) {
-        config.apm.enableAppStartTimeTracking();
-    }
-
-    
-    public void recordAttributionID(ReadableArray args) {
-        String attributionID = args.getString(0);
-        log("recordAttributionID: Not implemented for Android", LogLevel.DEBUG);
-    }
-
-    
     public void recordIndirectAttribution(ReadableArray args) {
         ReadableMap values = args.getMap(0);
         Map<String, Object> objectMap = values.toHashMap();
@@ -2085,7 +1963,11 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
 
     
     public void setID(String newDeviceID) {
-        Countly.sharedInstance().deviceId().setID(newDeviceID);
+        if ("TemporaryDeviceID".equals(newDeviceID)) {
+            Countly.sharedInstance().deviceId().enableTemporaryIdMode();
+        } else {
+            Countly.sharedInstance().deviceId().setID(newDeviceID);
+        }
     }
 
     

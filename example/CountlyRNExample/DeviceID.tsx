@@ -25,7 +25,7 @@ const styles = StyleSheet.create({
 
 function DeviceIDScreen() {
     const [nextDeviceId, setNextDeviceId] = React.useState("TestingDeviceIDValue");
-    const [status, setStatus] = React.useState("Current device ID details will appear here.");
+    const [status, setStatus] = React.useState("Current device ID details and update results will appear here.");
 
     const currentDeviceId = nextDeviceId.trim() || "TestingDeviceIDValue";
 
@@ -41,7 +41,17 @@ function DeviceIDScreen() {
 
     const setDeviceId = () => {
         Countly.deviceId.setID(currentDeviceId);
-        setStatus(`Set device ID to '${currentDeviceId}'.`);
+        setStatus(`Set device ID to '${currentDeviceId}' using automatic merge selection.`);
+    };
+
+    const changeDeviceIdWithMerge = () => {
+        Countly.deviceId.changeID(currentDeviceId, true);
+        setStatus(`Changed device ID to '${currentDeviceId}' with merge enabled.`);
+    };
+
+    const changeDeviceIdWithoutMerge = () => {
+        Countly.deviceId.changeID(currentDeviceId, false);
+        setStatus(`Changed device ID to '${currentDeviceId}' without merge.`);
     };
 
     const temporaryDeviceIdMode = () => {
@@ -57,7 +67,9 @@ function DeviceIDScreen() {
                 <CountlyButton title="Get Device ID" onPress={() => void readDeviceId()} color={lightOrange} />
                 <CountlyButton title="Get Device ID Type" onPress={() => void readDeviceIdType()} color={lightOrange} />
                 <CountlyButton title="Temporary Device ID Mode" onPress={temporaryDeviceIdMode} color={lightOrange} />
-                <CountlyButton title="Set Device ID" onPress={setDeviceId} color={lightOrange} />
+                <CountlyButton title="Set Device ID (Auto)" onPress={setDeviceId} color={lightOrange} />
+                <CountlyButton title="Change Device ID With Merge" onPress={changeDeviceIdWithMerge} color={lightOrange} />
+                <CountlyButton title="Change Device ID Without Merge" onPress={changeDeviceIdWithoutMerge} color={lightOrange} />
             </ScrollView>
         </SafeAreaView>
     );

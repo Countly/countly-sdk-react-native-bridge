@@ -14,7 +14,6 @@ import ConsentScreen from "./Consent";
 import RemoteConfigScreen from "./RemoteConfig";
 import OthersScreen from "./Others";
 import CrashesScreen from "./Crashes";
-import LegacyScreen from "./EventsLegacy";
 import IntegrationTestsScreen from "./testing/IntegrationTests";
 import { Image } from "react-native";
 
@@ -50,7 +49,6 @@ class Example extends React.Component {
                     <Stack.Screen name={navigationName.Others} component={OthersScreen} />
                     <Stack.Screen name={navigationName.Crashes} component={CrashesScreen} />
                     <Stack.Screen name={navigationName.IntegrationTests} component={IntegrationTestsScreen} />
-                    <Stack.Screen name={navigationName.Legacy} component={LegacyScreen} />
                 </Stack.Navigator>
         );
     }

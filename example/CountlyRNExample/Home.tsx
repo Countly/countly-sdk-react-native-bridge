@@ -59,7 +59,6 @@ function HomeScreen({ navigation }) {
                 <CountlyButton title="Remote Config" onPress={() => navigation.navigate(navigationName.RemoteConfig)} color={lightGreen} lightText={true} />
                 <CountlyButton title="Crashes" onPress={() => navigation.navigate(navigationName.Crashes)} color={lightGreen} lightText={true} />
                 <CountlyButton title="Others" onPress={() => navigation.navigate(navigationName.Others)} color={lightGreen} lightText={true} />
-                <CountlyButton title="Legacy APIs" onPress={() => navigation.navigate(navigationName.Legacy)} color={lightGreen} lightText={true} />
             </ScrollView>
         </SafeAreaView>
     );

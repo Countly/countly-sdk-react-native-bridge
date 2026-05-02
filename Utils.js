@@ -103,11 +103,6 @@ function configToJson(config) {
             json.trackAppStartTime = config.apm.trackAppStartTime;
             L.i("init configuration, APM track app start time");
         }
-        // Legacy APM
-        if (config._apmLegacy) {
-            json.enableApm = true;
-            L.i("init configuration, APM start time recording enabled");
-        }
         // APM END --------------------------------------------
         if (config.experimental.previousNameRecording) {
             json.enablePreviousNameRecording = true;

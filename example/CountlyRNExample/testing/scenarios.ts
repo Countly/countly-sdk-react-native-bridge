@@ -386,14 +386,14 @@ function createDeviceIdMergeScenario() {
     return {
         id: "device-id-merge-request",
         title: "Device ID Merge Request",
-        description: "Checks that changing the device ID with merge enabled appends a request containing both the new and old device IDs.",
+        description: "Checks that changing the device ID with merge enabled through the deviceId API appends a request containing both the new and old device IDs.",
         async run() {
             await haltBridgeForScenario();
 
             await Countly.initWithConfig(createCountlyConfig().setDeviceID("integration-device-1"));
             const baselineQueue = await getStableRequestQueue();
 
-            Countly.changeDeviceId("integration-device-2", true);
+            Countly.deviceId.changeID("integration-device-2", true);
 
             const finalQueue = await waitForRequestGrowth(baselineQueue, 1);
             const appendedRequests = takeAppendedEntries(baselineQueue, finalQueue);
