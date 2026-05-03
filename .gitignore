@@ -24,4 +24,3 @@ coverage/
 package-lock.json
 example/AwesomeProject/*
 example/ExpoProject/*
-.vscode/

@@ -8,11 +8,14 @@ class Feedback {
     }
 
     /**
+     * @deprecated in 26.1.0 : use 'Countly.feedback.presentNPS' instead.
+     *
      * Shows the first available NPS widget that meets the criteria.
      * @param {String} [nameIDorTag] - name, id, or tag of the widget to show (optional)
      * @param {callback} [callback] - called when the widget is closed (optional)
      */
     showNPS(nameIDorTag, callback) {
+        L.w("showNPS, deprecated. Use 'Countly.feedback.presentNPS(nameIDorTag, widgetShownCallback, widgetClosedCallback)' instead.");
         L.i(`showNPS, Will show NPS widget with name, id, or tag: [${nameIDorTag}], callback provided: [${typeof callback === "function"}]`);
         this.presentNPS(nameIDorTag, null, callback);
     }
@@ -29,11 +32,14 @@ class Feedback {
     }
 
     /**
+     * @deprecated in 26.1.0 : use 'Countly.feedback.presentSurvey' instead.
+     *
      * Shows the first available Survey widget that meets the criteria.
      * @param {String} [nameIDorTag] - name, id, or tag of the widget to show (optional) 
      * @param {callback} [callback] - called when the widget is closed (optional)
      */
     showSurvey(nameIDorTag, callback) {
+        L.w("showSurvey, deprecated. Use 'Countly.feedback.presentSurvey(nameIDorTag, widgetShownCallback, widgetClosedCallback)' instead.");
         L.i(`showSurvey, Will show Survey widget with name, id, or tag: [${nameIDorTag}], callback provided: [${typeof callback === "function"}]`);
         this.presentSurvey(nameIDorTag, null, callback);
     }
@@ -50,11 +56,14 @@ class Feedback {
     }
 
     /**
+     * @deprecated in 26.1.0 : use 'Countly.feedback.presentRating' instead.
+     *
      * Shows the first available Rating widget that meets the criteria.
      * @param {String} [nameIDorTag] - name, id, or tag of the widget to show (optional)
      * @param {callback} [callback] - called when the widget is closed (optional)
      */
     showRating(nameIDorTag, callback) {
+        L.w("showRating, deprecated. Use 'Countly.feedback.presentRating(nameIDorTag, widgetShownCallback, widgetClosedCallback)' instead.");
         L.i(`showRating, Will show Rating widget with name, id, or tag: [${nameIDorTag}], callback provided: [${typeof callback === "function"}]`);
         this.presentRating(nameIDorTag, null, callback);
     }

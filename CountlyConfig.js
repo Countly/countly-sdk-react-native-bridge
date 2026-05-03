@@ -39,6 +39,12 @@ class CountlyConfig {
 
     #customNetworkRequestHeaders;
 
+    #enableAutomaticViewTracking = false;
+
+    #automaticViewTrackingExclusionList;
+
+    #globalViewSegmentation;
+
     constructor(serverURL, appKey) {
         this.serverURL = serverURL;
         this.appKey = appKey;
@@ -118,6 +124,18 @@ class CountlyConfig {
 
     get _customNetworkRequestHeaders() {
         return this.#customNetworkRequestHeaders;
+    }
+
+    get _enableAutomaticViewTracking() {
+        return this.#enableAutomaticViewTracking;
+    }
+
+    get _automaticViewTrackingExclusionList() {
+        return this.#automaticViewTrackingExclusionList;
+    }
+
+    get _globalViewSegmentation() {
+        return this.#globalViewSegmentation;
     }
 
     /**
@@ -201,6 +219,35 @@ class CountlyConfig {
      */
     disableViewRestartForManualRecording() {
         this.#disableViewRestartForManualRecording = true;
+        return this;
+    }
+
+    /**
+     * Enables automatic native view tracking.
+     */
+    enableAutomaticViewTracking() {
+        this.#enableAutomaticViewTracking = true;
+        return this;
+    }
+
+    /**
+     * Sets the list of native view/activity class names to exclude from automatic view tracking.
+     * Android expects fully qualified activity class names.
+     *
+     * @param {String[]} automaticViewTrackingExclusionList exclusion list
+     */
+    setAutomaticViewTrackingExclusionList(automaticViewTrackingExclusionList) {
+        this.#automaticViewTrackingExclusionList = automaticViewTrackingExclusionList;
+        return this;
+    }
+
+    /**
+     * Sets segmentation values that should be attached to all recorded views.
+     *
+     * @param {Object} globalViewSegmentation segmentation values
+     */
+    setGlobalViewSegmentation(globalViewSegmentation) {
+        this.#globalViewSegmentation = globalViewSegmentation;
         return this;
     }
 

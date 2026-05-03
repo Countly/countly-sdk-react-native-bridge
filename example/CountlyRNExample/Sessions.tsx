@@ -36,30 +36,18 @@ function SessionsScreen() {
     };
 
     const startSession = () => {
-        const result = Countly.startSession();
-
-        if (result) {
-            updateStatus(String(result));
-            return;
-        }
-
+        Countly.sessions.beginSession();
         setIsSessionActive(true);
         updateStatus("Started a manual session.");
     };
 
     const updateSession = () => {
-        const result = Countly.updateSession();
-        updateStatus(result ? String(result) : "Updated the active manual session.");
+        Countly.sessions.updateSession();
+        updateStatus("Updated the active manual session.");
     };
 
     const endSession = () => {
-        const result = Countly.endSession();
-
-        if (result) {
-            updateStatus(String(result));
-            return;
-        }
-
+        Countly.sessions.endSession();
         setIsSessionActive(false);
         updateStatus("Ended the active manual session.");
     };

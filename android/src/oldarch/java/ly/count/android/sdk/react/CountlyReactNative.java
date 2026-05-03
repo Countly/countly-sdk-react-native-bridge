@@ -143,6 +143,61 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void startAutoStoppedView(ReadableArray args, Promise promise) {
+        this.impl.startAutoStoppedView(args, promise);
+    }
+
+    @ReactMethod
+    public void startView(ReadableArray args, Promise promise) {
+        this.impl.startView(args, promise);
+    }
+
+    @ReactMethod
+    public void stopViewWithName(ReadableArray args) {
+        this.impl.stopViewWithName(args);
+    }
+
+    @ReactMethod
+    public void stopViewWithID(ReadableArray args) {
+        this.impl.stopViewWithID(args);
+    }
+
+    @ReactMethod
+    public void stopAllViews(ReadableArray args) {
+        this.impl.stopAllViews(args);
+    }
+
+    @ReactMethod
+    public void pauseViewWithID(ReadableArray args) {
+        this.impl.pauseViewWithID(args);
+    }
+
+    @ReactMethod
+    public void resumeViewWithID(ReadableArray args) {
+        this.impl.resumeViewWithID(args);
+    }
+
+    @ReactMethod
+    public void addSegmentationToViewWithID(ReadableArray args) {
+        this.impl.addSegmentationToViewWithID(args);
+    }
+
+    @ReactMethod
+    public void addSegmentationToViewWithName(ReadableArray args) {
+        this.impl.addSegmentationToViewWithName(args);
+    }
+
+    @ReactMethod
+    public void setGlobalViewSegmentation(ReadableArray args) {
+        this.impl.setGlobalViewSegmentation(args);
+    }
+
+    @ReactMethod
+    public void updateGlobalViewSegmentation(ReadableArray args) {
+        this.impl.updateGlobalViewSegmentation(args);
+    }
+
+    @ReactMethod
     public void setUserData(ReadableArray args, Promise promise) {
         this.impl.setUserData(args, promise);
     }

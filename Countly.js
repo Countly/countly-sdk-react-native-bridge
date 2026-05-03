@@ -9,8 +9,10 @@ import { Platform, NativeModules, NativeEventEmitter, TurboModuleRegistry } from
 import CountlyState from "./CountlyState.js";
 import Feedback from "./Feedback.js";
 import Event from "./Event.js";
+import Sessions from "./Sessions.js";
 import DeviceId from "./DeviceId.js";
 import RemoteConfig from "./RemoteConfig.js";
+import Views from "./Views.js";
 import * as L from "./Logger.js";
 import * as Utils from "./Utils.js";
 import * as Validate from "./Validators.js";
@@ -30,8 +32,10 @@ CountlyState.eventEmitter = eventEmitter;
 
 Countly.feedback = new Feedback(CountlyState);
 Countly.events = new Event(CountlyState);
+Countly.sessions = new Sessions(CountlyState);
 Countly.deviceId = new DeviceId(CountlyState);
 Countly.remoteConfig = new RemoteConfig(CountlyState);
+Countly.views = new Views(CountlyState);
 
 let _isCrashReportingEnabled = false;
 
@@ -138,7 +142,7 @@ Countly.initWithConfig = async function (countlyConfig) {
     }
     if (countlyConfig.deviceID == "") {
         L.e("init, Device ID during init can't be an empty string. Value will be ignored.");
-        countlyConfig.deviceId = null;
+        countlyConfig.deviceID = null;
     }
     if (countlyConfig.serverURL == "") {
         L.e("init, Server URL during init can't be an empty string");
@@ -185,6 +189,8 @@ Countly.isInitialized = async function () {
 };
 
 /**
+ * @deprecated in 26.1.0 : use 'Countly.views.startAutoStoppedView' instead.
+ *
  * Record custom view to Countly.
  *
  * @param {string} recordView - name of the view
@@ -198,6 +204,7 @@ Countly.recordView = function (recordView, segments) {
         L.e(`recordView, ${msg}`);
         return msg;
     }
+    L.w("recordView, deprecated legacy alias. Use 'Countly.views.startAutoStoppedView(viewName, segmentation)' instead.");
     const message = Validate.String(recordView, "view name", "recordView");
     if (message) {
         return message;
@@ -433,51 +440,54 @@ Countly.setCustomCrashSegments = function (segments) {
 };
 
 /**
+ * @deprecated in 26.1.0 : use 'Countly.sessions.beginSession' instead of 'startSession'.
  *
- * Start session tracking
+ * Start session tracking.
  *
  * @return {string | void} error message or void
  */
 Countly.startSession = function () {
+    L.w("startSession, startSession is deprecated, use Countly.sessions.beginSession instead.");
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'startSession'";
         L.e(`startSession, ${message}`);
         return message;
     }
-    L.d("startSession, Starting session");
-    CountlyNativeModule.startSession();
+    return Countly.sessions.beginSession();
 };
 
 /**
+ * @deprecated in 26.1.0 : use 'Countly.sessions.updateSession' instead of 'updateSession'.
  *
- * Update session tracking
+ * Update session tracking.
  *
  * @return {string | void} error message or void
  */
 Countly.updateSession = function () {
+    L.w("updateSession, updateSession is deprecated, use Countly.sessions.updateSession instead.");
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'updateSession'";
         L.e(`updateSession, ${message}`);
         return message;
     }
-    L.d("updateSession, Updating session");
-    CountlyNativeModule.updateSession();
+    return Countly.sessions.updateSession();
 };
 
 /**
+ * @deprecated in 26.1.0 : use 'Countly.sessions.endSession' instead of 'endSession'.
  *
- * End session tracking
+ * End session tracking.
  *
  * @return {string | void} error message or void
  */
 Countly.endSession = function () {
+    L.w("endSession, endSession is deprecated, use Countly.sessions.endSession instead.");
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'endSession'";
         L.e(`endSession, ${message}`);
         return message;
     }
-    L.d("endSession, Ending session");
-    CountlyNativeModule.endSession();
+    return Countly.sessions.endSession();
 };
 
 /**

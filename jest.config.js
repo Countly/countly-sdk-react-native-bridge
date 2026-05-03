@@ -10,6 +10,8 @@ module.exports = {
     collectCoverage: true,
     collectCoverageFrom: [
         "**/*.{js,jsx}",
+        "!babel.config.js",
+        "!jest.config.js",
         "!**/node_modules/**",
         "!**/vendor/**",
         "!**/example/**",

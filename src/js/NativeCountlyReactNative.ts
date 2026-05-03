@@ -2,6 +2,10 @@ import type { TurboModule } from "react-native";
 import { TurboModuleRegistry } from "react-native";
 import type { UnsafeObject } from 'react-native/Libraries/Types/CodegenTypes';
 
+type SegmentationPrimitive = string | number | boolean;
+type SegmentationArrayValue = ReadonlyArray<SegmentationPrimitive>;
+type SegmentationArg = SegmentationPrimitive | SegmentationArrayValue;
+
 export interface Spec extends TurboModule {
     init(args: Array<UnsafeObject>): Promise<void>;
     setLoggingEnabled(args: Array<boolean>): void;
@@ -26,7 +30,18 @@ export interface Spec extends TurboModule {
     startEvent(args: Array<string>): void;
     cancelEvent(args: Array<string>): void;
     endEvent(args: UnsafeObject): void;
-    recordView(args: Array<string>): void;
+    recordView(args: Array<SegmentationArg>): void;
+    startAutoStoppedView(args: Array<SegmentationArg>): Promise<string | null>;
+    startView(args: Array<SegmentationArg>): Promise<string | null>;
+    stopViewWithName(args: Array<SegmentationArg>): void;
+    stopViewWithID(args: Array<SegmentationArg>): void;
+    stopAllViews(args: Array<SegmentationArg>): void;
+    pauseViewWithID(args: Array<string>): void;
+    resumeViewWithID(args: Array<string>): void;
+    addSegmentationToViewWithID(args: Array<SegmentationArg>): void;
+    addSegmentationToViewWithName(args: Array<SegmentationArg>): void;
+    setGlobalViewSegmentation(args: Array<SegmentationArg>): void;
+    updateGlobalViewSegmentation(args: Array<SegmentationArg>): void;
     setUserData(args: Array<UnsafeObject>): Promise<void>;
     sendPushToken(args: Array<string>): void;
     registerForNotification(args: Array<UnsafeObject>): void;

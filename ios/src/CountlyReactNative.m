@@ -244,6 +244,27 @@ NSString *const kCountlyNotificationPersistencyKey = @"kCountlyNotificationPersi
     return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
 }
 
+- (NSDictionary *)segmentationDictionaryFromArguments:(NSArray *)arguments startIndex:(NSInteger)startIndex {
+    if (arguments == nil || arguments.count <= startIndex) {
+        return nil;
+    }
+
+    NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
+    for (NSInteger index = startIndex; index + 1 < arguments.count; index += 2) {
+        id key = [arguments objectAtIndex:index];
+        if (![key isKindOfClass:[NSString class]]) {
+            continue;
+        }
+
+        id value = [arguments objectAtIndex:index + 1];
+        if (value != nil && value != (id)kCFNull) {
+            dict[(NSString *)key] = value;
+        }
+    }
+
+    return dict.count > 0 ? dict : nil;
+}
+
 RCT_EXPORT_MODULE();
 
 RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
@@ -396,6 +417,18 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
     }
     if (json[@"enableVisibilityTracking"]) {
         config.experimental.enableVisibiltyTracking = YES;
+    }
+    NSNumber *enableAutomaticViewTracking = json[@"enableAutomaticViewTracking"];
+    if (enableAutomaticViewTracking) {
+        config.enableAutomaticViewTracking = [enableAutomaticViewTracking boolValue];
+    }
+    NSArray *automaticViewTrackingExclusionList = json[@"automaticViewTrackingExclusionList"];
+    if ([automaticViewTrackingExclusionList isKindOfClass:[NSArray class]]) {
+        config.automaticViewTrackingExclusionList = automaticViewTrackingExclusionList;
+    }
+    NSDictionary *globalViewSegmentation = json[@"globalViewSegmentation"];
+    if ([globalViewSegmentation isKindOfClass:[NSDictionary class]]) {
+        config.globalViewSegmentation = globalViewSegmentation;
     }
 
     if (json[@"crashReporting"]) {
@@ -556,13 +589,95 @@ RCT_EXPORT_METHOD(recordEvent : (NSDictionary *)arguments) {
 
 RCT_EXPORT_METHOD(recordView : (NSArray *)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      NSString *recordView = [arguments objectAtIndex:0];
-      NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
-      for (int i = 1, il = (int)arguments.count; i < il; i += 2) {
-          dict[[arguments objectAtIndex:i]] = [arguments objectAtIndex:i + 1];
-      }
-      [Countly.sharedInstance recordView:recordView segmentation:dict];
+            NSString *recordView = arguments.count > 0 ? [arguments objectAtIndex:0] : nil;
+            NSDictionary *dict = [self segmentationDictionaryFromArguments:arguments startIndex:1];
+            [[Countly.sharedInstance views] startAutoStoppedView:recordView segmentation:dict];
     });
+}
+
+RCT_REMAP_METHOD(startAutoStoppedView, params : (NSArray *)arguments startAutoStoppedViewWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSString *viewName = arguments.count > 0 ? [arguments objectAtIndex:0] : nil;
+            NSDictionary *dict = [self segmentationDictionaryFromArguments:arguments startIndex:1];
+            NSString *viewID = [[Countly.sharedInstance views] startAutoStoppedView:viewName segmentation:dict];
+            resolve(viewID ?: [NSNull null]);
+        });
+}
+
+RCT_REMAP_METHOD(startView, params : (NSArray *)arguments startViewWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSString *viewName = arguments.count > 0 ? [arguments objectAtIndex:0] : nil;
+            NSDictionary *dict = [self segmentationDictionaryFromArguments:arguments startIndex:1];
+            NSString *viewID = [[Countly.sharedInstance views] startView:viewName segmentation:dict];
+            resolve(viewID ?: [NSNull null]);
+        });
+}
+
+RCT_EXPORT_METHOD(stopViewWithName : (NSArray *)arguments) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSString *viewName = arguments.count > 0 ? [arguments objectAtIndex:0] : nil;
+            NSDictionary *dict = [self segmentationDictionaryFromArguments:arguments startIndex:1];
+            [[Countly.sharedInstance views] stopViewWithName:viewName segmentation:dict];
+        });
+}
+
+RCT_EXPORT_METHOD(stopViewWithID : (NSArray *)arguments) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSString *viewID = arguments.count > 0 ? [arguments objectAtIndex:0] : nil;
+            NSDictionary *dict = [self segmentationDictionaryFromArguments:arguments startIndex:1];
+            [[Countly.sharedInstance views] stopViewWithID:viewID segmentation:dict];
+        });
+}
+
+RCT_EXPORT_METHOD(stopAllViews : (NSArray *)arguments) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSDictionary *dict = [self segmentationDictionaryFromArguments:arguments startIndex:0];
+            [[Countly.sharedInstance views] stopAllViews:dict];
+        });
+}
+
+RCT_EXPORT_METHOD(pauseViewWithID : (NSArray *)arguments) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSString *viewID = arguments.count > 0 ? [arguments objectAtIndex:0] : nil;
+            [[Countly.sharedInstance views] pauseViewWithID:viewID];
+        });
+}
+
+RCT_EXPORT_METHOD(resumeViewWithID : (NSArray *)arguments) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSString *viewID = arguments.count > 0 ? [arguments objectAtIndex:0] : nil;
+            [[Countly.sharedInstance views] resumeViewWithID:viewID];
+        });
+}
+
+RCT_EXPORT_METHOD(addSegmentationToViewWithID : (NSArray *)arguments) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSString *viewID = arguments.count > 0 ? [arguments objectAtIndex:0] : nil;
+            NSDictionary *dict = [self segmentationDictionaryFromArguments:arguments startIndex:1];
+            [[Countly.sharedInstance views] addSegmentationToViewWithID:viewID segmentation:dict];
+        });
+}
+
+RCT_EXPORT_METHOD(addSegmentationToViewWithName : (NSArray *)arguments) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSString *viewName = arguments.count > 0 ? [arguments objectAtIndex:0] : nil;
+            NSDictionary *dict = [self segmentationDictionaryFromArguments:arguments startIndex:1];
+            [[Countly.sharedInstance views] addSegmentationToViewWithName:viewName segmentation:dict];
+        });
+}
+
+RCT_EXPORT_METHOD(setGlobalViewSegmentation : (NSArray *)arguments) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSDictionary *dict = [self segmentationDictionaryFromArguments:arguments startIndex:0];
+            [[Countly.sharedInstance views] setGlobalViewSegmentation:dict];
+        });
+}
+
+RCT_EXPORT_METHOD(updateGlobalViewSegmentation : (NSArray *)arguments) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSDictionary *dict = [self segmentationDictionaryFromArguments:arguments startIndex:0];
+            [[Countly.sharedInstance views] updateGlobalViewSegmentation:dict];
+        });
 }
 
 RCT_EXPORT_METHOD(setLoggingEnabled : (NSArray *)arguments) {

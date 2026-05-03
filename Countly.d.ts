@@ -191,6 +191,8 @@ declare module "countly-sdk-react-native-bridge" {
       export function presentRating(nameIDorTag?: string, widgetShownCallback?: WidgetCallback, widgetClosedCallback?: WidgetCallback): void;
 
       /**
+        * @deprecated in 26.1.0 : use 'Countly.feedback.presentNPS' instead.
+        *
        * Shows the first available NPS widget that meets the criteria.
        * @param {String} [nameIDorTag] - name, id, or tag of the widget to show (optional)
        * @param {callback} [widgetClosedCallback] - called when the widget is closed (optional)
@@ -198,6 +200,8 @@ declare module "countly-sdk-react-native-bridge" {
       export function showNPS(nameIDorTag?: string, widgetClosedCallback?: WidgetCallback): void;
 
       /**
+        * @deprecated in 26.1.0 : use 'Countly.feedback.presentSurvey' instead.
+        *
        * Shows the first available survey widget that meets the criteria.
        * @param {String} [nameIDorTag] - name, id, or tag of the widget to show (optional)
        * @param {callback} [widgetClosedCallback] - called when the widget is closed (optional)
@@ -205,6 +209,8 @@ declare module "countly-sdk-react-native-bridge" {
       export function showSurvey(nameIDorTag?: string, widgetClosedCallback?: WidgetCallback): void;
 
       /**
+        * @deprecated in 26.1.0 : use 'Countly.feedback.presentRating' instead.
+        *
        * Shows the first available rating widget that meets the criteria.
        * @param {String} [nameIDorTag] - name, id, or tag of the widget to show (optional)
        * @param {callback} [widgetClosedCallback] - called when the widget is closed (optional)
@@ -300,6 +306,91 @@ declare module "countly-sdk-react-native-bridge" {
     }
 
     /**
+     * Countly Sessions Module
+     */
+    export namespace sessions {
+      /**
+       * Starts a manual session.
+       * Requires `CountlyConfig.enableManualSessionControl()`.
+       */
+      export function beginSession(): void;
+
+      /**
+       * Updates the active manual session.
+       * Requires `CountlyConfig.enableManualSessionControl()`.
+       */
+      export function updateSession(): void;
+
+      /**
+       * Ends the active manual session.
+       * Requires `CountlyConfig.enableManualSessionControl()`.
+       */
+      export function endSession(): void;
+    }
+
+    /**
+     * Countly Views Module
+     */
+    export namespace views {
+      /**
+       * Starts a view that is automatically stopped when another auto-stopped view begins.
+       * Resolves with the created view ID, or `null` if the native SDK does not start the view.
+       */
+      export function startAutoStoppedView(viewName: string, segmentation?: Segmentation): Promise<string | null>;
+
+      /**
+       * Starts a multi-view-tracking view that stays open until explicitly stopped.
+       * Resolves with the created view ID, or `null` if the native SDK does not start the view.
+       */
+      export function startView(viewName: string, segmentation?: Segmentation): Promise<string | null>;
+
+      /**
+       * Stops a running view by name.
+       */
+      export function stopViewWithName(viewName: string, segmentation?: Segmentation): void;
+
+      /**
+       * Stops a running view by ID.
+       */
+      export function stopViewWithID(viewID: string, segmentation?: Segmentation): void;
+
+      /**
+       * Stops all currently running views.
+       */
+      export function stopAllViews(segmentation?: Segmentation): void;
+
+      /**
+       * Pauses a running view by ID.
+       */
+      export function pauseViewWithID(viewID: string): void;
+
+      /**
+       * Resumes a paused view by ID.
+       */
+      export function resumeViewWithID(viewID: string): void;
+
+      /**
+       * Adds or overrides segmentation on a running view by ID.
+       */
+      export function addSegmentationToViewWithID(viewID: string, segmentation: Segmentation): void;
+
+      /**
+       * Adds or overrides segmentation on a running view by name.
+       */
+      export function addSegmentationToViewWithName(viewName: string, segmentation: Segmentation): void;
+
+      /**
+       * Replaces the global segmentation that will be attached to subsequent views.
+       */
+      export function setGlobalViewSegmentation(segmentation?: Segmentation): void;
+
+      /**
+       * Merges the provided keys into the global view segmentation.
+       */
+      export function updateGlobalViewSegmentation(segmentation: Segmentation): void;
+    }
+
+    /**
      * Countly Content Module
      */
     export namespace content {
@@ -347,6 +438,8 @@ declare module "countly-sdk-react-native-bridge" {
     export function isInitialized(): Promise<boolean>;
 
     /**
+     * @deprecated in 26.1.0 : use 'Countly.views.startAutoStoppedView' instead.
+     *
      * Record custom view to Countly.
      *
      * @param {string} recordView - name of the view
@@ -506,26 +599,23 @@ declare module "countly-sdk-react-native-bridge" {
     export function setCustomCrashSegments(segments: Record<string, any>): void;
 
     /**
+     * @deprecated in 26.1.0 : use 'Countly.sessions.beginSession' instead of 'startSession'.
      *
-     * Start session tracking
-     *
-     * @return {string | void} error message or void
+     * Starts a manual session.
      */
     export function startSession(): string | void;
 
     /**
+     * @deprecated in 26.1.0 : use 'Countly.sessions.updateSession' instead of 'updateSession'.
      *
-     * Update session tracking
-     *
-     * @return {string | void} error message or void
+     * Updates the active manual session.
      */
     export function updateSession(): string | void;
 
     /**
+     * @deprecated in 26.1.0 : use 'Countly.sessions.endSession' instead of 'endSession'.
      *
-     * End session tracking
-     *
-     * @return {string | void} error message or void
+     * Ends the active manual session.
      */
     export function endSession(): string | void;
 
@@ -1360,6 +1450,22 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
      * Disables automatic view restart behavior for manual view recordings.
      */
     disableViewRestartForManualRecording(): CountlyConfig;
+
+    /**
+     * Enables automatic native view tracking during SDK initialization.
+     */
+    enableAutomaticViewTracking(): CountlyConfig;
+
+    /**
+     * Sets activity/view-controller class names to exclude from automatic native view tracking.
+     * Android expects fully qualified activity class names.
+     */
+    setAutomaticViewTrackingExclusionList(automaticViewTrackingExclusionList: readonly string[]): CountlyConfig;
+
+    /**
+     * Sets global segmentation values that should be attached to all recorded views.
+     */
+    setGlobalViewSegmentation(globalViewSegmentation: Segmentation): CountlyConfig;
   }
 
   export default CountlyConfig;

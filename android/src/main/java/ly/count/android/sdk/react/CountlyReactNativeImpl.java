@@ -581,6 +581,25 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
                     log("setRequestTimeoutDuration: failure, timeout value must be greater than 0", LogLevel.DEBUG);
                 }
             }
+            if (_config.has("enableAutomaticViewTracking") && _config.getBoolean("enableAutomaticViewTracking")) {
+                config.enableAutomaticViewTracking();
+            }
+            if (_config.has("automaticViewTrackingExclusionList")) {
+                JSONArray exclusionList = _config.getJSONArray("automaticViewTrackingExclusionList");
+                List<Class<?>> resolvedExclusions = new ArrayList<>();
+                for (int i = 0; i < exclusionList.length(); i++) {
+                    String className = exclusionList.optString(i, null);
+                    Class<?> resolvedClass = resolveTrackedActivityClass(className);
+                    if (resolvedClass != null) {
+                        resolvedExclusions.add(resolvedClass);
+                    }
+                }
+                config.setAutomaticViewTrackingExclusions(resolvedExclusions.toArray(new Class[0]));
+            }
+            if (_config.has("globalViewSegmentation")) {
+                JSONObject globalViewSegmentation = _config.getJSONObject("globalViewSegmentation");
+                config.setGlobalViewSegmentation(toMapObject(globalViewSegmentation));
+            }
             if (_config.has("manualSessionHandling") && _config.getBoolean("manualSessionHandling")) {
                 config.enableManualSessionControl();
             }
@@ -666,6 +685,83 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         return map;
     }
 
+    public static Map<String, Object> toMapObject(JSONObject jsonobj) {
+        Map<String, Object> map = new HashMap<>();
+        if (jsonobj == null) {
+            return map;
+        }
+        try {
+            Iterator<String> keys = jsonobj.keys();
+            while (keys.hasNext()) {
+                String key = keys.next();
+                Object value = jsonobj.get(key);
+                Object parsedValue = jsonValueToJava(value);
+                if (parsedValue != null) {
+                    map.put(key, parsedValue);
+                }
+            }
+        } catch (JSONException e) {
+            log("Exception occurred at 'toMapObject' method: ", e, LogLevel.ERROR);
+        }
+        return map;
+    }
+
+    private static Object jsonValueToJava(Object value) throws JSONException {
+        if (value == null || value == JSONObject.NULL) {
+            return null;
+        }
+
+        if (value instanceof JSONArray) {
+            JSONArray array = (JSONArray) value;
+            List<Object> list = new ArrayList<>();
+            for (int i = 0; i < array.length(); i++) {
+                Object arrayValue = jsonValueToJava(array.get(i));
+                if (arrayValue != null) {
+                    list.add(arrayValue);
+                }
+            }
+            return list;
+        }
+
+        if (value instanceof JSONObject) {
+            return toMapObject((JSONObject) value);
+        }
+
+        if (value instanceof Number) {
+            double doubleValue = ((Number) value).doubleValue();
+            int intValue = (int) doubleValue;
+            if (doubleValue == intValue) {
+                return intValue;
+            }
+            return doubleValue;
+        }
+
+        return value;
+    }
+
+    private Class<?> resolveTrackedActivityClass(String className) {
+        if (className == null || className.isEmpty()) {
+            return null;
+        }
+
+        try {
+            return Class.forName(className);
+        } catch (ClassNotFoundException ignored) {
+        }
+
+        Activity activity = getActivity();
+        if (activity != null && !className.contains(".")) {
+            String packageClassName = activity.getPackageName() + "." + className;
+            try {
+                return Class.forName(packageClassName);
+            } catch (ClassNotFoundException ignored) {
+            }
+        }
+
+        log("populateConfig, Failed to resolve automatic view tracking exclusion class: " + className, LogLevel.WARNING);
+        return null;
+    }
+
     private Object getReadableArrayValue(ReadableArray args, int index) {
         if (args == null || index < 0 || index >= args.size() || args.isNull(index)) {
             return null;
@@ -696,6 +792,27 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
             default:
                 return null;
         }
+    }
+
+    private Map<String, Object> convertReadableArrayToSegmentation(ReadableArray args, int startIndex) {
+        Map<String, Object> segmentation = new HashMap<>();
+        if (args == null) {
+            return segmentation;
+        }
+
+        for (int i = startIndex; i < args.size(); i += 2) {
+            if (i + 1 >= args.size() || args.isNull(i)) {
+                continue;
+            }
+
+            String key = args.getString(i);
+            Object value = getReadableArrayValue(args, i + 1);
+            if (key != null && value != null) {
+                segmentation.put(key, value);
+            }
+        }
+
+        return segmentation;
     }
 
     public static WritableMap toWritableMap(JSONObject jsonObject) {
@@ -1067,11 +1184,67 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     
     public void recordView(ReadableArray args) {
         String viewName = args.getString(0);
-        HashMap<String, Object> segmentation = new HashMap<>();
-        for (int i = 1, il = args.size(); i < il; i += 2) {
-            segmentation.put(args.getString(i), args.getString(i + 1));
-        }
+        Map<String, Object> segmentation = convertReadableArrayToSegmentation(args, 1);
         Countly.sharedInstance().views().startAutoStoppedView(viewName, segmentation);
+    }
+
+    public void startAutoStoppedView(ReadableArray args, Promise promise) {
+        String viewName = args.getString(0);
+        Map<String, Object> segmentation = convertReadableArrayToSegmentation(args, 1);
+        promise.resolve(Countly.sharedInstance().views().startAutoStoppedView(viewName, segmentation));
+    }
+
+    public void startView(ReadableArray args, Promise promise) {
+        String viewName = args.getString(0);
+        Map<String, Object> segmentation = convertReadableArrayToSegmentation(args, 1);
+        promise.resolve(Countly.sharedInstance().views().startView(viewName, segmentation));
+    }
+
+    public void stopViewWithName(ReadableArray args) {
+        String viewName = args.getString(0);
+        Map<String, Object> segmentation = convertReadableArrayToSegmentation(args, 1);
+        Countly.sharedInstance().views().stopViewWithName(viewName, segmentation);
+    }
+
+    public void stopViewWithID(ReadableArray args) {
+        String viewID = args.getString(0);
+        Map<String, Object> segmentation = convertReadableArrayToSegmentation(args, 1);
+        Countly.sharedInstance().views().stopViewWithID(viewID, segmentation);
+    }
+
+    public void stopAllViews(ReadableArray args) {
+        Map<String, Object> segmentation = convertReadableArrayToSegmentation(args, 0);
+        Countly.sharedInstance().views().stopAllViews(segmentation);
+    }
+
+    public void pauseViewWithID(ReadableArray args) {
+        Countly.sharedInstance().views().pauseViewWithID(args.getString(0));
+    }
+
+    public void resumeViewWithID(ReadableArray args) {
+        Countly.sharedInstance().views().resumeViewWithID(args.getString(0));
+    }
+
+    public void addSegmentationToViewWithID(ReadableArray args) {
+        String viewID = args.getString(0);
+        Map<String, Object> segmentation = convertReadableArrayToSegmentation(args, 1);
+        Countly.sharedInstance().views().addSegmentationToViewWithID(viewID, segmentation);
+    }
+
+    public void addSegmentationToViewWithName(ReadableArray args) {
+        String viewName = args.getString(0);
+        Map<String, Object> segmentation = convertReadableArrayToSegmentation(args, 1);
+        Countly.sharedInstance().views().addSegmentationToViewWithName(viewName, segmentation);
+    }
+
+    public void setGlobalViewSegmentation(ReadableArray args) {
+        Map<String, Object> segmentation = convertReadableArrayToSegmentation(args, 0);
+        Countly.sharedInstance().views().setGlobalViewSegmentation(segmentation);
+    }
+
+    public void updateGlobalViewSegmentation(ReadableArray args) {
+        Map<String, Object> segmentation = convertReadableArrayToSegmentation(args, 0);
+        Countly.sharedInstance().views().updateGlobalViewSegmentation(segmentation);
     }
 
     

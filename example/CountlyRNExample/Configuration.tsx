@@ -1,7 +1,7 @@
 import CountlyConfig from "countly-sdk-react-native-bridge/CountlyConfig";
 
-const COUNTLY_SERVER_URL = "https://your.server.ly";
-const COUNTLY_APP_KEY = "YOUR_APP_KEY";
+const COUNTLY_SERVER_URL: string = "https://your.server.ly";
+const COUNTLY_APP_KEY: string = "YOUR_APP_KEY";
 
 if (COUNTLY_APP_KEY === "YOUR_APP_KEY" || COUNTLY_SERVER_URL === "https://your.server.ly") {
     console.warn("Please do not use default set of app key and server url");
@@ -30,6 +30,9 @@ const countlyConfig = createCountlyConfig();
 // .disableBackoffMechanism() // Disable request backoff logic
 // .disableGradualRequestCleaner() // Android only
 // .disableViewRestartForManualRecording() // Keep manually recorded views from auto-restarting
+// .enableAutomaticViewTracking() // Enable automatic native view tracking from init
+// .setAutomaticViewTrackingExclusionList(['com.countly.demo.HiddenActivity']) // Android expects fully qualified activity names
+// .setGlobalViewSegmentation({ app: 'CountlyRNExample', environment: 'demo' }) // Applied to all subsequent views
 // .setSDKBehaviorSettings({}) // Provide SDK behavior settings from Countly server
 
 // Push notification configuration ============================

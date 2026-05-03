@@ -10,11 +10,7 @@ async function initialize() {
     const isInitialized = await Countly.isInitialized();
     if (!isInitialized) {
         await Countly.initWithConfig(countlyConfig);
-        const sessionStartResult = Countly.startSession();
-
-        if (sessionStartResult) {
-            console.warn(sessionStartResult);
-        }
+        Countly.sessions.beginSession();
 
         await Countly.appLoadingFinished();
     }

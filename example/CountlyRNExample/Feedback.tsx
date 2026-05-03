@@ -146,7 +146,7 @@ function FeedbackScreen() {
 
     const showDirectWidget = (widgetType: WidgetType) => {
         const lookupValue = currentFilter || undefined;
-        const onClosed = () => updateStatus(`Show ${widgetType} widget closed.`);
+        const onClosed = () => updateStatus(`Legacy show ${widgetType} widget closed.`);
 
         if (widgetType === "rating") {
             Countly.feedback.showRating(lookupValue, onClosed);
@@ -156,7 +156,7 @@ function FeedbackScreen() {
             Countly.feedback.showNPS(lookupValue, onClosed);
         }
 
-        updateStatus(`Requested show ${widgetType} widget.`);
+        updateStatus(`Requested legacy show ${widgetType} widget. Prefer Countly.feedback.present${widgetType === "nps" ? "NPS" : widgetType === "survey" ? "Survey" : "Rating"}(...).`);
     };
 
     return (
@@ -214,7 +214,7 @@ function FeedbackScreen() {
                     color={lightOrange}
                     lightText={true}
                 />
-                <Text style={{ fontSize: 16, fontWeight: "bold", textAlign: "center", marginTop: 20 }}>Direct Present APIs</Text>
+                <Text style={{ fontSize: 16, fontWeight: "bold", textAlign: "center", marginTop: 20 }}>Preferred Direct Present APIs</Text>
                 <CountlyButton
                     title="Present Rating"
                     onPress={() => presentDirectWidget("rating")}
@@ -222,10 +222,11 @@ function FeedbackScreen() {
                 />
                 <CountlyButton onPress={() => presentDirectWidget("survey")} title="Present Survey" color="#00b5ad" />
                 <CountlyButton onPress={() => presentDirectWidget("nps")} title="Present NPS" color="#00b5ad" />
-                <Text style={{ fontSize: 16, fontWeight: "bold", textAlign: "center", marginTop: 20 }}>Direct Show APIs</Text>
-                <CountlyButton onPress={() => showDirectWidget("rating")} title="Show Rating" color="#00b5ad" />
-                <CountlyButton onPress={() => showDirectWidget("survey")} title="Show Survey" color="#00b5ad" />
-                <CountlyButton onPress={() => showDirectWidget("nps")} title="Show NPS" color="#00b5ad" />
+                <Text style={{ fontSize: 16, fontWeight: "bold", textAlign: "center", marginTop: 20 }}>Legacy Direct Show APIs</Text>
+                <Text style={styles.statusText}>Use these only for backward-compatibility checks. Prefer the present* helpers above.</Text>
+                <CountlyButton onPress={() => showDirectWidget("rating")} title="Legacy Show Rating" color="#00b5ad" />
+                <CountlyButton onPress={() => showDirectWidget("survey")} title="Legacy Show Survey" color="#00b5ad" />
+                <CountlyButton onPress={() => showDirectWidget("nps")} title="Legacy Show NPS" color="#00b5ad" />
             </ScrollView>
         </SafeAreaView>
     );

@@ -150,7 +150,7 @@ function configToJson(config) {
             json.allowedIntentClassNames = config.allowedIntentClassNames;
             L.i(`init configuration, Allowed intent class names: ${config.allowedIntentClassNames}`);
         }
-        if (config.allowedIntentClassNames) {
+        if (config.allowedIntentPackageNames) {
             json.allowedIntentPackageNames = config.allowedIntentPackageNames;
             L.i(`init configuration, Allowed intent package names: ${config.allowedIntentPackageNames}`);
         }
@@ -174,6 +174,18 @@ function configToJson(config) {
         if (config._requestTimeoutDuration) {
             json.requestTimeoutDuration = config._requestTimeoutDuration;
             L.i(`init configuration, Request timeout duration: ${config._requestTimeoutDuration}`);
+        }
+        if (config._enableAutomaticViewTracking) {
+            json.enableAutomaticViewTracking = true;
+            L.i("init configuration, Enabled automatic view tracking");
+        }
+        if (config._automaticViewTrackingExclusionList) {
+            json.automaticViewTrackingExclusionList = config._automaticViewTrackingExclusionList;
+            L.i(`init configuration, Automatic view tracking exclusion list: ${JSON.stringify(config._automaticViewTrackingExclusionList)}`);
+        }
+        if (config._globalViewSegmentation) {
+            json.globalViewSegmentation = config._globalViewSegmentation;
+            L.i(`init configuration, Global view segmentation: ${JSON.stringify(config._globalViewSegmentation)}`);
         }
         if (config._manualSessionControl) {
             json.manualSessionHandling = true;

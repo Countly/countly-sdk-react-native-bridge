@@ -142,9 +142,9 @@ function createManualSessionScenario() {
             await Countly.initWithConfig(config);
 
             const baselineQueue = await getStableRequestQueue();
-            Countly.startSession();
-            Countly.updateSession();
-            Countly.endSession();
+            Countly.sessions.beginSession();
+            Countly.sessions.updateSession();
+            Countly.sessions.endSession();
 
             const finalQueue = await waitForRequestGrowth(baselineQueue, 3);
             const appendedRequests = takeAppendedEntries(baselineQueue, finalQueue);
@@ -179,7 +179,7 @@ function createViewScenario() {
             await Countly.initWithConfig(createCountlyConfig());
             const baselineQueue = await getStableEventQueue();
 
-            Countly.recordView("Integration Test View", { source: "testing" });
+            await Countly.views.startAutoStoppedView("Integration Test View", { source: "testing" });
 
             const finalQueue = await waitForEventGrowth(baselineQueue, 1);
             const appendedEvents = takeAppendedEntries(baselineQueue, finalQueue);
