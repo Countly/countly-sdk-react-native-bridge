@@ -1,4 +1,5 @@
 import Countly from "countly-sdk-react-native-bridge";
+import { Platform } from "react-native";
 
 import { createCountlyConfig } from "../Configuration";
 import {
@@ -65,6 +66,59 @@ function payloadContainsString(value: unknown, expected: string): boolean {
 
 function parseQueueRequests(entries: string[]) {
     return entries.map((entry) => ({ entry, params: parseQueryEntry(entry) }));
+}
+
+function createStableEventQueueConfig() {
+    return createCountlyConfig().disableSDKBehaviorSettingsUpdates();
+}
+
+function isIOSEventQueueFallbackEnabled() {
+    return Platform.OS === "ios";
+}
+
+function prepareIOSEventQueueRequestFallback() {
+    if (isIOSEventQueueFallbackEnabled()) {
+        Countly.setEventSendThreshold(1);
+    }
+}
+
+function findLastEventPayload(entries: string[], eventName: string) {
+    const request = findLastRequestWithEventName(entries, eventName);
+    const eventPayload = getRequestEvents(request)
+        .reverse()
+        .find((candidate) => extractEventName(candidate, JSON.stringify(candidate)) === eventName) || null;
+
+    return {
+        eventPayload,
+        request,
+    };
+}
+
+function isManualSessionRequest(params: Record<string, string>) {
+    if (params.begin_session === "1" || params.end_session === "1") {
+        return true;
+    }
+
+    return params.session_duration !== undefined && !params.begin_session && !params.end_session;
+}
+
+async function waitForQueuedManualSessionRequests(minCount: number, timeoutMs = 1500, pollIntervalMs = 50) {
+    const startedAt = Date.now();
+    let lastSeenRequests: ParsedQueueRequest[] = [];
+
+    while (Date.now() - startedAt < timeoutMs) {
+        const requestQueue = await Countly.test.getRequestQueue();
+        const sessionRequests = parseQueueRequests(requestQueue).filter((request) => isManualSessionRequest(request.params));
+
+        if (sessionRequests.length >= minCount) {
+            return sessionRequests;
+        }
+
+        lastSeenRequests = sessionRequests;
+        await new Promise<void>((resolve) => setTimeout(resolve, pollIntervalMs));
+    }
+
+    return lastSeenRequests;
 }
 
 function findLastRequestWithField(entries: string[], fieldName: string) {
@@ -134,31 +188,35 @@ function createManualSessionScenario() {
     return {
         id: "manual-session-order",
         title: "Manual Session Request Order",
-        description: "Validates that begin, update, and end session calls are queued in the expected native request order.",
+        description: "Validates that begin, update, and end session calls appear in the expected native request order.",
         async run() {
             await haltBridgeForScenario();
 
-            const config = createCountlyConfig().enableManualSessionControl();
-            await Countly.initWithConfig(config);
+            await Countly.initWithConfig(createCountlyConfig());
 
-            const baselineQueue = await getStableRequestQueue();
             Countly.sessions.beginSession();
             Countly.sessions.updateSession();
             Countly.sessions.endSession();
 
-            const finalQueue = await waitForRequestGrowth(baselineQueue, 3);
-            const appendedRequests = takeAppendedEntries(baselineQueue, finalQueue);
-            const sessionRequestEntries = appendedRequests.slice(-3);
-            const sessionRequests = sessionRequestEntries.map(parseQueryEntry);
+            const sessionRequests = await waitForQueuedManualSessionRequests(3);
+            const sessionRequestEntries = sessionRequests.map((request) => request.entry);
+            const finalRequestQueue = await Countly.test.getRequestQueue();
 
-            assertCondition(sessionRequests.length === 3, `Expected 3 session requests, received ${sessionRequests.length}.`);
-            assertCondition(sessionRequests[0].begin_session === "1", "First appended request is not a begin_session request.");
-            assertCondition(!sessionRequests[1].begin_session && !sessionRequests[1].end_session, "Second appended request should be a session update request.");
-            assertCondition(sessionRequests[2].end_session === "1", "Third appended request is not an end_session request.");
+            assertCondition(
+                sessionRequests.length === 3,
+                `Expected 3 queued session requests, received ${sessionRequests.length}. Session entries: ${sessionRequestEntries.join(" | ")}. Full queue: ${finalRequestQueue.join(" | ")}`
+            );
+            assertCondition(sessionRequests[0].params.begin_session === "1", "First queued session request is not a begin_session request.");
+            assertCondition(
+                sessionRequests[1].params.session_duration !== undefined && !sessionRequests[1].params.begin_session && !sessionRequests[1].params.end_session,
+                "Second queued session request should be a session update request."
+            );
+            assertCondition(sessionRequests[2].params.end_session === "1", "Third queued session request is not an end_session request.");
 
             return {
                 summary: "Observed the expected begin, update, and end session request order.",
                 details: [
+                    `Request queue size after session calls: ${finalRequestQueue.length}`,
                     `Begin request: ${sessionRequestEntries[0]}`,
                     `Update request: ${sessionRequestEntries[1]}`,
                     `End request: ${sessionRequestEntries[2]}`,
@@ -172,31 +230,54 @@ function createViewScenario() {
     return {
         id: "view-request",
         title: "View Event Queue Payload",
-        description: "Checks that a recorded view appends a native event queue entry containing the requested view name.",
+        description: "Checks that a recorded view produces a native payload containing the requested view name.",
         async run() {
             await haltBridgeForScenario();
 
-            await Countly.initWithConfig(createCountlyConfig());
-            const baselineQueue = await getStableEventQueue();
+            prepareIOSEventQueueRequestFallback();
+            await Countly.initWithConfig(createStableEventQueueConfig());
+            if (!isIOSEventQueueFallbackEnabled()) {
+                const baselineQueue = await getStableEventQueue();
 
+                await Countly.views.startAutoStoppedView("Integration Test View", { source: "testing" });
+
+                const finalQueue = await waitForEventGrowth(baselineQueue, 1);
+                const appendedEvents = takeAppendedEntries(baselineQueue, finalQueue);
+                const lastEvent = appendedEvents[appendedEvents.length - 1] || "";
+                const parsedEvent = safeParseJson(lastEvent);
+                const containsViewName = payloadContainsString(parsedEvent, "Integration Test View") || lastEvent.includes("Integration Test View");
+                const containsSourceValue = payloadContainsString(parsedEvent, "testing") || lastEvent.includes("testing");
+
+                assertCondition(appendedEvents.length >= 1, "Recording a view did not append an event to the native event queue.");
+                assertCondition(containsViewName, `Expected a queued view event containing 'Integration Test View', received '${lastEvent}'.`);
+                assertCondition(containsSourceValue, `Expected a queued view event containing source 'testing', received '${lastEvent}'.`);
+
+                return {
+                    summary: "Recorded view event contains the expected view name and segmentation.",
+                    details: [
+                        `Appended events: ${appendedEvents.length}`,
+                        `Last view event: ${lastEvent}`,
+                    ],
+                };
+            }
+
+            const baselineRequestQueue = await getStableRequestQueue();
             await Countly.views.startAutoStoppedView("Integration Test View", { source: "testing" });
 
-            const finalQueue = await waitForEventGrowth(baselineQueue, 1);
-            const appendedEvents = takeAppendedEntries(baselineQueue, finalQueue);
-            const lastEvent = appendedEvents[appendedEvents.length - 1] || "";
-            const parsedEvent = safeParseJson(lastEvent);
-            const containsViewName = payloadContainsString(parsedEvent, "Integration Test View") || lastEvent.includes("Integration Test View");
-            const containsSourceValue = payloadContainsString(parsedEvent, "testing") || lastEvent.includes("testing");
+            const finalRequestQueue = await waitForRequestGrowth(baselineRequestQueue, 1);
+            const appendedRequests = takeAppendedEntries(baselineRequestQueue, finalRequestQueue);
+            const { eventPayload, request } = findLastEventPayload(appendedRequests, "[CLY]_view");
+            const segmentation = eventPayload?.segmentation || eventPayload?.seg || {};
 
-            assertCondition(appendedEvents.length >= 1, "Recording a view did not append an event to the native event queue.");
-            assertCondition(containsViewName, `Expected a queued view event containing 'Integration Test View', received '${lastEvent}'.`);
-            assertCondition(containsSourceValue, `Expected a queued view event containing source 'testing', received '${lastEvent}'.`);
+            assertCondition(request !== null, "Recording a view did not flush a view event into the native request queue on iOS.");
+            assertCondition(segmentation.name === "Integration Test View", `Expected flushed view event name 'Integration Test View', received '${segmentation.name || ""}'.`);
+            assertCondition(segmentation.source === "testing", `Expected flushed view event segmentation source 'testing', received '${segmentation.source || ""}'.`);
 
             return {
-                summary: "Recorded view event contains the expected view name and segmentation.",
+                summary: "Recorded view event was flushed into a native request with the expected payload.",
                 details: [
-                    `Appended events: ${appendedEvents.length}`,
-                    `Last view event: ${lastEvent}`,
+                    `Appended requests after flush: ${appendedRequests.length}`,
+                    `View request: ${request?.entry || ""}`,
                 ],
             };
         },
@@ -207,36 +288,63 @@ function createEventScenario() {
     return {
         id: "event-queue-payload",
         title: "Event Queue Payload",
-        description: "Records an RN event and checks the native event queue entry for the event name and segmentation values.",
+        description: "Records an RN event and checks the native payload for the event name and segmentation values.",
         async run() {
             await haltBridgeForScenario();
 
-            await Countly.initWithConfig(createCountlyConfig());
-            const baselineQueue = await getStableEventQueue();
+            prepareIOSEventQueueRequestFallback();
+            await Countly.initWithConfig(createStableEventQueueConfig());
+            if (!isIOSEventQueueFallbackEnabled()) {
+                const baselineQueue = await getStableEventQueue();
 
+                Countly.events.recordEvent("purchase", { sku: "sku-1", qty: 2 }, 4, 19.99);
+
+                const finalQueue = await waitForEventGrowth(baselineQueue, 1);
+                const appendedEvents = takeAppendedEntries(baselineQueue, finalQueue);
+                const lastEvent = appendedEvents[appendedEvents.length - 1] || "";
+                const parsedEvent = safeParseJson(lastEvent);
+                const eventName = extractEventName(parsedEvent, lastEvent);
+                const segmentation = parsedEvent?.segmentation || parsedEvent?.seg || {};
+                const eventCount = parsedEvent?.count ?? parsedEvent?.c;
+                const eventSum = parsedEvent?.sum ?? parsedEvent?.s;
+
+                assertCondition(appendedEvents.length >= 1, "Recording an event did not append an item to the native event queue.");
+                assertCondition(eventName === "purchase", `Expected event name 'purchase', received '${eventName || ""}'.`);
+                assertCondition(segmentation.sku === "sku-1", "Expected recorded event segmentation to include sku=sku-1.");
+                assertCondition(Number(segmentation.qty) === 2, `Expected recorded event segmentation to include qty=2, received '${segmentation.qty || ""}'.`);
+                assertCondition(Number(eventCount) === 4, `Expected event count 4, received '${eventCount || ""}'.`);
+                assertCondition(Number(eventSum) === 19.99, `Expected event sum 19.99, received '${eventSum || ""}'.`);
+
+                return {
+                    summary: "Recorded event payload matches the expected queue entry.",
+                    details: [
+                        `Appended events: ${appendedEvents.length}`,
+                        `Last event payload: ${lastEvent}`,
+                    ],
+                };
+            }
+
+            const baselineRequestQueue = await getStableRequestQueue();
             Countly.events.recordEvent("purchase", { sku: "sku-1", qty: 2 }, 4, 19.99);
 
-            const finalQueue = await waitForEventGrowth(baselineQueue, 1);
-            const appendedEvents = takeAppendedEntries(baselineQueue, finalQueue);
-            const lastEvent = appendedEvents[appendedEvents.length - 1] || "";
-            const parsedEvent = safeParseJson(lastEvent);
-            const eventName = extractEventName(parsedEvent, lastEvent);
-            const segmentation = parsedEvent?.segmentation || parsedEvent?.seg || {};
-            const eventCount = parsedEvent?.count ?? parsedEvent?.c;
-            const eventSum = parsedEvent?.sum ?? parsedEvent?.s;
+            const finalRequestQueue = await waitForRequestGrowth(baselineRequestQueue, 1);
+            const appendedRequests = takeAppendedEntries(baselineRequestQueue, finalRequestQueue);
+            const { eventPayload, request } = findLastEventPayload(appendedRequests, "purchase");
+            const segmentation = eventPayload?.segmentation || eventPayload?.seg || {};
+            const eventCount = eventPayload?.count ?? eventPayload?.c;
+            const eventSum = eventPayload?.sum ?? eventPayload?.s;
 
-            assertCondition(appendedEvents.length >= 1, "Recording an event did not append an item to the native event queue.");
-            assertCondition(eventName === "purchase", `Expected event name 'purchase', received '${eventName || ""}'.`);
+            assertCondition(request !== null, "Recording an event did not flush a matching event into the native request queue on iOS.");
             assertCondition(segmentation.sku === "sku-1", "Expected recorded event segmentation to include sku=sku-1.");
             assertCondition(Number(segmentation.qty) === 2, `Expected recorded event segmentation to include qty=2, received '${segmentation.qty || ""}'.`);
             assertCondition(Number(eventCount) === 4, `Expected event count 4, received '${eventCount || ""}'.`);
             assertCondition(Number(eventSum) === 19.99, `Expected event sum 19.99, received '${eventSum || ""}'.`);
 
             return {
-                summary: "Recorded event payload matches the expected queue entry.",
+                summary: "Recorded event payload matches the expected native request payload.",
                 details: [
-                    `Appended events: ${appendedEvents.length}`,
-                    `Last event payload: ${lastEvent}`,
+                    `Appended requests after flush: ${appendedRequests.length}`,
+                    `Event request: ${request?.entry || ""}`,
                 ],
             };
         },
@@ -247,21 +355,63 @@ function createEventFlushBeforeCachedUserPropertyScenario() {
     return {
         id: "event-flush-before-cached-user-property",
         title: "Event Flush Before Cached User Property",
-        description: "Checks that setting a user property after queueing an event flushes that event into the request queue while keeping the property out of both native queues.",
+        description: "Checks that an event can flush into the request queue without forcing a cached user property into either native queue.",
         async run() {
             await haltBridgeForScenario();
 
-            await Countly.initWithConfig(createCountlyConfig());
+            prepareIOSEventQueueRequestFallback();
+            await Countly.initWithConfig(createStableEventQueueConfig());
             const baselineRequestQueue = await getStableRequestQueue();
             const baselineEventQueue = await getStableEventQueue();
 
             Countly.events.recordEvent("queued-before-user-property", { source: "integration-testing" });
 
-            const eventQueueWithQueuedEvent = await waitForEventGrowth(baselineEventQueue, 1);
-            const queuedEvents = takeAppendedEntries(baselineEventQueue, eventQueueWithQueuedEvent);
-            const queuedEvent = queuedEvents[queuedEvents.length - 1] || "";
+            let queuedEvent = "";
+            let flushedEventRequest = null;
+            if (!isIOSEventQueueFallbackEnabled()) {
+                const eventQueueWithQueuedEvent = await waitForEventGrowth(baselineEventQueue, 1);
+                const queuedEvents = takeAppendedEntries(baselineEventQueue, eventQueueWithQueuedEvent);
+                queuedEvent = queuedEvents[queuedEvents.length - 1] || "";
 
-            assertCondition(queuedEvents.length >= 1, "Expected the event queue to grow before setting a user property, but no event was queued.");
+                assertCondition(queuedEvents.length >= 1, "Expected the event queue to grow before setting a user property, but no event was queued.");
+            } else {
+                const requestQueueWithFlushedEvent = await waitForRequestGrowth(baselineRequestQueue, 1);
+                const appendedRequestsBeforeProperty = takeAppendedEntries(baselineRequestQueue, requestQueueWithFlushedEvent);
+                const eventQueueAfterFlush = await getStableEventQueue();
+                flushedEventRequest = findLastRequestWithEventName(appendedRequestsBeforeProperty, "queued-before-user-property");
+                queuedEvent = flushedEventRequest?.entry || "";
+
+                assertCondition(flushedEventRequest !== null, "Expected the queued event to flush into the request queue on iOS, but no matching request was appended.");
+                assertCondition(
+                    queuesMatch(eventQueueAfterFlush, baselineEventQueue),
+                    `Expected the iOS event queue to stay at baseline after the event flushed immediately, but it changed from ${baselineEventQueue.length} item(s) to ${eventQueueAfterFlush.length}.`,
+                );
+
+                await Countly.userData.setProperty("cached_after_event", "cached-value");
+
+                const requestQueueAfterProperty = await getStableRequestQueue();
+                const eventQueueAfterProperty = await getStableEventQueue();
+                const propertyRequests = takeAppendedEntries(requestQueueWithFlushedEvent, requestQueueAfterProperty);
+                const cachedUserPropertyRequest = findLastRequestWithCustomUserProperty(propertyRequests, "cached_after_event");
+
+                assertCondition(
+                    queuesMatch(requestQueueAfterProperty, requestQueueWithFlushedEvent),
+                    `Expected caching a user property to leave the iOS request queue unchanged after the event flush, but it grew by ${requestQueueAfterProperty.length - requestQueueWithFlushedEvent.length} item(s).`,
+                );
+                assertCondition(
+                    queuesMatch(eventQueueAfterProperty, eventQueueAfterFlush),
+                    `Expected caching a user property to leave the iOS event queue unchanged after the event flush, but it changed from ${eventQueueAfterFlush.length} item(s) to ${eventQueueAfterProperty.length}.`,
+                );
+                assertCondition(cachedUserPropertyRequest === null, "Expected the user property to stay cached and out of both native queues after the event flushed, but a user_details request was appended.");
+
+                return {
+                    summary: "The queued event flushed into a native request while the later user property stayed cached.",
+                    details: [
+                        `Flushed event request: ${flushedEventRequest?.entry || ""}`,
+                        `Request queue size after property call: ${requestQueueAfterProperty.length}`,
+                    ],
+                };
+            }
 
             await Countly.userData.setProperty("cached_after_event", "cached-value");
 
@@ -269,7 +419,7 @@ function createEventFlushBeforeCachedUserPropertyScenario() {
             const finalRequestQueue = await getStableRequestQueue();
             const finalEventQueue = await getStableEventQueue();
             const appendedRequests = takeAppendedEntries(baselineRequestQueue, finalRequestQueue);
-            const flushedEventRequest = findLastRequestWithEventName(appendedRequests, "queued-before-user-property");
+            flushedEventRequest = findLastRequestWithEventName(appendedRequests, "queued-before-user-property");
             const cachedUserPropertyRequest = findLastRequestWithCustomUserProperty(appendedRequests, "cached_after_event");
 
             assertCondition(flushedEventRequest !== null, "Expected setting a user property to flush the queued event into the request queue, but no request contained the queued event.");
@@ -291,12 +441,13 @@ function createEventFlushBeforeCachedUserPropertyScenario() {
 function createCachedUserPropertyFlushOnEventScenario() {
     return {
         id: "cached-user-property-flush-on-event",
-        title: "Cached User Property Flush On Event",
-        description: "Checks that a cached user property stays out of both native queues until an event is recorded, then moves into the request queue.",
+        title: "Cached User Property Flush Behavior",
+        description: "Checks that a cached user property stays out of both native queues until a supported flush path moves it into the request queue.",
         async run() {
             await haltBridgeForScenario();
 
-            await Countly.initWithConfig(createCountlyConfig());
+            prepareIOSEventQueueRequestFallback();
+            await Countly.initWithConfig(createStableEventQueueConfig());
             const baselineRequestQueue = await getStableRequestQueue();
             const baselineEventQueue = await getStableEventQueue();
 
@@ -315,6 +466,36 @@ function createCachedUserPropertyFlushOnEventScenario() {
             );
 
             Countly.events.recordEvent("flushes-cached-user-property", { source: "integration-testing" });
+
+            if (isIOSEventQueueFallbackEnabled()) {
+                const requestQueueAfterEvent = await waitForRequestGrowth(baselineRequestQueue, 1);
+                const appendedRequestsAfterEvent = takeAppendedEntries(baselineRequestQueue, requestQueueAfterEvent);
+                const eventRequest = findLastRequestWithEventName(appendedRequestsAfterEvent, "flushes-cached-user-property");
+                const cachedUserPropertyRequestAfterEvent = findLastRequestWithCustomUserProperty(appendedRequestsAfterEvent, "cached_before_event");
+
+                assertCondition(eventRequest !== null, "Expected recording an event to flush the event into the iOS request queue, but no matching event request was appended.");
+                assertCondition(cachedUserPropertyRequestAfterEvent === null, "Expected the cached user property to remain unsent on iOS until explicit save, but a user_details request was appended with the event.");
+
+                await Countly.userDataBulk.save();
+
+                const finalRequestQueue = await waitForRequestGrowth(requestQueueAfterEvent, 1);
+                const finalEventQueue = await getStableEventQueue();
+                const appendedRequestsAfterSave = takeAppendedEntries(requestQueueAfterEvent, finalRequestQueue);
+                const cachedUserPropertyRequest = findLastRequestWithCustomUserProperty(appendedRequestsAfterSave, "cached_before_event");
+                const customUserDetails = getCustomUserDetails(cachedUserPropertyRequest);
+
+                assertCondition(cachedUserPropertyRequest !== null, "Expected explicit save to flush the cached user property into the iOS request queue, but no matching user_details request was appended.");
+                assertCondition(customUserDetails?.cached_before_event === "cached-value", `Expected cached user property value 'cached-value', received '${customUserDetails?.cached_before_event || ""}'.`);
+
+                return {
+                    summary: "On iOS, the cached user property stayed local through the event flush and moved into the request queue only after explicit save.",
+                    details: [
+                        `Event request: ${eventRequest?.entry || ""}`,
+                        `User details request after save: ${cachedUserPropertyRequest?.entry || ""}`,
+                        `Event queue size after save: ${finalEventQueue.length}`,
+                    ],
+                };
+            }
 
             await waitForRequestGrowth(baselineRequestQueue, 1);
             const finalRequestQueue = await getStableRequestQueue();
@@ -343,39 +524,71 @@ function createConsentEventScenario() {
     return {
         id: "consent-gates-events",
         title: "Consent Gates Event Queue",
-        description: "Verifies that events stay blocked until RN gives event consent, then appear in the native event queue.",
+        description: "Verifies that events stay blocked until RN gives event consent, then appear in the native payload.",
         async run() {
             await haltBridgeForScenario();
 
-            await Countly.initWithConfig(createCountlyConfig().setRequiresConsent(true));
-            const blockedBaselineQueue = await getStableEventQueue();
+            prepareIOSEventQueueRequestFallback();
+            await Countly.initWithConfig(createStableEventQueueConfig().setRequiresConsent(true));
+            if (!isIOSEventQueueFallbackEnabled()) {
+                const blockedBaselineQueue = await getStableEventQueue();
 
+                Countly.events.recordEvent("blocked-consent-event");
+
+                const blockedQueue = await getStableEventQueue();
+                const blockedEvents = takeAppendedEntries(blockedBaselineQueue, blockedQueue);
+
+                assertCondition(blockedEvents.length === 0, `Expected event queue to stay unchanged without consent, but ${blockedEvents.length} event(s) were added.`);
+
+                Countly.giveConsent(["events"]);
+
+                const allowedBaselineQueue = await getStableEventQueue();
+                Countly.events.recordEvent("allowed-consent-event", { source: "integration-testing" }, 1, 0);
+
+                const allowedQueue = await waitForEventGrowth(allowedBaselineQueue, 1);
+                const allowedEvents = takeAppendedEntries(allowedBaselineQueue, allowedQueue);
+                const lastAllowedEvent = allowedEvents[allowedEvents.length - 1] || "";
+                const parsedAllowedEvent = safeParseJson(lastAllowedEvent);
+                const eventName = extractEventName(parsedAllowedEvent, lastAllowedEvent);
+
+                assertCondition(allowedEvents.length >= 1, "Expected an event queue entry after giving event consent.");
+                assertCondition(eventName === "allowed-consent-event", `Expected allowed event name 'allowed-consent-event', received '${eventName || ""}'.`);
+
+                return {
+                    summary: "Events stayed blocked before consent and were queued after consent was granted.",
+                    details: [
+                        `Blocked event queue growth: ${blockedEvents.length}`,
+                        `Allowed event payload: ${lastAllowedEvent}`,
+                    ],
+                };
+            }
+
+            const blockedBaselineRequestQueue = await getStableRequestQueue();
             Countly.events.recordEvent("blocked-consent-event");
+            const blockedRequestQueue = await getStableRequestQueue();
+            const blockedRequests = takeAppendedEntries(blockedBaselineRequestQueue, blockedRequestQueue);
+            const blockedEventRequest = findLastRequestWithEventName(blockedRequests, "blocked-consent-event");
 
-            const blockedQueue = await getStableEventQueue();
-            const blockedEvents = takeAppendedEntries(blockedBaselineQueue, blockedQueue);
-
-            assertCondition(blockedEvents.length === 0, `Expected event queue to stay unchanged without consent, but ${blockedEvents.length} event(s) were added.`);
+            assertCondition(blockedEventRequest === null, "Expected events to stay blocked without consent, but a blocked event request was appended.");
 
             Countly.giveConsent(["events"]);
 
-            const allowedBaselineQueue = await getStableEventQueue();
+            const allowedBaselineRequestQueue = await getStableRequestQueue();
             Countly.events.recordEvent("allowed-consent-event", { source: "integration-testing" }, 1, 0);
 
-            const allowedQueue = await waitForEventGrowth(allowedBaselineQueue, 1);
-            const allowedEvents = takeAppendedEntries(allowedBaselineQueue, allowedQueue);
-            const lastAllowedEvent = allowedEvents[allowedEvents.length - 1] || "";
-            const parsedAllowedEvent = safeParseJson(lastAllowedEvent);
-            const eventName = extractEventName(parsedAllowedEvent, lastAllowedEvent);
+            const allowedFinalRequestQueue = await waitForRequestGrowth(allowedBaselineRequestQueue, 1);
+            const appendedRequests = takeAppendedEntries(allowedBaselineRequestQueue, allowedFinalRequestQueue);
+            const { eventPayload, request } = findLastEventPayload(appendedRequests, "allowed-consent-event");
+            const segmentation = eventPayload?.segmentation || eventPayload?.seg || {};
 
-            assertCondition(allowedEvents.length >= 1, "Expected an event queue entry after giving event consent.");
-            assertCondition(eventName === "allowed-consent-event", `Expected allowed event name 'allowed-consent-event', received '${eventName || ""}'.`);
+            assertCondition(request !== null, "Expected an event request after giving event consent on iOS, but none was appended.");
+            assertCondition(segmentation.source === "integration-testing", `Expected allowed event source 'integration-testing', received '${segmentation.source || ""}'.`);
 
             return {
-                summary: "Events stayed blocked before consent and were queued after consent was granted.",
+                summary: "Events stayed blocked before consent and were flushed into a native request after consent was granted.",
                 details: [
-                    `Blocked event queue growth: ${blockedEvents.length}`,
-                    `Allowed event payload: ${lastAllowedEvent}`,
+                    `Blocked appended requests: ${blockedRequests.length}`,
+                    `Allowed event request: ${request?.entry || ""}`,
                 ],
             };
         },

@@ -19,10 +19,6 @@
 @property (nonatomic, strong) NSMutableArray *recordedEvents;
 @end
 
-@protocol CountlyEventDictionaryRepresentable <NSObject>
-- (NSDictionary *)dictionaryRepresentation;
-@end
-
 static NSString *const kCountlyRNHandledRequestKey = @"CountlyRNHandledRequestKey";
 
 @interface CountlyRNRequestCaptureProtocol : NSURLProtocol
@@ -175,6 +171,16 @@ static NSURLSessionConfiguration *CountlyRNRequestCaptureConfiguration(NSURLSess
     return sessionConfiguration;
 }
 
+static NSData *CountlyRNCapturedResponseDataForRequest(NSURLRequest *request) {
+    NSString *path = request.URL.path ?: @"";
+
+    if ([path isEqualToString:@"/i"]) {
+        return [@"{\"result\":\"Success\"}" dataUsingEncoding:NSUTF8StringEncoding];
+    }
+
+    return [@"{}" dataUsingEncoding:NSUTF8StringEncoding];
+}
+
 @implementation CountlyRNRequestCaptureProtocol
 
 + (BOOL)canInitWithRequest:(NSURLRequest *)request {
@@ -190,7 +196,7 @@ static NSURLSessionConfiguration *CountlyRNRequestCaptureConfiguration(NSURLSess
     [NSURLProtocol setProperty:@YES forKey:kCountlyRNHandledRequestKey inRequest:mutableRequest];
     CountlyRNRecordCapturedRequest(mutableRequest, @"direct");
 
-    NSData *responseData = [@"{}" dataUsingEncoding:NSUTF8StringEncoding];
+    NSData *responseData = CountlyRNCapturedResponseDataForRequest(mutableRequest);
     NSHTTPURLResponse *response = [[NSHTTPURLResponse alloc] initWithURL:mutableRequest.URL statusCode:200 HTTPVersion:nil headerFields:@{ @"Content-Type": @"application/json" }];
     [self.client URLProtocol:self didReceiveResponse:response cacheStoragePolicy:NSURLCacheStorageNotAllowed];
     [self.client URLProtocol:self didLoadData:responseData];
@@ -1675,13 +1681,16 @@ RCT_REMAP_METHOD(getEventQueue, getEventQueueWithResolver : (RCTPromiseResolveBl
             NSMutableArray *recordedEventsJSON = NSMutableArray.new;
 
             for (id event in recordedEvents) {
-                    if ([event conformsToProtocol:@protocol(CountlyEventDictionaryRepresentable)]) {
-                            NSDictionary *eventDictionary = [(id<CountlyEventDictionaryRepresentable>)event dictionaryRepresentation];
-                            NSString *eventJson = [self toJSONString:eventDictionary];
-                            if (eventJson) {
-                                    [recordedEventsJSON addObject:eventJson];
-                            }
-                    }
+                if (![event isKindOfClass:[CountlyEvent class]]) {
+                    COUNTLY_RN_LOG(@"Skipping unexpected recorded event object of class %@", NSStringFromClass([event class]));
+                    continue;
+                }
+
+                NSDictionary *eventDictionary = [(CountlyEvent *)event dictionaryRepresentation];
+                NSString *eventJson = [self toJSONString:eventDictionary];
+                if (eventJson) {
+                    [recordedEventsJSON addObject:eventJson];
+                }
             }
 
             resolve(recordedEventsJSON);
