@@ -72,6 +72,20 @@ function createStableEventQueueConfig() {
     return createCountlyConfig().disableSDKBehaviorSettingsUpdates();
 }
 
+const MANUAL_SESSION_TEST_SERVER_URL = "https://127.0.0.1:1";
+const MANUAL_SESSION_UPDATE_DELAY_MS = 1200;
+
+function createManualSessionRequestOrderConfig() {
+    return createCountlyConfig()
+        .setServerURL(MANUAL_SESSION_TEST_SERVER_URL)
+        .setRequestTimeoutDuration(1)
+        .disableSDKBehaviorSettingsUpdates();
+}
+
+function sleep(timeoutMs: number) {
+    return new Promise<void>((resolve) => setTimeout(resolve, timeoutMs));
+}
+
 function isIOSEventQueueFallbackEnabled() {
     return Platform.OS === "ios";
 }
@@ -100,25 +114,6 @@ function isManualSessionRequest(params: Record<string, string>) {
     }
 
     return params.session_duration !== undefined && !params.begin_session && !params.end_session;
-}
-
-async function waitForQueuedManualSessionRequests(minCount: number, timeoutMs = 1500, pollIntervalMs = 50) {
-    const startedAt = Date.now();
-    let lastSeenRequests: ParsedQueueRequest[] = [];
-
-    while (Date.now() - startedAt < timeoutMs) {
-        const requestQueue = await Countly.test.getRequestQueue();
-        const sessionRequests = parseQueueRequests(requestQueue).filter((request) => isManualSessionRequest(request.params));
-
-        if (sessionRequests.length >= minCount) {
-            return sessionRequests;
-        }
-
-        lastSeenRequests = sessionRequests;
-        await new Promise<void>((resolve) => setTimeout(resolve, pollIntervalMs));
-    }
-
-    return lastSeenRequests;
 }
 
 function findLastRequestWithField(entries: string[], fieldName: string) {
@@ -192,19 +187,23 @@ function createManualSessionScenario() {
         async run() {
             await haltBridgeForScenario();
 
-            await Countly.initWithConfig(createCountlyConfig());
+            await Countly.initWithConfig(createManualSessionRequestOrderConfig());
+
+            const baselineRequestQueue = await getStableRequestQueue();
 
             Countly.sessions.beginSession();
+            await sleep(MANUAL_SESSION_UPDATE_DELAY_MS);
             Countly.sessions.updateSession();
             Countly.sessions.endSession();
 
-            const sessionRequests = await waitForQueuedManualSessionRequests(3);
+            const finalRequestQueue = await waitForRequestGrowth(baselineRequestQueue, 3);
+            const appendedRequests = takeAppendedEntries(baselineRequestQueue, finalRequestQueue);
+            const sessionRequests = parseQueueRequests(appendedRequests).filter((request) => isManualSessionRequest(request.params));
             const sessionRequestEntries = sessionRequests.map((request) => request.entry);
-            const finalRequestQueue = await Countly.test.getRequestQueue();
 
             assertCondition(
                 sessionRequests.length === 3,
-                `Expected 3 queued session requests, received ${sessionRequests.length}. Session entries: ${sessionRequestEntries.join(" | ")}. Full queue: ${finalRequestQueue.join(" | ")}`
+                `Expected 3 queued session requests, received ${sessionRequests.length}. Session entries: ${sessionRequestEntries.join(" | ")}. Appended queue entries: ${appendedRequests.join(" | ")}. Full queue: ${finalRequestQueue.join(" | ")}`
             );
             assertCondition(sessionRequests[0].params.begin_session === "1", "First queued session request is not a begin_session request.");
             assertCondition(
@@ -216,6 +215,7 @@ function createManualSessionScenario() {
             return {
                 summary: "Observed the expected begin, update, and end session request order.",
                 details: [
+                    `Manual session queue growth: ${appendedRequests.length}`,
                     `Request queue size after session calls: ${finalRequestQueue.length}`,
                     `Begin request: ${sessionRequestEntries[0]}`,
                     `Update request: ${sessionRequestEntries[1]}`,
