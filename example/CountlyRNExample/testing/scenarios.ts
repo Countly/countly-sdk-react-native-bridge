@@ -1,4 +1,4 @@
-import Countly from "countly-sdk-react-native-bridge";
+import Countly from "countly-sdk-react-native-bridge-np";
 import { Platform } from "react-native";
 
 import { createCountlyConfig } from "../Configuration";

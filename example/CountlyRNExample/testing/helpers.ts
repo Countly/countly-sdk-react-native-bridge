@@ -1,4 +1,4 @@
-import Countly from "countly-sdk-react-native-bridge";
+import Countly from "countly-sdk-react-native-bridge-np";
 
 const POLL_INTERVAL_MS = 1500;
 const DEFAULT_TIMEOUT_MS = 3000;

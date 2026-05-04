@@ -2,7 +2,7 @@
 import React from "react";
 import { SafeAreaView, ScrollView, Text, View } from "react-native";
 
-import Countly from "countly-sdk-react-native-bridge";
+import Countly from "countly-sdk-react-native-bridge-np";
 
 import CountlyButton from "../CountlyButton";
 import { lightGreen, lightOrange } from "../Constants";
