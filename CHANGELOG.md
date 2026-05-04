@@ -1,3 +1,98 @@
+## 26.1.0
+* Added a new `Countly.sessions` interface for manual session control:
+  * `beginSession()`
+  * `updateSession()`
+  * `endSession()`
+* Added a new `Countly.remoteConfig` interface with:
+  * `update()`
+  * `updateForKeysOnly(keyNames)`
+  * `updateExceptKeys(keyNames)`
+  * `getValue(keyName)`
+  * `clearValues()`
+* Added a new `Countly.views` interface with:
+  * `startAutoStoppedView(viewName, segmentation?)`
+  * `startView(viewName, segmentation?)`
+  * `stopViewWithName(viewName, segmentation?)`
+  * `stopViewWithID(viewID, segmentation?)`
+  * `stopAllViews(segmentation?)`
+  * `pauseViewWithID(viewID)`
+  * `resumeViewWithID(viewID)`
+  * `addSegmentationToViewWithID(viewID, segmentation)`
+  * `addSegmentationToViewWithName(viewName, segmentation)`
+  * `setGlobalViewSegmentation(segmentation?)`
+  * `updateGlobalViewSegmentation(segmentation)`
+* Deprecated root-level session methods in favor of `Countly.sessions`:
+  * `Countly.startSession()`
+  * `Countly.updateSession()`
+  * `Countly.endSession()`
+* Deprecated root-level remote config methods in favor of `Countly.remoteConfig`:
+  * `Countly.remoteConfigUpdate(...)`
+  * `Countly.updateRemoteConfigForKeysOnly(...)`
+  * `Countly.updateRemoteConfigExceptKeys(...)`
+  * `Countly.getRemoteConfigValueForKey(...)`
+  * `Countly.getRemoteConfigValueForKeyP(...)`
+  * `Countly.remoteConfigClearValues()`
+* Deprecated root-level view recording in favor of `Countly.views.startAutoStoppedView(...)`:
+  * `Countly.recordView(...)`
+* Deprecated legacy feedback shortcut helpers in favor of the newer direct present APIs:
+  * `Countly.feedback.showNPS(...)` -> `Countly.feedback.presentNPS(...)`
+  * `Countly.feedback.showSurvey(...)` -> `Countly.feedback.presentSurvey(...)`
+  * `Countly.feedback.showRating(...)` -> `Countly.feedback.presentRating(...)`
+* Added `Countly.remoteConfig.getValue(keyName)` as the async replacement for the older root-level remote config getters. It returns `null` when a value is missing.
+* Mitigated an issue where the new remote config interface could reject on normal runtime conditions such as missing values, invalid input, or use before SDK initialization. These calls now log and return without crashing the app.
+* Mitigated an issue where `Countly.initWithConfig(...)` could preserve an empty `deviceID` under the wrong field name instead of clearing the init payload value.
+* Mitigated an issue where `allowedIntentPackageNames` could be dropped from init config serialization unless `allowedIntentClassNames` was also provided.
+* Added `Countly.addCustomNetworkRequestHeaders(...)` for runtime request header updates.
+* Added `Countly.content.previewContent(contentId)` for direct content previews.
+* Added `Countly.webViewDisplayOption` constants and `.content.setWebViewDisplayOption(...)` for controlling content and feedback presentation.
+* Added direct `Countly.feedback.presentNPS(...)`, `Countly.feedback.presentSurvey(...)`, and `Countly.feedback.presentRating(...)` helpers backed by the latest native feedback APIs.
+* Added `Countly.deviceId.changeID(newDeviceID, merge)` to the device ID interface for explicit merge control after removing the old root-level `Countly.changeDeviceId(...)` API.
+* Mitigated an inconsistency where `Countly.deviceId.setID(Countly.TemporaryDeviceIDString)` did not route temporary-device-ID mode through the dedicated native handling on Android, and now does so explicitly on both Android and iOS.
+* Added init config options for manual session control, hybrid manual session mode, automatic view tracking, global view segmentation, custom network request headers, and disabling auto view restart.
+  * `enableManualSessionControl()`
+  * `enableManualSessionControlHybridMode()`
+  * `enableAutomaticViewTracking()`
+  * `setAutomaticViewTrackingExclusionList(automaticViewTrackingExclusionList)`
+  * `setGlobalViewSegmentation(globalViewSegmentation)`
+  * `addCustomNetworkRequestHeaders(customHeaderValues)`
+  * `disableViewRestartForManualRecording()`
+  * Removed `Countly.init(...)`. Use `Countly.initWithConfig(countlyConfig)`.
+  * Removed `Countly.hasBeenCalledOnStart()`. No direct replacement.
+  * Removed `Countly.sendEvent(...)`. Use `Countly.events.recordEvent(...)`.
+  * Removed `Countly.pushTokenType(...)`. Use `CountlyConfig.setPushTokenType(...)` and `CountlyConfig.setPushNotificationChannelInformation(...)`.
+  * Removed `Countly.configureIntentRedirectionCheck(...)`. Use `CountlyConfig.configureIntentRedirectionCheck(...)`.
+  * Removed `Countly.start()` and `Countly.stop()`. No direct replacement; automatic session tracking is enabled by default. For manual control use `Countly.sessions.beginSession()`, `Countly.sessions.updateSession()`, and `Countly.sessions.endSession()`.
+  * Removed `Countly.enableLogging()` and `Countly.disableLogging()`. Use `Countly.setLoggingEnabled(...)`.
+  * Removed `Countly.setLocationInit(...)`. Use `CountlyConfig.setLocation(...)`.
+  * Removed `Countly.getCurrentDeviceId()`. Use `Countly.deviceId.getID()`.
+  * Removed `Countly.getDeviceIDType()`. Use `Countly.deviceId.getType()`.
+  * Removed `Countly.changeDeviceId(...)`. Use `Countly.deviceId.setID(...)` for automatic merge selection or `Countly.deviceId.changeID(..., merge)` for explicit merge control.
+  * Removed `Countly.enableCrashReporting()`. Use `CountlyConfig.enableCrashReporting()` with `Countly.initWithConfig(...)`.
+  * Removed `Countly.enableParameterTamperingProtection(...)`. Use `CountlyConfig.enableParameterTamperingProtection(...)`.
+  * Removed `Countly.startEvent(...)`, `Countly.cancelEvent(...)`, and `Countly.endEvent(...)`. Use `Countly.events.startEvent(...)`, `Countly.events.cancelEvent(...)`, and `Countly.events.endEvent(...)`.
+  * Removed `Countly.setRequiresConsent(...)`. Use `CountlyConfig.setRequiresConsent(...)`.
+  * Removed `Countly.giveConsentInit(...)`. Use `CountlyConfig.giveConsent(...)`.
+  * Removed `Countly.setStarRatingDialogTexts(...)`. Use `CountlyConfig.setStarRatingDialogTexts(...)`.
+  * Removed `Countly.getFeedbackWidgets()`. Use `Countly.feedback.getAvailableFeedbackWidgets()`.
+  * Removed `Countly.presentFeedbackWidgetObject(...)`. Use `Countly.feedback.presentFeedbackWidget(...)`.
+  * Removed `Countly.enableApm()` and `CountlyConfig.enableApm()`. Use the `CountlyConfig.apm` interface, including `enableAppStartTimeTracking()`, `enableForegroundBackgroundTracking()`, and `enableManualAppLoadedTrigger()` as needed.
+  * Removed `Countly.enableAttribution(...)` and `Countly.recordAttributionID(...)`. Use `Countly.recordIndirectAttribution(...)`.
+  * Removed `CountlyConfig.pushTokenType(...)`. Use `CountlyConfig.setPushTokenType(...)` and `CountlyConfig.setPushNotificationChannelInformation(...)`.
+
+* Android specific changes:
+  * Added `disableGradualRequestCleaner()` init config support.
+  * Set the initial activity during SDK initialization to improve content and feedback presentation flows.
+  * Ensured Android feedback, survey, NPS, and rating presentation runs on the UI thread to avoid WebView/dialog crashes when showing widgets from the React Native bridge.
+  * Aligned the Android bridge with the current native SDK APIs for APM/crash config, preserved feedback widget version metadata for presentation, and allowed typed user-property values to pass through to the native user profile API.
+
+* iOS specific changes:
+  * Added support for the latest manual session handling, custom request header, content preview, and safe-area content display APIs from the native SDK.
+  * Aligned the user-profile bridge with the current `Countly.user` APIs for typed custom-property setters and forwarded custom user data during `Countly.setUserData(...)` and `Countly.userDataBulk.setUserProperties(...)`.
+  * Breaking change: on iOS, custom fields passed through `Countly.setUserData(...)` and `Countly.userDataBulk.setUserProperties(...)` are now forwarded to the native SDK instead of being ignored by the bridge.
+
+* Updated the underlying Android SDK version to 26.1.2
+* Updated the underlying iOS SDK version to 26.1.1
+
 ## 25.4.1
 * Improved Content display mechanics.
 * Added "setRequestTimeoutDuration" init config parameter to change request timeout duration in seconds.

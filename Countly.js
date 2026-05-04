@@ -6,11 +6,13 @@
 
 import { Platform, NativeModules, NativeEventEmitter, TurboModuleRegistry } from "react-native";
 
-import CountlyConfig from "./CountlyConfig.js";
 import CountlyState from "./CountlyState.js";
 import Feedback from "./Feedback.js";
 import Event from "./Event.js";
+import Sessions from "./Sessions.js";
 import DeviceId from "./DeviceId.js";
+import RemoteConfig from "./RemoteConfig.js";
+import Views from "./Views.js";
 import * as L from "./Logger.js";
 import * as Utils from "./Utils.js";
 import * as Validate from "./Validators.js";
@@ -30,7 +32,10 @@ CountlyState.eventEmitter = eventEmitter;
 
 Countly.feedback = new Feedback(CountlyState);
 Countly.events = new Event(CountlyState);
+Countly.sessions = new Sessions(CountlyState);
 Countly.deviceId = new DeviceId(CountlyState);
+Countly.remoteConfig = new RemoteConfig(CountlyState);
+Countly.views = new Views(CountlyState);
 
 let _isCrashReportingEnabled = false;
 
@@ -39,7 +44,7 @@ Countly.userDataBulk = {}; // userDataBulk interface
 
 Countly.content = {}; // content interface
 
-let _isPushInitialized = false;
+Countly.test = {}; // test-only interface
 
 /*
  * Listener for rating widget callback, when callback recieve we will remove the callback using listener.
@@ -48,27 +53,81 @@ let _ratingWidgetListener;
 const ratingWidgetCallbackName = "ratingWidgetCallback";
 const pushNotificationCallbackName = "pushNotificationCallback";
 
+function removeSubscription(stateKey) {
+    const subscription = _state[stateKey];
+    if (subscription && typeof subscription.remove === "function") {
+        subscription.remove();
+    }
+    _state[stateKey] = null;
+}
+
+function resetBridgeStateForTesting() {
+    removeSubscription("globalContentCallbackSubscription");
+    removeSubscription("widgetShownCallback");
+    removeSubscription("widgetClosedCallback");
+
+    if (_ratingWidgetListener && typeof _ratingWidgetListener.remove === "function") {
+        _ratingWidgetListener.remove();
+    }
+    _ratingWidgetListener = null;
+
+    _state.isInitialized = false;
+}
+
+function installJsCrashReportingHandler() {
+    if (_isCrashReportingEnabled || typeof ErrorUtils === "undefined") {
+        return;
+    }
+
+    L.i("initWithConfig, Adding Countly JS error handler.");
+    const previousHandler = ErrorUtils.getGlobalHandler();
+    ErrorUtils.setGlobalHandler((error, isFatal) => {
+        const jsStackTrace = Utils.getStackTrace(error);
+        let errorTitle;
+        let stackArr;
+        if (jsStackTrace == null || jsStackTrace.length === 0) {
+            errorTitle = error.name;
+            stackArr = error.stack;
+        } else {
+            let fname = jsStackTrace[0].file;
+            if (fname.startsWith("http")) {
+                const chunks = fname.split("/");
+                fname = chunks[chunks.length - 1].split("?")[0];
+            }
+            errorTitle = `${error.name} (${jsStackTrace[0].methodName}@${fname})`;
+            const regExp = "(.*)(@?)http(s?).*/(.*)\\?(.*):(.*):(.*)";
+            stackArr = error.stack.split("\n").map((row) => {
+                row = row.trim();
+                if (!row.includes("http")) {
+                    return row;
+                }
+
+                const matches = row.match(regExp);
+                return matches && matches.length == 8 ? `${matches[1]}${matches[2]}${matches[4]}(${matches[6]}:${matches[7]})` : row;
+            });
+            stackArr = stackArr.join("\n");
+        }
+
+        CountlyNativeModule.logJSException(errorTitle, error.message.trim(), stackArr);
+
+        if (previousHandler) {
+            previousHandler(error, isFatal);
+        }
+    });
+
+    _isCrashReportingEnabled = true;
+}
+
+function isSupportedUserPropertyValue(value) {
+    return typeof value === "string" || typeof value === "number" || typeof value === "boolean" || Array.isArray(value);
+}
+
 Countly.messagingMode = { DEVELOPMENT: "1", PRODUCTION: "0", ADHOC: "2" };
 if (/android/.exec(Platform.OS)) {
     Countly.messagingMode.DEVELOPMENT = "2";
 }
+Countly.webViewDisplayOption = { IMMERSIVE: "IMMERSIVE", SAFE_AREA: "SAFE_AREA" };
 Countly.TemporaryDeviceIDString = "TemporaryDeviceID";
-
-/**
- * Initialize Countly
- *
- * @deprecated in 23.02.0 : use 'initWithConfig' instead of 'init'.
- *
- * @function Countly.init should be used to initialize countly
- * @param {string} serverURL server url
- * @param {string} appKey application key
- * @param {string} deviceId device ID
- */
-Countly.init = async function (serverUrl, appKey, deviceId) {
-    L.w("Countly.init is deprecated, use Countly.initWithConfig instead");
-    const countlyConfig = new CountlyConfig(serverUrl, appKey).setDeviceID(deviceId);
-    await Countly.initWithConfig(countlyConfig);
-};
 
 /**
  * Initialize Countly
@@ -83,7 +142,7 @@ Countly.initWithConfig = async function (countlyConfig) {
     }
     if (countlyConfig.deviceID == "") {
         L.e("init, Device ID during init can't be an empty string. Value will be ignored.");
-        countlyConfig.deviceId = null;
+        countlyConfig.deviceID = null;
     }
     if (countlyConfig.serverURL == "") {
         L.e("init, Server URL during init can't be an empty string");
@@ -94,8 +153,9 @@ Countly.initWithConfig = async function (countlyConfig) {
         return;
     }
     L.d("initWithConfig, Initializing Countly");
+    removeSubscription("globalContentCallbackSubscription");
     if (countlyConfig.content.contentCallback) {
-        eventEmitter.addListener("globalContentCallback", (data) => {
+        _state.globalContentCallbackSubscription = eventEmitter.addListener("globalContentCallback", (data) => {
             L.d(`init configuration, Global content callback called with data: ${data}`);
             try {
                 data = JSON.parse(data);
@@ -110,6 +170,9 @@ Countly.initWithConfig = async function (countlyConfig) {
     const argsString = JSON.stringify(argsMap);
     args.push(argsString);
     await CountlyNativeModule.init(args);
+    if (countlyConfig._crashReporting) {
+        installJsCrashReportingHandler();
+    }
     _state.isInitialized = true;
 };
 
@@ -126,59 +189,8 @@ Countly.isInitialized = async function () {
 };
 
 /**
+ * @deprecated in 26.1.0 : use 'Countly.views.startAutoStoppedView' instead.
  *
- * Checks if the Countly SDK onStart function has been called
- *
- * @deprecated in 23.6.0. This will be removed.
- *
- * @return {boolean | string} boolean or error message
- */
-Countly.hasBeenCalledOnStart = function () {
-    if (!_state.isInitialized) {
-        const message = "'init' must be called before 'hasBeenCalledOnStart'";
-        L.e(`hasBeenCalledOnStart, ${message}`);
-        return message;
-    }
-    L.w("hasBeenCalledOnStart, This call is deprecated and will be removed with no replacement.");
-    return CountlyNativeModule.hasBeenCalledOnStart();
-};
-
-/**
- * Sends an event to the server
- *
- * @deprecated in 24.4.0 : use 'Countly.events.recordEvent' instead of this.
- * 
- * @param {CountlyEventOptions} options event options. 
- * CountlyEventOptions {
- *   eventName: string;
- *   eventCount?: number;
- *   eventSum?: number | string;
- *   segments?: Segmentation;
- * }
- * @return {string | void} error message or void
- */
-Countly.sendEvent = function (options) {
-    if (!_state.isInitialized) {
-        const msg = "'init' must be called before 'sendEvent'";
-        L.w(`sendEvent, ${msg}`);
-        return msg;
-    }
-    L.w("sendEvent, This method is deprecated, use 'Countly.events.recordEvent' instead");
-    if (!options) {
-        const message = "no event object provided!";
-        L.w(`sendEvent, ${message}`);
-        return message;
-    }
-    // previous implementation was not clear about the data types of eventCount and eventSum
-    // here parse them to make sure they are in correct format for the new method
-    // parser will return a false value (NaN) in case of invalid data (like undefined, null, empty string, etc.)
-    options.eventCount = parseInt(options.eventCount, 10) || 1;
-    options.eventSum = parseFloat(options.eventSum) || 0;
-
-    Countly.events.recordEvent(options.eventName, options.segments, options.eventCount, options.eventSum);
-};
-
-/**
  * Record custom view to Countly.
  *
  * @param {string} recordView - name of the view
@@ -192,6 +204,7 @@ Countly.recordView = function (recordView, segments) {
         L.e(`recordView, ${msg}`);
         return msg;
     }
+    L.w("recordView, deprecated legacy alias. Use 'Countly.views.startAutoStoppedView(viewName, segmentation)' instead.");
     const message = Validate.String(recordView, "view name", "recordView");
     if (message) {
         return message;
@@ -228,27 +241,6 @@ Countly.disablePushNotifications = function () {
 };
 
 /**
- * @deprecated in 23.02.0 : use 'countlyConfig.pushTokenType' instead of 'pushTokenType'.
- *
- * Set messaging mode for push notifications
- * Should be called before Countly init
- *
- * @return {string | void} error message or void
- */
-Countly.pushTokenType = function (tokenType, channelName, channelDescription) {
-    const message = Validate.String(tokenType, "tokenType", "pushTokenType");
-    if (message) {
-        return message;
-    }
-    L.w("pushTokenType, pushTokenType is deprecated, use countlyConfig.pushTokenType instead");
-    const args = [];
-    args.push(tokenType);
-    args.push(channelName || "");
-    args.push(channelDescription || "");
-    CountlyNativeModule.pushTokenType(args);
-};
-
-/**
  *
  * Send push token
  * @param {object} options - object containing the push token
@@ -280,7 +272,6 @@ Countly.askForNotificationPermission = function (customSoundPath = "null") {
     }
     L.d(`askForNotificationPermission, Asking for notification permission at: [${customSoundPath}]`);
     CountlyNativeModule.askForNotificationPermission([customSoundPath]);
-    _isPushInitialized = true;
 };
 
 /**
@@ -297,111 +288,6 @@ Countly.registerForNotification = function (theListener) {
 };
 
 /**
- * @deprecated in 23.02.0 : use 'countlyConfig.configureIntentRedirectionCheck' instead of 'configureIntentRedirectionCheck'.
- *
- * Configure intent redirection checks for push notification
- * Should be called before Countly "askForNotificationPermission"
- *
- * @param {string[]} allowedIntentClassNames allowed intent class names
- * @param {string[]} allowedIntentPackageNames allowed intent package names
- * @param {boolean} useAdditionalIntentRedirectionChecks to check additional intent checks. The default value is "true"
- * @return {string | void} error message or void
- */
-Countly.configureIntentRedirectionCheck = function (allowedIntentClassNames = [], allowedIntentPackageNames = [], useAdditionalIntentRedirectionChecks = true) {
-    if (/ios/.exec(Platform.OS)) {
-        L.e("configureIntentRedirectionCheck, configureIntentRedirectionCheck is not required for iOS");
-
-        return "configureIntentRedirectionCheck : not required for iOS";
-    }
-
-    if (_isPushInitialized) {
-        let message = "'configureIntentRedirectionCheck' must be called before 'askForNotificationPermission'";
-        L.e(`configureIntentRedirectionCheck, ${message}`);
-        return message;
-    }
-    L.w("configureIntentRedirectionCheck, configureIntentRedirectionCheck is deprecated, use countlyConfig.configureIntentRedirectionCheck instead");
-    if (!Array.isArray(allowedIntentClassNames)) {
-        L.w("configureIntentRedirectionCheck, " + `Ignoring, unsupported data type '${typeof allowedIntentClassNames}' 'allowedIntentClassNames' should be an array of String`);
-        allowedIntentClassNames = [];
-    }
-    if (!Array.isArray(allowedIntentPackageNames)) {
-        L.w("configureIntentRedirectionCheck, " + `Ignoring, unsupported data type '${typeof allowedIntentPackageNames}' 'allowedIntentPackageNames' should be an array of String`);
-        allowedIntentPackageNames = [];
-    }
-
-    if (typeof useAdditionalIntentRedirectionChecks !== "boolean") {
-        L.w("configureIntentRedirectionCheck, " + `Ignoring, unsupported data type '${typeof useAdditionalIntentRedirectionChecks}' 'useAdditionalIntentRedirectionChecks' should be a boolean`);
-        useAdditionalIntentRedirectionChecks = true;
-    }
-
-    const _allowedIntentClassNames = [];
-    for (const className of allowedIntentClassNames) {
-        let message = Validate.String(className, "class name", "configureIntentRedirectionCheck");
-        if (message == null) {
-            _allowedIntentClassNames.push(className);
-        }
-    }
-
-    const _allowedIntentPackageNames = [];
-    for (const packageName of allowedIntentPackageNames) {
-        let message = Validate.String(packageName, "package name", "configureIntentRedirectionCheck");
-        if (message == null) {
-            _allowedIntentPackageNames.push(packageName);
-        }
-    }
-
-    CountlyNativeModule.configureIntentRedirectionCheck(_allowedIntentClassNames, _allowedIntentPackageNames, useAdditionalIntentRedirectionChecks);
-};
-
-/**
- * @deprecated at 23.6.0 - Automatic sessions are handled by underlying SDK, this function will do nothing.
- *
- * Countly start for android
- *
- */
-Countly.start = function () {
-    L.w("start, Automatic sessions are handled by underlying SDK, this function will do nothing.");
-};
-
-/**
- * @deprecated at 23.6.0 - Automatic sessions are handled by underlying SDK, this function will do nothing.
- *
- * Countly stop for android
- *
- */
-Countly.stop = function () {
-    L.w("stop, Automatic sessions are handled by underlying SDK, this function will do nothing.");
-};
-
-/**
- * Enable countly internal debugging logs
- * Should be called before Countly init
- *
- * @deprecated in 20.04.6
- *
- * @function Countly.setLoggingEnabled should be used to enable/disable countly internal debugging logs
- * 
- */
-
-Countly.enableLogging = function () {
-    L.w("enableLogging, enableLogging is deprecated, use countlyConfig.enableLogging instead");
-    CountlyNativeModule.setLoggingEnabled([true]);
-};
-
-/**
- * Disable countly internal debugging logs
- *
- * @deprecated in 20.04.6
- *
- * @function Countly.setLoggingEnabled should be used to enable/disable countly internal debugging logs
- * 
- */
-Countly.disableLogging = function () {
-    L.w("disableLogging, disableLogging is deprecated, use countlyConfig.enableLogging instead");
-    CountlyNativeModule.setLoggingEnabled([false]);
-};
-
-/**
  * Set to true if you want to enable countly internal debugging logs
  * Should be called before Countly init
  *
@@ -411,26 +297,6 @@ Countly.setLoggingEnabled = function (enabled = true) {
     // TODO: init check
     L.d(`setLoggingEnabled, Setting logging enabled to: [${enabled}]`);
     CountlyNativeModule.setLoggingEnabled([enabled]);
-};
-
-/**
- * @deprecated in 23.02.0 : use 'countlyConfig.setLocation' instead of 'setLocationInit'.
- *
- * Set user initial location
- * Should be called before init
- * @param {string | null} countryCode ISO Country code for the user's country
- * @param {string | null} city Name of the user's city
- * @param {string | null} location comma separate lat and lng values. For example, "56.42345,123.45325"
- * @param {string | null} ipAddress IP address of user's
- */
-Countly.setLocationInit = function (countryCode, city, location, ipAddress) {
-    L.w("setLocationInit, setLocationInit is deprecated, use countlyConfig.setLocation instead");
-    const args = [];
-    args.push(countryCode || "null");
-    args.push(city || "null");
-    args.push(location || "null");
-    args.push(ipAddress || "null");
-    CountlyNativeModule.setLocationInit(args);
 };
 
 /**
@@ -474,73 +340,6 @@ Countly.disableLocation = function () {
 };
 
 /**
- * @deprecated use 'Countly.deviceId.getID' instead of 'Countly.getCurrentDeviceId'
- * 
- * Get currently used device Id.
- * Should be called after Countly init
- *
- * @return {string} device id or error message
- */
-Countly.getCurrentDeviceId = async function () {
-    if (!_state.isInitialized) {
-        const message = "'init' must be called before 'getCurrentDeviceId'";
-        L.e(`getCurrentDeviceId, ${message}`);
-        return message;
-    }
-    L.d("getCurrentDeviceId, Getting current device id");
-    const result = await CountlyNativeModule.getCurrentDeviceId();
-    return result;
-};
-
-/**
- * @deprecated use 'Countly.deviceId.getType' instead of 'Countly.getDeviceIDType'
- * 
- * Get currently used device Id type.
- * Should be called after Countly init
- *
- * @return {DeviceIdType | null} deviceIdType or null
- */
-Countly.getDeviceIDType = async function () {
-    if (!_state.isInitialized) {
-        L.e("getDeviceIDType, 'init' must be called before 'getDeviceIDType'");
-        return null;
-    }
-    L.d("getDeviceIDType, Getting device id type");
-    const result = await CountlyNativeModule.getDeviceIDType();
-    return Utils.intToDeviceIDType(result);
-};
-
-/**
- * @deprecated use 'Countly.deviceId.setID' instead of 'Countly.changeDeviceId' for setting device ID.
- * 
- * Change the current device ID
- *
- * @param {string} newDeviceID id new device id
- * @param {boolean} onServer merge device id
- * @return {string | void} error message or void
- */
-Countly.changeDeviceId = function (newDeviceID, onServer) {
-    if (!_state.isInitialized) {
-        const msg = "'init' must be called before 'changeDeviceId'";
-        L.e(`changeDeviceId, ${msg}`);
-        return msg;
-    }
-    const message = Validate.String(newDeviceID, "newDeviceID", "changeDeviceId");
-    if (message) {
-        return message;
-    }
-
-    L.d(`changeDeviceId, Changing to new device id: [${newDeviceID}], with merge: [${onServer}]`);
-    if (!onServer) {
-        onServer = "0";
-    } else {
-        onServer = "1";
-    }
-    newDeviceID = newDeviceID.toString();
-    CountlyNativeModule.changeDeviceId([newDeviceID, onServer]);
-};
-
-/**
  *
  * Set to "true" if you want HTTP POST to be used for all requests
  * Should be called before Countly init
@@ -551,55 +350,6 @@ Countly.setHttpPostForced = function (boolean = true) {
     const args = [];
     args.push(boolean ? "1" : "0");
     CountlyNativeModule.setHttpPostForced(args);
-};
-
-/**
- * @deprecated in 23.02.0 : use 'countlyConfig.enableCrashReporting' instead of 'enableCrashReporting'.
- *
- * Enable crash reporting to report unhandled crashes to Countly
- * Should be called before Countly init
- */
-Countly.enableCrashReporting = async function () {
-    L.w("enableCrashReporting, enableCrashReporting is deprecated, use countlyConfig.enableCrashReporting instead");
-    CountlyNativeModule.enableCrashReporting();
-    if (ErrorUtils && !_isCrashReportingEnabled) {
-        L.i("enableCrashReporting, Adding Countly JS error handler.");
-        const previousHandler = ErrorUtils.getGlobalHandler();
-        ErrorUtils.setGlobalHandler((error, isFatal) => {
-            const jsStackTrace = Utils.getStackTrace(error);
-            let errorTitle;
-            let stackArr;
-            if (jsStackTrace == null) {
-                errorTitle = error.name;
-                stackArr = error.stack;
-            } else {
-                let fname = jsStackTrace[0].file;
-                if (fname.startsWith("http")) {
-                    const chunks = fname.split("/");
-                    fname = chunks[chunks.length - 1].split("?")[0];
-                }
-                errorTitle = `${error.name} (${jsStackTrace[0].methodName}@${fname})`;
-                const regExp = "(.*)(@?)http(s?).*/(.*)\\?(.*):(.*):(.*)";
-                stackArr = error.stack.split("\n").map((row) => {
-                    row = row.trim();
-                    if (!row.includes("http")) {
-                        return row;
-                    }
-
-                    const matches = row.match(regExp);
-                    return matches && matches.length == 8 ? `${matches[1]}${matches[2]}${matches[4]}(${matches[6]}:${matches[7]})` : row;
-                });
-                stackArr = stackArr.join("\n");
-            }
-
-            CountlyNativeModule.logJSException(errorTitle, error.message.trim(), stackArr);
-
-            if (previousHandler) {
-                previousHandler(error, isFatal);
-            }
-        });
-    }
-    _isCrashReportingEnabled = true;
 };
 
 /**
@@ -690,53 +440,93 @@ Countly.setCustomCrashSegments = function (segments) {
 };
 
 /**
+ * @deprecated in 26.1.0 : use 'Countly.sessions.beginSession' instead of 'startSession'.
  *
- * Start session tracking
+ * Start session tracking.
  *
  * @return {string | void} error message or void
  */
 Countly.startSession = function () {
+    L.w("startSession, startSession is deprecated, use Countly.sessions.beginSession instead.");
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'startSession'";
         L.e(`startSession, ${message}`);
         return message;
     }
-    L.d("startSession, Starting session");
-    CountlyNativeModule.startSession();
+    return Countly.sessions.beginSession();
 };
 
 /**
+ * @deprecated in 26.1.0 : use 'Countly.sessions.updateSession' instead of 'updateSession'.
  *
- * End session tracking
+ * Update session tracking.
+ *
+ * @return {string | void} error message or void
+ */
+Countly.updateSession = function () {
+    L.w("updateSession, updateSession is deprecated, use Countly.sessions.updateSession instead.");
+    if (!_state.isInitialized) {
+        const message = "'init' must be called before 'updateSession'";
+        L.e(`updateSession, ${message}`);
+        return message;
+    }
+    return Countly.sessions.updateSession();
+};
+
+/**
+ * @deprecated in 26.1.0 : use 'Countly.sessions.endSession' instead of 'endSession'.
+ *
+ * End session tracking.
  *
  * @return {string | void} error message or void
  */
 Countly.endSession = function () {
+    L.w("endSession, endSession is deprecated, use Countly.sessions.endSession instead.");
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'endSession'";
         L.e(`endSession, ${message}`);
         return message;
     }
-    L.d("endSession, Ending session");
-    CountlyNativeModule.endSession();
+    return Countly.sessions.endSession();
 };
 
 /**
- * @deprecated in 23.02.0 : use 'countlyConfig.enableParameterTamperingProtection' instead of 'enableParameterTamperingProtection'.
+ * Adds or overrides custom network request headers at runtime.
  *
- * Set the optional salt to be used for calculating the checksum of requested data which will be sent with each request, using the &checksum field
- * Should be called before Countly init
- *
- * @param {string} salt salt
+ * @param {Record<string, string>} customHeaderValues header key/value pairs
  * @return {string | void} error message or void
  */
-Countly.enableParameterTamperingProtection = function (salt) {
-    const message = Validate.String(salt, "salt", "enableParameterTamperingProtection");
-    if (message) {
+Countly.addCustomNetworkRequestHeaders = function (customHeaderValues) {
+    if (!_state.isInitialized) {
+        const message = "'init' must be called before 'addCustomNetworkRequestHeaders'";
+        L.e(`addCustomNetworkRequestHeaders, ${message}`);
         return message;
     }
-    L.w(`enableParameterTamperingProtection, enableParameterTamperingProtection is deprecated, use countlyConfig.enableParameterTamperingProtection instead. Salt : [${salt}]`);
-    CountlyNativeModule.enableParameterTamperingProtection([salt.toString()]);
+    if (!customHeaderValues || typeof customHeaderValues !== "object") {
+        const message = "customHeaderValues should be a key/value object";
+        L.e(`addCustomNetworkRequestHeaders, ${message}`);
+        return message;
+    }
+
+    const args = [];
+    for (const key in customHeaderValues) {
+        const value = customHeaderValues[key];
+        if (value === null || value === undefined) {
+            L.w(`addCustomNetworkRequestHeaders, skipping '${key}' due to null or undefined value`);
+            continue;
+        }
+
+        args.push(key.toString());
+        args.push(value.toString());
+    }
+
+    if (args.length === 0) {
+        L.w("addCustomNetworkRequestHeaders, no valid header values were provided");
+        return;
+    }
+
+    L.d(`addCustomNetworkRequestHeaders, Adding custom headers: [${JSON.stringify(customHeaderValues)}]`);
+    CountlyNativeModule.addCustomNetworkRequestHeaders(args);
 };
 
 /**
@@ -753,76 +543,6 @@ Countly.pinnedCertificates = function (certificateName) {
     }
     L.d(`pinnedCertificates, Setting pinned certificates: [${certificateName}]`);
     CountlyNativeModule.pinnedCertificates([certificateName]);
-};
-
-/**
- * Start a Timed Event
- * @deprecated in 24.4.0 : use 'Countly.events.startEvent' instead of this.
- *
- * @param {string} eventName name of event
- * @return {string | void} error message or void
- */
-Countly.startEvent = function (eventName) {
-    if (!_state.isInitialized) {
-        const msg = "'init' must be called before 'startEvent'";
-        L.e(`startEventLegacy, ${msg}`);
-        return msg;
-    }
-    L.w("startEventLegacy, This method is deprecated, use 'Countly.events.startEvent' instead");
-    Countly.events.startEvent(eventName);
-};
-
-/**
- * Cancel a Timed Event
- * @deprecated in 24.4.0 : use 'Countly.events.cancelEvent' instead of this.
- *
- * @param {string} eventName name of event
- * @return {string | void} error message or void
- */
-Countly.cancelEvent = function (eventName) {
-    if (!_state.isInitialized) {
-        const msg = "'init' must be called before 'cancelEvent'";
-        L.e(`cancelEventLegacy, ${msg}`);
-        return msg;
-    }
-    L.w("cancelEventLegacy, This method is deprecated, use 'Countly.events.cancelEvent' instead");
-    Countly.events.cancelEvent(eventName);
-};
-
-/**
- * End a Timed Event
- * @deprecated in 24.4.0 : use 'Countly.events.endEvent' instead of this.
- *
- * @param {string | CountlyEventOptions} options event options. 
- * CountlyEventOptions {
- *   eventName: string;
- *   eventCount?: number;
- *   eventSum?: number | string;
- *   segments?: Segmentation;
- * }
- * @return {string | void} error message or void
- */
-Countly.endEvent = function (options) {
-    if (!_state.isInitialized) {
-        const message = "'init' must be called before 'endEvent'";
-        L.e(`endEventLegacy, ${message}`);
-        return message;
-    }
-    L.w("endEventLegacy, This method is deprecated, use 'Countly.events.endEvent' instead");
-    if (!options) {
-        const message = "no event object or event name provided!";
-        L.w(`endEventLegacy, ${message}`);
-        return message;
-    }
-    if (typeof options === "string") {
-        options = { eventName: options };
-    }
-    // previous implementation was not clear about the data types of eventCount and eventSum
-    // here parse them to make sure they are in correct format for the new method
-    // parser will return a false value (NaN) in case of invalid data (like undefined, null, empty string, etc.)
-    options.eventCount = parseInt(options.eventCount, 10) || 1;
-    options.eventSum = parseFloat(options.eventSum) || 0;
-    Countly.events.endEvent(options.eventName, options.segments, options.eventCount, options.eventSum);
 };
 
 /**
@@ -852,8 +572,8 @@ Countly.setUserData = async function (userData) {
     }
     const args = [];
     for (const key in userData) {
-        if (typeof userData[key] !== "string" && key.toString() != "byear") {
-            L.w("setUserData, " + `skipping value for key '${key.toString()}', due to unsupported data type '${typeof userData[key]}', its data type should be 'string'`);
+        if (key.toString() !== "byear" && !isSupportedUserPropertyValue(userData[key])) {
+            L.w("setUserData, " + `skipping value for key '${key.toString()}', due to unsupported data type '${typeof userData[key]}', its data type should be 'string', 'number', 'boolean', or an array of those types`);
         }
     }
 
@@ -896,7 +616,6 @@ Countly.userData.setProperty = async function (keyName, keyValue) {
         return message;
     }
     keyName = keyName.toString();
-    keyValue = keyValue.toString();
     if (keyName && (keyValue || keyValue == "")) {
         await CountlyNativeModule.userData_setProperty([keyName, keyValue]);
     }
@@ -1178,8 +897,8 @@ Countly.userDataBulk.setUserProperties = async function (customAndPredefined) {
         return message;
     }
     for (const key in customAndPredefined) {
-        if (typeof customAndPredefined[key] !== "string" && key.toString() != "byear") {
-            L.w("setUserProperties, " + `skipping value for key '${key.toString()}', due to unsupported data type '${typeof customAndPredefined[key]}', its data type should be 'string'`);
+        if (key.toString() !== "byear" && !isSupportedUserPropertyValue(customAndPredefined[key])) {
+            L.w("setUserProperties, " + `skipping value for key '${key.toString()}', due to unsupported data type '${typeof customAndPredefined[key]}', its data type should be 'string', 'number', 'boolean', or an array of those types`);
         }
     }
 
@@ -1238,7 +957,6 @@ Countly.userDataBulk.setProperty = async function (keyName, keyValue) {
         return message;
     }
     keyName = keyName.toString();
-    keyValue = keyValue.toString();
     if (keyName && (keyValue || keyValue == "")) {
         await CountlyNativeModule.userDataBulk_setProperty([keyName, keyValue]);
     }
@@ -1502,19 +1220,6 @@ Countly.userDataBulk.pullValue = async function (keyName, keyValue) {
 };
 
 /**
- * @deprecated in 23.02.0 : use 'countlyConfig.setRequiresConsent' instead of 'setRequiresConsent'.
- *
- * Set that consent should be required for features to work.
- * Should be called before Countly init
- *
- * @param {boolean} flag if true, consent is required for features to work.
- */
-Countly.setRequiresConsent = function (flag) {
-    L.w(`setRequiresConsent, setRequiresConsent is deprecated, use countlyConfig.setRequiresConsent instead. Flag : [${flag}]`);
-    CountlyNativeModule.setRequiresConsent([flag]);
-};
-
-/**
  *
  * Give consent for some features
  * Should be called after Countly init
@@ -1536,27 +1241,6 @@ Countly.giveConsent = function (args) {
         features = args;
     }
     CountlyNativeModule.giveConsent(features);
-};
-
-/**
- * @deprecated in 23.02.0 : use 'countlyConfig.giveConsent' instead of 'giveConsentInit'.
- *
- * Give consent for specific features before init.
- * Should be called after Countly init
- *
- * @param {string[] | string} args list of consents
- */
-Countly.giveConsentInit = async function (args) {
-    L.w("giveConsentInit, giveConsentInit is deprecated, use countlyConfig.giveConsent instead.");
-    let features = [];
-    if (typeof args === "string") {
-        features.push(args);
-    } else if (Array.isArray(args)) {
-        features = args;
-    } else {
-        L.w("giveConsentInit " + `unsupported data type '${typeof args}'`);
-    }
-    await CountlyNativeModule.giveConsentInit(features);
 };
 
 /**
@@ -1618,6 +1302,7 @@ Countly.removeAllConsent = function () {
 };
 
 /**
+ * @deprecated in 26.1.0 : use 'Countly.remoteConfig.update' instead of 'remoteConfigUpdate'.
  *
  * Replaces all stored Remote Config values with new values from server.
  *
@@ -1631,6 +1316,7 @@ Countly.remoteConfigUpdate = function (callback) {
         callback(message);
         return message;
     }
+    L.w("remoteConfigUpdate, remoteConfigUpdate is deprecated, use Countly.remoteConfig.update instead.");
     L.d("remoteConfigUpdate, Updating remote config");
     CountlyNativeModule.remoteConfigUpdate([], (stringItem) => {
         callback(stringItem);
@@ -1638,6 +1324,8 @@ Countly.remoteConfigUpdate = function (callback) {
 };
 
 /**
+ * @deprecated in 26.1.0 : use 'Countly.remoteConfig.updateForKeysOnly' instead of 'updateRemoteConfigForKeysOnly'.
+ *
  *
  * Replace specific Remote Config key value pairs with new values from server.
  *
@@ -1652,6 +1340,7 @@ Countly.updateRemoteConfigForKeysOnly = function (keyNames, callback) {
         callback(message);
         return message;
     }
+    L.w("updateRemoteConfigForKeysOnly, updateRemoteConfigForKeysOnly is deprecated, use Countly.remoteConfig.updateForKeysOnly instead.");
     L.d(`updateRemoteConfigForKeysOnly, Updating remote config for keys: [${keyNames}]`);
     const args = [];
     if (keyNames.length) {
@@ -1665,6 +1354,8 @@ Countly.updateRemoteConfigForKeysOnly = function (keyNames, callback) {
 };
 
 /**
+ * @deprecated in 26.1.0 : use 'Countly.remoteConfig.updateExceptKeys' instead of 'updateRemoteConfigExceptKeys'.
+ *
  *
  * Replace all except specific Remote Config key value pairs with new values from server.
  *
@@ -1679,6 +1370,7 @@ Countly.updateRemoteConfigExceptKeys = function (keyNames, callback) {
         callback(message);
         return message;
     }
+    L.w("updateRemoteConfigExceptKeys, updateRemoteConfigExceptKeys is deprecated, use Countly.remoteConfig.updateExceptKeys instead.");
     L.d(`updateRemoteConfigExceptKeys, Updating remote config except keys: [${keyNames}]`);
     const args = [];
     if (keyNames.length) {
@@ -1692,6 +1384,8 @@ Countly.updateRemoteConfigExceptKeys = function (keyNames, callback) {
 };
 
 /**
+ * @deprecated in 26.1.0 : use 'Countly.remoteConfig.getValue' instead of 'getRemoteConfigValueForKey'.
+ *
  *
  * Replace Remote Config key value for a specific key with new values from server.
  *
@@ -1706,6 +1400,7 @@ Countly.getRemoteConfigValueForKey = function (keyName, callback) {
         callback(message);
         return message;
     }
+    L.w("getRemoteConfigValueForKey, getRemoteConfigValueForKey is deprecated, use Countly.remoteConfig.getValue instead.");
     CountlyNativeModule.getRemoteConfigValueForKey([keyName.toString() || ""], (value) => {
         if (Platform.OS == "android") {
             try {
@@ -1720,6 +1415,8 @@ Countly.getRemoteConfigValueForKey = function (keyName, callback) {
 };
 
 /**
+ * @deprecated in 26.1.0 : use 'Countly.remoteConfig.getValue' instead of 'getRemoteConfigValueForKeyP'.
+ *
  *
  * Replace Remote Config key value for a specific key with new values from server.
  *
@@ -1732,6 +1429,7 @@ Countly.getRemoteConfigValueForKeyP = function (keyName) {
         L.e(`getRemoteConfigValueForKeyP, ${message}`);
         return message;
     }
+    L.w("getRemoteConfigValueForKeyP, getRemoteConfigValueForKeyP is deprecated, use Countly.remoteConfig.getValue instead.");
     L.d(`getRemoteConfigValueForKeyP, Getting remote config value for key: [${keyName}]`);
     if (Platform.OS != "android") {
         return "To be implemented";
@@ -1750,11 +1448,14 @@ Countly.getRemoteConfigValueForKeyP = function (keyName) {
             return value;
         })
         .catch((e) => {
-            L.e("getRemoteConfigValueForKeyP, Catch Error:", e);
+            L.e(`getRemoteConfigValueForKeyP, Catch Error: ${e?.message || String(e)}`);
+            return undefined;
         });
 };
 
 /**
+ * @deprecated in 26.1.0 : use 'Countly.remoteConfig.clearValues' instead of 'remoteConfigClearValues'.
+ *
  *
  * Clear all Remote Config values downloaded from the server.
  *
@@ -1766,28 +1467,10 @@ Countly.remoteConfigClearValues = async function () {
         L.e(`remoteConfigClearValues, ${message}`);
         return message;
     }
+    L.w("remoteConfigClearValues, remoteConfigClearValues is deprecated, use Countly.remoteConfig.clearValues instead.");
     L.d("remoteConfigClearValues, Clearing remote config values");
     const result = await CountlyNativeModule.remoteConfigClearValues();
     return result;
-};
-
-/**
- * @deprecated in 23.02.0 : use 'countlyConfig.setStarRatingDialogTexts' instead of 'setStarRatingDialogTexts'.
- *
- * Set's the text's for the different fields in the star rating dialog. Set value null if for some field you want to keep the old value
- *
- * @param {string} starRatingTextTitle - dialog's title text (Only for Android)
- * @param {string} starRatingTextMessage - dialog's message text
- * @param {string} starRatingTextDismiss - dialog's dismiss buttons text (Only for Android)
- * @return {string | void} error message or void
- */
-Countly.setStarRatingDialogTexts = function (starRatingTextTitle, starRatingTextMessage, starRatingTextDismiss) {
-    L.w(`setStarRatingDialogTexts, setStarRatingDialogTexts is deprecated, use countlyConfig.setStarRatingDialogTexts instead. starRatingTextTitle : [${starRatingTextTitle}], starRatingTextMessage : [${starRatingTextMessage}], starRatingTextDismiss : [${starRatingTextDismiss}]`);
-    const args = [];
-    args.push(starRatingTextTitle);
-    args.push(starRatingTextMessage);
-    args.push(starRatingTextDismiss);
-    CountlyNativeModule.setStarRatingDialogTexts(args);
 };
 
 /**
@@ -1831,9 +1514,11 @@ Countly.presentRatingWidgetWithID = function (widgetId, closeButtonText, ratingW
         L.e(`presentRatingWidgetWithID, ${message}`);
         return message;
     }
-    if (typeof closeButtonText !== "string") {
+    if (closeButtonText == null) {
         closeButtonText = "";
-        L.w("presentRatingWidgetWithID, " + `unsupported data type of closeButtonText : '${typeof args}'`);
+    } else if (typeof closeButtonText !== "string") {
+        closeButtonText = "";
+        L.w("presentRatingWidgetWithID, " + `unsupported data type of closeButtonText : '${typeof closeButtonText}'`);
     }
     if (ratingWidgetCallback) {
         // eventEmitter.addListener('ratingWidgetCallback', ratingWidgetCallback);
@@ -1843,88 +1528,6 @@ Countly.presentRatingWidgetWithID = function (widgetId, closeButtonText, ratingW
         });
     }
     CountlyNativeModule.presentRatingWidgetWithID([widgetId.toString() || "", closeButtonText.toString() || "Done"]);
-};
-
-/**
- * Get a list of available feedback widgets as array of object to handle multiple widgets of same type.
- * @deprecated in 23.8.0 : use 'Countly.feedback.getAvailableFeedbackWidgets' instead of 'getFeedbackWidgets'.
- * @param {callback listener} [onFinished] - returns (retrievedWidgets, error). This parameter is optional.
- * @return {string | []} error message or array of feedback widgets
- */
-Countly.getFeedbackWidgets = async function (onFinished) {
-    if (!_state.isInitialized) {
-        const message = "'init' must be called before 'getFeedbackWidgets'";
-        L.e(`getFeedbackWidgets, ${message}`);
-        return message;
-    }
-    let result = [];
-    let error = null;
-    try {
-        result = await CountlyNativeModule.getFeedbackWidgets();
-    } catch (e) {
-        error = e.message;
-    }
-    if (onFinished) {
-        onFinished(result, error);
-    }
-    return result;
-};
-
-/**
- * Present a chosen feedback widget
- *
- * @deprecated in 23.8.0 : use 'Countly.feedback.presentFeedbackWidget' instead of 'presentFeedbackWidgetObject'.
- * @param {object} feedbackWidget - feeback Widget with id, type and name
- * @param {string} closeButtonText - text for cancel/close button
- * @param {callback listener} [widgetShownCallback] - Callback to be executed when feedback widget is displayed. This parameter is optional.
- * @param {callback listener} [widgetClosedCallback] - Callback to be executed when feedback widget is closed. This parameter is optional.
- *
- * @return {string | void} error message or void
- */
-Countly.presentFeedbackWidgetObject = async function (feedbackWidget, closeButtonText, widgetShownCallback, widgetClosedCallback) {
-    if (!_state.isInitialized) {
-        const msg = "'init' must be called before 'presentFeedbackWidgetObject'";
-        L.e(`presentFeedbackWidgetObject, ${msg}`);
-        return msg;
-    }
-    L.w("presentFeedbackWidgetObject, presentFeedbackWidgetObject is deprecated, use Countly.feedback.presentFeedbackWidget instead.");
-    let message = null;
-    if (!feedbackWidget) {
-        message = "feedbackWidget should not be null or undefined";
-        L.e(`presentFeedbackWidgetObject, ${message}`);
-        return message;
-    }
-    if (!feedbackWidget.id) {
-        message = "FeedbackWidget id should not be null or empty";
-        L.e(`presentFeedbackWidgetObject, ${message}`);
-        return message;
-    }
-    if (!feedbackWidget.type) {
-        message = "FeedbackWidget type should not be null or empty";
-        L.e(`presentFeedbackWidgetObject, ${message}`);
-        return message;
-    }
-    if (typeof closeButtonText !== "string") {
-        closeButtonText = "";
-        L.w("presentFeedbackWidgetObject, " + `unsupported data type of closeButtonText : '${typeof args}'`);
-    }
-
-    if (widgetShownCallback) {
-        _state.widgetShownCallback = eventEmitter.addListener(_state.widgetShownCallbackName, () => {
-            widgetShownCallback();
-            _state.widgetShownCallback.remove();
-        });
-    }
-    if (widgetClosedCallback) {
-        _state.widgetClosedCallback = eventEmitter.addListener(_state.widgetClosedCallbackName, () => {
-            widgetClosedCallback();
-            _state.widgetClosedCallback.remove();
-        });
-    }
-
-    feedbackWidget.name = feedbackWidget.name || "";
-    closeButtonText = closeButtonText || "";
-    CountlyNativeModule.presentFeedbackWidget([feedbackWidget.id, feedbackWidget.type, feedbackWidget.name, closeButtonText]);
 };
 
 /**
@@ -2049,62 +1652,6 @@ Countly.recordNetworkTrace = function (networkTraceKey, responseCode, requestPay
     args.push(startTime.toString());
     args.push(endTime.toString());
     CountlyNativeModule.recordNetworkTrace(args);
-};
-
-/**
- * @deprecated in 23.02.0 : use 'countlyConfig.apm' interface instead of 'enableApm'.
- *
- * Enable APM features, which includes the recording of app start time.
- * Should be called before Countly init
- */
-Countly.enableApm = function () {
-    L.w("enableApm, enableApm is deprecated, use countlyConfig.apm interface instead.");
-    const args = [];
-    CountlyNativeModule.enableApm(args);
-};
-
-/**
- * @deprecated in 23.02.0 : use 'Countly.recordIndirectAttribution' instead of 'Countly'.
- *
- * Enable campaign attribution reporting to Countly.
- * For iOS use "recordAttributionID" instead of "enableAttribution"
- * Should be called before Countly init
- * @param {string} attributionID attribution ID
- * @return {string | void} error message or void
- */
-Countly.enableAttribution = async function (attributionID = "") {
-    L.w("enableAttribution, enableAttribution is deprecated, use Countly.recordIndirectAttribution instead.");
-    if (/ios/.exec(Platform.OS)) {
-        if (attributionID == "") {
-            const message = "attribution Id for iOS can't be empty string";
-            L.e(`enableAttribution ${message}`);
-            return message;
-        }
-        Countly.recordAttributionID(attributionID);
-    } else {
-        const message = "This method does nothing for android";
-        L.e(`enableAttribution, ${message}`);
-        return message;
-    }
-};
-
-/**
- *
- * @deprecated in 23.02.0 : use 'Countly.recordIndirectAttribution' instead of 'recordAttributionID'.
- *
- * set attribution Id for campaign attribution reporting.
- * Currently implemented for iOS only
- * @param {string} attributionID attribution ID
- * @return {string | void} error message or void
- */
-Countly.recordAttributionID = function (attributionID) {
-    L.w("recordAttributionID, recordAttributionID is deprecated, use Countly.recordIndirectAttribution instead.");
-    if (!/ios/.exec(Platform.OS)) {
-        return "recordAttributionID : To be implemented";
-    }
-    const args = [];
-    args.push(attributionID);
-    CountlyNativeModule.recordAttributionID(args);
 };
 
 /**
@@ -2252,6 +1799,25 @@ Countly.content.refreshContentZone = function() {
 };
 
 /**
+ * Preview a specific content by ID without entering the content zone.
+ *
+ * @param {string} contentId content identifier to preview
+ */
+Countly.content.previewContent = function(contentId) {
+    const message = Validate.String(contentId, "contentId", "previewContent");
+    if (message) {
+        return message;
+    }
+    L.i(`previewContent, previewing content with ID: [${contentId}]`);
+    if (!_state.isInitialized) {
+        const initMessage = "'init' must be called before 'previewContent'";
+        L.e(`previewContent, ${initMessage}`);
+        return initMessage;
+    }
+    CountlyNativeModule.previewContent([contentId]);
+};
+
+/**
  * Opt out user from the content fetching and updates
  * 
  */
@@ -2263,6 +1829,33 @@ Countly.content.exitContentZone = function() {
         return;
     }
     CountlyNativeModule.exitContentZone();
+};
+
+/**
+ * Test-only helper methods for RN integration tests.
+ */
+Countly.test.enableRequestCapture = async function () {
+    await CountlyNativeModule.enableRequestCapture();
+};
+
+Countly.test.getCapturedRequests = async function () {
+    const requests = await CountlyNativeModule.getCapturedRequests();
+    return requests || [];
+};
+
+Countly.test.getRequestQueue = async function () {
+    const queue = await CountlyNativeModule.getRequestQueue();
+    return queue || [];
+};
+
+Countly.test.getEventQueue = async function () {
+    const queue = await CountlyNativeModule.getEventQueue();
+    return queue || [];
+};
+
+Countly.test.halt = async function () {
+    await CountlyNativeModule.halt();
+    resetBridgeStateForTesting();
 };
 
 export default Countly;

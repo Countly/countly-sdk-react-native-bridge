@@ -8,42 +8,135 @@ class Feedback {
     }
 
     /**
+     * @deprecated in 26.1.0 : use 'Countly.feedback.presentNPS' instead.
+     *
      * Shows the first available NPS widget that meets the criteria.
      * @param {String} [nameIDorTag] - name, id, or tag of the widget to show (optional)
      * @param {callback} [callback] - called when the widget is closed (optional)
      */
     showNPS(nameIDorTag, callback) {
+        L.w("showNPS, deprecated. Use 'Countly.feedback.presentNPS(nameIDorTag, widgetShownCallback, widgetClosedCallback)' instead.");
         L.i(`showNPS, Will show NPS widget with name, id, or tag: [${nameIDorTag}], callback provided: [${typeof callback === "function"}]`);
-        this.#showInternalFeedback("nps", nameIDorTag, callback);
+        this.presentNPS(nameIDorTag, null, callback);
     }
+
     /**
+     * Presents the first available NPS widget that meets the criteria.
+     * @param {String} [nameIDorTag] - name, id, or tag of the widget to show (optional)
+     * @param {callback} [widgetShownCallback] - called when the widget is displayed (optional)
+     * @param {callback} [widgetClosedCallback] - called when the widget is closed (optional)
+     */
+    presentNPS(nameIDorTag, widgetShownCallback, widgetClosedCallback) {
+        L.i(`presentNPS, Will show NPS widget with name, id, or tag: [${nameIDorTag}], shown callback provided: [${typeof widgetShownCallback === "function"}], closed callback provided: [${typeof widgetClosedCallback === "function"}]`);
+        this.#presentDirectFeedback("presentNPS", "nps", nameIDorTag, widgetShownCallback, widgetClosedCallback);
+    }
+
+    /**
+     * @deprecated in 26.1.0 : use 'Countly.feedback.presentSurvey' instead.
+     *
      * Shows the first available Survey widget that meets the criteria.
      * @param {String} [nameIDorTag] - name, id, or tag of the widget to show (optional) 
      * @param {callback} [callback] - called when the widget is closed (optional)
      */
     showSurvey(nameIDorTag, callback) {
+        L.w("showSurvey, deprecated. Use 'Countly.feedback.presentSurvey(nameIDorTag, widgetShownCallback, widgetClosedCallback)' instead.");
         L.i(`showSurvey, Will show Survey widget with name, id, or tag: [${nameIDorTag}], callback provided: [${typeof callback === "function"}]`);
-        this.#showInternalFeedback("survey", nameIDorTag, callback);
+        this.presentSurvey(nameIDorTag, null, callback);
     }
 
     /**
+     * Presents the first available Survey widget that meets the criteria.
+     * @param {String} [nameIDorTag] - name, id, or tag of the widget to show (optional)
+     * @param {callback} [widgetShownCallback] - called when the widget is displayed (optional)
+     * @param {callback} [widgetClosedCallback] - called when the widget is closed (optional)
+     */
+    presentSurvey(nameIDorTag, widgetShownCallback, widgetClosedCallback) {
+        L.i(`presentSurvey, Will show Survey widget with name, id, or tag: [${nameIDorTag}], shown callback provided: [${typeof widgetShownCallback === "function"}], closed callback provided: [${typeof widgetClosedCallback === "function"}]`);
+        this.#presentDirectFeedback("presentSurvey", "survey", nameIDorTag, widgetShownCallback, widgetClosedCallback);
+    }
+
+    /**
+     * @deprecated in 26.1.0 : use 'Countly.feedback.presentRating' instead.
+     *
      * Shows the first available Rating widget that meets the criteria.
      * @param {String} [nameIDorTag] - name, id, or tag of the widget to show (optional)
      * @param {callback} [callback] - called when the widget is closed (optional)
      */
     showRating(nameIDorTag, callback) {
+        L.w("showRating, deprecated. Use 'Countly.feedback.presentRating(nameIDorTag, widgetShownCallback, widgetClosedCallback)' instead.");
         L.i(`showRating, Will show Rating widget with name, id, or tag: [${nameIDorTag}], callback provided: [${typeof callback === "function"}]`);
-        this.#showInternalFeedback("rating", nameIDorTag, callback);
+        this.presentRating(nameIDorTag, null, callback);
     }
 
-    #showInternalFeedback(widgetType, nameIDorTag, callback) {
+    /**
+     * Presents the first available Rating widget that meets the criteria.
+     * @param {String} [nameIDorTag] - name, id, or tag of the widget to show (optional)
+     * @param {callback} [widgetShownCallback] - called when the widget is displayed (optional)
+     * @param {callback} [widgetClosedCallback] - called when the widget is closed (optional)
+     */
+    presentRating(nameIDorTag, widgetShownCallback, widgetClosedCallback) {
+        L.i(`presentRating, Will show Rating widget with name, id, or tag: [${nameIDorTag}], shown callback provided: [${typeof widgetShownCallback === "function"}], closed callback provided: [${typeof widgetClosedCallback === "function"}]`);
+        this.#presentDirectFeedback("presentRating", "rating", nameIDorTag, widgetShownCallback, widgetClosedCallback);
+    }
+
+    #normalizeNameIDorTag(nameIDorTag, functionName) {
+        if (typeof nameIDorTag === "string") {
+            return nameIDorTag;
+        }
+        if (nameIDorTag == null) {
+            return "";
+        }
+
+        L.w(`${functionName}, unsupported data type of nameIDorTag: [${typeof nameIDorTag}]`);
+        return "";
+    }
+
+    #registerPresentationCallbacks(widgetShownCallback, widgetClosedCallback) {
+        if (this.#state.widgetShownCallback) {
+            this.#state.widgetShownCallback.remove();
+            this.#state.widgetShownCallback = null;
+        }
+        if (this.#state.widgetClosedCallback) {
+            this.#state.widgetClosedCallback.remove();
+            this.#state.widgetClosedCallback = null;
+        }
+
+        if (typeof widgetShownCallback === "function") {
+            this.#state.widgetShownCallback = this.#state.eventEmitter.addListener(this.#state.widgetShownCallbackName, () => {
+                widgetShownCallback();
+                this.#state.widgetShownCallback.remove();
+                this.#state.widgetShownCallback = null;
+            });
+        }
+        if (typeof widgetClosedCallback === "function") {
+            this.#state.widgetClosedCallback = this.#state.eventEmitter.addListener(this.#state.widgetClosedCallbackName, () => {
+                widgetClosedCallback();
+                this.#state.widgetClosedCallback.remove();
+                this.#state.widgetClosedCallback = null;
+            });
+        }
+    }
+
+    #presentDirectFeedback(nativeMethodName, widgetType, nameIDorTag, widgetShownCallback, widgetClosedCallback) {
         if (!this.#state.isInitialized) {
-            L.e(`showInternalFeedback, 'init' must be called before 'showInternalFeedback'`);
+            L.e(`${nativeMethodName}, 'init' must be called before '${nativeMethodName}'`);
             return;
         }
-        if (typeof nameIDorTag !== "string") {
-            L.d(`showInternalFeedback, unsupported data type of nameIDorTag or its not given : [${typeof nameIDorTag}]`);
+
+        const normalizedNameIDorTag = this.#normalizeNameIDorTag(nameIDorTag, nativeMethodName);
+        const nativeMethod = this.#state.CountlyReactNative[nativeMethodName];
+
+        if (typeof nativeMethod === "function") {
+            this.#registerPresentationCallbacks(widgetShownCallback, widgetClosedCallback);
+            nativeMethod.call(this.#state.CountlyReactNative, [normalizedNameIDorTag]);
+            return;
         }
+
+        L.w(`${nativeMethodName}, native direct feedback method unavailable, falling back to widget lookup`);
+        this.#showInternalFeedback(widgetType, normalizedNameIDorTag, widgetShownCallback, widgetClosedCallback);
+    }
+
+    #showInternalFeedback(widgetType, nameIDorTag, widgetShownCallback, widgetClosedCallback) {
         this.getAvailableFeedbackWidgets((retrievedWidgets, error) => {
             if (error) {
                 L.e(`showInternalFeedback, ${error}`);
@@ -56,9 +149,9 @@ class Feedback {
             L.d(`showInternalFeedback, Found [${retrievedWidgets.length}] feedback widgets`);
             let widget = retrievedWidgets.find(w => w.type === widgetType);
             try {
-                if (nameIDorTag && typeof nameIDorTag === 'string') {
+                if (nameIDorTag) {
                     const matchedWidget = retrievedWidgets.find(w =>
-                        w.type === widgetType && (w.name === nameIDorTag || w.id === nameIDorTag || w.tags.includes(nameIDorTag))
+                        w.type === widgetType && (w.name === nameIDorTag || w.id === nameIDorTag || (Array.isArray(w.tags) && w.tags.includes(nameIDorTag)))
                     );
                     if (matchedWidget) {
                         widget = matchedWidget;
@@ -73,7 +166,7 @@ class Feedback {
                 L.d(`showInternalFeedback, No ${widgetType} widget found.`);
                 return;
             }
-            this.presentFeedbackWidget(widget, null, null, callback);
+            this.presentFeedbackWidget(widget, null, widgetShownCallback, widgetClosedCallback);
         });
     }
 
@@ -135,28 +228,20 @@ class Feedback {
             L.e(`presentFeedbackWidget, ${message}`);
             return { error: message };
         }
-        if (typeof closeButtonText !== "string") {
+        if (closeButtonText == null) {
             closeButtonText = "";
-            L.w(`presentFeedbackWidget, unsupported data type of closeButtonText : [${typeof args}]`);
+        } else if (typeof closeButtonText !== "string") {
+            closeButtonText = "";
+            L.w(`presentFeedbackWidget, unsupported data type of closeButtonText: [${typeof closeButtonText}]`);
         }
 
         L.d(`presentFeedbackWidget, presentFeedbackWidget with widget:[${JSON.stringify(feedbackWidget)}]`);
-        if (widgetShownCallback) {
-            this.#state.widgetShownCallback = this.#state.eventEmitter.addListener(this.#state.widgetShownCallbackName, () => {
-                widgetShownCallback();
-                this.#state.widgetShownCallback.remove();
-            });
-        }
-        if (widgetClosedCallback) {
-            this.#state.widgetClosedCallback = this.#state.eventEmitter.addListener(this.#state.widgetClosedCallbackName, () => {
-                widgetClosedCallback();
-                this.#state.widgetClosedCallback.remove();
-            });
-        }
+        this.#registerPresentationCallbacks(widgetShownCallback, widgetClosedCallback);
 
         feedbackWidget.name = feedbackWidget.name || "";
         closeButtonText = closeButtonText || "";
-        this.#state.CountlyReactNative.presentFeedbackWidget([feedbackWidget.id, feedbackWidget.type, feedbackWidget.name, closeButtonText]);
+        const widgetVersion = typeof feedbackWidget.widgetVersion === "string" ? feedbackWidget.widgetVersion : "";
+        this.#state.CountlyReactNative.presentFeedbackWidget([feedbackWidget.id, feedbackWidget.type, feedbackWidget.name, closeButtonText, widgetVersion]);
         return { error: null };
     }
 
