@@ -43,11 +43,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void hasBeenCalledOnStart(Promise promise) {
-        this.impl.hasBeenCalledOnStart(promise);
-    }
-
-    @ReactMethod
     public void getCurrentDeviceId(Promise promise) {
         this.impl.getCurrentDeviceId(promise);
     }
@@ -68,18 +63,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void enableParameterTamperingProtection(ReadableArray args) {
-        this.impl.enableParameterTamperingProtection(args);
-    }
-
-    @ReactMethod
     public void pinnedCertificates(ReadableArray args) {
         this.impl.pinnedCertificates(args);
-    }
-
-    @ReactMethod
-    public void setLocationInit(ReadableArray args) {
-        this.impl.setLocationInit(args);
     }
 
     @ReactMethod
@@ -93,11 +78,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void enableCrashReporting() {
-        this.impl.enableCrashReporting();
-    }
-
-    @ReactMethod
     public void addCrashLog(ReadableArray args) {
         this.impl.addCrashLog(args);
     }
@@ -105,6 +85,21 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void recordMetrics(ReadableArray args) {
         this.impl.recordMetrics(args);
+    }
+
+    @ReactMethod
+    public void startSession() {
+        this.impl.startSession();
+    }
+
+    @ReactMethod
+    public void updateSession() {
+        this.impl.updateSession();
+    }
+
+    @ReactMethod
+    public void endSession() {
+        this.impl.endSession();
     }
 
     @ReactMethod
@@ -148,6 +143,61 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void startAutoStoppedView(ReadableArray args, Promise promise) {
+        this.impl.startAutoStoppedView(args, promise);
+    }
+
+    @ReactMethod
+    public void startView(ReadableArray args, Promise promise) {
+        this.impl.startView(args, promise);
+    }
+
+    @ReactMethod
+    public void stopViewWithName(ReadableArray args) {
+        this.impl.stopViewWithName(args);
+    }
+
+    @ReactMethod
+    public void stopViewWithID(ReadableArray args) {
+        this.impl.stopViewWithID(args);
+    }
+
+    @ReactMethod
+    public void stopAllViews(ReadableArray args) {
+        this.impl.stopAllViews(args);
+    }
+
+    @ReactMethod
+    public void pauseViewWithID(ReadableArray args) {
+        this.impl.pauseViewWithID(args);
+    }
+
+    @ReactMethod
+    public void resumeViewWithID(ReadableArray args) {
+        this.impl.resumeViewWithID(args);
+    }
+
+    @ReactMethod
+    public void addSegmentationToViewWithID(ReadableArray args) {
+        this.impl.addSegmentationToViewWithID(args);
+    }
+
+    @ReactMethod
+    public void addSegmentationToViewWithName(ReadableArray args) {
+        this.impl.addSegmentationToViewWithName(args);
+    }
+
+    @ReactMethod
+    public void setGlobalViewSegmentation(ReadableArray args) {
+        this.impl.setGlobalViewSegmentation(args);
+    }
+
+    @ReactMethod
+    public void updateGlobalViewSegmentation(ReadableArray args) {
+        this.impl.updateGlobalViewSegmentation(args);
+    }
+
+    @ReactMethod
     public void setUserData(ReadableArray args, Promise promise) {
         this.impl.setUserData(args, promise);
     }
@@ -155,11 +205,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void sendPushToken(ReadableArray args) {
         this.impl.sendPushToken(args);
-    }
-
-    @ReactMethod
-    public void pushTokenType(ReadableArray args) {
-        this.impl.pushTokenType(args);
     }
 
     // public static void onNotification(Map<String, String> notification) {
@@ -174,11 +219,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void askForNotificationPermission(ReadableArray args) {
         this.impl.askForNotificationPermission(args);
-    }
-
-    @ReactMethod
-    public void configureIntentRedirectionCheck(ReadableArray intentClassNames, ReadableArray intentPackageNames, boolean useAdditionalIntentRedirectionChecks) {
-        this.impl.configureIntentRedirectionCheck(intentClassNames, intentPackageNames, useAdditionalIntentRedirectionChecks);
     }
 
     @ReactMethod
@@ -292,16 +332,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void setRequiresConsent(ReadableArray args) {
-        this.impl.setRequiresConsent(args);
-    }
-
-    @ReactMethod
-    public void giveConsentInit(ReadableArray featureNames) {
-        this.impl.giveConsentInit(featureNames);
-    }
-
-    @ReactMethod
     public void giveConsent(ReadableArray featureNames) {
         this.impl.giveConsent(featureNames);
     }
@@ -353,11 +383,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void setStarRatingDialogTexts(ReadableArray args) {
-        this.impl.setStarRatingDialogTexts(args);
-    }
-
-    @ReactMethod
     public void showStarRating(ReadableArray args, final Callback callback) {
         this.impl.showStarRating(args, callback);
     }
@@ -365,6 +390,21 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void presentRatingWidgetWithID(ReadableArray args) {
         this.impl.presentRatingWidgetWithID(args);
+    }
+
+    @ReactMethod
+    public void presentNPS(ReadableArray args) {
+        this.impl.presentNPS(args);
+    }
+
+    @ReactMethod
+    public void presentSurvey(ReadableArray args) {
+        this.impl.presentSurvey(args);
+    }
+
+    @ReactMethod
+    public void presentRating(ReadableArray args) {
+        this.impl.presentRating(args);
     }
 
     @ReactMethod
@@ -408,6 +448,11 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void addCustomNetworkRequestHeaders(ReadableArray args) {
+        this.impl.addCustomNetworkRequestHeaders(args);
+    }
+
+    @ReactMethod
     public void startTrace(ReadableArray args) {
         this.impl.startTrace(args);
     }
@@ -433,16 +478,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void enableApm(ReadableArray args) {
-        this.impl.enableApm(args);
-    }
-
-    @ReactMethod
-    public void recordAttributionID(ReadableArray args) {
-        this.impl.recordAttributionID(args);
-    }
-
-    @ReactMethod
     public void recordIndirectAttribution(ReadableArray args) {
         this.impl.recordIndirectAttribution(args);
     }
@@ -458,6 +493,31 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void enableRequestCapture(Promise promise) {
+        this.impl.enableRequestCapture(promise);
+    }
+
+    @ReactMethod
+    public void getCapturedRequests(Promise promise) {
+        this.impl.getCapturedRequests(promise);
+    }
+
+    @ReactMethod
+    public void getRequestQueue(Promise promise) {
+        this.impl.getRequestQueue(promise);
+    }
+
+    @ReactMethod
+    public void getEventQueue(Promise promise) {
+        this.impl.getEventQueue(promise);
+    }
+
+    @ReactMethod
+    public void halt(Promise promise) {
+        this.impl.halt(promise);
+    }
+
+    @ReactMethod
     public void enterContentZone() {
         this.impl.enterContentZone();
     }
@@ -465,6 +525,11 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void refreshContentZone() {
         this.impl.refreshContentZone();
+    }
+
+    @ReactMethod
+    public void previewContent(ReadableArray args) {
+        this.impl.previewContent(args);
     }
 
     @ReactMethod

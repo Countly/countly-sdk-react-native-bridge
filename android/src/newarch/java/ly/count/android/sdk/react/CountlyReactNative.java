@@ -13,17 +13,13 @@ init(ReadableArray args, Promise promise)
 setLoggingEnabled(ReadableArray args)
 isLoggingEnabled(final Promise promise)
 isInitialized(Promise promise)
-hasBeenCalledOnStart(Promise promise)
 getCurrentDeviceId(Promise promise)
 getDeviceIDType(Promise promise)
 changeDeviceId(ReadableArray args)
 setHttpPostForced(ReadableArray args)
-enableParameterTamperingProtection(ReadableArray args)
 pinnedCertificates(ReadableArray args)
-setLocationInit(ReadableArray args)
 setLocation(ReadableArray args)
 disableLocation()
-enableCrashReporting()
 addCrashLog(ReadableArray args)
 logException(ReadableArray args)
 logJSException(String err, String message, String stack)
@@ -35,11 +31,9 @@ endEvent(ReadableMap args)
 recordView(ReadableArray args)
 setUserData(ReadableArray args, Promise promise)
 sendPushToken(ReadableArray args)
-pushTokenType(ReadableArray args)
 onNotification(Map<String, String> notification)
 registerForNotification(ReadableArray args)
 askForNotificationPermission(ReadableArray args)
-configureIntentRedirectionCheck(ReadableArray intentClassNames, ReadableArray intentPackageNames, boolean useAdditionalIntentRedirectionChecks)
 userData_setProperty(ReadableArray args, Promise promise)
 userData_increment(ReadableArray args, Promise promise)
 userData_incrementBy(ReadableArray args, Promise promise)
@@ -62,8 +56,6 @@ userDataBulk_setOnce(ReadableArray args, Promise promise)
 userDataBulk_pushUniqueValue(ReadableArray args, Promise promise)
 userDataBulk_pushValue(ReadableArray args, Promise promise)
 userDataBulk_pullValue(ReadableArray args, Promise promise)
-setRequiresConsent(ReadableArray args)
-giveConsentInit(ReadableArray featureNames)
 giveConsent(ReadableArray featureNames)
 removeConsent(ReadableArray featureNames)
 giveAllConsent()
@@ -74,7 +66,6 @@ updateRemoteConfigExceptKeys(ReadableArray args, final Callback myCallback)
 getRemoteConfigValueForKey(ReadableArray args, final Callback myCallback)
 getRemoteConfigValueForKeyP(String keyName, Promise promise)
 remoteConfigClearValues(Promise promise)
-setStarRatingDialogTexts(ReadableArray args)
 showStarRating(ReadableArray args, final Callback callback)
 presentRatingWidgetWithID(ReadableArray args)
 getFeedbackWidgets(final Promise promise)
@@ -91,8 +82,6 @@ cancelTrace(ReadableArray args)
 clearAllTraces(ReadableArray args)
 endTrace(ReadableArray args)
 recordNetworkTrace(ReadableArray args)
-enableApm(ReadableArray args)
-recordAttributionID(ReadableArray args)
 recordIndirectAttribution(ReadableArray args)
 recordDirectAttribution(ReadableArray args)
 appLoadingFinished()
@@ -137,11 +126,6 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     }
 
     @Override
-    public void hasBeenCalledOnStart(Promise promise) {
-        this.impl.hasBeenCalledOnStart(promise);
-    }
-
-    @Override
     public void getCurrentDeviceId(Promise promise) {
         this.impl.getCurrentDeviceId(promise);
     }
@@ -162,18 +146,8 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     }
 
     @Override
-    public void enableParameterTamperingProtection(ReadableArray args) {
-        this.impl.enableParameterTamperingProtection(args);
-    }
-
-    @Override
     public void pinnedCertificates(ReadableArray args) {
         this.impl.pinnedCertificates(args);
-    }
-
-    @Override
-    public void setLocationInit(ReadableArray args) {
-        this.impl.setLocationInit(args);
     }
 
     @Override
@@ -184,11 +158,6 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     @Override
     public void disableLocation() {
         this.impl.disableLocation();
-    }
-
-    @Override
-    public void enableCrashReporting() {
-        this.impl.enableCrashReporting();
     }
 
     @Override
@@ -204,6 +173,21 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     @Override
     public void recordMetrics(ReadableArray args) {
         this.impl.recordMetrics(args);
+    }
+
+    @Override
+    public void startSession() {
+        this.impl.startSession();
+    }
+
+    @Override
+    public void updateSession() {
+        this.impl.updateSession();
+    }
+
+    @Override
+    public void endSession() {
+        this.impl.endSession();
     }
 
     @Override
@@ -242,6 +226,61 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     }
 
     @Override
+    public void startAutoStoppedView(ReadableArray args, Promise promise) {
+        this.impl.startAutoStoppedView(args, promise);
+    }
+
+    @Override
+    public void startView(ReadableArray args, Promise promise) {
+        this.impl.startView(args, promise);
+    }
+
+    @Override
+    public void stopViewWithName(ReadableArray args) {
+        this.impl.stopViewWithName(args);
+    }
+
+    @Override
+    public void stopViewWithID(ReadableArray args) {
+        this.impl.stopViewWithID(args);
+    }
+
+    @Override
+    public void stopAllViews(ReadableArray args) {
+        this.impl.stopAllViews(args);
+    }
+
+    @Override
+    public void pauseViewWithID(ReadableArray args) {
+        this.impl.pauseViewWithID(args);
+    }
+
+    @Override
+    public void resumeViewWithID(ReadableArray args) {
+        this.impl.resumeViewWithID(args);
+    }
+
+    @Override
+    public void addSegmentationToViewWithID(ReadableArray args) {
+        this.impl.addSegmentationToViewWithID(args);
+    }
+
+    @Override
+    public void addSegmentationToViewWithName(ReadableArray args) {
+        this.impl.addSegmentationToViewWithName(args);
+    }
+
+    @Override
+    public void setGlobalViewSegmentation(ReadableArray args) {
+        this.impl.setGlobalViewSegmentation(args);
+    }
+
+    @Override
+    public void updateGlobalViewSegmentation(ReadableArray args) {
+        this.impl.updateGlobalViewSegmentation(args);
+    }
+
+    @Override
     public void setUserData(ReadableArray args, Promise promise) {
         this.impl.setUserData(args, promise);
     }
@@ -249,11 +288,6 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     @Override
     public void sendPushToken(ReadableArray args) {
         this.impl.sendPushToken(args);
-    }
-
-    @Override
-    public void pushTokenType(ReadableArray args) {
-        this.impl.pushTokenType(args);
     }
 
     // public static void onNotification(Map<String, String> notification) {
@@ -268,11 +302,6 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     @Override
     public void askForNotificationPermission(ReadableArray args) {
         this.impl.askForNotificationPermission(args);
-    }
-
-    @Override
-    public void configureIntentRedirectionCheck(ReadableArray intentClassNames, ReadableArray intentPackageNames, boolean useAdditionalIntentRedirectionChecks) {
-        this.impl.configureIntentRedirectionCheck(intentClassNames, intentPackageNames, useAdditionalIntentRedirectionChecks);
     }
 
     @Override
@@ -386,16 +415,6 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     }
 
     @Override
-    public void setRequiresConsent(ReadableArray args) {
-        this.impl.setRequiresConsent(args);
-    }
-
-    @Override
-    public void giveConsentInit(ReadableArray featureNames) {
-        this.impl.giveConsentInit(featureNames);
-    }
-
-    @Override
     public void giveConsent(ReadableArray featureNames) {
         this.impl.giveConsent(featureNames);
     }
@@ -446,11 +465,6 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     }
 
     @Override
-    public void setStarRatingDialogTexts(ReadableArray args) {
-        this.impl.setStarRatingDialogTexts(args);
-    }
-
-    @Override
     public void showStarRating(ReadableArray args, final Callback callback) {
         this.impl.showStarRating(args, callback);
     }
@@ -458,6 +472,21 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     @Override
     public void presentRatingWidgetWithID(ReadableArray args) {
         this.impl.presentRatingWidgetWithID(args);
+    }
+
+    @Override
+    public void presentNPS(ReadableArray args) {
+        this.impl.presentNPS(args);
+    }
+
+    @Override
+    public void presentSurvey(ReadableArray args) {
+        this.impl.presentSurvey(args);
+    }
+
+    @Override
+    public void presentRating(ReadableArray args) {
+        this.impl.presentRating(args);
     }
 
     @Override
@@ -500,6 +529,11 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     }
 
     @Override
+    public void addCustomNetworkRequestHeaders(ReadableArray args) {
+        this.impl.addCustomNetworkRequestHeaders(args);
+    }
+
+    @Override
     public void startTrace(ReadableArray args) {
         this.impl.startTrace(args);
     }
@@ -525,16 +559,6 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     }
 
     @Override
-    public void enableApm(ReadableArray args) {
-        this.impl.enableApm(args);
-    }
-
-    @Override
-    public void recordAttributionID(ReadableArray args) {
-        this.impl.recordAttributionID(args);
-    }
-
-    @Override
     public void recordIndirectAttribution(ReadableArray args) {
         this.impl.recordIndirectAttribution(args);
     }
@@ -550,6 +574,31 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     }
 
     @Override
+    public void enableRequestCapture(Promise promise) {
+        this.impl.enableRequestCapture(promise);
+    }
+
+    @Override
+    public void getCapturedRequests(Promise promise) {
+        this.impl.getCapturedRequests(promise);
+    }
+
+    @Override
+    public void getRequestQueue(Promise promise) {
+        this.impl.getRequestQueue(promise);
+    }
+
+    @Override
+    public void getEventQueue(Promise promise) {
+        this.impl.getEventQueue(promise);
+    }
+
+    @Override
+    public void halt(Promise promise) {
+        this.impl.halt(promise);
+    }
+
+    @Override
     public void enterContentZone() {
         this.impl.enterContentZone();
     }
@@ -557,6 +606,11 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     @Override
     public void refreshContentZone() {
         this.impl.refreshContentZone();
+    }
+
+    @Override
+    public void previewContent(ReadableArray args) {
+        this.impl.previewContent(args);
     }
 
     @Override

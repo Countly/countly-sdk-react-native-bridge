@@ -19,8 +19,6 @@ const BUILDING_WITH_PUSH_DISABLED = true;
 class CountlyConfig {
     #crashReporting = false;
 
-    #apmLegacy = false;
-
     #disableIntentRedirectionCheck = false;
 
     #disableSDKBehaviorSettingsUpdates = false;
@@ -30,6 +28,22 @@ class CountlyConfig {
     #sdkBehaviorSettings;
 
     #requestTimeoutDuration;
+
+    #manualSessionControl = false;
+
+    #manualSessionControlHybridMode = false;
+
+    #disableGradualRequestCleaner = false;
+
+    #disableViewRestartForManualRecording = false;
+
+    #customNetworkRequestHeaders;
+
+    #enableAutomaticViewTracking = false;
+
+    #automaticViewTrackingExclusionList;
+
+    #globalViewSegmentation;
 
     constructor(serverURL, appKey) {
         this.serverURL = serverURL;
@@ -76,10 +90,6 @@ class CountlyConfig {
         return this.#crashReporting;
     }
 
-    get _apmLegacy() {
-        return this.#apmLegacy;
-    }
-
     get _disableIntentRedirectionCheck() {
         return this.#disableIntentRedirectionCheck;
     }
@@ -98,6 +108,38 @@ class CountlyConfig {
 
     get _requestTimeoutDuration() {
         return this.#requestTimeoutDuration;
+    }
+
+    get _manualSessionControl() {
+        return this.#manualSessionControl;
+    }
+
+    get _manualSessionControlHybridMode() {
+        return this.#manualSessionControlHybridMode;
+    }
+
+    get _disableGradualRequestCleaner() {
+        return this.#disableGradualRequestCleaner;
+    }
+
+    get _disableViewRestartForManualRecording() {
+        return this.#disableViewRestartForManualRecording;
+    }
+
+    get _customNetworkRequestHeaders() {
+        return this.#customNetworkRequestHeaders;
+    }
+
+    get _enableAutomaticViewTracking() {
+        return this.#enableAutomaticViewTracking;
+    }
+
+    get _automaticViewTrackingExclusionList() {
+        return this.#automaticViewTrackingExclusionList;
+    }
+
+    get _globalViewSegmentation() {
+        return this.#globalViewSegmentation;
     }
 
     /**
@@ -138,6 +180,78 @@ class CountlyConfig {
      */
     setRequestTimeoutDuration(timeout) {
         this.#requestTimeoutDuration = timeout;
+        return this;
+    }
+
+    /**
+     * Enables manual session control.
+     */
+    enableManualSessionControl() {
+        this.#manualSessionControl = true;
+        return this;
+    }
+
+    /**
+     * Enables hybrid manual session control.
+     */
+    enableManualSessionControlHybridMode() {
+        this.#manualSessionControl = true;
+        this.#manualSessionControlHybridMode = true;
+        return this;
+    }
+
+    /**
+     * Adds custom headers for all outgoing network requests.
+     *
+     * @param {Object} customHeaderValues header key/value pairs
+     */
+    addCustomNetworkRequestHeaders(customHeaderValues) {
+        this.#customNetworkRequestHeaders = customHeaderValues;
+        return this;
+    }
+
+    /**
+     * Disables the gradual request queue cleaner on Android.
+     */
+    disableGradualRequestCleaner() {
+        this.#disableGradualRequestCleaner = true;
+        return this;
+    }
+
+    /**
+     * Disables automatic restart behavior for manually recorded views.
+     */
+    disableViewRestartForManualRecording() {
+        this.#disableViewRestartForManualRecording = true;
+        return this;
+    }
+
+    /**
+     * Enables automatic native view tracking.
+     */
+    enableAutomaticViewTracking() {
+        this.#enableAutomaticViewTracking = true;
+        return this;
+    }
+
+    /**
+     * Sets the list of native view/activity class names to exclude from automatic view tracking.
+     * Android expects fully qualified activity class names.
+     *
+     * @param {String[]} automaticViewTrackingExclusionList exclusion list
+     */
+    setAutomaticViewTrackingExclusionList(automaticViewTrackingExclusionList) {
+        this.#automaticViewTrackingExclusionList = automaticViewTrackingExclusionList;
+        return this;
+    }
+
+    /**
+     * Sets segmentation values that should be attached to all recorded views.
+     *
+     * @param {Object} globalViewSegmentation segmentation values
+     */
+    setGlobalViewSegmentation(globalViewSegmentation) {
+        this.#globalViewSegmentation = globalViewSegmentation;
         return this;
     }
 
@@ -215,16 +329,6 @@ class CountlyConfig {
     }
 
     /**
-     * @deprecated in 24.4.0 : use 'countlyConfig.apm' interface instead of 'config.enableApm'.
-     * 
-     * Method to enable application performance monitoring which includes the recording of app start time.
-     */
-    enableApm() {
-        this.#apmLegacy = true;
-        return this;
-    }
-
-    /**
      * AdditionalIntentRedirectionChecks are enabled by default.
      * This method should be used to disable them.
      */
@@ -258,26 +362,6 @@ class CountlyConfig {
      */
     setSDKBehaviorSettings(settingsObject) {
         this.#sdkBehaviorSettings = settingsObject;
-        return this;
-    }
-
-    /**
-     * Method to set the push token type
-     * @deprecated
-     * Use setPushTokenType() instead to set pushToken
-     * Use setPushNotificationChannelInformation() instead to set channel information
-     *
-     * @param {TokenType} tokenType token type
-     * @param {String} channelName channel name
-     * @param {String} channelDescription channel description
-     */
-    pushTokenType(tokenType, channelName, channelDescription) {
-        if (BUILDING_WITH_PUSH_DISABLED) {
-            return this;
-        }
-        this.tokenType = tokenType;
-        this.channelName = channelName;
-        this.channelDescription = channelDescription;
         return this;
     }
 

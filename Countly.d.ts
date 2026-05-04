@@ -13,6 +13,8 @@ interface FeedbackWidget {
   id: string;
   type: string;
   name?: string;
+  tags?: string[];
+  widgetVersion?: string | null;
 }
 
 interface FeedbackWidgetResultObject {
@@ -63,8 +65,41 @@ interface ResultObject {
 }
 interface ErrorObject { error: string | null }
 
+interface CountlyRemoteConfigModule {
+  /**
+   * Replaces all stored Remote Config values with new values from server.
+   */
+  update(): Promise<void>;
+
+  /**
+   * Replaces specific Remote Config key/value pairs with new values from server.
+   * @param {string[]} keyNames array of keys to replace.
+   */
+  updateForKeysOnly(keyNames: readonly string[]): Promise<void>;
+
+  /**
+   * Replaces all except specific Remote Config key/value pairs with new values from server.
+   * @param {string[]} keyNames array of keys to skip.
+   */
+  updateExceptKeys(keyNames: readonly string[]): Promise<void>;
+
+  /**
+   * Gets the current Remote Config value for a specific key.
+   * Returns null when the key has no stored value.
+   * @param {string} keyName key to fetch.
+   */
+  getValue(keyName: string): Promise<any | null>;
+
+  /**
+   * Clears all downloaded Remote Config values.
+   */
+  clearValues(): Promise<void>;
+}
+
 declare module "countly-sdk-react-native-bridge-np" {
-  import type CountlyConfig from "countly-sdk-react-native-bridge-np/CountlyConfig";
+  import CountlyConfig from "countly-sdk-react-native-bridge-np/CountlyConfig";
+
+  export type WebViewDisplayOption = "IMMERSIVE" | "SAFE_AREA";
 
   namespace Countly {
     string;
@@ -82,18 +117,82 @@ declare module "countly-sdk-react-native-bridge-np" {
     /**
      * Messaging modes for push notifications
      */
-    namespace messagingMode {
+    export namespace messagingMode {
       const DEVELOPMENT: string;
       const PRODUCTION: string;
       const ADHOC: string;
     }
 
     /**
-     * Countly Feedback Module
+     * Display modes for content and feedback web views.
      */
-    namespace feedback {
+    export namespace webViewDisplayOption {
+      const IMMERSIVE: WebViewDisplayOption;
+      const SAFE_AREA: WebViewDisplayOption;
+    }
+
+    /**
+     * Test-only helpers for RN integration tests.
+     */
+    export namespace test {
+      /**
+       * Enables direct-request capture for the next integration scenario and clears any previous capture log.
+       */
+      export function enableRequestCapture(): Promise<void>;
 
       /**
+       * Reads captured direct/immediate native requests as JSON strings.
+       */
+      export function getCapturedRequests(): Promise<string[]>;
+
+      /**
+       * Reads the native request queue as a list of raw query strings.
+       */
+      export function getRequestQueue(): Promise<string[]>;
+
+      /**
+       * Reads the native event queue as a list of event JSON strings.
+       */
+      export function getEventQueue(): Promise<string[]>;
+
+      /**
+       * Resets the native SDK and the JS bridge state for the next integration scenario.
+       */
+      export function halt(): Promise<void>;
+    }
+
+    /**
+     * Countly Feedback Module
+     */
+    export namespace feedback {
+
+      /**
+       * Presents the first available NPS widget that meets the criteria.
+       * @param {String} [nameIDorTag] - name, id, or tag of the widget to show (optional)
+       * @param {callback} [widgetShownCallback] - called when the widget is displayed (optional)
+       * @param {callback} [widgetClosedCallback] - called when the widget is closed (optional)
+       */
+      export function presentNPS(nameIDorTag?: string, widgetShownCallback?: WidgetCallback, widgetClosedCallback?: WidgetCallback): void;
+
+      /**
+       * Presents the first available survey widget that meets the criteria.
+       * @param {String} [nameIDorTag] - name, id, or tag of the widget to show (optional)
+       * @param {callback} [widgetShownCallback] - called when the widget is displayed (optional)
+       * @param {callback} [widgetClosedCallback] - called when the widget is closed (optional)
+       */
+      export function presentSurvey(nameIDorTag?: string, widgetShownCallback?: WidgetCallback, widgetClosedCallback?: WidgetCallback): void;
+
+      /**
+       * Presents the first available rating widget that meets the criteria.
+       * @param {String} [nameIDorTag] - name, id, or tag of the widget to show (optional)
+       * @param {callback} [widgetShownCallback] - called when the widget is displayed (optional)
+       * @param {callback} [widgetClosedCallback] - called when the widget is closed (optional)
+       */
+      export function presentRating(nameIDorTag?: string, widgetShownCallback?: WidgetCallback, widgetClosedCallback?: WidgetCallback): void;
+
+      /**
+        * @deprecated in 26.1.0 : use 'Countly.feedback.presentNPS' instead.
+        *
        * Shows the first available NPS widget that meets the criteria.
        * @param {String} [nameIDorTag] - name, id, or tag of the widget to show (optional)
        * @param {callback} [widgetClosedCallback] - called when the widget is closed (optional)
@@ -101,6 +200,8 @@ declare module "countly-sdk-react-native-bridge-np" {
       export function showNPS(nameIDorTag?: string, widgetClosedCallback?: WidgetCallback): void;
 
       /**
+        * @deprecated in 26.1.0 : use 'Countly.feedback.presentSurvey' instead.
+        *
        * Shows the first available survey widget that meets the criteria.
        * @param {String} [nameIDorTag] - name, id, or tag of the widget to show (optional)
        * @param {callback} [widgetClosedCallback] - called when the widget is closed (optional)
@@ -108,6 +209,8 @@ declare module "countly-sdk-react-native-bridge-np" {
       export function showSurvey(nameIDorTag?: string, widgetClosedCallback?: WidgetCallback): void;
 
       /**
+        * @deprecated in 26.1.0 : use 'Countly.feedback.presentRating' instead.
+        *
        * Shows the first available rating widget that meets the criteria.
        * @param {String} [nameIDorTag] - name, id, or tag of the widget to show (optional)
        * @param {callback} [widgetClosedCallback] - called when the widget is closed (optional)
@@ -132,7 +235,7 @@ declare module "countly-sdk-react-native-bridge-np" {
        *
        * @return {ErrorObject} object {error: string or null}
        */
-      export function presentFeedbackWidget(feedbackWidget: FeedbackWidget, closeButtonText: string, widgetShownCallback: WidgetCallback, widgetClosedCallback: WidgetCallback): ErrorObject;
+      export function presentFeedbackWidget(feedbackWidget: FeedbackWidget, closeButtonText?: string, widgetShownCallback?: WidgetCallback, widgetClosedCallback?: WidgetCallback): ErrorObject;
 
       /**
        * Get a feedback widget's data as an object.
@@ -155,57 +258,142 @@ declare module "countly-sdk-react-native-bridge-np" {
     /**
      * Countly Event Module
      */
-    namespace events {
-    /**
-     * Records an event.
-     * Event will be saved to the internal queue and will be sent to the server with the next trigger.
-     *
-     * @param {string} eventName - Name of the event (This will be displayed on the dashboard)
-     * @param {Segmentation} segmentation - Extra information to send with your event as key/value pairs
-     * @param {number} eventCount - Indicates how many times this event has happened (Default is 1)
-     * @param {number} eventSum - A numerical value that is attached to this event (Will be summed up on the dashboard for all events with the same name)
-     * @return {void}
-     */
+    export namespace events {
+      /**
+       * Records an event.
+       * Event will be saved to the internal queue and will be sent to the server with the next trigger.
+       *
+       * @param {string} eventName - Name of the event (This will be displayed on the dashboard)
+       * @param {Segmentation} segmentation - Extra information to send with your event as key/value pairs
+       * @param {number} eventCount - Indicates how many times this event has happened (Default is 1)
+       * @param {number} eventSum - A numerical value that is attached to this event (Will be summed up on the dashboard for all events with the same name)
+       * @return {void}
+       */
       export function recordEvent(eventName: string, segmentation?: Segmentation, eventCount?: number, eventSum?: number): void;
 
-    /**
-     *
-     * Starts a Timed Event
-     * If 'endEvent' is not called (with the same event name) no event will be recorded.
-     *
-     * @param {string} eventName - name of the event
-     * @return {void}
-     */
+      /**
+       *
+       * Starts a Timed Event
+       * If 'endEvent' is not called (with the same event name) no event will be recorded.
+       *
+       * @param {string} eventName - name of the event
+       * @return {void}
+       */
       export function startEvent(eventName: string): void;
 
-    /**
-     *
-     * Ends a Timed Event if it is started.
-     * Should be called after startEvent.
-     * This will behave like recordEvent.
-     *
-     * @param {string} eventName - Name of the event (This will be displayed on the dashboard)
-     * @param {Segmentation} segmentation - Extra information to send with your event as key/value pairs
-     * @param {number} eventCount - Indicates how many times this event has happened (Default is 1)
-     * @param {number} eventSum - A numerical value that is attached to this event (Will be summed up on the dashboard for all events with the same name)
-     * @return {void} void
-     */
+      /**
+       *
+       * Ends a Timed Event if it is started.
+       * Should be called after startEvent.
+       * This will behave like recordEvent.
+       *
+       * @param {string} eventName - Name of the event (This will be displayed on the dashboard)
+       * @param {Segmentation} segmentation - Extra information to send with your event as key/value pairs
+       * @param {number} eventCount - Indicates how many times this event has happened (Default is 1)
+       * @param {number} eventSum - A numerical value that is attached to this event (Will be summed up on the dashboard for all events with the same name)
+       * @return {void} void
+       */
       export function endEvent(eventName: string, segmentation?: Segmentation, eventCount?: number, eventSum?: number): void;
 
-    /**
-     *
-     * Cancels a Timed Event if it is started.
-     *
-     * @param {string} eventName - name of the event
-     * @return {void}
-     */
+      /**
+       *
+       * Cancels a Timed Event if it is started.
+       *
+       * @param {string} eventName - name of the event
+       * @return {void}
+       */
       export function cancelEvent(eventName: string): void;
+    }
+
+    /**
+     * Countly Sessions Module
+     */
+    export namespace sessions {
+      /**
+       * Starts a manual session.
+       * Requires `CountlyConfig.enableManualSessionControl()`.
+       */
+      export function beginSession(): void;
+
+      /**
+       * Updates the active manual session.
+       * Requires `CountlyConfig.enableManualSessionControl()`.
+       */
+      export function updateSession(): void;
+
+      /**
+       * Ends the active manual session.
+       * Requires `CountlyConfig.enableManualSessionControl()`.
+       */
+      export function endSession(): void;
+    }
+
+    /**
+     * Countly Views Module
+     */
+    export namespace views {
+      /**
+       * Starts a view that is automatically stopped when another auto-stopped view begins.
+       * Resolves with the created view ID, or `null` if the native SDK does not start the view.
+       */
+      export function startAutoStoppedView(viewName: string, segmentation?: Segmentation): Promise<string | null>;
+
+      /**
+       * Starts a multi-view-tracking view that stays open until explicitly stopped.
+       * Resolves with the created view ID, or `null` if the native SDK does not start the view.
+       */
+      export function startView(viewName: string, segmentation?: Segmentation): Promise<string | null>;
+
+      /**
+       * Stops a running view by name.
+       */
+      export function stopViewWithName(viewName: string, segmentation?: Segmentation): void;
+
+      /**
+       * Stops a running view by ID.
+       */
+      export function stopViewWithID(viewID: string, segmentation?: Segmentation): void;
+
+      /**
+       * Stops all currently running views.
+       */
+      export function stopAllViews(segmentation?: Segmentation): void;
+
+      /**
+       * Pauses a running view by ID.
+       */
+      export function pauseViewWithID(viewID: string): void;
+
+      /**
+       * Resumes a paused view by ID.
+       */
+      export function resumeViewWithID(viewID: string): void;
+
+      /**
+       * Adds or overrides segmentation on a running view by ID.
+       */
+      export function addSegmentationToViewWithID(viewID: string, segmentation: Segmentation): void;
+
+      /**
+       * Adds or overrides segmentation on a running view by name.
+       */
+      export function addSegmentationToViewWithName(viewName: string, segmentation: Segmentation): void;
+
+      /**
+       * Replaces the global segmentation that will be attached to subsequent views.
+       */
+      export function setGlobalViewSegmentation(segmentation?: Segmentation): void;
+
+      /**
+       * Merges the provided keys into the global view segmentation.
+       */
+      export function updateGlobalViewSegmentation(segmentation: Segmentation): void;
     }
 
     /**
      * Countly Content Module
      */
-    namespace content {
+    export namespace content {
       /**
        * Opt in user for the content fetching and updates
        */
@@ -217,22 +405,21 @@ declare module "countly-sdk-react-native-bridge-np" {
       export function refreshContentZone(): void;
 
       /**
+       * Preview a specific content without entering the content zone.
+       * @param {string} contentId - content identifier to preview
+       */
+      export function previewContent(contentId: string): string | void;
+
+      /**
        * Opt out user from the content fetching and updates
        */
       export function exitContentZone(): void;
     }
 
     /**
-     * Initialize Countly
-     *
-     * @deprecated in 23.02.0 : use 'initWithConfig' instead of 'init'.
-     *
-     * @function Countly.init should be used to initialize countly
-     * @param {string} serverURL server url
-     * @param {string} appKey application key
-     * @param {string | null} deviceId device ID
+     * Countly Remote Config Module
      */
-    export function init(serverUrl: string, appKey: string, deviceId: string | null): Promise<void>;
+    export const remoteConfig: CountlyRemoteConfigModule;
 
     /**
      * Initialize Countly
@@ -251,26 +438,8 @@ declare module "countly-sdk-react-native-bridge-np" {
     export function isInitialized(): Promise<boolean>;
 
     /**
+     * @deprecated in 26.1.0 : use 'Countly.views.startAutoStoppedView' instead.
      *
-     * Checks if the Countly SDK onStart function has been called
-     *
-     * @deprecated in 23.6.0. This will be removed.
-     *
-     * @return {Promise<string> | string} boolean or error message
-     */
-    export function hasBeenCalledOnStart(): Promise<string> | string;
-
-    /**
-     *
-     * Used to send various types of event;
-     * @deprecated in 24.4.0 : use 'Countly.events.recordEvent' instead of this.
-     *
-     * @param {CountlyEventOptions} options event
-     * @return {string | void} error message or void
-     */
-    export function sendEvent(options: CountlyEventOptions): string | void;
-
-    /**
      * Record custom view to Countly.
      *
      * @param {string} recordView - name of the view
@@ -290,20 +459,6 @@ declare module "countly-sdk-react-native-bridge-np" {
     export function disablePushNotifications(): string | void;
 
     /**
-     * @deprecated in 23.02.0 : use 'countlyConfig.pushTokenType' instead of 'pushTokenType'. FOR PUSH VERSION ONLY
-     *
-     * @param {string} tokenType - Token type
-     * @param {string} channelName - Channel name
-     * @param {string} channelDescription - Description for the channel
-     * Set messaging mode for push notifications
-     * Should be called before Countly init
-     *
-     * @return {string | void} error message or void
-     */
-    export function pushTokenType(tokenType: string, channelName: string, channelDescription: string): Promise<string> | string;
-
-    /**
-     * @deprecated FOR PUSH VERSION ONLY
      *
      * Send push token
      * @param {object} options - object containing the push token
@@ -336,81 +491,12 @@ declare module "countly-sdk-react-native-bridge-np" {
     export function registerForNotification(theListener: (theNotification: string) => void): any; // The return type should be adjusted to the actual event subscription type
 
     /**
-     * @deprecated in 23.02.0 : use 'countlyConfig.configureIntentRedirectionCheck' instead of 'configureIntentRedirectionCheck'. FOR PUSH VERSION ONLY
-     *
-     * Configure intent redirection checks for push notification
-     * Should be called before Countly "askForNotificationPermission"
-     *
-     * @param {string[]} allowedIntentClassNames allowed intent class names
-     * @param {string[]} allowedIntentPackageNames allowed intent package names
-     * @param {boolean} useAdditionalIntentRedirectionChecks to check additional intent checks. It is by default its true
-     * @return {string | void} error message or void
-     */
-    export function configureIntentRedirectionCheck(
-      allowedIntentClassNames?: string[],
-      allowedIntentPackageNames?: string[],
-      useAdditionalIntentRedirectionChecks?: boolean
-    ): string | void;
-
-    /**
-     * @deprecated at 23.6.0 - Automatic sessions are handled by underlying SDK, this function will do nothing.
-     *
-     * Countly start for android
-     *
-     */
-    export function start(): void;
-
-    /**
-     * @deprecated at 23.6.0 - Automatic sessions are handled by underlying SDK, this function will do nothing.
-     *
-     * Countly stop for android
-     *
-     */
-    export function stop(): void;
-
-    /**
-     * Enable countly internal debugging logs
-     * Should be called before Countly init
-     *
-     * @deprecated in 20.04.6
-     *
-     * @function Countly.setLoggingEnabled should be used to enable/disable countly internal debugging logs
-     */
-    export function enableLogging(): void;
-
-    /**
-     * Disable countly internal debugging logs
-     *
-     * @deprecated in 20.04.6
-     *
-     * @function Countly.setLoggingEnabled should be used to enable/disable countly internal debugging logs
-     */
-    export function disableLogging(): void;
-
-    /**
      * Set to true if you want to enable countly internal debugging logs
      * Should be called before Countly init
      *
      * @param {[boolean = true]} enabled server url
      */
     export function setLoggingEnabled(enabled?: boolean): void;
-
-    /**
-     * @deprecated in 23.02.0 : use 'countlyConfig.setLocation' instead of 'setLocationInit'.
-     *
-     * Set user initial location
-     * Should be called before init
-     * @param {string | null} countryCode ISO Country code for the user's country
-     * @param {string | null} city Name of the user's city
-     * @param {string | null} location comma separate lat and lng values. For example, "56.42345,123.45325"
-     * @param {string | null} ipAddress IP address of user's
-     */
-    export function setLocationInit(
-      countryCode: string | null,
-      city: string | null,
-      location: string | null,
-      ipAddress: string | null,
-    ): void;
 
     /**
      *
@@ -436,38 +522,7 @@ declare module "countly-sdk-react-native-bridge-np" {
      */
     export function disableLocation(): string | void;
 
-    /**
-     * @deprecated use 'Countly.deviceId.getID' instead of 'Countly.getCurrentDeviceId'
-     * 
-     * Get currently used device Id.
-     * Should be called after Countly init
-     *
-     * @return {string} device id or error message
-     */
-    export function getCurrentDeviceId(): Promise<string> | string;
-
-    /**
-     * @deprecated use 'Countly.deviceId.getType' instead of 'Countly.getDeviceIDType'
-     * 
-     * Get currently used device Id type.
-     * Should be called after Countly init
-     *
-     * @return {DeviceIdType | null} deviceIdType or null
-     */
-    export function getDeviceIDType(): Promise<DeviceIdType> | null;
-
-    /**
-     * @deprecated use 'Countly.deviceId.setID' instead of 'Countly.changeDeviceId'
-     * 
-     * Change the current device id
-     *
-     * @param {string} newDeviceID id new device id
-     * @param {boolean} onServer merge device id
-     * @return {string | void} error message or void
-     */
-    export function changeDeviceId(newDeviceID: string, onServer: boolean): string | void;
-
-    namespace deviceId {
+    export namespace deviceId {
       /**
        * 
        * Get currently used device ID.
@@ -493,6 +548,14 @@ declare module "countly-sdk-react-native-bridge-np" {
        * @param {string} newDeviceID device ID to set
        */
       export function setID(newDeviceID: string): void;
+
+      /**
+       * Changes device ID with explicit merge selection.
+       *
+       * @param {string} newDeviceID device ID to set
+       * @param {boolean} merge when true, merges the old and new device IDs on the server
+       */
+      export function changeID(newDeviceID: string, merge?: boolean): void;
     }
 
     /**
@@ -502,14 +565,6 @@ declare module "countly-sdk-react-native-bridge-np" {
      * @param {boolean} forceHttp force http post for all requests. Default value is true
      */
     export function setHttpPostForced(boolean?: boolean): void;
-
-    /**
-     * @deprecated in 23.02.0 : use 'countlyConfig.enableCrashReporting' instead of 'enableCrashReporting'.
-     *
-     * Enable crash reporting to report unhandled crashes to Countly
-     * Should be called before Countly init
-     */
-    export function enableCrashReporting(): void;
 
     /**
      *
@@ -547,31 +602,31 @@ declare module "countly-sdk-react-native-bridge-np" {
     export function setCustomCrashSegments(segments: Record<string, any>): void;
 
     /**
+     * @deprecated in 26.1.0 : use 'Countly.sessions.beginSession' instead of 'startSession'.
      *
-     * Start session tracking
-     *
-     * @return {string | void} error message or void
+     * Starts a manual session.
      */
     export function startSession(): string | void;
 
     /**
+     * @deprecated in 26.1.0 : use 'Countly.sessions.updateSession' instead of 'updateSession'.
      *
-     * End session tracking
+     * Updates the active manual session.
+     */
+    export function updateSession(): string | void;
+
+    /**
+     * @deprecated in 26.1.0 : use 'Countly.sessions.endSession' instead of 'endSession'.
      *
-     * @return {string | void} error message or void
+     * Ends the active manual session.
      */
     export function endSession(): string | void;
 
     /**
-     * @deprecated in 23.02.0 : use 'countlyConfig.enableParameterTamperingProtection' instead of 'enableParameterTamperingProtection'.
-     *
-     * Set the optional salt to be used for calculating the checksum of requested data which will be sent with each request, using the &checksum field
-     * Should be called before Countly init
-     *
-     * @param {string} salt salt
-     * @return {string | void} error message or void
+     * Adds or overrides custom network request headers at runtime.
+     * @param {Record<string, string>} customHeaderValues header key/value pairs
      */
-    export function enableParameterTamperingProtection(salt: string): string | void;
+    export function addCustomNetworkRequestHeaders(customHeaderValues: Record<string, string>): string | void;
 
     /**
      *
@@ -581,36 +636,6 @@ declare module "countly-sdk-react-native-bridge-np" {
      * @return {string | void} error message or void
      */
     export function pinnedCertificates(certificateName: string): string | void;
-
-    /**
-     *
-     * Start Event
-     * @deprecated in 24.4.0 : use 'Countly.events.startEvent' instead of this.
-     *
-     * @param {string} eventName name of event
-     * @return {string | void} error message or void
-     */
-    export function startEvent(eventName: string): string | void;
-
-    /**
-     *
-     * Cancel Event
-     * @deprecated in 24.4.0 : use 'Countly.events.cancelEvent' instead of this.
-     *
-     * @param {string} eventName name of event
-     * @return {string | void} error message or void
-     */
-    export function cancelEvent(eventName: string): string | void;
-
-    /**
-     *
-     * End Event
-     * @deprecated in 24.4.0 : use 'Countly.events.endEvent' instead of this.
-     *
-     * @param {string | object} options event options
-     * @return {string | void} error message or void
-     */
-    export function endEvent(options: string | CountlyEventOptions): string | void;
 
     /**
      *
@@ -852,16 +877,6 @@ declare module "countly-sdk-react-native-bridge-np" {
     }
 
     /**
-     * @deprecated in 23.02.0 : use 'countlyConfig.setRequiresConsent' instead of 'setRequiresConsent'.
-     *
-     * Set that consent should be required for features to work.
-     * Should be called before Countly init
-     *
-     * @param {boolean} flag if true, consent is required for features to work.
-     */
-    export function setRequiresConsent(flag: boolean): void;
-
-    /**
      *
      * Give consent for some features
      * Should be called after Countly init
@@ -870,16 +885,6 @@ declare module "countly-sdk-react-native-bridge-np" {
      * @return {string | void} error message or void
      */
     export function giveConsent(args: string[] | string): string | void;
-
-    /**
-     * @deprecated in 23.02.0 : use 'countlyConfig.giveConsent' instead of 'giveConsentInit'.
-     *
-     * Give consent for specific features before init.
-     * Should be called after Countly init
-     *
-     * @param {string[] | string} args list of consents
-     */
-    export function giveConsentInit(args: string[] | string): Promise<void>;
 
     /**
      *
@@ -910,6 +915,7 @@ declare module "countly-sdk-react-native-bridge-np" {
     export function removeAllConsent(): string | void;
 
     /**
+     * @deprecated in 26.1.0 : use 'Countly.remoteConfig.update' instead of 'remoteConfigUpdate'.
      *
      * Replaces all stored Remote Config values with new values from server.
      *
@@ -919,6 +925,8 @@ declare module "countly-sdk-react-native-bridge-np" {
     export function remoteConfigUpdate(callback: CountlyCallback): string | void;
 
     /**
+     * @deprecated in 26.1.0 : use 'Countly.remoteConfig.updateForKeysOnly' instead of 'updateRemoteConfigForKeysOnly'.
+     *
      *
      * Replace specific Remote Config key value pairs with new values from server.
      *
@@ -929,6 +937,8 @@ declare module "countly-sdk-react-native-bridge-np" {
     export function updateRemoteConfigForKeysOnly(keyNames: readonly string[], callback: CountlyCallback): string | void;
 
     /**
+      * @deprecated in 26.1.0 : use 'Countly.remoteConfig.updateExceptKeys' instead of 'updateRemoteConfigExceptKeys'.
+      *
      *
      * Replace all except specific Remote Config key value pairs with new values from server.
      *
@@ -939,6 +949,8 @@ declare module "countly-sdk-react-native-bridge-np" {
     export function updateRemoteConfigExceptKeys(keyNames: readonly string[], callback: CountlyCallback): string | void;
 
     /**
+      * @deprecated in 26.1.0 : use 'Countly.remoteConfig.getValue' instead of 'getRemoteConfigValueForKey'.
+      *
      *
      * Replace Remote Config key value for a specific key with new values from server.
      * This takes in a callback that is called after new values are fetched.
@@ -950,6 +962,8 @@ declare module "countly-sdk-react-native-bridge-np" {
     export function getRemoteConfigValueForKey(keyName: string, callback: (value: any) => void): string | void;
 
     /**
+      * @deprecated in 26.1.0 : use 'Countly.remoteConfig.getValue' instead of 'getRemoteConfigValueForKeyP'.
+      *
      *
      * Replace Remote Config key value for a specific key with new values from server. This returns a promise that can be listened to.
      *
@@ -959,28 +973,14 @@ declare module "countly-sdk-react-native-bridge-np" {
     export function getRemoteConfigValueForKeyP(keyName: string): string | Promise<any>;
 
     /**
+      * @deprecated in 26.1.0 : use 'Countly.remoteConfig.clearValues' instead of 'remoteConfigClearValues'.
+      *
      *
      * Clear all Remote Config values downloaded from the server.
      *
      * @return {string | promise} error message or promise
      */
     export function remoteConfigClearValues(): string | Promise<string>;
-
-    /**
-     * @deprecated in 23.02.0 : use 'countlyConfig.setStarRatingDialogTexts' instead of 'setStarRatingDialogTexts'.
-     *
-     * Set's the text's for the different fields in the star rating dialog. Set value null if for some field you want to keep the old value
-     *
-     * @param {string} starRatingTextTitle - dialog's title text (Only for Android)
-     * @param {string} starRatingTextMessage - dialog's message text
-     * @param {string} starRatingTextDismiss - dialog's dismiss buttons text (Only for Android)
-     * @return {string | void} error message or void
-     */
-    export function setStarRatingDialogTexts(
-      starRatingTextTitle: string,
-      starRatingTextMessage: string,
-      starRatingTextDismiss: string,
-    ): void;
 
     /**
      *
@@ -1001,32 +1001,6 @@ declare module "countly-sdk-react-native-bridge-np" {
      * @return {string | void} error message or void
      */
     export function presentRatingWidgetWithID(widgetId: string, closeButtonText: string, ratingWidgetCallback?: CountlyErrorCallback): string | void;
-
-    /**
-     * Get a list of available feedback widgets as array of object to handle multiple widgets of same type.
-     * @deprecated in 23.8.0 : use 'Countly.feedback.getAvailableFeedbackWidgets' instead of 'getFeedbackWidgets'.
-     * @param {callback listener} [onFinished] - returns (retrievedWidgets, error). This parameter is optional.
-     * @return {string | []} error message or array of feedback widgets
-     */
-    export function getFeedbackWidgets(onFinished?: FeedbackWidgetCallback): Promise<any> | string;
-
-    /**
-     * Present a chosen feedback widget
-     *
-     * @deprecated in 23.8.0 : use 'Countly.feedback.presentFeedbackWidget' instead of 'presentFeedbackWidgetObject'.
-     * @param {FeedbackWidget} feedbackWidget - feeback Widget with id, type and name
-     * @param {string} closeButtonText - text for cancel/close button
-     * @param {callback listener} [widgetShownCallback] - Callback to be executed when feedback widget is displayed. This parameter is optional.
-     * @param {callback listener} [widgetClosedCallback] - Callback to be executed when feedback widget is closed. This parameter is optional.
-     *
-     * @return {string | void} error message or void
-     */
-    export function presentFeedbackWidgetObject(
-      feedbackWidget: FeedbackWidget,
-      closeButtonText: string,
-      widgetShownCallback: WidgetCallback,
-      widgetClosedCallback: WidgetCallback
-    ): string | void;
 
     /**
      *
@@ -1098,36 +1072,6 @@ declare module "countly-sdk-react-native-bridge-np" {
       startTime: number,
       endTime: number,
     ): string | void;
-
-    /**
-     * @deprecated in 23.02.0 : use 'countlyConfig.apm' interface instead of 'enableApm'.
-     *
-     * Enable APM features, which includes the recording of app start time.
-     * Should be called before Countly init
-     */
-    export function enableApm(): void;
-
-    /**
-     * @deprecated in 23.02.0 : use 'Countly.recordIndirectAttribution' instead of 'Countly'.
-     *
-     * Enable campaign attribution reporting to Countly.
-     * For iOS use "recordAttributionID" instead of "enableAttribution"
-     * Should be called before Countly init
-     * @param {string} attributionID attribution ID
-     * @return {string | void} error message or void
-     */
-    export function enableAttribution(attributionID?: string): string;
-
-    /**
-     *
-     * @deprecated in 23.02.0 : use 'Countly.recordIndirectAttribution' instead of 'recordAttributionID'.
-     *
-     * set attribution Id for campaign attribution reporting.
-     * Currently implemented for iOS only
-     * @param {string} attributionID attribution ID
-     * @return {string | void} error message or void
-     */
-    export function recordAttributionID(attributionID: string): string | void;
 
     /**
      * Replaces all requests with a different app key with the current app key.
@@ -1211,6 +1155,11 @@ declare module "countly-sdk-react-native-bridge-np/CountlyConfig" {
      * @param callback - callback to be called when new content is available
      */
     setGlobalContentCallback(callback: Function): this;
+
+    /**
+     * Controls how Content and feedback widgets are displayed.
+     */
+    setWebViewDisplayOption(displayOption: import("countly-sdk-react-native-bridge").WebViewDisplayOption): this;
   }
 
   /**
@@ -1220,29 +1169,29 @@ declare module "countly-sdk-react-native-bridge-np/CountlyConfig" {
    *
    */
   class CountlyConfigApm {
-      /**
-       * Enables the tracking of app start time. (For iOS after this call you 
-       * will have to call [enableManualAppLoadedTrigger])
-       */
-      enableAppStartTimeTracking(): CountlyConfigApm;
+    /**
+     * Enables the tracking of app start time. (For iOS after this call you 
+     * will have to call [enableManualAppLoadedTrigger])
+     */
+    enableAppStartTimeTracking(): CountlyConfigApm;
 
-      /**
-       * Enables the automatic tracking of app foreground and background 
-       * durations.
-       */
-      enableForegroundBackgroundTracking(): CountlyConfigApm;
+    /**
+     * Enables the automatic tracking of app foreground and background 
+     * durations.
+     */
+    enableForegroundBackgroundTracking(): CountlyConfigApm;
 
-      /**
-       * Enables the usage of manual trigger [Countly.appLoadingFinished] to 
-       * determine app start finish time.
-       */
-      enableManualAppLoadedTrigger(): CountlyConfigApm;
+    /**
+     * Enables the usage of manual trigger [Countly.appLoadingFinished] to 
+     * determine app start finish time.
+     */
+    enableManualAppLoadedTrigger(): CountlyConfigApm;
 
-      /**
-       * Gives you the ability to override the app start initial timestamp.
-       * [timestamp] is the timestamp (in milliseconds)
-       */
-      setAppStartTimestampOverride(timestamp: number): CountlyConfigApm;
+    /**
+     * Gives you the ability to override the app start initial timestamp.
+     * [timestamp] is the timestamp (in milliseconds)
+     */
+    setAppStartTimestampOverride(timestamp: number): CountlyConfigApm;
   }
 
   class CountlyConfigSDKInternalLimits {
@@ -1250,37 +1199,37 @@ declare module "countly-sdk-react-native-bridge-np/CountlyConfig" {
      * Limits the maximum size of all string keys
      * @param keyLengthLimit - maximum char size of all string keys (default 128 chars)
      */
-    setMaxKeyLength(keyLengthLimit: number) : CountlyConfigSDKInternalLimits;
+    setMaxKeyLength(keyLengthLimit: number): CountlyConfigSDKInternalLimits;
 
     /**
      * Limits the size of all values in segmentation key-value pairs
      * @param valueSizeLimit - the maximum char size of all values in our key-value pairs (default 256 chars)
      */
-    setMaxValueSize(valueSizeLimit: number) : CountlyConfigSDKInternalLimits;
+    setMaxValueSize(valueSizeLimit: number): CountlyConfigSDKInternalLimits;
 
     /**
      * Limits the max amount of custom segmentation in one event
      * @param segmentationAmountLimit - the maximum amount of custom segmentation in one event (default 100 key-value pairs)
      */
-    setMaxSegmentationValues(segmentationAmountLimit: number) : CountlyConfigSDKInternalLimits;
+    setMaxSegmentationValues(segmentationAmountLimit: number): CountlyConfigSDKInternalLimits;
 
     /**
      * Limits the max amount of breadcrumbs that can be recorded before the oldest one is deleted
      * @param breadcrumbCountLimit - the maximum amount of breadcrumbs that can be recorded before the oldest one is deleted (default 100)
      */
-    setMaxBreadcrumbCount(breadcrumbCountLimit: number) : CountlyConfigSDKInternalLimits;
+    setMaxBreadcrumbCount(breadcrumbCountLimit: number): CountlyConfigSDKInternalLimits;
 
     /**
      * Limits the max amount of stack trace lines to be recorded per thread
      * @param stackTraceLinesPerThreadLimit - maximum amount of stack trace lines to be recorded per thread (default 30)
      */
-    setMaxStackTraceLinesPerThread(stackTraceLinesPerThreadLimit: number) : CountlyConfigSDKInternalLimits;
+    setMaxStackTraceLinesPerThread(stackTraceLinesPerThreadLimit: number): CountlyConfigSDKInternalLimits;
 
     /**
      * Limits the max characters allowed per stack trace lines. Also limits the crash message length
      * @param stackTraceLineLengthLimit - maximum length of each stack trace line (default 200)
      */
-    setMaxStackTraceLineLength(stackTraceLineLengthLimit: number) : CountlyConfigSDKInternalLimits;
+    setMaxStackTraceLineLength(stackTraceLineLengthLimit: number): CountlyConfigSDKInternalLimits;
   }
 
   /**
@@ -1290,225 +1239,236 @@ declare module "countly-sdk-react-native-bridge-np/CountlyConfig" {
    *
    */
   declare class CountlyConfig {
-      /**
-     * @param {string} serverURL server url
-     * @param {string} appKey application key
+    /**
+   * @param {string} serverURL server url
+   * @param {string} appKey application key
+   */
+    constructor(serverURL: string, appKey: string);
+
+    /**
+   * getter for CountlyConfigApm instance that is used to access CountlyConfigApm methods
+   */
+    apm: CountlyConfigApm;
+    /**
+   * getter for CountlySDKLimits instance that is used to access CountlyConfigSDKInternalLimits methods
+   */
+    sdkInternalLimits: CountlyConfigSDKInternalLimits;
+
+    /**
+     * getter for experimental features
      */
-      constructor(serverURL: string, appKey: string);
+    experimental: experimental;
 
-      /**
-     * getter for CountlyConfigApm instance that is used to access CountlyConfigApm methods
+    /**
+     * getter for content features
      */
-      apm: CountlyConfigApm;
-      /**
-     * getter for CountlySDKLimits instance that is used to access CountlyConfigSDKInternalLimits methods
+    content: content;
+
+    /**
+   * Method to set the server url
+   *
+   * @param {string} serverURL server url
+   */
+    setServerURL(serverURL: string): CountlyConfig;
+
+    /**
+   * Method to set the app key
+   *
+   * @param {string} appKey application key
+   */
+    setAppKey(appKey: string): CountlyConfig;
+
+    /**
+   * Method to set the device id
+   *
+   * @param {string} deviceID device id
+   */
+    setDeviceID(deviceID: string): CountlyConfig;
+
+    /**
+   * Method to enable countly internal debugging logs
+   *
+   * @param {boolean} loggingEnabled enable
+   * if true, countly sdk would log to console.
+   */
+    setLoggingEnabled(loggingEnabled: boolean): CountlyConfig;
+
+    /**
+   * Method to enable crash reporting to report unhandled crashes to Countly
+   */
+    enableCrashReporting(): CountlyConfig;
+
+    /**
+   * Method to set if the consent feature is enabled.
+   *
+   * If set to true, no feature will work without consent being given.
+   *
+   * @param {boolean} shouldRequireConsent required. True: It is enabled. False:
+   * It is disabled.
+   */
+    setRequiresConsent(shouldRequireConsent: boolean): CountlyConfig;
+
+    /**
+   * Method to give consent for specific features before init
+   *
+   * @param {string[]} consents consents e.g ['location', 'sessions',
+   * 'attribution', 'push', 'events', 'views', 'crashes', 'users', 'push',
+   * 'star-rating', 'apm', 'feedback', 'remote-config', 'metrics']
+   */
+    giveConsent(consents: readonly string[]): CountlyConfig;
+
+    /**
+   * Method to set the user initial location
+   *
+   * @param {string} locationCountryCode country code e.g 'TR'
+   * @param {string} locationCity city e.g 'Istanbul'
+   * @param {string} locationGpsCoordinates gps coordinates e.g '41.0082,28.9784'
+   * @param {string} locationIpAddress ip address e.g '10.2.33.12'
+   */
+    setLocation(locationCountryCode: string, locationCity: string, locationGpsCoordinates: string, locationIpAddress: string): CountlyConfig;
+
+    /**
+   * Method to enable tamper protection. This sets the optional salt to be
+   * used for calculating the checksum of requested data which will be sent
+   * with each request
+   *
+   * @param {string} tamperingProtectionSalt salt
+   */
+    enableParameterTamperingProtection(tamperingProtectionSalt: string): CountlyConfig;
+
+    /**
+   * AdditionalIntentRedirectionChecks are enabled by default.
+   * This method should be used to disable them.
+   */
+    disableAdditionalIntentRedirectionChecks(): CountlyConfig;
+
+    /**
+   * Method to set the push token type
+   * NB: ONLY FOR iOS
+   *
+   * @param {Countly.messagingMode} tokenType token type
+   * Possible values include 'DEVELOPMENT', 'PRODUCTION', 'ADHOC'.
+   */
+    setPushTokenType(tokenType: messagingMode): CountlyConfig;
+
+    /**
+   * Method to set the push channel name and description
+   * NB: ONLY FOR ANDROID
+   *
+   * @param {string} name channel name
+   * @param {string} description channel description
+   */
+    setPushNotificationChannelInformation(name: string, description: string): CountlyConfig;
+
+    /**
+   * Method to set the push notification accent color
+   * NB: ONLY FOR ANDROID
+   *
+   * @param {string} accentColor notification accent color
+   * example '#000000'
+   */
+    setPushNotificationAccentColor(accentColor: string): CountlyConfig;
+
+    /**
+   * Method to configure intent redirection check
+   *
+   * @param {string[]} allowedIntentClassNames allowed intent class names
+   * @param {string[]} allowedIntentPackageNames allowed intent package name
+   */
+    configureIntentRedirectionCheck(allowedIntentClassNames: readonly string[], allowedIntentPackageNames: readonly string[]): CountlyConfig;
+
+    /**
+   * Method to set star rating dialog text
+   *
+   * @param {string} starRatingTextTitle title
+   * @param {string} starRatingTextMessage message
+   * @param {string} starRatingTextDismiss dismiss
+   */
+    setStarRatingDialogTexts(starRatingTextTitle: string, starRatingTextMessage: string, starRatingTextDismiss: string): CountlyConfig;
+
+    /**
+   * Report direct user attribution
+   *
+   * @param {string} campaignType campaign type
+   * @param {object} campaignData campaign data
+   */
+    recordDirectAttribution(campaignType: string, campaignData: object): CountlyConfig;
+
+    /**
+   * Report indirect user attribution
+   *
+   * @param {object} attributionValues attribution values
+   */
+    recordIndirectAttribution(attributionValues: object): CountlyConfig;
+
+    /**
+     * Method to disable SDK behavior settings updates requests.
+     * @return {CountlyConfig}
      */
-      sdkInternalLimits: CountlyConfigSDKInternalLimits;
+    disableSDKBehaviorSettingsUpdates(): CountlyConfig;
 
-      /**
-       * getter for experimental features
-       */
-      experimental: experimental;
+    /**
+     * Method to disable backoff mechanism for requests.
+     * @return {CountlyConfig}
+     */
+    disableBackoffMechanism(): CountlyConfig;
 
-      /**
-       * getter for content features
-       */
-      content: content;
-
-      /**
-     * Method to set the server url
+    /**
+     * Method to set SDK behavior settings.
      *
-     * @param {string} serverURL server url
+     * @param {object} settingsObject settings object
+     * @return {CountlyConfig}
      */
-      setServerURL(serverURL: string): CountlyConfig;
+    setSDKBehaviorSettings(settingsObject: object): CountlyConfig;
 
-      /**
-     * Method to set the app key
+    /**
+     * Method to set the request timeout duration
      *
-     * @param {string} appKey application key
+     * @param {number} requestTimeoutDuration - request timeout duration in seconds
+     * @return {CountlyConfig}
      */
-      setAppKey(appKey: string): CountlyConfig;
+    setRequestTimeoutDuration(requestTimeoutDuration: number): CountlyConfig;
 
-      /**
-     * Method to set the device id
-     *
-     * @param {string} deviceID device id
+    /**
+     * Enables manual session handling.
      */
-      setDeviceID(deviceID: string): CountlyConfig;
+    enableManualSessionControl(): CountlyConfig;
 
-      /**
-     * Method to enable countly internal debugging logs
-     *
-     * @param {boolean} loggingEnabled enable
-     * if true, countly sdk would log to console.
+    /**
+     * Enables hybrid manual session handling.
      */
-      setLoggingEnabled(loggingEnabled: boolean): CountlyConfig;
+    enableManualSessionControlHybridMode(): CountlyConfig;
 
-      /**
-     * Method to enable crash reporting to report unhandled crashes to Countly
+    /**
+     * Adds custom request headers to outgoing network calls.
      */
-      enableCrashReporting(): CountlyConfig;
+    addCustomNetworkRequestHeaders(customHeaderValues: Record<string, string>): CountlyConfig;
 
-      /**
-     * Method to set if the consent feature is enabled.
-     *
-     * If set to true, no feature will work without consent being given.
-     *
-     * @param {boolean} shouldRequireConsent required. True: It is enabled. False:
-     * It is disabled.
+    /**
+     * Disables the gradual request queue cleaner on Android.
      */
-      setRequiresConsent(shouldRequireConsent: boolean): CountlyConfig;
+    disableGradualRequestCleaner(): CountlyConfig;
 
-      /**
-     * Method to give consent for specific features before init
-     *
-     * @param {string[]} consents consents e.g ['location', 'sessions',
-     * 'attribution', 'events', 'views', 'crashes', 'users',
-     * 'star-rating', 'apm', 'feedback', 'remote-config', 'metrics']
+    /**
+     * Disables automatic view restart behavior for manual view recordings.
      */
-      giveConsent(consents: readonly string[]): CountlyConfig;
+    disableViewRestartForManualRecording(): CountlyConfig;
 
-      /**
-     * Method to set the user initial location
-     *
-     * @param {string} locationCountryCode country code e.g 'TR'
-     * @param {string} locationCity city e.g 'Istanbul'
-     * @param {string} locationGpsCoordinates gps coordinates e.g '41.0082,28.9784'
-     * @param {string} locationIpAddress ip address e.g '10.2.33.12'
+    /**
+     * Enables automatic native view tracking during SDK initialization.
      */
-      setLocation(locationCountryCode: string, locationCity: string, locationGpsCoordinates: string, locationIpAddress: string): CountlyConfig;
+    enableAutomaticViewTracking(): CountlyConfig;
 
-      /**
-     * Method to enable tamper protection. This sets the optional salt to be
-     * used for calculating the checksum of requested data which will be sent
-     * with each request
-     *
-     * @param {string} tamperingProtectionSalt salt
+    /**
+     * Sets activity/view-controller class names to exclude from automatic native view tracking.
+     * Android expects fully qualified activity class names.
      */
-      enableParameterTamperingProtection(tamperingProtectionSalt: string): CountlyConfig;
+    setAutomaticViewTrackingExclusionList(automaticViewTrackingExclusionList: readonly string[]): CountlyConfig;
 
-      /**
-     * @deprecated in 24.4.0 : use 'countlyConfig.apm' interface instead of 'config.enableApm'.
-     * 
-     * Method to enable application performance monitoring which includes the recording of app start time.
+    /**
+     * Sets global segmentation values that should be attached to all recorded views.
      */
-      enableApm(): CountlyConfig;
-
-      /**
-     * @deprecated FOR PUSH VERSION ONLY
-     * 
-     * AdditionalIntentRedirectionChecks are enabled by default.
-     * This method should be used to disable them.
-     */
-      disableAdditionalIntentRedirectionChecks(): CountlyConfig;
-
-      /**
-     * Method to set the push token type
-     * @deprecated FOR PUSH VERSION ONLY
-     * 
-     * Use setPushTokenType() instead to set pushToken
-     * Use setPushNotificationChannelInformation() instead to set channel information
-     *
-     * @param {TokenType} tokenType token type
-     * @param {string} channelName channel name
-     * @param {string} channelDescription channel description
-     */
-      pushTokenType(tokenType: TokenType, channelName: string, channelDescription: string): CountlyConfig;
-
-      /**
-     * @deprecated FOR PUSH VERSION ONLY
-     * 
-     * Method to set the push token type
-     * NB: ONLY FOR iOS
-     *
-     * @param {Countly.messagingMode} tokenType token type
-     * Possible values include 'DEVELOPMENT', 'PRODUCTION', 'ADHOC'.
-     */
-      setPushTokenType(tokenType: messagingMode): CountlyConfig;
-
-      /**
-     * @deprecated FOR PUSH VERSION ONLY
-     * 
-     * Method to set the push channel name and description
-     * NB: ONLY FOR ANDROID
-     *
-     * @param {string} name channel name
-     * @param {string} description channel description
-     */
-      setPushNotificationChannelInformation(name: string, description: string): CountlyConfig;
-
-      /**
-     * @deprecated FOR PUSH VERSION ONLY
-     * 
-     * Method to set the push notification accent color
-     * NB: ONLY FOR ANDROID
-     *
-     * @param {string} accentColor notification accent color
-     * example '#000000'
-     */
-      setPushNotificationAccentColor(accentColor: string): CountlyConfig;
-
-      /**
-     * @deprecated FOR PUSH VERSION ONLY
-     * 
-     * Method to configure intent redirection check
-     *
-     * @param {string[]} allowedIntentClassNames allowed intent class names
-     * @param {string[]} allowedIntentPackageNames allowed intent package name
-     */
-      configureIntentRedirectionCheck(allowedIntentClassNames: readonly string[], allowedIntentPackageNames: readonly string[]): CountlyConfig;
-
-      /**
-     * Method to set star rating dialog text
-     *
-     * @param {string} starRatingTextTitle title
-     * @param {string} starRatingTextMessage message
-     * @param {string} starRatingTextDismiss dismiss
-     */
-      setStarRatingDialogTexts(starRatingTextTitle: string, starRatingTextMessage: string, starRatingTextDismiss: string): CountlyConfig;
-
-      /**
-     * Report direct user attribution
-     *
-     * @param {string} campaignType campaign type
-     * @param {object} campaignData campaign data
-     */
-      recordDirectAttribution(campaignType: string, campaignData: object): CountlyConfig;
-
-      /**
-     * Report indirect user attribution
-     *
-     * @param {object} attributionValues attribution values
-     */
-      recordIndirectAttribution(attributionValues: object): CountlyConfig;
-
-      /**
-       * Method to disable SDK behavior settings updates requests.
-       * @return {CountlyConfig}
-       */
-      disableSDKBehaviorSettingsUpdates(): CountlyConfig;
-
-      /**
-       * Method to disable backoff mechanism for requests.
-       * @return {CountlyConfig}
-       */
-      disableBackoffMechanism(): CountlyConfig;
-
-      /**
-       * Method to set SDK behavior settings.
-       *
-       * @param {object} settingsObject settings object
-       * @return {CountlyConfig}
-       */
-      setSDKBehaviorSettings(settingsObject: object): CountlyConfig;
-
-      /**
-       * Method to set the request timeout duration
-       *
-       * @param {number} requestTimeoutDuration - request timeout duration in seconds
-       * @return {CountlyConfig}
-       */
-      setRequestTimeoutDuration(requestTimeoutDuration: number): CountlyConfig;
+    setGlobalViewSegmentation(globalViewSegmentation: Segmentation): CountlyConfig;
   }
 
   export default CountlyConfig;
