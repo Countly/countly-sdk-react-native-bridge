@@ -1,0 +1,101 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "install expo example deps",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"--prefix",
+				"example/ExpoProject",
+				"install"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "install expo example deps",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"--prefix",
+				"example/ExpoProject",
+				"install"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run bridge jest tests",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"test",
+				"--",
+				"--runInBand"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "bridge jest",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"test",
+				"--",
+				"--runInBand"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "bridge jest validation",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"test",
+				"--",
+				"--runInBand"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "bridge jest",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"test",
+				"--",
+				"--runInBand"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "bridge jest",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"test",
+				"--",
+				"--runInBand"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "bridge jest",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"test",
+				"--",
+				"--runInBand"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		}
+	]
+}

@@ -15,6 +15,10 @@ python create_app.py
 
 It will give you an option to setup Expo or Create React App as the template.
 
+The generated app installs the local bridge package from this repository, so unpublished native and JS changes are available immediately.
+It also includes an "Integration Tests" screen and a shared `testing/` folder inside the copied example app so you can run RN-driven queue assertions on iOS or Android.
+Starter scenarios now cover sessions, views, events, consent-gated events, merged device ID changes, user-details flushes, metrics requests, and direct request capture for server config and remote config.
+
 Then you can start the app by going to the created folder (AwesomeProject or ExpoProject) and:
 
 ```bash
@@ -27,7 +31,7 @@ npx expo run android
 ```
 
 ## Manual App Creation
-For more information you can check [here](https://reactnative.dev/docs/getting-started-without-a-framework).
+For more information, see the [React Native getting started guide without a framework](https://reactnative.dev/docs/getting-started-without-a-framework).
 
 If you want to set up the app manually instead, then you should run:
 
@@ -141,19 +145,20 @@ STEP 3: Updating NotificationService file
         Under `AwesomeProject(Project) -> CountlyNSE(Folder) -> NotificationService.m`
         Add import header `#import "CountlyNotificationService.h"`
         Add the following line at the end of `didReceiveNotificationRequest:withContentHandler:`
-        
-        - (void)didReceiveNotificationRequest:(UNNotificationRequest *)request withContentHandler:(void (^)(UNNotificationContent * _Nonnull))contentHandler
-        {
-            self.contentHandler = contentHandler;
-            self.bestAttemptContent = [request.content mutableCopy];    
-            //delete existing template code, and add this line
-            [CountlyNotificationService didReceiveNotificationRequest:request withContentHandler:contentHandler];
-        }
-        
 
-        Note: Please make sure you configure App Transport Security setting in extension's Info.plist file also, just like the main application. Otherwise media attachments from non-https sources can not be loaded.
-        
-        Note: Please make sure you check Deployment Target version of extension target is 10, not 10.3 (or whatever minor version Xcode set automatically). Otherwise users running iOS versions lower than Deployment Target value can not get rich push notifications.
+```objc
+- (void)didReceiveNotificationRequest:(UNNotificationRequest *)request withContentHandler:(void (^)(UNNotificationContent * _Nonnull))contentHandler
+{
+  self.contentHandler = contentHandler;
+  self.bestAttemptContent = [request.content mutableCopy];
+  //delete existing template code, and add this line
+  [CountlyNotificationService didReceiveNotificationRequest:request withContentHandler:contentHandler];
+}
+```
 
-        Note: To send push messages to applications that are Debug build use Countly.messagingMode.DEVELOPMENT, for App Store built ones use Countly.messagingMode.PRODUCTION, and for TestFlight/Ad Hoc builds use Countly.messagingMode.ADHOC.
+Note: Please make sure you configure App Transport Security setting in extension's Info.plist file also, just like the main application. Otherwise media attachments from non-https sources can not be loaded.
+
+Note: Please make sure you check Deployment Target version of extension target is 10, not 10.3 (or whatever minor version Xcode set automatically). Otherwise users running iOS versions lower than Deployment Target value can not get rich push notifications.
+
+Note: To send push messages to applications that are Debug build use Countly.messagingMode.DEVELOPMENT, for App Store built ones use Countly.messagingMode.PRODUCTION, and for TestFlight/Ad Hoc builds use Countly.messagingMode.ADHOC.
         

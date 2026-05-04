@@ -83,6 +83,14 @@ const timedEventWithSumAndSegment = () => {
         Countly.events.endEvent("timedEventWithSumAndSegment", { Country: "India", Age: 21 }, 1, 0.99);
     }, 1000);
 };
+
+const cancelTimedEvent = () => {
+    Countly.events.startEvent("timedEventToCancel");
+
+    setTimeout(() => {
+        Countly.events.cancelEvent("timedEventToCancel");
+    }, 1000);
+};
 // TIMED EVENTS
 
 // Test Bad Values
@@ -105,18 +113,19 @@ const eventSendThreshold = () => {
     Countly.setEventSendThreshold(10);
 };
 
-function EventScreen({ navigation }) {
+function EventScreen() {
     return (
         <SafeAreaView>
             <ScrollView>
                 <CountlyButton onPress={basicEvent} title="Basic Event" color="#e0e0e0" />
                 <CountlyButton onPress={eventWithSum} title="Event with Sum" color="#e0e0e0" />
                 <CountlyButton onPress={eventWithSegment} title="Event with Segment" color="#e0e0e0" />
-                <CountlyButton onPress={eventWithSumAndSegment} title="Even with Sum and Segment" color="#841584" />
+                <CountlyButton onPress={eventWithSumAndSegment} title="Event with Sum and Segment" color="#841584" />
                 <CountlyButton onPress={startEvent} title="Timed event" color="#e0e0e0" />
                 <CountlyButton onPress={timedEventWithSum} title="Timed events with Sum" color="#e0e0e0" />
                 <CountlyButton onPress={timedEventWithSegment} title="Timed events with Segment" color="#e0e0e0" />
                 <CountlyButton onPress={timedEventWithSumAndSegment} title="Timed events with Sum and Segment" color="#e0e0e0" />
+                <CountlyButton onPress={cancelTimedEvent} title="Cancel Timed Event" color="#e0e0e0" />
                 <CountlyButton onPress={testEventWithBadValues} title="Test Event With Bad Values" color="#e0e0e0" />
                 <CountlyButton onPress={eventSendThreshold} title="Set Event Threshold" color="#00b5ad" />
             </ScrollView>

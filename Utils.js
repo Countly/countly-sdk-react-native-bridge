@@ -103,11 +103,6 @@ function configToJson(config) {
             json.trackAppStartTime = config.apm.trackAppStartTime;
             L.i("init configuration, APM track app start time");
         }
-        // Legacy APM
-        if (config._apmLegacy) {
-            json.enableApm = true;
-            L.i("init configuration, APM start time recording enabled");
-        }
         // APM END --------------------------------------------
         if (config.experimental.previousNameRecording) {
             json.enablePreviousNameRecording = true;
@@ -124,6 +119,10 @@ function configToJson(config) {
         if (config.content.contentCallback) {
             json.setGlobalContentCallback = true;
             L.i("init configuration, Set global content callback");
+        }
+        if (config.content.webViewDisplayOption) {
+            json.webViewDisplayOption = config.content.webViewDisplayOption;
+            L.i(`init configuration, WebView display option: ${config.content.webViewDisplayOption}`);
         }
         if (config._disableIntentRedirectionCheck) {
             json.disableAdditionalIntentRedirectionChecks = true;
@@ -151,7 +150,7 @@ function configToJson(config) {
             json.allowedIntentClassNames = config.allowedIntentClassNames;
             L.i(`init configuration, Allowed intent class names: ${config.allowedIntentClassNames}`);
         }
-        if (config.allowedIntentClassNames) {
+        if (config.allowedIntentPackageNames) {
             json.allowedIntentPackageNames = config.allowedIntentPackageNames;
             L.i(`init configuration, Allowed intent package names: ${config.allowedIntentPackageNames}`);
         }
@@ -175,6 +174,30 @@ function configToJson(config) {
         if (config._requestTimeoutDuration) {
             json.requestTimeoutDuration = config._requestTimeoutDuration;
             L.i(`init configuration, Request timeout duration: ${config._requestTimeoutDuration}`);
+        }
+        if (config._enableAutomaticViewTracking) {
+            json.enableAutomaticViewTracking = true;
+            L.i("init configuration, Enabled automatic view tracking");
+        }
+        if (config._automaticViewTrackingExclusionList) {
+            json.automaticViewTrackingExclusionList = config._automaticViewTrackingExclusionList;
+            L.i(`init configuration, Automatic view tracking exclusion list: ${JSON.stringify(config._automaticViewTrackingExclusionList)}`);
+        }
+        if (config._globalViewSegmentation) {
+            json.globalViewSegmentation = config._globalViewSegmentation;
+            L.i(`init configuration, Global view segmentation: ${JSON.stringify(config._globalViewSegmentation)}`);
+        }
+        if (config._manualSessionControl) {
+            json.manualSessionHandling = true;
+            L.i("init configuration, Enabled manual session control");
+        }
+        if (config._manualSessionControlHybridMode) {
+            json.enableManualSessionControlHybridMode = true;
+            L.i("init configuration, Enabled hybrid manual session control");
+        }
+        if (config._customNetworkRequestHeaders) {
+            json.customNetworkRequestHeaders = config._customNetworkRequestHeaders;
+            L.i(`init configuration, Custom network request headers: ${JSON.stringify(config._customNetworkRequestHeaders)}`);
         }
         if (config.attributionValues) {
             json.attributionValues = config.attributionValues;
@@ -237,6 +260,14 @@ function configToJson(config) {
         if (config._disableBackoff) {
             L.i("init configuration, disabled backoff mechanism");
             json.disableBackoffMechanism = true;
+        }
+        if (config._disableGradualRequestCleaner) {
+            L.i("init configuration, disabled gradual request cleaner");
+            json.disableGradualRequestCleaner = true;
+        }
+        if (config._disableViewRestartForManualRecording) {
+            L.i("init configuration, disabled view restart for manual recordings");
+            json.disableViewRestartForManualRecording = true;
         }
         if (config._sdkBehaviorSettings) {
             L.i(`init configuration, SDK behavior settings: ${JSON.stringify(config._sdkBehaviorSettings)}`);

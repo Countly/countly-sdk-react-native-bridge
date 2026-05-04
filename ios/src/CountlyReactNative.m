@@ -4,15 +4,31 @@
 #import <React/RCTUtils.h>
 
 #import "Countly.h"
+
 #import "CountlyCommon.h"
-#import "CountlyConfig.h"
-#import "CountlyConnectionManager.h"
+#import "CountlyPersistency.h"
+#import "CountlyPushNotifications.h"
 #import "CountlyReactNative.h"
-#import "CountlyRemoteConfig.h"
 
 #ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
 #import "CountlyRNPushNotifications.h"
 #endif
+
+@interface CountlyPersistency ()
+@property (nonatomic, strong) NSMutableArray *queuedRequests;
+@property (nonatomic, strong) NSMutableArray *recordedEvents;
+@end
+
+static NSString *const kCountlyRNHandledRequestKey = @"CountlyRNHandledRequestKey";
+
+@interface CountlyRNRequestCaptureProtocol : NSURLProtocol
+@end
+
+@interface CountlyRNRequestCaptureProtocol () <NSURLSessionDataDelegate>
+@property (nonatomic, strong) NSURLSession *session;
+@property (nonatomic, strong) NSURLSessionDataTask *task;
+@property (nonatomic, strong) NSMutableData *responseData;
+@end
 
 #if DEBUG
 #define COUNTLY_RN_LOG(fmt, ...) CountlyRNInternalLog(fmt, ##__VA_ARGS__)
@@ -22,9 +38,10 @@
 
 @interface CountlyFeedbackWidget ()
 + (CountlyFeedbackWidget *)createWithDictionary:(NSDictionary *)dictionary;
+@property (nonatomic, readonly) NSString *widgetVersion;
 @end
 
-NSString *const kCountlyReactNativeSDKVersion = @"25.4.1";
+NSString *const kCountlyReactNativeSDKVersion = @"26.1.0";
 NSString *const kCountlyReactNativeSDKName = @"js-rnb-ios";
 
 CLYPushTestMode const CLYPushTestModeProduction = @"CLYPushTestModeProduction";
@@ -33,6 +50,10 @@ CountlyConfig *config = nil; // alloc here
 NSMutableArray<CLYFeature> *countlyFeatures = nil;
 NSArray<CountlyFeedbackWidget *> *feedbackWidgetList = nil;
 BOOL enablePushNotifications = true;
+BOOL countlyRNRequestCaptureEnabled = false;
+NSMutableArray<NSString *> *countlyRNCapturedRequests = nil;
+NSURLSessionConfiguration *countlyRNForwardSessionConfiguration = nil;
+NSString *countlyRNCapturedHost = nil;
 
 NSString *const NAME_KEY = @"name";
 NSString *const USERNAME_KEY = @"username";
@@ -50,6 +71,147 @@ NSString *const widgetClosedCallbackName = @"widgetClosedCallback";
 NSString *const ratingWidgetCallbackName = @"ratingWidgetCallback";
 NSString *const pushNotificationCallbackName = @"pushNotificationCallback";
 NSString *const contentCallbackName = @"globalContentCallback";
+
+static void CountlyRNEnsureCapturedRequests(void) {
+    if (countlyRNCapturedRequests == nil) {
+        countlyRNCapturedRequests = NSMutableArray.new;
+    }
+}
+
+static void CountlyRNResetCapturedRequests(void) {
+    CountlyRNEnsureCapturedRequests();
+    [countlyRNCapturedRequests removeAllObjects];
+}
+
+static NSData *CountlyRNBodyDataFromRequest(NSURLRequest *request) {
+    if (request.HTTPBody != nil) {
+        return request.HTTPBody;
+    }
+
+    if (request.HTTPBodyStream == nil) {
+        return nil;
+    }
+
+    NSInputStream *bodyStream = request.HTTPBodyStream;
+    [bodyStream open];
+
+    NSMutableData *bodyData = NSMutableData.data;
+    uint8_t buffer[1024];
+    NSInteger bytesRead = 0;
+    while ((bytesRead = [bodyStream read:buffer maxLength:sizeof(buffer)]) > 0) {
+        [bodyData appendBytes:buffer length:(NSUInteger)bytesRead];
+    }
+
+    [bodyStream close];
+    return bodyData.length > 0 ? bodyData.copy : nil;
+}
+
+static NSString *CountlyRNQueryLikePayloadFromRequest(NSURLRequest *request) {
+    NSData *bodyData = CountlyRNBodyDataFromRequest(request);
+    if (bodyData.length > 0) {
+        NSString *bodyString = [[NSString alloc] initWithData:bodyData encoding:NSUTF8StringEncoding];
+        if (bodyString.length > 0) {
+            return bodyString;
+        }
+    }
+
+    return request.URL.query ?: @"";
+}
+
+static void CountlyRNRecordCapturedRequest(NSURLRequest *request, NSString *kind) {
+    CountlyRNEnsureCapturedRequests();
+
+    NSString *payload = CountlyRNQueryLikePayloadFromRequest(request) ?: @"";
+    NSMutableDictionary *capturedRequest = [[NSMutableDictionary alloc] init];
+    capturedRequest[@"kind"] = kind ?: @"network";
+    capturedRequest[@"url"] = request.URL.absoluteString ?: @"";
+    capturedRequest[@"path"] = request.URL.path ?: @"";
+    capturedRequest[@"httpMethod"] = request.HTTPMethod ?: @"GET";
+    capturedRequest[@"requestData"] = payload;
+
+    NSError *error = nil;
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:capturedRequest options:0 error:&error];
+    if (error == nil && jsonData != nil) {
+        NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+        if (jsonString.length > 0) {
+            [countlyRNCapturedRequests addObject:jsonString];
+        }
+    }
+}
+
+static BOOL CountlyRNShouldCaptureRequest(NSURLRequest *request) {
+    if (!countlyRNRequestCaptureEnabled || request.URL == nil) {
+        return NO;
+    }
+
+    if ([NSURLProtocol propertyForKey:kCountlyRNHandledRequestKey inRequest:request]) {
+        return NO;
+    }
+
+    if (countlyRNCapturedHost.length == 0) {
+        return NO;
+    }
+
+    return [request.URL.host isEqualToString:countlyRNCapturedHost];
+}
+
+static NSURLSessionConfiguration *CountlyRNRequestCaptureConfiguration(NSURLSessionConfiguration *sourceConfiguration) {
+    NSURLSessionConfiguration *sessionConfiguration = [sourceConfiguration copy] ?: NSURLSessionConfiguration.defaultSessionConfiguration;
+    NSMutableArray<Class> *protocolClasses = [NSMutableArray arrayWithArray:sessionConfiguration.protocolClasses ?: @[]];
+    if (![protocolClasses containsObject:CountlyRNRequestCaptureProtocol.class]) {
+        [protocolClasses insertObject:CountlyRNRequestCaptureProtocol.class atIndex:0];
+    }
+    sessionConfiguration.protocolClasses = protocolClasses;
+
+    countlyRNForwardSessionConfiguration = [sourceConfiguration copy] ?: NSURLSessionConfiguration.defaultSessionConfiguration;
+    NSMutableArray<Class> *forwardProtocolClasses = [NSMutableArray arrayWithArray:countlyRNForwardSessionConfiguration.protocolClasses ?: @[]];
+    [forwardProtocolClasses removeObject:CountlyRNRequestCaptureProtocol.class];
+    countlyRNForwardSessionConfiguration.protocolClasses = forwardProtocolClasses;
+
+    return sessionConfiguration;
+}
+
+static NSData *CountlyRNCapturedResponseDataForRequest(NSURLRequest *request) {
+    NSString *path = request.URL.path ?: @"";
+
+    if ([path isEqualToString:@"/i"]) {
+        return [@"{\"result\":\"Success\"}" dataUsingEncoding:NSUTF8StringEncoding];
+    }
+
+    return [@"{}" dataUsingEncoding:NSUTF8StringEncoding];
+}
+
+@implementation CountlyRNRequestCaptureProtocol
+
++ (BOOL)canInitWithRequest:(NSURLRequest *)request {
+    return CountlyRNShouldCaptureRequest(request);
+}
+
++ (NSURLRequest *)canonicalRequestForRequest:(NSURLRequest *)request {
+    return request;
+}
+
+- (void)startLoading {
+    NSMutableURLRequest *mutableRequest = [self.request mutableCopy];
+    [NSURLProtocol setProperty:@YES forKey:kCountlyRNHandledRequestKey inRequest:mutableRequest];
+    CountlyRNRecordCapturedRequest(mutableRequest, @"direct");
+
+    NSData *responseData = CountlyRNCapturedResponseDataForRequest(mutableRequest);
+    NSHTTPURLResponse *response = [[NSHTTPURLResponse alloc] initWithURL:mutableRequest.URL statusCode:200 HTTPVersion:nil headerFields:@{ @"Content-Type": @"application/json" }];
+    [self.client URLProtocol:self didReceiveResponse:response cacheStoragePolicy:NSURLCacheStorageNotAllowed];
+    [self.client URLProtocol:self didLoadData:responseData];
+    [self.client URLProtocolDidFinishLoading:self];
+}
+
+- (void)stopLoading {
+    [self.task cancel];
+    [self.session invalidateAndCancel];
+    self.task = nil;
+    self.session = nil;
+    self.responseData = nil;
+}
+
+@end
 
 @implementation CountlyReactNative
 NSString *const kCountlyNotificationPersistencyKey = @"kCountlyNotificationPersistencyKey";
@@ -72,6 +234,41 @@ NSString *const kCountlyNotificationPersistencyKey = @"kCountlyNotificationPersi
 
 - (NSArray<NSString *> *)supportedEvents {
     return @[ pushNotificationCallbackName, ratingWidgetCallbackName, widgetShownCallbackName, widgetClosedCallbackName, contentCallbackName ];
+}
+
+- (NSString *)toJSONString:(id)object {
+    if (!object || ![NSJSONSerialization isValidJSONObject:object]) {
+        return nil;
+    }
+
+    NSError *error = nil;
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:object options:0 error:&error];
+    if (error || !jsonData) {
+        return nil;
+    }
+
+    return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+}
+
+- (NSDictionary *)segmentationDictionaryFromArguments:(NSArray *)arguments startIndex:(NSInteger)startIndex {
+    if (arguments == nil || arguments.count <= startIndex) {
+        return nil;
+    }
+
+    NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
+    for (NSInteger index = startIndex; index + 1 < arguments.count; index += 2) {
+        id key = [arguments objectAtIndex:index];
+        if (![key isKindOfClass:[NSString class]]) {
+            continue;
+        }
+
+        id value = [arguments objectAtIndex:index + 1];
+        if (value != nil && value != (id)kCFNull) {
+            dict[(NSString *)key] = value;
+        }
+    }
+
+    return dict.count > 0 ? dict : nil;
 }
 
 RCT_EXPORT_MODULE();
@@ -191,6 +388,14 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
             [self sendEventWithName:contentCallbackName body:contentDataString];
         }];
     }
+    NSString *webViewDisplayOption = json[@"webViewDisplayOption"];
+    if ([webViewDisplayOption isKindOfClass:[NSString class]]) {
+        if ([webViewDisplayOption isEqualToString:@"SAFE_AREA"]) {
+            [config.content setWebviewDisplayOption:SAFE_AREA];
+        } else {
+            [config.content setWebviewDisplayOption:IMMERSIVE];
+        }
+    }
     // APM ------------------------------------------------
     NSNumber *enableForegroundBackground = json[@"enableForegroundBackground"];
     if (enableForegroundBackground) {
@@ -218,6 +423,18 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
     }
     if (json[@"enableVisibilityTracking"]) {
         config.experimental.enableVisibiltyTracking = YES;
+    }
+    NSNumber *enableAutomaticViewTracking = json[@"enableAutomaticViewTracking"];
+    if (enableAutomaticViewTracking) {
+        config.enableAutomaticViewTracking = [enableAutomaticViewTracking boolValue];
+    }
+    NSArray *automaticViewTrackingExclusionList = json[@"automaticViewTrackingExclusionList"];
+    if ([automaticViewTrackingExclusionList isKindOfClass:[NSArray class]]) {
+        config.automaticViewTrackingExclusionList = automaticViewTrackingExclusionList;
+    }
+    NSDictionary *globalViewSegmentation = json[@"globalViewSegmentation"];
+    if ([globalViewSegmentation isKindOfClass:[NSDictionary class]]) {
+        config.globalViewSegmentation = globalViewSegmentation;
     }
 
     if (json[@"crashReporting"]) {
@@ -288,6 +505,41 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
         }
     }
 
+    if (json[@"manualSessionHandling"]) {
+        config.manualSessionHandling = [json[@"manualSessionHandling"] boolValue];
+    }
+    if (json[@"enableManualSessionControlHybridMode"]) {
+        config.enableManualSessionControlHybridMode = [json[@"enableManualSessionControlHybridMode"] boolValue];
+    }
+
+    NSDictionary *customNetworkRequestHeaders = json[@"customNetworkRequestHeaders"];
+    if ([customNetworkRequestHeaders isKindOfClass:[NSDictionary class]] && customNetworkRequestHeaders.count > 0) {
+        NSURLSessionConfiguration *sessionConfiguration = config.URLSessionConfiguration ?: NSURLSessionConfiguration.defaultSessionConfiguration;
+        NSMutableDictionary *headerValues = [[NSMutableDictionary alloc] init];
+        if ([sessionConfiguration.HTTPAdditionalHeaders isKindOfClass:[NSDictionary class]]) {
+            [headerValues addEntriesFromDictionary:(NSDictionary *)sessionConfiguration.HTTPAdditionalHeaders];
+        }
+
+        [customNetworkRequestHeaders enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
+            if ([key isKindOfClass:[NSString class]] && [obj isKindOfClass:[NSString class]] && [(NSString *)key length] > 0) {
+                headerValues[key] = obj;
+            }
+        }];
+
+        sessionConfiguration.HTTPAdditionalHeaders = [headerValues copy];
+        config.URLSessionConfiguration = sessionConfiguration;
+    }
+
+    if (json[@"disableViewRestartForManualRecording"]) {
+        config.disableViewRestartForManualRecording = [json[@"disableViewRestartForManualRecording"] boolValue];
+    }
+
+    NSURLSessionConfiguration *sessionConfiguration = config.URLSessionConfiguration ?: NSURLSessionConfiguration.defaultSessionConfiguration;
+    config.URLSessionConfiguration = CountlyRNRequestCaptureConfiguration(sessionConfiguration);
+
+    NSURLComponents *serverURLComponents = [NSURLComponents componentsWithString:serverurl ?: @""];
+    countlyRNCapturedHost = serverURLComponents.host;
+
     if (json[@"disableSDKBehaviorSettingsUpdates"]) {
         config.disableSDKBehaviorSettingsUpdates = [json[@"disableSDKBehaviorSettingsUpdates"] boolValue];
     }
@@ -311,7 +563,11 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
 
 RCT_EXPORT_METHOD(setID : (NSString *)newDeviceID) { 
     dispatch_async(dispatch_get_main_queue(), ^{ 
-        [Countly.sharedInstance setID:newDeviceID];
+        if ([newDeviceID isEqualToString:@"TemporaryDeviceID"]) {
+            [Countly.sharedInstance enableTemporaryDeviceIDMode];
+        } else {
+            [Countly.sharedInstance setID:newDeviceID];
+        }
     });
 }
 
@@ -339,13 +595,95 @@ RCT_EXPORT_METHOD(recordEvent : (NSDictionary *)arguments) {
 
 RCT_EXPORT_METHOD(recordView : (NSArray *)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      NSString *recordView = [arguments objectAtIndex:0];
-      NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
-      for (int i = 1, il = (int)arguments.count; i < il; i += 2) {
-          dict[[arguments objectAtIndex:i]] = [arguments objectAtIndex:i + 1];
-      }
-      [Countly.sharedInstance recordView:recordView segmentation:dict];
+            NSString *recordView = arguments.count > 0 ? [arguments objectAtIndex:0] : nil;
+            NSDictionary *dict = [self segmentationDictionaryFromArguments:arguments startIndex:1];
+            [[Countly.sharedInstance views] startAutoStoppedView:recordView segmentation:dict];
     });
+}
+
+RCT_REMAP_METHOD(startAutoStoppedView, params : (NSArray *)arguments startAutoStoppedViewWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSString *viewName = arguments.count > 0 ? [arguments objectAtIndex:0] : nil;
+            NSDictionary *dict = [self segmentationDictionaryFromArguments:arguments startIndex:1];
+            NSString *viewID = [[Countly.sharedInstance views] startAutoStoppedView:viewName segmentation:dict];
+            resolve(viewID ?: [NSNull null]);
+        });
+}
+
+RCT_REMAP_METHOD(startView, params : (NSArray *)arguments startViewWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSString *viewName = arguments.count > 0 ? [arguments objectAtIndex:0] : nil;
+            NSDictionary *dict = [self segmentationDictionaryFromArguments:arguments startIndex:1];
+            NSString *viewID = [[Countly.sharedInstance views] startView:viewName segmentation:dict];
+            resolve(viewID ?: [NSNull null]);
+        });
+}
+
+RCT_EXPORT_METHOD(stopViewWithName : (NSArray *)arguments) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSString *viewName = arguments.count > 0 ? [arguments objectAtIndex:0] : nil;
+            NSDictionary *dict = [self segmentationDictionaryFromArguments:arguments startIndex:1];
+            [[Countly.sharedInstance views] stopViewWithName:viewName segmentation:dict];
+        });
+}
+
+RCT_EXPORT_METHOD(stopViewWithID : (NSArray *)arguments) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSString *viewID = arguments.count > 0 ? [arguments objectAtIndex:0] : nil;
+            NSDictionary *dict = [self segmentationDictionaryFromArguments:arguments startIndex:1];
+            [[Countly.sharedInstance views] stopViewWithID:viewID segmentation:dict];
+        });
+}
+
+RCT_EXPORT_METHOD(stopAllViews : (NSArray *)arguments) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSDictionary *dict = [self segmentationDictionaryFromArguments:arguments startIndex:0];
+            [[Countly.sharedInstance views] stopAllViews:dict];
+        });
+}
+
+RCT_EXPORT_METHOD(pauseViewWithID : (NSArray *)arguments) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSString *viewID = arguments.count > 0 ? [arguments objectAtIndex:0] : nil;
+            [[Countly.sharedInstance views] pauseViewWithID:viewID];
+        });
+}
+
+RCT_EXPORT_METHOD(resumeViewWithID : (NSArray *)arguments) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSString *viewID = arguments.count > 0 ? [arguments objectAtIndex:0] : nil;
+            [[Countly.sharedInstance views] resumeViewWithID:viewID];
+        });
+}
+
+RCT_EXPORT_METHOD(addSegmentationToViewWithID : (NSArray *)arguments) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSString *viewID = arguments.count > 0 ? [arguments objectAtIndex:0] : nil;
+            NSDictionary *dict = [self segmentationDictionaryFromArguments:arguments startIndex:1];
+            [[Countly.sharedInstance views] addSegmentationToViewWithID:viewID segmentation:dict];
+        });
+}
+
+RCT_EXPORT_METHOD(addSegmentationToViewWithName : (NSArray *)arguments) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSString *viewName = arguments.count > 0 ? [arguments objectAtIndex:0] : nil;
+            NSDictionary *dict = [self segmentationDictionaryFromArguments:arguments startIndex:1];
+            [[Countly.sharedInstance views] addSegmentationToViewWithName:viewName segmentation:dict];
+        });
+}
+
+RCT_EXPORT_METHOD(setGlobalViewSegmentation : (NSArray *)arguments) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSDictionary *dict = [self segmentationDictionaryFromArguments:arguments startIndex:0];
+            [[Countly.sharedInstance views] setGlobalViewSegmentation:dict];
+        });
+}
+
+RCT_EXPORT_METHOD(updateGlobalViewSegmentation : (NSArray *)arguments) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSDictionary *dict = [self segmentationDictionaryFromArguments:arguments startIndex:0];
+            [[Countly.sharedInstance views] updateGlobalViewSegmentation:dict];
+        });
 }
 
 RCT_EXPORT_METHOD(setLoggingEnabled : (NSArray *)arguments) {
@@ -391,25 +729,6 @@ RCT_EXPORT_METHOD(sendPushToken : (NSArray *)arguments) {
       NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
       [request setHTTPMethod:@"GET"];
       [request setURL:[NSURL URLWithString:urlString]];
-    });
-#endif
-}
-RCT_EXPORT_METHOD(pushTokenType : (NSArray *)arguments) {
-#ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
-    dispatch_async(dispatch_get_main_queue(), ^{
-      if (config == nil) {
-          config = CountlyConfig.new;
-      }
-      config.sendPushTokenAlways = YES;
-      config.pushTestMode = CLYPushTestModeProduction;
-      NSString *tokenType = [arguments objectAtIndex:0];
-      if ([tokenType isEqualToString:@"1"]) {
-          config.pushTestMode = CLYPushTestModeDevelopment;
-      } else if ([tokenType isEqualToString:@"2"]) {
-          config.pushTestMode = CLYPushTestModeTestFlightOrAdHoc;
-      }
-
-      CountlyPushNotifications.sharedInstance.pushTestMode = config.pushTestMode;
     });
 #endif
 }
@@ -506,16 +825,6 @@ RCT_EXPORT_METHOD(setHttpPostForced : (NSArray *)arguments) {
     });
 }
 
-RCT_EXPORT_METHOD(enableParameterTamperingProtection : (NSArray *)arguments) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-      NSString *salt = [arguments objectAtIndex:0];
-      if (config == nil) {
-          config = CountlyConfig.new;
-      }
-      config.secretSalt = salt;
-    });
-}
-
 RCT_EXPORT_METHOD(pinnedCertificates : (NSArray *)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^{
       NSString *certificateName = [arguments objectAtIndex:0];
@@ -559,41 +868,6 @@ RCT_EXPORT_METHOD(endEvent : (NSDictionary *)arguments) {
             }
         }
         [[Countly sharedInstance] endEvent:eventName segmentation:dict count:countInt sum:sumFloat];
-    });
-}
-
-RCT_EXPORT_METHOD(setLocationInit : (NSArray *)arguments) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-      if (config == nil) {
-          config = CountlyConfig.new;
-      }
-      NSString *countryCode = [arguments objectAtIndex:0];
-      NSString *city = [arguments objectAtIndex:1];
-      NSString *locationString = [arguments objectAtIndex:2];
-      NSString *ipAddress = [arguments objectAtIndex:3];
-
-      if (locationString != nil && ![locationString isEqualToString:@"null"] && [locationString containsString:@","]) {
-          @try {
-              NSArray *locationArray = [locationString componentsSeparatedByString:@","];
-              NSString *latitudeString = [locationArray objectAtIndex:0];
-              NSString *longitudeString = [locationArray objectAtIndex:1];
-
-              double latitudeDouble = [latitudeString doubleValue];
-              double longitudeDouble = [longitudeString doubleValue];
-              config.location = (CLLocationCoordinate2D){latitudeDouble, longitudeDouble};
-          } @catch (NSException *exception) {
-              COUNTLY_RN_LOG(@"Invalid location: %@", locationString);
-          }
-      }
-      if (city != nil && ![city isEqualToString:@"null"]) {
-          config.city = city;
-      }
-      if (countryCode != nil && ![countryCode isEqualToString:@"null"]) {
-          config.ISOCountryCode = countryCode;
-      }
-      if (ipAddress != nil && ![ipAddress isEqualToString:@"null"]) {
-          config.IP = ipAddress;
-      }
     });
 }
 
@@ -656,15 +930,6 @@ RCT_EXPORT_METHOD(disableLocation) {
     return locationCoordinate;
 }
 
-RCT_EXPORT_METHOD(enableCrashReporting) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-      if (config == nil) {
-          config = CountlyConfig.new;
-      }
-      [self addCountlyFeature:CLYCrashReporting];
-    });
-}
-
 RCT_EXPORT_METHOD(addCrashLog : (NSArray *)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^{
       NSString *logs = [arguments objectAtIndex:0];
@@ -716,6 +981,40 @@ RCT_EXPORT_METHOD(recordMetrics : (NSArray *)arguments) {
     });
 }
 
+RCT_EXPORT_METHOD(startSession) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [Countly.sharedInstance beginSession];
+        });
+}
+
+RCT_EXPORT_METHOD(updateSession) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [Countly.sharedInstance updateSession];
+        });
+}
+
+RCT_EXPORT_METHOD(endSession) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [Countly.sharedInstance endSession];
+        });
+}
+
+RCT_EXPORT_METHOD(addCustomNetworkRequestHeaders : (NSArray *)arguments) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSMutableDictionary<NSString *, NSString *> *customHeaderValues = [[NSMutableDictionary alloc] init];
+            for (int i = 0, il = (int)arguments.count; i < il; i += 2) {
+                    if (i + 1 < il) {
+                            NSString *key = [arguments objectAtIndex:i];
+                            NSString *value = [arguments objectAtIndex:i + 1];
+                            if (key.length > 0 && value != nil) {
+                                    customHeaderValues[key] = value;
+                            }
+                    }
+            }
+            [Countly.sharedInstance addCustomNetworkRequestHeaders:customHeaderValues];
+        });
+}
+
 RCT_EXPORT_METHOD(logJSException : (NSString *)errTitle withMessage : (NSString *)message withStack : (NSString *)stackTrace) {
     dispatch_async(dispatch_get_main_queue(), ^{
       NSException *myException = [NSException exceptionWithName:errTitle reason:message userInfo:@{@"nonfatal" : @"1"}];
@@ -727,9 +1026,9 @@ RCT_EXPORT_METHOD(logJSException : (NSString *)errTitle withMessage : (NSString 
 RCT_REMAP_METHOD(userData_setProperty, params : (NSArray *)arguments userDataSetPropertyWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
       NSString *keyName = [arguments objectAtIndex:0];
-      NSString *keyValue = [arguments objectAtIndex:1];
+            id keyValue = [arguments objectAtIndex:1];
 
-      [Countly.user set:keyName value:keyValue];
+            [self setCustomUserProperty:keyName value:keyValue];
       resolve(@"Success");
     });
 }
@@ -830,8 +1129,6 @@ RCT_REMAP_METHOD(userData_pullValue, params : (NSArray *)arguments userDataPullV
 RCT_REMAP_METHOD(userDataBulk_setUserProperties, params : (NSDictionary *)userProperties userDataBulkSetUserPropertiesWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
       [self setUserDataIntenral:userProperties];
-      NSDictionary *customeProperties = [self removePredefinedUserProperties:userProperties];
-      Countly.user.custom = customeProperties;
       resolve(@"Success");
     });
 }
@@ -846,9 +1143,9 @@ RCT_REMAP_METHOD(userDataBulk_save, params : (NSArray *)arguments userDataBulkSa
 RCT_REMAP_METHOD(userDataBulk_setProperty, params : (NSArray *)arguments userDataBulkSetPropertyWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
       NSString *keyName = [arguments objectAtIndex:0];
-      NSString *keyValue = [arguments objectAtIndex:1];
+            id keyValue = [arguments objectAtIndex:1];
 
-      [Countly.user set:keyName value:keyValue];
+            [self setCustomUserProperty:keyName value:keyValue];
       resolve(@"Success");
     });
 }
@@ -941,25 +1238,6 @@ RCT_REMAP_METHOD(userDataBulk_pullValue, params : (NSArray *)arguments userDataB
 
       [Countly.user pull:keyName value:keyValue];
       resolve(@"Success");
-    });
-}
-
-RCT_EXPORT_METHOD(setRequiresConsent : (NSArray *)arguments) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-      if (config == nil) {
-          config = CountlyConfig.new;
-      }
-      BOOL consentFlag = [[arguments objectAtIndex:0] boolValue];
-      config.requiresConsent = consentFlag;
-    });
-}
-
-RCT_EXPORT_METHOD(giveConsentInit : (NSArray *)arguments) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-      if (config == nil) {
-          config = CountlyConfig.new;
-      }
-      config.consents = arguments;
     });
 }
 
@@ -1081,13 +1359,6 @@ RCT_EXPORT_METHOD(getRemoteConfigValueForKey : (NSArray *)arguments callback : (
     });
 }
 
-RCT_EXPORT_METHOD(setStarRatingDialogTexts : (NSArray *)arguments) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-      NSString *starRatingTextMessage = [arguments objectAtIndex:1];
-      config.starRatingMessage = starRatingTextMessage;
-    });
-}
-
 RCT_EXPORT_METHOD(showStarRating : (NSArray *)arguments callback : (RCTResponseSenderBlock)callback) {
     dispatch_async(dispatch_get_main_queue(), ^{
       [Countly.sharedInstance askForStarRating:^(NSInteger rating) {
@@ -1110,9 +1381,63 @@ RCT_EXPORT_METHOD(presentRatingWidgetWithID : (NSArray *)arguments) {
     });
 }
 
+RCT_EXPORT_METHOD(presentNPS : (NSArray *)arguments) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      NSString *nameIDorTag = nil;
+      if (arguments.count > 0 && ![[arguments objectAtIndex:0] isKindOfClass:[NSNull class]]) {
+          nameIDorTag = [arguments objectAtIndex:0];
+      }
+
+      [[Countly.sharedInstance feedback] presentNPS:nameIDorTag
+                                      widgetCallback:^(WidgetState widgetState) {
+                                        if (widgetState == WIDGET_APPEARED) {
+                                            [self sendEventWithName:widgetShownCallbackName body:nil];
+                                        } else if (widgetState == WIDGET_CLOSED) {
+                                            [self sendEventWithName:widgetClosedCallbackName body:nil];
+                                        }
+                                      }];
+    });
+}
+
+RCT_EXPORT_METHOD(presentSurvey : (NSArray *)arguments) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      NSString *nameIDorTag = nil;
+      if (arguments.count > 0 && ![[arguments objectAtIndex:0] isKindOfClass:[NSNull class]]) {
+          nameIDorTag = [arguments objectAtIndex:0];
+      }
+
+      [[Countly.sharedInstance feedback] presentSurvey:nameIDorTag
+                                         widgetCallback:^(WidgetState widgetState) {
+                                           if (widgetState == WIDGET_APPEARED) {
+                                               [self sendEventWithName:widgetShownCallbackName body:nil];
+                                           } else if (widgetState == WIDGET_CLOSED) {
+                                               [self sendEventWithName:widgetClosedCallbackName body:nil];
+                                           }
+                                         }];
+    });
+}
+
+RCT_EXPORT_METHOD(presentRating : (NSArray *)arguments) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      NSString *nameIDorTag = nil;
+      if (arguments.count > 0 && ![[arguments objectAtIndex:0] isKindOfClass:[NSNull class]]) {
+          nameIDorTag = [arguments objectAtIndex:0];
+      }
+
+      [[Countly.sharedInstance feedback] presentRating:nameIDorTag
+                                         widgetCallback:^(WidgetState widgetState) {
+                                           if (widgetState == WIDGET_APPEARED) {
+                                               [self sendEventWithName:widgetShownCallbackName body:nil];
+                                           } else if (widgetState == WIDGET_CLOSED) {
+                                               [self sendEventWithName:widgetClosedCallbackName body:nil];
+                                           }
+                                         }];
+    });
+}
+
 RCT_REMAP_METHOD(getFeedbackWidgets, getFeedbackWidgetsWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      [Countly.sharedInstance getFeedbackWidgets:^(NSArray<CountlyFeedbackWidget *> *_Nonnull feedbackWidgets, NSError *_Nonnull error) {
+      [[Countly.sharedInstance feedback] getAvailableFeedbackWidgets:^(NSArray<CountlyFeedbackWidget *> *_Nonnull feedbackWidgets, NSError *_Nonnull error) {
         if (error) {
             NSString *errorStr = error.localizedDescription;
             reject(@"getFeedbackWidgets_failure", errorStr, nil);
@@ -1120,11 +1445,12 @@ RCT_REMAP_METHOD(getFeedbackWidgets, getFeedbackWidgetsWithResolver : (RCTPromis
             feedbackWidgetList = [NSArray arrayWithArray:feedbackWidgets];
             NSMutableArray *feedbackWidgetsArray = [NSMutableArray arrayWithCapacity:feedbackWidgets.count];
             for (CountlyFeedbackWidget *retrievedWidget in feedbackWidgets) {
-                NSMutableDictionary *feedbackWidget = [NSMutableDictionary dictionaryWithCapacity:3];
+                NSMutableDictionary *feedbackWidget = [NSMutableDictionary dictionaryWithCapacity:5];
                 feedbackWidget[@"id"] = retrievedWidget.ID;
                 feedbackWidget[@"type"] = retrievedWidget.type;
                 feedbackWidget[@"name"] = retrievedWidget.name;
                 feedbackWidget[@"tags"] = retrievedWidget.tags;
+                feedbackWidget[@"widgetVersion"] = retrievedWidget.widgetVersion ?: [NSNull null];
                 [feedbackWidgetsArray addObject:feedbackWidget];
             }
             resolve(feedbackWidgetsArray);
@@ -1135,7 +1461,13 @@ RCT_REMAP_METHOD(getFeedbackWidgets, getFeedbackWidgetsWithResolver : (RCTPromis
 
 RCT_REMAP_METHOD(getAvailableFeedbackWidgets, getAvailableFeedbackWidgetsWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      [Countly.sharedInstance getFeedbackWidgets:^(NSArray<CountlyFeedbackWidget *> *_Nonnull feedbackWidgets, NSError *_Nonnull error) {
+            [[Countly.sharedInstance feedback] getAvailableFeedbackWidgets:^(NSArray<CountlyFeedbackWidget *> *_Nonnull feedbackWidgets, NSError *_Nonnull error) {
+                if (error) {
+                        NSString *errorStr = error.localizedDescription;
+                        reject(@"getAvailableFeedbackWidgets_failure", errorStr, nil);
+                        return;
+                }
+
         NSMutableDictionary *feedbackWidgetsDict = [NSMutableDictionary dictionaryWithCapacity:feedbackWidgets.count];
         for (CountlyFeedbackWidget *feedbackWidget in feedbackWidgets) {
             feedbackWidgetsDict[feedbackWidget.type] = feedbackWidget.ID;
@@ -1162,7 +1494,7 @@ RCT_REMAP_METHOD(getFeedbackWidgetData, params : (NSArray *)arguments getFeedbac
         NSString *widgetId = [arguments objectAtIndex:0];
         CountlyFeedbackWidget *feedbackWidget = [self getFeedbackWidget:widgetId];
         if (feedbackWidget == nil) {
-            NSString *errorMessage = [NSString stringWithFormat:@"No feedbackWidget is found against widget Id : '%@', always call 'getFeedbackWidgets' to get updated list of feedback widgets.", widgetId];
+            NSString *errorMessage = [NSString stringWithFormat:@"No feedbackWidget is found against widget Id : '%@', always call 'getAvailableFeedbackWidgets' to get an updated list of feedback widgets.", widgetId];
             CountlyRNInternalLog(errorMessage);
             reject(@"getFeedbackWidgetData_failure", errorMessage, nil);
         } else {
@@ -1186,7 +1518,7 @@ RCT_REMAP_METHOD(reportFeedbackWidgetManually, params : (NSArray *)arguments rep
 
         CountlyFeedbackWidget *feedbackWidget = [self getFeedbackWidget:widgetId];
         if (feedbackWidget == nil) {
-            NSString *errorMessage = [NSString stringWithFormat:@"No feedbackWidget is found against widget Id : '%@', always call 'getFeedbackWidgets' to get updated list of feedback widgets.", widgetId];
+            NSString *errorMessage = [NSString stringWithFormat:@"No feedbackWidget is found against widget Id : '%@', always call 'getAvailableFeedbackWidgets' to get an updated list of feedback widgets.", widgetId];
             CountlyRNInternalLog(errorMessage);
             reject(@"reportFeedbackWidgetManually_failure", errorMessage, nil);
         } else {
@@ -1201,12 +1533,27 @@ RCT_EXPORT_METHOD(presentFeedbackWidget : (NSArray *)arguments) {
       NSString *widgetId = [arguments objectAtIndex:0];
       NSString *widgetType = [arguments objectAtIndex:1];
       NSString *widgetName = [arguments objectAtIndex:2];
-      NSMutableDictionary *feedbackWidgetsDict = [NSMutableDictionary dictionaryWithCapacity:3];
+      NSString *widgetVersion = nil;
+      if (arguments.count > 4 && ![[arguments objectAtIndex:4] isKindOfClass:[NSNull class]]) {
+          widgetVersion = [arguments objectAtIndex:4];
+      }
 
-      feedbackWidgetsDict[@"_id"] = widgetId;
-      feedbackWidgetsDict[@"type"] = widgetType;
-      feedbackWidgetsDict[@"name"] = widgetName;
-      CountlyFeedbackWidget *feedback = [CountlyFeedbackWidget createWithDictionary:feedbackWidgetsDict];
+      CountlyFeedbackWidget *feedback = [self getFeedbackWidget:widgetId];
+      if (feedback == nil || (widgetVersion.length > 0 && feedback.widgetVersion.length == 0)) {
+          NSMutableDictionary *feedbackWidget = [NSMutableDictionary dictionaryWithCapacity:4];
+          feedbackWidget[@"_id"] = widgetId;
+          feedbackWidget[@"type"] = widgetType;
+          feedbackWidget[@"name"] = widgetName;
+          if (widgetVersion.length > 0) {
+              feedbackWidget[@"wv"] = widgetVersion;
+          }
+          feedback = [CountlyFeedbackWidget createWithDictionary:feedbackWidget];
+      }
+
+      if (feedback == nil) {
+          return;
+      }
+
       [feedback
           presentWithAppearBlock:^{
             [self sendEventWithName:widgetShownCallbackName body:nil];
@@ -1248,13 +1595,6 @@ RCT_REMAP_METHOD(isLoggingEnabled, isLoggingEnabledWithResolver : (RCTPromiseRes
 }
 
 RCT_REMAP_METHOD(isInitialized, isInitializedWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-      id result = [NSNumber numberWithBool:CountlyCommon.sharedInstance.hasStarted];
-      resolve(result);
-    });
-}
-
-RCT_REMAP_METHOD(hasBeenCalledOnStart, hasBeenCalledOnStartWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
       id result = [NSNumber numberWithBool:CountlyCommon.sharedInstance.hasStarted];
       resolve(result);
@@ -1306,30 +1646,70 @@ RCT_EXPORT_METHOD(recordNetworkTrace : (NSArray *)arguments) {
       [Countly.sharedInstance recordNetworkTrace:networkTraceKey requestPayloadSize:requestPayloadSize responsePayloadSize:responsePayloadSize responseStatusCode:responseCode startTime:startTime endTime:endTime];
     });
 }
-RCT_EXPORT_METHOD(enableApm : (NSArray *)arguments) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-      config.enablePerformanceMonitoring = YES;
-    });
-}
-
-RCT_EXPORT_METHOD(recordAttributionID : (NSArray *)arguments) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-      NSString *attributionID = [arguments objectAtIndex:0];
-      if (CountlyCommon.sharedInstance.hasStarted) {
-          [Countly.sharedInstance recordAttributionID:attributionID];
-      } else {
-          if (config == nil) {
-              config = CountlyConfig.new;
-          }
-          config.attributionID = attributionID;
-      }
-    });
-}
 
 RCT_EXPORT_METHOD(appLoadingFinished) {
     dispatch_async(dispatch_get_main_queue(), ^{
       [Countly.sharedInstance appLoadingFinished];
     });
+}
+
+RCT_REMAP_METHOD(enableRequestCapture, enableRequestCaptureWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            countlyRNRequestCaptureEnabled = YES;
+            CountlyRNResetCapturedRequests();
+            resolve(nil);
+        });
+}
+
+RCT_REMAP_METHOD(getCapturedRequests, getCapturedRequestsWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            CountlyRNEnsureCapturedRequests();
+            resolve([countlyRNCapturedRequests copy]);
+        });
+}
+
+RCT_REMAP_METHOD(getRequestQueue, getRequestQueueWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSArray *queuedRequests = [[CountlyPersistency.sharedInstance queuedRequests] copy] ?: @[];
+            resolve(queuedRequests);
+        });
+}
+
+RCT_REMAP_METHOD(getEventQueue, getEventQueueWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSArray *recordedEvents = [[CountlyPersistency.sharedInstance recordedEvents] copy] ?: @[];
+            NSMutableArray *recordedEventsJSON = NSMutableArray.new;
+
+            for (id event in recordedEvents) {
+                if (![event isKindOfClass:[CountlyEvent class]]) {
+                    COUNTLY_RN_LOG(@"Skipping unexpected recorded event object of class %@", NSStringFromClass([event class]));
+                    continue;
+                }
+
+                NSDictionary *eventDictionary = [(CountlyEvent *)event dictionaryRepresentation];
+                NSString *eventJson = [self toJSONString:eventDictionary];
+                if (eventJson) {
+                    [recordedEventsJSON addObject:eventJson];
+                }
+            }
+
+            resolve(recordedEventsJSON);
+        });
+}
+
+RCT_REMAP_METHOD(halt, haltWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [Countly.sharedInstance halt:YES];
+            config = nil;
+            countlyFeatures = nil;
+            feedbackWidgetList = nil;
+            enablePushNotifications = true;
+            countlyRNRequestCaptureEnabled = NO;
+            CountlyRNResetCapturedRequests();
+            countlyRNForwardSessionConfiguration = nil;
+            countlyRNCapturedHost = nil;
+            resolve(nil);
+        });
 }
 
 RCT_EXPORT_METHOD(setCustomMetrics : (NSArray *)arguments) {
@@ -1354,6 +1734,13 @@ RCT_EXPORT_METHOD(refreshContentZone) {
     dispatch_async(dispatch_get_main_queue(), ^{
       [Countly.sharedInstance.content refreshContentZone];
     });
+}
+
+RCT_EXPORT_METHOD(previewContent : (NSArray *)arguments) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSString *contentId = [arguments objectAtIndex:0];
+            [Countly.sharedInstance.content previewContent:contentId];
+        });
 }
 
 RCT_EXPORT_METHOD(exitContentZone) {
@@ -1405,15 +1792,82 @@ void CountlyRNInternalLog(NSString *format, ...) {
     return userProperties;
 }
 
+- (BOOL)isBooleanNumber:(NSNumber *)numberValue {
+    return CFGetTypeID((__bridge CFTypeRef)numberValue) == CFBooleanGetTypeID();
+}
+
+- (NSMutableDictionary *)currentCustomUserProperties {
+    if ([Countly.user.custom isKindOfClass:[NSDictionary class]]) {
+        return [(NSDictionary *)Countly.user.custom mutableCopy];
+    }
+
+    return [NSMutableDictionary dictionary];
+}
+
+- (void)setCustomUserPropertyDictionaryValue:(id)value forKey:(NSString *)keyName {
+    if (keyName == nil || keyName.length == 0) {
+        return;
+    }
+
+    if (value == nil || [value isKindOfClass:[NSNull class]]) {
+        [Countly.user unSet:keyName];
+        return;
+    }
+
+    NSMutableDictionary *customUserProperties = [self currentCustomUserProperties];
+    customUserProperties[keyName] = value;
+    Countly.user.custom = [customUserProperties copy];
+}
+
+- (void)setCustomUserProperty:(NSString *)keyName value:(id)value {
+    if ([value isKindOfClass:[NSString class]]) {
+        [Countly.user set:keyName value:(NSString *)value];
+        return;
+    }
+
+    if ([value isKindOfClass:[NSNumber class]]) {
+        NSNumber *numberValue = (NSNumber *)value;
+        if ([self isBooleanNumber:numberValue]) {
+            [Countly.user set:keyName boolValue:numberValue.boolValue];
+        } else {
+            [Countly.user set:keyName numberValue:numberValue];
+        }
+        return;
+    }
+
+    [self setCustomUserPropertyDictionaryValue:value forKey:keyName];
+}
+
+- (NSDictionary *)customUserPropertiesFromUserData:(NSDictionary *__nullable)userData {
+    if (userData == nil) {
+        return nil;
+    }
+
+    NSMutableDictionary *customUserProperties = [[self removePredefinedUserProperties:userData] mutableCopy];
+    id explicitCustomProperties = customUserProperties[CUSTOM_KEY];
+    [customUserProperties removeObjectForKey:CUSTOM_KEY];
+
+    if ([explicitCustomProperties isKindOfClass:[NSDictionary class]]) {
+        [customUserProperties addEntriesFromDictionary:(NSDictionary *)explicitCustomProperties];
+    }
+
+    if (customUserProperties.count == 0) {
+        return nil;
+    }
+
+    return [customUserProperties copy];
+}
+
 - (void)setUserDataIntenral:(NSDictionary *__nullable)userData {
-    NSString *name = userData[NAME_KEY];
-    NSString *username = userData[USERNAME_KEY];
-    NSString *email = userData[EMAIL_KEY];
-    NSString *organization = userData[ORG_KEY];
-    NSString *phone = userData[PHONE_KEY];
-    NSString *picture = userData[PICTURE_KEY];
-    NSString *gender = userData[GENDER_KEY];
-    NSString *byear = userData[BYEAR_KEY];
+    id name = userData[NAME_KEY];
+    id username = userData[USERNAME_KEY];
+    id email = userData[EMAIL_KEY];
+    id organization = userData[ORG_KEY];
+    id phone = userData[PHONE_KEY];
+    id picture = userData[PICTURE_KEY];
+    id picturePath = userData[PICTURE_PATH_KEY];
+    id gender = userData[GENDER_KEY];
+    id byear = userData[BYEAR_KEY];
 
     if (name) {
         Countly.user.name = name;
@@ -1433,11 +1887,23 @@ void CountlyRNInternalLog(NSString *format, ...) {
     if (picture) {
         Countly.user.pictureURL = picture;
     }
+    if (picturePath) {
+        Countly.user.pictureLocalPath = picturePath;
+    }
     if (gender) {
         Countly.user.gender = gender;
     }
     if (byear) {
-        Countly.user.birthYear = @([byear integerValue]);
+        if ([byear isKindOfClass:[NSNull class]]) {
+            Countly.user.birthYear = byear;
+        } else {
+            Countly.user.birthYear = @([byear integerValue]);
+        }
+    }
+
+    NSDictionary *customUserProperties = [self customUserPropertiesFromUserData:userData];
+    if (customUserProperties != nil) {
+        Countly.user.custom = customUserProperties;
     }
 }
 

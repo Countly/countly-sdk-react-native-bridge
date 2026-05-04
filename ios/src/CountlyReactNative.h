@@ -1,5 +1,6 @@
 #import "React/RCTBridgeModule.h"
 #import "React/RCTEventEmitter.h"
+#import <UserNotifications/UserNotifications.h>
 
 @interface CountlyReactNative : RCTEventEmitter <RCTBridgeModule>
 typedef void (^Result)(id _Nullable result);
@@ -9,19 +10,18 @@ typedef void (^Result)(id _Nullable result);
 - (void)recordView:(NSArray *_Nullable)arguments;
 
 - (void)setHttpPostForced:(NSArray *_Nullable)arguments;
-- (void)setLocationInit:(NSArray *_Nullable)arguments;
 - (void)setLocation:(NSArray *_Nullable)arguments;
-- (void)enableCrashReporting;
 - (void)addCrashLog:(NSArray *_Nullable)arguments;
 
 - (void)changeDeviceId:(NSArray *_Nullable)arguments;
-- (void)enableParameterTamperingProtection:(NSArray *_Nullable)arguments;
 - (void)pinnedCertificates:(NSArray *_Nullable)arguments;
+- (void)startSession;
+- (void)updateSession;
+- (void)endSession;
+- (void)addCustomNetworkRequestHeaders:(NSArray *_Nullable)arguments;
 - (void)startEvent:(NSArray *_Nullable)arguments;
 - (void)endEvent:(NSArray *_Nullable)arguments;
 
-- (void)setRequiresConsent:(NSArray *_Nullable)arguments;
-- (void)giveConsentInit:(NSArray *_Nullable)arguments;
 - (void)giveConsent:(NSArray *_Nullable)arguments;
 - (void)removeConsent:(NSArray *_Nullable)arguments;
 - (void)giveAllConsent;
@@ -32,10 +32,12 @@ typedef void (^Result)(id _Nullable result);
 - (void)getRemoteConfigValueForKey:(NSArray *_Nullable)arguments callback:(RCTResponseSenderBlock _Nullable)callback;
 - (void)showStarRating:(NSArray *_Nullable)arguments callback:(RCTResponseSenderBlock _Nullable)callback;
 - (void)presentFeedbackWidget:(NSArray *_Nullable)arguments;
+- (void)presentNPS:(NSArray *_Nullable)arguments;
+- (void)presentSurvey:(NSArray *_Nullable)arguments;
+- (void)presentRating:(NSArray *_Nullable)arguments;
 - (void)replaceAllAppKeysInQueueWithCurrentAppKey;
 - (void)removeDifferentAppKeysFromQueue;
 - (void)setEventSendThreshold:(NSArray *_Nullable)arguments;
-- (void)pushTokenType:(NSArray *_Nullable)arguments;
 - (void)sendPushToken:(NSArray *_Nullable)arguments;
 - (void)askForNotificationPermission:(NSArray *_Nullable)arguments;
 - (void)registerForNotification:(NSArray *_Nullable)arguments;
@@ -46,18 +48,22 @@ typedef void (^Result)(id _Nullable result);
 - (void)clearAllTraces:(NSArray *_Nullable)arguments;
 - (void)endTrace:(NSArray *_Nullable)arguments;
 - (void)recordNetworkTrace:(NSArray *_Nullable)arguments;
-- (void)enableApm:(NSArray *_Nullable)arguments;
 - (void)setCustomMetrics:(NSArray *_Nullable)arguments;
 
-- (void)recordAttributionID:(NSArray *_Nullable)arguments;
 - (void)appLoadingFinished;
 - (void)disablePushNotifications;
+- (void)enableRequestCapture:(RCTPromiseResolveBlock _Nullable)resolve rejecter:(RCTPromiseRejectBlock _Nullable)reject;
+- (void)getCapturedRequests:(RCTPromiseResolveBlock _Nullable)resolve rejecter:(RCTPromiseRejectBlock _Nullable)reject;
+- (void)getRequestQueue:(RCTPromiseResolveBlock _Nullable)resolve rejecter:(RCTPromiseRejectBlock _Nullable)reject;
+- (void)getEventQueue:(RCTPromiseResolveBlock _Nullable)resolve rejecter:(RCTPromiseRejectBlock _Nullable)reject;
+- (void)halt:(RCTPromiseResolveBlock _Nullable)resolve rejecter:(RCTPromiseRejectBlock _Nullable)reject;
 
 - (void)enterContentZone;
 - (void)refreshContentZone;
+- (void)previewContent:(NSArray *_Nullable)arguments;
 - (void)exitContentZone;
 
-- (void)setID;
+- (void)setID:(NSString *_Nonnull)newDeviceID;
 
 #ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
 - (void)notificationCallback:(NSString *_Nullable)notificationJson;
