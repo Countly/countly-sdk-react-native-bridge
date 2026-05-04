@@ -2,6 +2,9 @@ import shutil
 import os
 import platform
 
+COUNTLY_TEMPLATE_DIR = "CountlyRNExample"
+LOCAL_BRIDGE_PATH = "../.."
+
 # This script sets up a React Native app with the Countly SDK
 # It is meant to be run from the example folder
 # It will remove any existing AwesomeProject or ExpoProject folder, and create a new one
@@ -31,17 +34,20 @@ def setup_react_native_app():
         if os.path.exists("AwesomeProject"):
             shutil.rmtree("AwesomeProject")
         os.system("npx @react-native-community/cli@latest init AwesomeProject")
-        shutil.copytree("CountlyRNExample", project_name, dirs_exist_ok=True)
 
-    # Copy contents of CountlyRNExample to  the new project folder
-    print("Copying contents of CountlyRNExample to", project_name)
-    shutil.copytree("CountlyRNExample", project_name if choice.lower() == "react" else "ExpoProject/app/(tabs)", dirs_exist_ok=True)
+    target_directory = project_name if choice.lower() == "react" else os.path.join("ExpoProject", "app", "(tabs)")
 
-    print("Adding countly-sdk-react-native-bridge-np to dependencies...")
+    # Copy contents of CountlyRNExample to the new project folder.
+    print("Copying Countly example screens and integration tests to", target_directory)
+    shutil.copytree(COUNTLY_TEMPLATE_DIR, target_directory, dirs_exist_ok=True)
 
-    # Add countly-sdk-react-native-bridge to dependencies in package.json
+    print("Adding the local countly-sdk-react-native-bridge-np package to dependencies...")
+
+    # Add countly-sdk-react-native-bridge-np to dependencies in package.json
     os.chdir(project_name)
-    os.system("npm install --save countly-sdk-react-native-bridge-np@latest @react-navigation/native react-native-screens react-native-safe-area-context @react-navigation/native-stack")
+    os.system(f"npm install --save {LOCAL_BRIDGE_PATH} @react-navigation/native react-native-screens react-native-safe-area-context @react-navigation/native-stack")
+
+    print("Generated app includes an Integration Tests screen backed by files in the testing/ folder.")
 
     # If on iOS, run pod install
     if platform.system() == "Darwin":

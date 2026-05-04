@@ -6,6 +6,7 @@ import { navigationName } from "./Constants";
 import HomeScreen from "./Home";
 import FeedbackScreen from "./Feedback";
 import EventScreen from "./Events";
+import SessionsScreen from "./Sessions";
 import UserProfilesScreen from "./UserProfiles";
 import ViewsScreen from "./Views";
 import APMScreen from "./APM";
@@ -14,7 +15,7 @@ import ConsentScreen from "./Consent";
 import RemoteConfigScreen from "./RemoteConfig";
 import OthersScreen from "./Others";
 import CrashesScreen from "./Crashes";
-import EventLegacyScreen from "./EventsLegacy";
+import IntegrationTestsScreen from "./testing/IntegrationTests";
 import { Image } from "react-native";
 
 const Stack = createNativeStackNavigator();
@@ -27,7 +28,7 @@ class Example extends React.Component {
                         name={navigationName.Home}
                         component={HomeScreen}
                         options={{
-                            headerTitle: (props) => (
+                            headerTitle: () => (
                                 <Image
                                     source={require("./asset/countly-logo.png")}
                                     style={{ width: 144, height: 42 }}
@@ -40,6 +41,7 @@ class Example extends React.Component {
                     />
                     <Stack.Screen name={navigationName.Feedback} component={FeedbackScreen} />
                     <Stack.Screen name={navigationName.Events} component={EventScreen} />
+                    <Stack.Screen name={navigationName.Sessions} component={SessionsScreen} />
                     <Stack.Screen name={navigationName.UserProfiles} component={UserProfilesScreen} />
                     <Stack.Screen name={navigationName.Views} component={ViewsScreen} />
                     <Stack.Screen name={navigationName.APM} component={APMScreen} />
@@ -48,7 +50,7 @@ class Example extends React.Component {
                     <Stack.Screen name={navigationName.RemoteConfig} component={RemoteConfigScreen} />
                     <Stack.Screen name={navigationName.Others} component={OthersScreen} />
                     <Stack.Screen name={navigationName.Crashes} component={CrashesScreen} />
-                    <Stack.Screen name={navigationName.eventLegacy} component={EventLegacyScreen} />
+                    <Stack.Screen name={navigationName.IntegrationTests} component={IntegrationTestsScreen} />
                 </Stack.Navigator>
             </NavigationContainer>
         );

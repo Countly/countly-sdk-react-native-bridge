@@ -17,8 +17,8 @@ NS_ASSUME_NONNULL_BEGIN
 @interface PassThroughBackgroundView : UIView
 
 
-@property (nonatomic, strong) WKWebView *webView;
-@property (nonatomic, strong) CLYButton *dismissButton;
+@property(nonatomic, strong) WKWebView *webView;
+@property(nonatomic, strong) CLYButton *dismissButton;
 
 
 

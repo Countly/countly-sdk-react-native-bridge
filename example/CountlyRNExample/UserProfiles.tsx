@@ -17,8 +17,11 @@ interface UserDataPredefined {
 }
 
 interface UserDataBulkCustom_1 extends UserDataPredefined {
-    customeValueA?: string;
-    customeValueB?: string;
+    customValueA?: string;
+    customValueB?: string;
+    isTester?: boolean;
+    favoriteChannels?: string[];
+    sessionCount?: number;
 }
 const onSendUserData = () => {
     // example for setUserData
@@ -50,8 +53,11 @@ const onSetUserProperties = () => {
         gender: "Male",
         byear: 1989,
         // Custom User Properties
-        customeValueA: "Custom value A",
-        customeValueB: "Custom value B",
+        customValueA: "Custom value A",
+        customValueB: "Custom value B",
+        isTester: true,
+        favoriteChannels: ["push", "email"],
+        sessionCount: 42,
     };
     Countly.userDataBulk.setUserProperties(options);
     Countly.userDataBulk.save();
@@ -59,22 +65,24 @@ const onSetUserProperties = () => {
 
 const onSendUserDataBulk = () => {
     Promise.allSettled([Countly.userDataBulk.setProperty("key", "value"),
-      Countly.userDataBulk.setProperty("increment", 5),
-      Countly.userDataBulk.increment("increment"),
-      Countly.userDataBulk.setProperty("incrementBy", 5),
-      Countly.userDataBulk.incrementBy("incrementBy", 10),
-      Countly.userDataBulk.setProperty("multiply", 5),
-      Countly.userDataBulk.multiply("multiply", 20),
-      Countly.userDataBulk.setProperty("saveMax", 5),
-      Countly.userDataBulk.saveMax("saveMax", 100),
-      Countly.userDataBulk.setProperty("saveMin", 5),
-      Countly.userDataBulk.saveMin("saveMin", 50),
-      Countly.userDataBulk.setOnce("setOnce", 200),
-      Countly.userDataBulk.pushUniqueValue("type", "morning"),
-      Countly.userDataBulk.pushValue("type", "morning"),
-      Countly.userDataBulk.pullValue("type", "morning")])
-      .then(values => {
-        // We need to call the "save" in then block else it will cause a race condition and "save" may call before all the user profiles calls are completed
+        Countly.userDataBulk.setProperty("increment", 5),
+        Countly.userDataBulk.increment("increment"),
+        Countly.userDataBulk.setProperty("incrementBy", 5),
+        Countly.userDataBulk.incrementBy("incrementBy", 10),
+        Countly.userDataBulk.setProperty("multiply", 5),
+        Countly.userDataBulk.multiply("multiply", 20),
+        Countly.userDataBulk.setProperty("saveMax", 5),
+        Countly.userDataBulk.saveMax("saveMax", 100),
+        Countly.userDataBulk.setProperty("saveMin", 5),
+        Countly.userDataBulk.saveMin("saveMin", 50),
+        Countly.userDataBulk.setOnce("setOnce", 200),
+        Countly.userDataBulk.pushUniqueValue("type", "morning"),
+        Countly.userDataBulk.pushValue("type", "morning"),
+        Countly.userDataBulk.pullValue("type", "morning"),
+        Countly.userDataBulk.setProperty("isTester", true),
+        Countly.userDataBulk.setProperty("favoriteChannels", ["push", "email"]),
+    ]).then(() => {
+        // Save after all queued user-property operations complete.
         Countly.userDataBulk.save();
     })
 };
@@ -92,6 +100,11 @@ const onUpdateUserData = () => {
 
 const userData_setProperty = () => {
     Countly.userData.setProperty("setProperty", "keyValue");
+};
+
+const userData_setTypedProperty = () => {
+    Countly.userData.setProperty("notificationsEnabled", true);
+    Countly.userData.setProperty("favoriteChannels", ["push", "email"]);
 };
 
 const userData_increment = () => {
@@ -142,6 +155,7 @@ function UserProfilesScreen({ navigation }) {
                 <CountlyButton onPress={onSendUserData} title="Send Users Data" color="#00b5ad" />
                 <CountlyButton onPress={onUpdateUserData} title="Update Users Data" color="#00b5ad" />
                 <CountlyButton onPress={userData_setProperty} title="UserData.setProperty" color="#00b5ad" />
+                <CountlyButton onPress={userData_setTypedProperty} title="UserData.setProperty (typed values)" color="#00b5ad" />
                 <CountlyButton onPress={userData_increment} title="UserData.increment" color="#00b5ad" />
                 <CountlyButton onPress={userData_incrementBy} title="UserData.incrementBy" color="#00b5ad" />
                 <CountlyButton onPress={userData_multiply} title="UserData.multiply" color="#00b5ad" />

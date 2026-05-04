@@ -60,6 +60,30 @@ class DeviceId {
         L.d(`setID, Setting device id as: [${newDeviceID}]`);
         this.#state.CountlyReactNative.setID(newDeviceID);
     };
+
+    /**
+     * Changes device ID with explicit merge selection.
+     *
+     * @param {string} newDeviceID - device ID to set
+     * @param {boolean} merge - when true, merges the old and new device IDs on the server
+     */
+    changeID = function (newDeviceID, merge = false) {
+        if (!this.#state.isInitialized) {
+            L.w("changeID, 'init' must be called before 'changeID'");
+            return;
+        }
+        if (!newDeviceID || typeof newDeviceID !== "string" || newDeviceID.length === 0) {
+            L.w("changeID, provided device ID is not a valid string:[" + newDeviceID + "]");
+            return;
+        }
+        if (typeof merge !== "boolean") {
+            L.w("changeID, merge should be a boolean value");
+            return;
+        }
+
+        L.d(`changeID, Changing to new device id: [${newDeviceID}], with merge: [${merge}]`);
+        this.#state.CountlyReactNative.changeDeviceId([newDeviceID, merge ? "1" : "0"]);
+    };
 }
 
 export default DeviceId;

@@ -8,17 +8,34 @@ import { lightGreen, navigationName } from "./Constants";
 
 async function initialize() {
     await Countly.initWithConfig(countlyConfig); // Initialize the countly SDK.
-    Countly.appLoadingFinished();
+    await Countly.appLoadingFinished();
 }
 
 function HomeScreen({ navigation }) {
-    initialize(); // Initialize the countly SDK.
+    React.useEffect(() => {
+        let notificationSubscription: { remove?: () => void } | null = null;
+
+        void initialize()
+            .then((subscription) => {
+                notificationSubscription = subscription;
+            })
+            .catch((error) => {
+                console.error("Failed to initialize Countly example app", error);
+            });
+
+        return () => {
+            notificationSubscription?.remove?.();
+        };
+    }, []);
+
     return (
         <SafeAreaView>
             <ScrollView>
                 <Text style={{ fontSize: 16, fontWeight: "bold", textAlign: "center", marginTop: 10 }}>Features List</Text>
+                <CountlyButton title="Integration Tests" onPress={() => navigation.navigate(navigationName.IntegrationTests)} color={lightGreen} lightText={true} />
                 <CountlyButton title="Feedback" onPress={() => navigation.navigate(navigationName.Feedback)} color={lightGreen} lightText={true} />
                 <CountlyButton title="Events" onPress={() => navigation.navigate(navigationName.Events)} color={lightGreen} lightText={true} />
+                <CountlyButton title="Sessions" onPress={() => navigation.navigate(navigationName.Sessions)} color={lightGreen} lightText={true} />
                 <CountlyButton title="User Profiles" onPress={() => navigation.navigate(navigationName.UserProfiles)} color={lightGreen} lightText={true} />
                 <CountlyButton title="Views" onPress={() => navigation.navigate(navigationName.Views)} color={lightGreen} lightText={true} />
                 <CountlyButton title="APM" onPress={() => navigation.navigate(navigationName.APM)} color={lightGreen} lightText={true} />
@@ -27,7 +44,6 @@ function HomeScreen({ navigation }) {
                 <CountlyButton title="Remote Config" onPress={() => navigation.navigate(navigationName.RemoteConfig)} color={lightGreen} lightText={true} />
                 <CountlyButton title="Crashes" onPress={() => navigation.navigate(navigationName.Crashes)} color={lightGreen} lightText={true} />
                 <CountlyButton title="Others" onPress={() => navigation.navigate(navigationName.Others)} color={lightGreen} lightText={true} />
-                <CountlyButton title="Events (Legacy)" onPress={() => navigation.navigate(navigationName.eventLegacy)} color={lightGreen} lightText={true} />
             </ScrollView>
         </SafeAreaView>
     );

@@ -1,3 +1,5 @@
+jest.mock('react-native/Libraries/Core/Devtools/parseErrorStack.js', () => jest.fn(() => []), { virtual: true });
+
 const { intToDeviceIDType, DeviceIdType } = require("../Utils.js");
 
 // 'intToDeviceIDType'

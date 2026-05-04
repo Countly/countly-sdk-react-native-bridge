@@ -15,6 +15,10 @@ python create_app.py
 
 It will give you an option to setup Expo or Create React App as the template.
 
+The generated app installs the local bridge package from this repository, so unpublished native and JS changes are available immediately.
+It also includes an "Integration Tests" screen and a shared `testing/` folder inside the copied example app so you can run RN-driven queue assertions on iOS or Android.
+Starter scenarios now cover sessions, views, events, consent-gated events, merged device ID changes, user-details flushes, metrics requests, and direct request capture for server config and remote config.
+
 Then you can start the app by going to the created folder (AwesomeProject or ExpoProject) and:
 
 ```bash
@@ -27,7 +31,7 @@ npx expo run android
 ```
 
 ## Manual App Creation
-For more information you can check [here](https://reactnative.dev/docs/getting-started-without-a-framework).
+For more information, see the [React Native getting started guide without a framework](https://reactnative.dev/docs/getting-started-without-a-framework).
 
 If you want to set up the app manually instead, then you should run:
 
