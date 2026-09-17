@@ -22,6 +22,9 @@
         "type": "git",
         "url": "git+https://github.com/Countly/countly-sdk-react-native-bridge.git"
     },
+    "peerDependencies": {
+        "react-native": ">=0.75.0"
+    },
     "devDependencies": {
         "@babel/core": "^7.23.3",
         "@babel/preset-env": "^7.23.9",

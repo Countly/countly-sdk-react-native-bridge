@@ -1,3 +1,14 @@
+## XX.XX.XX
+* !! Major breaking change !! The iOS layer is now built on the Countly Swift SDK instead of the vendored Objective-C SDK. The minimum supported iOS version is now 15.0, and the Swift SDK is resolved through Swift Package Manager, which needs React Native 0.75 or newer.
+
+* !! Major breaking change !! Push notification setups that call the bridge from an Objective-C `AppDelegate` must now import `<CountlyReactNative/CountlyReactNative-Swift.h>` instead of `CountlyReactNative.h`. The calls themselves are unchanged.
+
+* !! Major breaking change !! The `CountlyReactNative/NotificationService` pod subspec is gone. A notification service extension now adds the `countly-sdk-swift` package and its `CountlyNotificationService` product.
+
+* ! Minor breaking change ! `Countly.showStarRating(callback)` now does nothing on iOS and its callback is not called. The Swift SDK provides no star rating dialog. Android behavior is unchanged.
+
+* Updated the underlying iOS SDK to the Countly Swift SDK 26.8.0
+
 ## 26.1.0
 * Added a new `Countly.sessions` interface for manual session control:
   * `beginSession()`
