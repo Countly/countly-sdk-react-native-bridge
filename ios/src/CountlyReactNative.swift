@@ -35,13 +35,12 @@ public class CountlyReactNative: RCTEventEmitter {
 
     // MARK: - State
 
-    /// The configuration being assembled until `init` runs. The JavaScript layer
-    /// is allowed to touch a few settings before init, so this outlives a single
-    /// call.
-    static var config: CountlyConfig?
+    /// The configuration being assembled until `init` runs, per instance. The JavaScript layer is
+    /// allowed to touch a few settings before init, so this outlives a single call.
+    static var configs: [String: CountlyConfig] = [:]
 
-    /// The widgets the last fetch returned, so a later call can find one by ID.
-    static var feedbackWidgetList: [CountlyFeedbackWidget] = []
+    /// The widgets each instance last listed, so a widget ID is presented on the instance that fetched it.
+    static var feedbackWidgetLists: [String: [CountlyFeedbackWidget]] = [:]
 
     /// Mirrors the SDK's debug flag for `isLoggingEnabled`, which JavaScript may
     /// ask for before init.
@@ -104,11 +103,46 @@ public class CountlyReactNative: RCTEventEmitter {
         return text
     }
 
-    /// The configuration under assembly, created on first use.
-    static func ensureConfig() -> CountlyConfig {
-        if let existing = config { return existing }
+    /// The instance a call is meant for.
+    ///
+    /// - Parameter instanceName: the instance name the JavaScript layer sent, empty for the default one.
+    /// - Returns: the instance the call applies to, created when it does not exist yet.
+    static func countly(_ instanceName: String) -> CountlyInstance {
+        isDefaultInstance(instanceName) ? Countly.shared : Countly.instance(named: instanceName)
+    }
+
+    /// Whether a call is meant for the default instance.
+    ///
+    /// - Parameter instanceName: the instance name the JavaScript layer sent.
+    /// - Returns: true when the call carries no name or the default one.
+    static func isDefaultInstance(_ instanceName: String) -> Bool {
+        instanceName.isEmpty || instanceName == Countly.defaultInstanceName
+    }
+
+    /// The key an instance's state is stored under.
+    ///
+    /// - Parameter instanceName: the instance name the JavaScript layer sent.
+    /// - Returns: the name, or the empty string for the default instance.
+    static func instanceKey(_ instanceName: String) -> String {
+        isDefaultInstance(instanceName) ? "" : instanceName
+    }
+
+    /// The instance a call is meant for, without creating one.
+    ///
+    /// - Parameter instanceName: the instance name the JavaScript layer sent, empty for the default one.
+    /// - Returns: the instance, or `nil` when no instance carries that name.
+    static func existingCountly(_ instanceName: String) -> CountlyInstance? {
+        isDefaultInstance(instanceName) ? Countly.shared : Countly.getInstance(named: instanceName)
+    }
+
+    /// The configuration under assembly for an instance, created on first use.
+    ///
+    /// - Parameter instanceName: the instance name the JavaScript layer sent, empty for the default one.
+    /// - Returns: the configuration the next init of that instance will start with.
+    static func ensureConfig(_ instanceName: String) -> CountlyConfig {
+        if let existing = configs[instanceKey(instanceName)] { return existing }
         let created = CountlyConfig()
-        config = created
+        configs[instanceKey(instanceName)] = created
         return created
     }
 
@@ -160,8 +194,23 @@ public class CountlyReactNative: RCTEventEmitter {
     }
 
     /// Forwards an event to JavaScript, if the emitter is alive.
+    ///
+    /// - Parameter name: the event name the JavaScript layer subscribed to.
+    /// - Parameter body: the payload, already serialized when it is not a plain string.
     static func emit(_ name: String, body: Any?) {
         Self.shared?.sendEvent(withName: name, body: body)
+    }
+
+    /// Forwards an event that belongs to one instance, tagged so JavaScript can route it.
+    ///
+    /// - Parameter name: the event name the JavaScript layer subscribed to.
+    /// - Parameter instanceName: the instance the event came from, empty for the default one.
+    /// - Parameter payload: the fields of the event, which the instance name is added to.
+    static func emit(_ name: String, instanceName: String, payload: [String: Any] = [:]) {
+        var tagged = payload
+        tagged["instanceName"] = instanceKey(instanceName)
+        // Sent as a dictionary rather than a string, so the JavaScript side does not parse what was just built.
+        emit(name, body: tagged)
     }
 
     /// Runs on the main queue, as every call from the old Objective-C bridge did.
@@ -175,8 +224,9 @@ public class CountlyReactNative: RCTEventEmitter {
 
     // MARK: - Init
 
-    @objc(initialize:resolver:rejecter:)
+    @objc(initialize:instanceName:resolver:rejecter:)
     func initialize(_ arguments: [Any],
+                    instanceName: String,
                     resolver resolve: @escaping RCTPromiseResolveBlock,
                     rejecter reject: @escaping RCTPromiseRejectBlock) {
         Self.onMain {
@@ -187,7 +237,7 @@ public class CountlyReactNative: RCTEventEmitter {
                 return
             }
 
-            let config = self.populateConfig(json)
+            let config = self.populateConfig(json, instanceName: instanceName)
             config.sdkName = Self.sdkName
             config.sdkVersion = Self.sdkVersion
 
@@ -202,7 +252,7 @@ public class CountlyReactNative: RCTEventEmitter {
                 return
             }
 
-            Countly.shared.start(with: config)
+            Self.countly(instanceName).start(with: config)
 
             #if !COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
             CountlyRNPushNotifications.shared.recordPushActions()
@@ -216,8 +266,11 @@ public class CountlyReactNative: RCTEventEmitter {
     ///
     /// A key the JavaScript layer considers off is left out of the payload
     /// entirely, so for those flags the key being present is what turns them on.
-    private func populateConfig(_ json: [String: Any]) -> CountlyConfig {
-        let config = Self.ensureConfig()
+    /// - Parameter json: the configuration the JavaScript layer serialized.
+    /// - Parameter instanceName: the instance the configuration belongs to, empty for the default one.
+    /// - Returns: the configuration to start that instance with.
+    private func populateConfig(_ json: [String: Any], instanceName: String) -> CountlyConfig {
+        let config = Self.ensureConfig(instanceName)
 
         config.appKey = json["appKey"] as? String ?? ""
         config.host = json["serverURL"] as? String ?? ""
@@ -289,7 +342,7 @@ public class CountlyReactNative: RCTEventEmitter {
         if json["setGlobalContentCallback"] != nil {
             config.content.globalContentCallback = { status, data in
                 let payload: [String: Any] = ["status": status.rawValue, "data": data]
-                Self.emit(Self.contentCallbackName, body: Self.toJSONString(payload))
+                Self.emit(Self.contentCallbackName, instanceName: instanceName, payload: payload)
             }
         }
 
@@ -305,7 +358,7 @@ public class CountlyReactNative: RCTEventEmitter {
                 if !urlPrefixes.isEmpty, !urlPrefixes.contains(where: { link.lowercased().hasPrefix($0) }) {
                     return false
                 }
-                Self.emit(Self.contentUrlHandlerName, body: Self.toJSONString(["url": link]))
+                Self.emit(Self.contentUrlHandlerName, instanceName: instanceName, payload: ["url": link])
                 return true
             }
         }
@@ -455,49 +508,51 @@ public class CountlyReactNative: RCTEventEmitter {
 
     // MARK: - Device ID
 
-    @objc(setID:)
-    func setID(_ newDeviceID: String) {
+    @objc(setID:instanceName:)
+    func setID(_ newDeviceID: String, instanceName: String) {
         Self.onMain {
             if newDeviceID == "TemporaryDeviceID" {
-                Countly.shared.deviceID.enableTemporaryIDMode()
+                Self.countly(instanceName).deviceID.enableTemporaryIDMode()
             } else {
-                Countly.shared.deviceID.setID(newDeviceID)
+                Self.countly(instanceName).deviceID.setID(newDeviceID)
             }
         }
     }
 
-    @objc(changeDeviceId:)
-    func changeDeviceId(_ arguments: [Any]) {
+    @objc(changeDeviceId:instanceName:)
+    func changeDeviceId(_ arguments: [Any], instanceName: String) {
         Self.onMain {
             guard let newDeviceID = Self.asString(arguments.first) else { return }
             if newDeviceID == "TemporaryDeviceID" {
-                Countly.shared.deviceID.enableTemporaryIDMode()
+                Self.countly(instanceName).deviceID.enableTemporaryIDMode()
                 return
             }
 
             let onServer = arguments.count > 1 && Self.asBool(arguments[1])
             if onServer {
-                Countly.shared.deviceID.changeWithMerge(newDeviceID)
+                Self.countly(instanceName).deviceID.changeWithMerge(newDeviceID)
             } else {
-                Countly.shared.deviceID.changeWithoutMerge(newDeviceID)
+                Self.countly(instanceName).deviceID.changeWithoutMerge(newDeviceID)
             }
         }
     }
 
-    @objc(getCurrentDeviceId:rejecter:)
-    func getCurrentDeviceId(_ resolve: @escaping RCTPromiseResolveBlock,
+    @objc(getCurrentDeviceId:resolver:rejecter:)
+    func getCurrentDeviceId(_ instanceName: String,
+                            resolver resolve: @escaping RCTPromiseResolveBlock,
                             rejecter reject: @escaping RCTPromiseRejectBlock) {
         Self.onMain {
-            resolve(Countly.shared.deviceID.current ?? "deviceIdNotFound")
+            resolve(Self.countly(instanceName).deviceID.current ?? "deviceIdNotFound")
         }
     }
 
-    @objc(getDeviceIDType:rejecter:)
-    func getDeviceIDType(_ resolve: @escaping RCTPromiseResolveBlock,
+    @objc(getDeviceIDType:resolver:rejecter:)
+    func getDeviceIDType(_ instanceName: String,
+                         resolver resolve: @escaping RCTPromiseResolveBlock,
                          rejecter reject: @escaping RCTPromiseRejectBlock) {
         Self.onMain {
             // The JavaScript layer maps these numbers back to its own enum.
-            switch Countly.shared.deviceID.type {
+            switch Self.countly(instanceName).deviceID.type {
             case .developerSupplied: resolve(20202)
             case .temporary: resolve(30303)
             default: resolve(10101)
@@ -507,68 +562,69 @@ public class CountlyReactNative: RCTEventEmitter {
 
     // MARK: - Events
 
-    @objc(recordEvent:)
-    func recordEvent(_ arguments: [String: Any]) {
+    @objc(recordEvent:instanceName:)
+    func recordEvent(_ arguments: [String: Any], instanceName: String) {
         Self.onMain {
             guard let key = arguments["n"] as? String else { return }
             let count = (arguments["c"] as? NSNumber)?.intValue ?? 1
             let sum = (arguments["s"] as? NSNumber)?.doubleValue ?? 0
             let segmentation = Self.keyValuePairs(from: arguments["g"] as? [Any] ?? [], startIndex: 0)
 
-            Countly.shared.events.recordEvent(key, segmentation: segmentation, count: count, sum: sum)
+            Self.countly(instanceName).events.recordEvent(key, segmentation: segmentation, count: count, sum: sum)
         }
     }
 
-    @objc(startEvent:)
-    func startEvent(_ arguments: [Any]) {
+    @objc(startEvent:instanceName:)
+    func startEvent(_ arguments: [Any], instanceName: String) {
         Self.onMain {
             guard let key = Self.asString(arguments.first) else { return }
-            Countly.shared.events.startEvent(key)
+            Self.countly(instanceName).events.startEvent(key)
         }
     }
 
-    @objc(cancelEvent:)
-    func cancelEvent(_ arguments: [Any]) {
+    @objc(cancelEvent:instanceName:)
+    func cancelEvent(_ arguments: [Any], instanceName: String) {
         Self.onMain {
             guard let key = Self.asString(arguments.first) else { return }
-            Countly.shared.events.cancelEvent(key)
+            Self.countly(instanceName).events.cancelEvent(key)
         }
     }
 
-    @objc(endEvent:)
-    func endEvent(_ arguments: [String: Any]) {
+    @objc(endEvent:instanceName:)
+    func endEvent(_ arguments: [String: Any], instanceName: String) {
         Self.onMain {
             guard let key = arguments["n"] as? String else { return }
             let count = (arguments["c"] as? NSNumber)?.intValue ?? 1
             let sum = (arguments["s"] as? NSNumber)?.doubleValue ?? 0
             let segmentation = Self.keyValuePairs(from: arguments["g"] as? [Any] ?? [], startIndex: 0)
 
-            Countly.shared.events.endEvent(key, segmentation: segmentation, count: count, sum: sum)
+            Self.countly(instanceName).events.endEvent(key, segmentation: segmentation, count: count, sum: sum)
         }
     }
 
-    @objc(setEventSendThreshold:)
-    func setEventSendThreshold(_ arguments: [Any]) {
+    @objc(setEventSendThreshold:instanceName:)
+    func setEventSendThreshold(_ arguments: [Any], instanceName: String) {
         Self.onMain {
             guard let size = arguments.first else { return }
             let threshold = (size as? NSNumber)?.intValue ?? Int(Self.asString(size) ?? "") ?? 0
-            Self.ensureConfig().eventSendThreshold = threshold
+            Self.ensureConfig(instanceName).eventSendThreshold = threshold
         }
     }
 
     // MARK: - Views
 
-    @objc(recordView:)
-    func recordView(_ arguments: [Any]) {
+    @objc(recordView:instanceName:)
+    func recordView(_ arguments: [Any], instanceName: String) {
         Self.onMain {
             guard let viewName = Self.asString(arguments.first) else { return }
             let segmentation = Self.keyValuePairs(from: arguments, startIndex: 1)
-            _ = Countly.shared.views.startAutoStoppedView(viewName, segmentation: segmentation)
+            _ = Self.countly(instanceName).views.startAutoStoppedView(viewName, segmentation: segmentation)
         }
     }
 
-    @objc(startAutoStoppedView:resolver:rejecter:)
+    @objc(startAutoStoppedView:instanceName:resolver:rejecter:)
     func startAutoStoppedView(_ arguments: [Any],
+                              instanceName: String,
                               resolver resolve: @escaping RCTPromiseResolveBlock,
                               rejecter reject: @escaping RCTPromiseRejectBlock) {
         Self.onMain {
@@ -577,12 +633,13 @@ public class CountlyReactNative: RCTEventEmitter {
                 return
             }
             let segmentation = Self.keyValuePairs(from: arguments, startIndex: 1)
-            resolve(Countly.shared.views.startAutoStoppedView(viewName, segmentation: segmentation) ?? NSNull())
+            resolve(Self.countly(instanceName).views.startAutoStoppedView(viewName, segmentation: segmentation) ?? NSNull())
         }
     }
 
-    @objc(startView:resolver:rejecter:)
+    @objc(startView:instanceName:resolver:rejecter:)
     func startView(_ arguments: [Any],
+                   instanceName: String,
                    resolver resolve: @escaping RCTPromiseResolveBlock,
                    rejecter reject: @escaping RCTPromiseRejectBlock) {
         Self.onMain {
@@ -591,105 +648,105 @@ public class CountlyReactNative: RCTEventEmitter {
                 return
             }
             let segmentation = Self.keyValuePairs(from: arguments, startIndex: 1)
-            resolve(Countly.shared.views.startView(viewName, segmentation: segmentation) ?? NSNull())
+            resolve(Self.countly(instanceName).views.startView(viewName, segmentation: segmentation) ?? NSNull())
         }
     }
 
-    @objc(stopViewWithName:)
-    func stopViewWithName(_ arguments: [Any]) {
+    @objc(stopViewWithName:instanceName:)
+    func stopViewWithName(_ arguments: [Any], instanceName: String) {
         Self.onMain {
             guard let viewName = Self.asString(arguments.first) else { return }
-            Countly.shared.views.stopView(name: viewName, segmentation: Self.keyValuePairs(from: arguments, startIndex: 1))
+            Self.countly(instanceName).views.stopView(name: viewName, segmentation: Self.keyValuePairs(from: arguments, startIndex: 1))
         }
     }
 
-    @objc(stopViewWithID:)
-    func stopViewWithID(_ arguments: [Any]) {
+    @objc(stopViewWithID:instanceName:)
+    func stopViewWithID(_ arguments: [Any], instanceName: String) {
         Self.onMain {
             guard let viewID = Self.asString(arguments.first) else { return }
-            Countly.shared.views.stopView(id: viewID, segmentation: Self.keyValuePairs(from: arguments, startIndex: 1))
+            Self.countly(instanceName).views.stopView(id: viewID, segmentation: Self.keyValuePairs(from: arguments, startIndex: 1))
         }
     }
 
-    @objc(stopAllViews:)
-    func stopAllViews(_ arguments: [Any]) {
+    @objc(stopAllViews:instanceName:)
+    func stopAllViews(_ arguments: [Any], instanceName: String) {
         Self.onMain {
-            Countly.shared.views.stopAllViews(segmentation: Self.keyValuePairs(from: arguments, startIndex: 0))
+            Self.countly(instanceName).views.stopAllViews(segmentation: Self.keyValuePairs(from: arguments, startIndex: 0))
         }
     }
 
-    @objc(pauseViewWithID:)
-    func pauseViewWithID(_ arguments: [Any]) {
-        Self.onMain {
-            guard let viewID = Self.asString(arguments.first) else { return }
-            Countly.shared.views.pauseView(id: viewID)
-        }
-    }
-
-    @objc(resumeViewWithID:)
-    func resumeViewWithID(_ arguments: [Any]) {
+    @objc(pauseViewWithID:instanceName:)
+    func pauseViewWithID(_ arguments: [Any], instanceName: String) {
         Self.onMain {
             guard let viewID = Self.asString(arguments.first) else { return }
-            Countly.shared.views.resumeView(id: viewID)
+            Self.countly(instanceName).views.pauseView(id: viewID)
         }
     }
 
-    @objc(addSegmentationToViewWithID:)
-    func addSegmentationToViewWithID(_ arguments: [Any]) {
+    @objc(resumeViewWithID:instanceName:)
+    func resumeViewWithID(_ arguments: [Any], instanceName: String) {
+        Self.onMain {
+            guard let viewID = Self.asString(arguments.first) else { return }
+            Self.countly(instanceName).views.resumeView(id: viewID)
+        }
+    }
+
+    @objc(addSegmentationToViewWithID:instanceName:)
+    func addSegmentationToViewWithID(_ arguments: [Any], instanceName: String) {
         Self.onMain {
             guard let viewID = Self.asString(arguments.first),
                   let segmentation = Self.keyValuePairs(from: arguments, startIndex: 1) else { return }
-            Countly.shared.views.addSegmentation(toViewWithID: viewID, segmentation: segmentation)
+            Self.countly(instanceName).views.addSegmentation(toViewWithID: viewID, segmentation: segmentation)
         }
     }
 
-    @objc(addSegmentationToViewWithName:)
-    func addSegmentationToViewWithName(_ arguments: [Any]) {
+    @objc(addSegmentationToViewWithName:instanceName:)
+    func addSegmentationToViewWithName(_ arguments: [Any], instanceName: String) {
         Self.onMain {
             guard let viewName = Self.asString(arguments.first),
                   let segmentation = Self.keyValuePairs(from: arguments, startIndex: 1) else { return }
-            Countly.shared.views.addSegmentation(toViewWithName: viewName, segmentation: segmentation)
+            Self.countly(instanceName).views.addSegmentation(toViewWithName: viewName, segmentation: segmentation)
         }
     }
 
-    @objc(setGlobalViewSegmentation:)
-    func setGlobalViewSegmentation(_ arguments: [Any]) {
+    @objc(setGlobalViewSegmentation:instanceName:)
+    func setGlobalViewSegmentation(_ arguments: [Any], instanceName: String) {
         Self.onMain {
-            Countly.shared.views.setGlobalViewSegmentation(Self.keyValuePairs(from: arguments, startIndex: 0) ?? [:])
+            Self.countly(instanceName).views.setGlobalViewSegmentation(Self.keyValuePairs(from: arguments, startIndex: 0) ?? [:])
         }
     }
 
-    @objc(updateGlobalViewSegmentation:)
-    func updateGlobalViewSegmentation(_ arguments: [Any]) {
+    @objc(updateGlobalViewSegmentation:instanceName:)
+    func updateGlobalViewSegmentation(_ arguments: [Any], instanceName: String) {
         Self.onMain {
-            Countly.shared.views.updateGlobalViewSegmentation(Self.keyValuePairs(from: arguments, startIndex: 0) ?? [:])
+            Self.countly(instanceName).views.updateGlobalViewSegmentation(Self.keyValuePairs(from: arguments, startIndex: 0) ?? [:])
         }
     }
 
     // MARK: - Sessions
 
-    @objc(startSession)
-    func startSession() {
-        Self.onMain { Countly.shared.sessions.beginSession() }
+    @objc(startSession:)
+    func startSession(_ instanceName: String) {
+        Self.onMain { Self.countly(instanceName).sessions.beginSession() }
     }
 
-    @objc(updateSession)
-    func updateSession() {
-        Self.onMain { Countly.shared.sessions.updateSession() }
+    @objc(updateSession:)
+    func updateSession(_ instanceName: String) {
+        Self.onMain { Self.countly(instanceName).sessions.updateSession() }
     }
 
-    @objc(endSession)
-    func endSession() {
-        Self.onMain { Countly.shared.sessions.endSession() }
+    @objc(endSession:)
+    func endSession(_ instanceName: String) {
+        Self.onMain { Self.countly(instanceName).sessions.endSession() }
     }
 
     // MARK: - Configuration touched after construction
 
-    @objc(setLoggingEnabled:)
-    func setLoggingEnabled(_ arguments: [Any]) {
+    @objc(setLoggingEnabled:instanceName:)
+    func setLoggingEnabled(_ arguments: [Any], instanceName: String) {
         Self.onMain {
             let enabled = Self.asBool(arguments.first)
-            let config = Self.ensureConfig()
+            let config = Self.ensureConfig(instanceName)
             config.enableDebug = enabled
             if enabled {
                 config.internalLogLevel = .verbose
@@ -698,113 +755,115 @@ public class CountlyReactNative: RCTEventEmitter {
         }
     }
 
-    @objc(isLoggingEnabled:rejecter:)
-    func isLoggingEnabled(_ resolve: @escaping RCTPromiseResolveBlock,
+    @objc(isLoggingEnabled:resolver:rejecter:)
+    func isLoggingEnabled(_ instanceName: String,
+                          resolver resolve: @escaping RCTPromiseResolveBlock,
                           rejecter reject: @escaping RCTPromiseRejectBlock) {
         Self.onMain { resolve(Self.loggingEnabled) }
     }
 
-    @objc(isInitialized:rejecter:)
-    func isInitialized(_ resolve: @escaping RCTPromiseResolveBlock,
+    @objc(isInitialized:resolver:rejecter:)
+    func isInitialized(_ instanceName: String,
+                       resolver resolve: @escaping RCTPromiseResolveBlock,
                        rejecter reject: @escaping RCTPromiseRejectBlock) {
-        Self.onMain { resolve(Countly.shared.isStarted) }
+        Self.onMain { resolve(Self.existingCountly(instanceName)?.isStarted ?? false) }
     }
 
-    @objc(setHttpPostForced:)
-    func setHttpPostForced(_ arguments: [Any]) {
+    @objc(setHttpPostForced:instanceName:)
+    func setHttpPostForced(_ arguments: [Any], instanceName: String) {
         Self.onMain {
-            Self.ensureConfig().alwaysUsePOST = Self.asBool(arguments.first)
+            Self.ensureConfig(instanceName).alwaysUsePOST = Self.asBool(arguments.first)
         }
     }
 
-    @objc(pinnedCertificates:)
-    func pinnedCertificates(_ arguments: [Any]) {
+    @objc(pinnedCertificates:instanceName:)
+    func pinnedCertificates(_ arguments: [Any], instanceName: String) {
         Self.onMain {
             guard let certificateName = Self.asString(arguments.first) else { return }
-            Self.ensureConfig().pinnedCertificates = [certificateName]
+            Self.ensureConfig(instanceName).pinnedCertificates = [certificateName]
         }
     }
 
-    @objc(setCustomMetrics:)
-    func setCustomMetrics(_ arguments: [Any]) {
+    @objc(setCustomMetrics:instanceName:)
+    func setCustomMetrics(_ arguments: [Any], instanceName: String) {
         Self.onMain {
             let metrics = Self.keyValuePairs(from: arguments, startIndex: 0) ?? [:]
-            Self.ensureConfig().customMetrics = metrics.compactMapValues { $0 as? String }
+            Self.ensureConfig(instanceName).customMetrics = metrics.compactMapValues { $0 as? String }
         }
     }
 
-    @objc(recordMetrics:)
-    func recordMetrics(_ arguments: [Any]) {
+    @objc(recordMetrics:instanceName:)
+    func recordMetrics(_ arguments: [Any], instanceName: String) {
         Self.onMain {
             let metrics = Self.keyValuePairs(from: arguments, startIndex: 0) ?? [:]
-            Countly.shared.recordMetrics(metrics.compactMapValues { $0 as? String })
+            Self.countly(instanceName).recordMetrics(metrics.compactMapValues { $0 as? String })
         }
     }
 
-    @objc(addCustomNetworkRequestHeaders:)
-    func addCustomNetworkRequestHeaders(_ arguments: [Any]) {
+    @objc(addCustomNetworkRequestHeaders:instanceName:)
+    func addCustomNetworkRequestHeaders(_ arguments: [Any], instanceName: String) {
         Self.onMain {
             let headers = Self.keyValuePairs(from: arguments, startIndex: 0) ?? [:]
-            Countly.shared.addCustomNetworkRequestHeaders(headers.compactMapValues { $0 as? String })
+            Self.countly(instanceName).addCustomNetworkRequestHeaders(headers.compactMapValues { $0 as? String })
         }
     }
 
-    @objc(replaceAllAppKeysInQueueWithCurrentAppKey)
-    func replaceAllAppKeysInQueueWithCurrentAppKey() {
-        Self.onMain { Countly.shared.requestQueue.replaceAllAppKeysInQueueWithCurrentAppKey() }
+    @objc(replaceAllAppKeysInQueueWithCurrentAppKey:)
+    func replaceAllAppKeysInQueueWithCurrentAppKey(_ instanceName: String) {
+        Self.onMain { Self.countly(instanceName).requestQueue.replaceAllAppKeysInQueueWithCurrentAppKey() }
     }
 
-    @objc(removeDifferentAppKeysFromQueue)
-    func removeDifferentAppKeysFromQueue() {
-        Self.onMain { Countly.shared.requestQueue.removeDifferentAppKeysFromQueue() }
+    @objc(removeDifferentAppKeysFromQueue:)
+    func removeDifferentAppKeysFromQueue(_ instanceName: String) {
+        Self.onMain { Self.countly(instanceName).requestQueue.removeDifferentAppKeysFromQueue() }
     }
 
     // MARK: - Location
 
-    @objc(setLocation:)
-    func setLocation(_ arguments: [Any]) {
+    @objc(setLocation:instanceName:)
+    func setLocation(_ arguments: [Any], instanceName: String) {
         Self.onMain {
             func value(_ index: Int) -> String? {
                 guard arguments.count > index, let text = Self.asString(arguments[index]), text != "null" else { return nil }
                 return text
             }
 
-            Countly.shared.location.recordLocation(Self.coordinate(from: value(2)),
+            Self.countly(instanceName).location.recordLocation(Self.coordinate(from: value(2)),
                                                    city: value(1),
                                                    isoCountryCode: value(0),
                                                    ipAddress: value(3))
         }
     }
 
-    @objc(disableLocation)
-    func disableLocation() {
-        Self.onMain { Countly.shared.location.disableLocationInfo() }
+    @objc(disableLocation:)
+    func disableLocation(_ instanceName: String) {
+        Self.onMain { Self.countly(instanceName).location.disableLocationInfo() }
     }
 
     // MARK: - Crashes
 
-    @objc(addCrashLog:)
-    func addCrashLog(_ arguments: [Any]) {
+    @objc(addCrashLog:instanceName:)
+    func addCrashLog(_ arguments: [Any], instanceName: String) {
         Self.onMain {
             guard let log = Self.asString(arguments.first) else { return }
-            Countly.shared.crashes.addCrashBreadcrumb(log)
+            Self.countly(instanceName).crashes.addCrashBreadcrumb(log)
         }
     }
 
-    @objc(setCustomCrashSegments:)
-    func setCustomCrashSegments(_ arguments: [Any]) {
+    @objc(setCustomCrashSegments:instanceName:)
+    func setCustomCrashSegments(_ arguments: [Any], instanceName: String) {
         Self.onMain {
             let segmentation = Self.keyValuePairs(from: arguments, startIndex: 0) ?? [:]
-            if Countly.shared.isStarted {
-                Countly.shared.crashes.setCrashSegmentation(segmentation)
+            if Self.countly(instanceName).isStarted {
+                Self.countly(instanceName).crashes.setCrashSegmentation(segmentation)
             } else {
-                Self.ensureConfig().crashSegmentation = segmentation
+                Self.ensureConfig(instanceName).crashSegmentation = segmentation
             }
         }
     }
 
-    @objc(logException:)
-    func logException(_ arguments: [Any]) {
+    @objc(logException:instanceName:)
+    func logException(_ arguments: [Any], instanceName: String) {
         Self.onMain {
             guard let exceptionString = Self.asString(arguments.first) else { return }
 
@@ -816,18 +875,18 @@ public class CountlyReactNative: RCTEventEmitter {
                                         reason: exceptionString,
                                         userInfo: nil)
             // Always handled: the fatality argument has never chosen the crash type here.
-            Countly.shared.crashes.recordException(exception,
+            Self.countly(instanceName).crashes.recordException(exception,
                                                    isFatal: false,
                                                    stackTrace: exceptionString.components(separatedBy: "\n"),
                                                    segmentation: segmentation)
         }
     }
 
-    @objc(logJSException:withMessage:withStack:)
-    func logJSException(_ errTitle: String, withMessage message: String, withStack stackTrace: String) {
+    @objc(logJSException:withMessage:withStack:instanceName:)
+    func logJSException(_ errTitle: String, withMessage message: String, withStack stackTrace: String, instanceName: String) {
         Self.onMain {
             let exception = NSException(name: NSExceptionName(errTitle), reason: message, userInfo: nil)
-            Countly.shared.crashes.recordException(exception,
+            Self.countly(instanceName).crashes.recordException(exception,
                                                    isFatal: false,
                                                    stackTrace: stackTrace.components(separatedBy: "\n"),
                                                    segmentation: ["nonfatal": "1"])
@@ -836,22 +895,24 @@ public class CountlyReactNative: RCTEventEmitter {
 
     // MARK: - User profile
 
-    @objc(setUserData:resolver:rejecter:)
+    @objc(setUserData:instanceName:resolver:rejecter:)
     func setUserData(_ arguments: [Any],
+                     instanceName: String,
                      resolver resolve: @escaping RCTPromiseResolveBlock,
                      rejecter reject: @escaping RCTPromiseRejectBlock) {
         Self.onMain {
-            self.setUserDataInternal(arguments.first as? [String: Any])
+            self.setUserDataInternal(arguments.first as? [String: Any], instanceName: instanceName)
             resolve("Success")
         }
     }
 
-    @objc(userDataBulk_setUserProperties:resolver:rejecter:)
+    @objc(userDataBulk_setUserProperties:instanceName:resolver:rejecter:)
     func userDataBulkSetUserProperties(_ userProperties: [String: Any],
+                                       instanceName: String,
                                        resolver resolve: @escaping RCTPromiseResolveBlock,
                                        rejecter reject: @escaping RCTPromiseRejectBlock) {
         Self.onMain {
-            self.setUserDataInternal(userProperties)
+            self.setUserDataInternal(userProperties, instanceName: instanceName)
             resolve("Success")
         }
     }
@@ -859,7 +920,9 @@ public class CountlyReactNative: RCTEventEmitter {
     /// Applies a user data payload: predefined fields land on their own fields and
     /// everything else, including the contents of an explicit `custom` object,
     /// becomes a custom property.
-    private func setUserDataInternal(_ userData: [String: Any]?) {
+    /// - Parameter userData: the payload the JavaScript layer sent.
+    /// - Parameter instanceName: the instance the properties belong to, empty for the default one.
+    private func setUserDataInternal(_ userData: [String: Any]?, instanceName: String) {
         guard var data = userData else { return }
 
         if let explicitCustom = data.removeValue(forKey: "custom") as? [String: Any] {
@@ -869,208 +932,229 @@ public class CountlyReactNative: RCTEventEmitter {
         }
 
         guard !data.isEmpty else { return }
-        Countly.shared.userProfile.setProperties(data)
+        Self.countly(instanceName).userProfile.setProperties(data)
     }
 
-    @objc(userData_setProperty:resolver:rejecter:)
+    @objc(userData_setProperty:instanceName:resolver:rejecter:)
     func userDataSetProperty(_ arguments: [Any],
+                             instanceName: String,
                              resolver resolve: @escaping RCTPromiseResolveBlock,
                              rejecter reject: @escaping RCTPromiseRejectBlock) {
         Self.onMain {
             if let key = Self.asString(arguments.first) {
-                Countly.shared.userProfile.setCustomProperty(key, value: arguments.count > 1 ? arguments[1] : nil)
+                Self.countly(instanceName).userProfile.setCustomProperty(key, value: arguments.count > 1 ? arguments[1] : nil)
             }
             resolve("Success")
         }
     }
 
-    @objc(userData_increment:resolver:rejecter:)
+    @objc(userData_increment:instanceName:resolver:rejecter:)
     func userDataIncrement(_ arguments: [Any],
+                           instanceName: String,
                            resolver resolve: @escaping RCTPromiseResolveBlock,
                            rejecter reject: @escaping RCTPromiseRejectBlock) {
         Self.onMain {
             if let key = Self.asString(arguments.first) {
-                Countly.shared.userProfile.increment(key)
+                Self.countly(instanceName).userProfile.increment(key)
             }
             resolve("Success")
         }
     }
 
-    @objc(userData_incrementBy:resolver:rejecter:)
+    @objc(userData_incrementBy:instanceName:resolver:rejecter:)
     func userDataIncrementBy(_ arguments: [Any],
+                             instanceName: String,
                              resolver resolve: @escaping RCTPromiseResolveBlock,
                              rejecter reject: @escaping RCTPromiseRejectBlock) {
         Self.onMain {
             if let key = Self.asString(arguments.first) {
-                Countly.shared.userProfile.incrementBy(key, value: Self.number(arguments, at: 1))
+                Self.countly(instanceName).userProfile.incrementBy(key, value: Self.number(arguments, at: 1))
             }
             resolve("Success")
         }
     }
 
-    @objc(userData_multiply:resolver:rejecter:)
+    @objc(userData_multiply:instanceName:resolver:rejecter:)
     func userDataMultiply(_ arguments: [Any],
+                          instanceName: String,
                           resolver resolve: @escaping RCTPromiseResolveBlock,
                           rejecter reject: @escaping RCTPromiseRejectBlock) {
         Self.onMain {
             if let key = Self.asString(arguments.first) {
-                Countly.shared.userProfile.multiply(key, value: Self.number(arguments, at: 1))
+                Self.countly(instanceName).userProfile.multiply(key, value: Self.number(arguments, at: 1))
             }
             resolve("Success")
         }
     }
 
-    @objc(userData_saveMax:resolver:rejecter:)
+    @objc(userData_saveMax:instanceName:resolver:rejecter:)
     func userDataSaveMax(_ arguments: [Any],
+                         instanceName: String,
                          resolver resolve: @escaping RCTPromiseResolveBlock,
                          rejecter reject: @escaping RCTPromiseRejectBlock) {
         Self.onMain {
             if let key = Self.asString(arguments.first) {
-                Countly.shared.userProfile.max(key, value: Self.number(arguments, at: 1))
+                Self.countly(instanceName).userProfile.max(key, value: Self.number(arguments, at: 1))
             }
             resolve("Success")
         }
     }
 
-    @objc(userData_saveMin:resolver:rejecter:)
+    @objc(userData_saveMin:instanceName:resolver:rejecter:)
     func userDataSaveMin(_ arguments: [Any],
+                         instanceName: String,
                          resolver resolve: @escaping RCTPromiseResolveBlock,
                          rejecter reject: @escaping RCTPromiseRejectBlock) {
         Self.onMain {
             if let key = Self.asString(arguments.first) {
-                Countly.shared.userProfile.min(key, value: Self.number(arguments, at: 1))
+                Self.countly(instanceName).userProfile.min(key, value: Self.number(arguments, at: 1))
             }
             resolve("Success")
         }
     }
 
-    @objc(userData_setOnce:resolver:rejecter:)
+    @objc(userData_setOnce:instanceName:resolver:rejecter:)
     func userDataSetOnce(_ arguments: [Any],
+                         instanceName: String,
                          resolver resolve: @escaping RCTPromiseResolveBlock,
                          rejecter reject: @escaping RCTPromiseRejectBlock) {
         Self.onMain {
             if let key = Self.asString(arguments.first), arguments.count > 1 {
-                Countly.shared.userProfile.setOnce(key, value: arguments[1])
+                Self.countly(instanceName).userProfile.setOnce(key, value: arguments[1])
             }
             resolve("Success")
         }
     }
 
-    @objc(userData_pushUniqueValue:resolver:rejecter:)
+    @objc(userData_pushUniqueValue:instanceName:resolver:rejecter:)
     func userDataPushUniqueValue(_ arguments: [Any],
+                                 instanceName: String,
                                  resolver resolve: @escaping RCTPromiseResolveBlock,
                                  rejecter reject: @escaping RCTPromiseRejectBlock) {
         Self.onMain {
             if let key = Self.asString(arguments.first), arguments.count > 1 {
-                Countly.shared.userProfile.pushUnique(key, value: arguments[1])
+                Self.countly(instanceName).userProfile.pushUnique(key, value: arguments[1])
             }
             resolve("Success")
         }
     }
 
-    @objc(userData_pushValue:resolver:rejecter:)
+    @objc(userData_pushValue:instanceName:resolver:rejecter:)
     func userDataPushValue(_ arguments: [Any],
+                           instanceName: String,
                            resolver resolve: @escaping RCTPromiseResolveBlock,
                            rejecter reject: @escaping RCTPromiseRejectBlock) {
         Self.onMain {
             if let key = Self.asString(arguments.first), arguments.count > 1 {
-                Countly.shared.userProfile.push(key, value: arguments[1])
+                Self.countly(instanceName).userProfile.push(key, value: arguments[1])
             }
             resolve("Success")
         }
     }
 
-    @objc(userData_pullValue:resolver:rejecter:)
+    @objc(userData_pullValue:instanceName:resolver:rejecter:)
     func userDataPullValue(_ arguments: [Any],
+                           instanceName: String,
                            resolver resolve: @escaping RCTPromiseResolveBlock,
                            rejecter reject: @escaping RCTPromiseRejectBlock) {
         Self.onMain {
             if let key = Self.asString(arguments.first), arguments.count > 1 {
-                Countly.shared.userProfile.pull(key, value: arguments[1])
+                Self.countly(instanceName).userProfile.pull(key, value: arguments[1])
             }
             resolve("Success")
         }
     }
 
-    @objc(userDataBulk_save:resolver:rejecter:)
+    @objc(userDataBulk_save:instanceName:resolver:rejecter:)
     func userDataBulkSave(_ arguments: [Any],
+                          instanceName: String,
                           resolver resolve: @escaping RCTPromiseResolveBlock,
                           rejecter reject: @escaping RCTPromiseRejectBlock) {
         Self.onMain {
-            Countly.shared.userProfile.save()
+            Self.countly(instanceName).userProfile.save()
             resolve("Success")
         }
     }
 
     // The bulk variants stage the same operations and are sent on a flush or an explicit save.
-    @objc(userDataBulk_setProperty:resolver:rejecter:)
+    @objc(userDataBulk_setProperty:instanceName:resolver:rejecter:)
     func userDataBulkSetProperty(_ arguments: [Any],
+                                 instanceName: String,
                                  resolver resolve: @escaping RCTPromiseResolveBlock,
                                  rejecter reject: @escaping RCTPromiseRejectBlock) {
-        userDataSetProperty(arguments, resolver: resolve, rejecter: reject)
+        userDataSetProperty(arguments, instanceName: instanceName, resolver: resolve, rejecter: reject)
     }
 
-    @objc(userDataBulk_increment:resolver:rejecter:)
+    @objc(userDataBulk_increment:instanceName:resolver:rejecter:)
     func userDataBulkIncrement(_ arguments: [Any],
+                               instanceName: String,
                                resolver resolve: @escaping RCTPromiseResolveBlock,
                                rejecter reject: @escaping RCTPromiseRejectBlock) {
-        userDataIncrement(arguments, resolver: resolve, rejecter: reject)
+        userDataIncrement(arguments, instanceName: instanceName, resolver: resolve, rejecter: reject)
     }
 
-    @objc(userDataBulk_incrementBy:resolver:rejecter:)
+    @objc(userDataBulk_incrementBy:instanceName:resolver:rejecter:)
     func userDataBulkIncrementBy(_ arguments: [Any],
+                                 instanceName: String,
                                  resolver resolve: @escaping RCTPromiseResolveBlock,
                                  rejecter reject: @escaping RCTPromiseRejectBlock) {
-        userDataIncrementBy(arguments, resolver: resolve, rejecter: reject)
+        userDataIncrementBy(arguments, instanceName: instanceName, resolver: resolve, rejecter: reject)
     }
 
-    @objc(userDataBulk_multiply:resolver:rejecter:)
+    @objc(userDataBulk_multiply:instanceName:resolver:rejecter:)
     func userDataBulkMultiply(_ arguments: [Any],
+                              instanceName: String,
                               resolver resolve: @escaping RCTPromiseResolveBlock,
                               rejecter reject: @escaping RCTPromiseRejectBlock) {
-        userDataMultiply(arguments, resolver: resolve, rejecter: reject)
+        userDataMultiply(arguments, instanceName: instanceName, resolver: resolve, rejecter: reject)
     }
 
-    @objc(userDataBulk_saveMax:resolver:rejecter:)
+    @objc(userDataBulk_saveMax:instanceName:resolver:rejecter:)
     func userDataBulkSaveMax(_ arguments: [Any],
+                             instanceName: String,
                              resolver resolve: @escaping RCTPromiseResolveBlock,
                              rejecter reject: @escaping RCTPromiseRejectBlock) {
-        userDataSaveMax(arguments, resolver: resolve, rejecter: reject)
+        userDataSaveMax(arguments, instanceName: instanceName, resolver: resolve, rejecter: reject)
     }
 
-    @objc(userDataBulk_saveMin:resolver:rejecter:)
+    @objc(userDataBulk_saveMin:instanceName:resolver:rejecter:)
     func userDataBulkSaveMin(_ arguments: [Any],
+                             instanceName: String,
                              resolver resolve: @escaping RCTPromiseResolveBlock,
                              rejecter reject: @escaping RCTPromiseRejectBlock) {
-        userDataSaveMin(arguments, resolver: resolve, rejecter: reject)
+        userDataSaveMin(arguments, instanceName: instanceName, resolver: resolve, rejecter: reject)
     }
 
-    @objc(userDataBulk_setOnce:resolver:rejecter:)
+    @objc(userDataBulk_setOnce:instanceName:resolver:rejecter:)
     func userDataBulkSetOnce(_ arguments: [Any],
+                             instanceName: String,
                              resolver resolve: @escaping RCTPromiseResolveBlock,
                              rejecter reject: @escaping RCTPromiseRejectBlock) {
-        userDataSetOnce(arguments, resolver: resolve, rejecter: reject)
+        userDataSetOnce(arguments, instanceName: instanceName, resolver: resolve, rejecter: reject)
     }
 
-    @objc(userDataBulk_pushUniqueValue:resolver:rejecter:)
+    @objc(userDataBulk_pushUniqueValue:instanceName:resolver:rejecter:)
     func userDataBulkPushUniqueValue(_ arguments: [Any],
+                                     instanceName: String,
                                      resolver resolve: @escaping RCTPromiseResolveBlock,
                                      rejecter reject: @escaping RCTPromiseRejectBlock) {
-        userDataPushUniqueValue(arguments, resolver: resolve, rejecter: reject)
+        userDataPushUniqueValue(arguments, instanceName: instanceName, resolver: resolve, rejecter: reject)
     }
 
-    @objc(userDataBulk_pushValue:resolver:rejecter:)
+    @objc(userDataBulk_pushValue:instanceName:resolver:rejecter:)
     func userDataBulkPushValue(_ arguments: [Any],
+                               instanceName: String,
                                resolver resolve: @escaping RCTPromiseResolveBlock,
                                rejecter reject: @escaping RCTPromiseRejectBlock) {
-        userDataPushValue(arguments, resolver: resolve, rejecter: reject)
+        userDataPushValue(arguments, instanceName: instanceName, resolver: resolve, rejecter: reject)
     }
 
-    @objc(userDataBulk_pullValue:resolver:rejecter:)
+    @objc(userDataBulk_pullValue:instanceName:resolver:rejecter:)
     func userDataBulkPullValue(_ arguments: [Any],
+                               instanceName: String,
                                resolver resolve: @escaping RCTPromiseResolveBlock,
                                rejecter reject: @escaping RCTPromiseRejectBlock) {
-        userDataPullValue(arguments, resolver: resolve, rejecter: reject)
+        userDataPullValue(arguments, instanceName: instanceName, resolver: resolve, rejecter: reject)
     }
 
     /// Reads a numeric modifier argument, which the JavaScript layer sends as a
@@ -1084,28 +1168,28 @@ public class CountlyReactNative: RCTEventEmitter {
 
     // MARK: - Consent
 
-    @objc(giveConsent:)
-    func giveConsent(_ arguments: [Any]) {
+    @objc(giveConsent:instanceName:)
+    func giveConsent(_ arguments: [Any], instanceName: String) {
         Self.onMain {
-            Countly.shared.consent.giveConsent(for: Self.features(from: arguments))
+            Self.countly(instanceName).consent.giveConsent(for: Self.features(from: arguments))
         }
     }
 
-    @objc(removeConsent:)
-    func removeConsent(_ arguments: [Any]) {
+    @objc(removeConsent:instanceName:)
+    func removeConsent(_ arguments: [Any], instanceName: String) {
         Self.onMain {
-            Countly.shared.consent.cancelConsent(for: Self.features(from: arguments))
+            Self.countly(instanceName).consent.cancelConsent(for: Self.features(from: arguments))
         }
     }
 
-    @objc(giveAllConsent)
-    func giveAllConsent() {
-        Self.onMain { Countly.shared.consent.giveAllConsents() }
+    @objc(giveAllConsent:)
+    func giveAllConsent(_ instanceName: String) {
+        Self.onMain { Self.countly(instanceName).consent.giveAllConsents() }
     }
 
-    @objc(removeAllConsent)
-    func removeAllConsent() {
-        Self.onMain { Countly.shared.consent.cancelAllConsents() }
+    @objc(removeAllConsent:)
+    func removeAllConsent(_ instanceName: String) {
+        Self.onMain { Self.countly(instanceName).consent.cancelAllConsents() }
     }
 
     /// Maps the wire names the JavaScript layer sends onto features, dropping any
@@ -1123,81 +1207,86 @@ public class CountlyReactNative: RCTEventEmitter {
 
     // MARK: - Attribution
 
-    @objc(recordDirectAttribution:)
-    func recordDirectAttribution(_ arguments: [Any]) {
+    @objc(recordDirectAttribution:instanceName:)
+    func recordDirectAttribution(_ arguments: [Any], instanceName: String) {
         Self.onMain {
             guard let campaignType = Self.asString(arguments.first),
                   arguments.count > 1, let campaignData = Self.asString(arguments[1]) else { return }
 
-            if Countly.shared.isStarted {
-                Countly.shared.attribution.recordDirectAttribution(campaignType: campaignType, campaignData: campaignData)
+            if Self.countly(instanceName).isStarted {
+                Self.countly(instanceName).attribution.recordDirectAttribution(campaignType: campaignType, campaignData: campaignData)
             } else {
-                let config = Self.ensureConfig()
+                let config = Self.ensureConfig(instanceName)
                 config.campaignType = campaignType
                 config.campaignData = campaignData
             }
         }
     }
 
-    @objc(recordIndirectAttribution:)
-    func recordIndirectAttribution(_ arguments: [Any]) {
+    @objc(recordIndirectAttribution:instanceName:)
+    func recordIndirectAttribution(_ arguments: [Any], instanceName: String) {
         Self.onMain {
             guard let attribution = arguments.first as? [String: String] else { return }
-            if Countly.shared.isStarted {
-                Countly.shared.attribution.recordIndirectAttribution(attribution)
+            if Self.countly(instanceName).isStarted {
+                Self.countly(instanceName).attribution.recordIndirectAttribution(attribution)
             } else {
-                Self.ensureConfig().indirectAttribution = attribution
+                Self.ensureConfig(instanceName).indirectAttribution = attribution
             }
         }
     }
 
     // MARK: - Remote config
 
-    @objc(remoteConfigUpdate:callback:)
-    func remoteConfigUpdate(_ arguments: [Any], callback: @escaping RCTResponseSenderBlock) {
+    @objc(remoteConfigUpdate:instanceName:callback:)
+    func remoteConfigUpdate(_ arguments: [Any], instanceName: String,
+                                                callback: @escaping RCTResponseSenderBlock) {
         Self.onMain {
-            Countly.shared.remoteConfig.downloadKeys { result, error, _, _ in
+            Self.countly(instanceName).remoteConfig.downloadKeys { result, error, _, _ in
                 callback([[Self.remoteConfigMessage(result, error, success: "Remote Config is updated and ready to use!")]])
             }
         }
     }
 
-    @objc(updateRemoteConfigForKeysOnly:callback:)
-    func updateRemoteConfigForKeysOnly(_ arguments: [Any], callback: @escaping RCTResponseSenderBlock) {
+    @objc(updateRemoteConfigForKeysOnly:instanceName:callback:)
+    func updateRemoteConfigForKeysOnly(_ arguments: [Any], instanceName: String,
+                                                           callback: @escaping RCTResponseSenderBlock) {
         Self.onMain {
             let keys = arguments.compactMap { $0 as? String }
-            Countly.shared.remoteConfig.downloadSpecificKeys(keys) { result, error, _, _ in
+            Self.countly(instanceName).remoteConfig.downloadSpecificKeys(keys) { result, error, _, _ in
                 callback([[Self.remoteConfigMessage(result, error, success: "Remote Config is updated only for given keys and ready to use!")]])
             }
         }
     }
 
-    @objc(updateRemoteConfigExceptKeys:callback:)
-    func updateRemoteConfigExceptKeys(_ arguments: [Any], callback: @escaping RCTResponseSenderBlock) {
+    @objc(updateRemoteConfigExceptKeys:instanceName:callback:)
+    func updateRemoteConfigExceptKeys(_ arguments: [Any], instanceName: String,
+                                                          callback: @escaping RCTResponseSenderBlock) {
         Self.onMain {
             let keys = arguments.compactMap { $0 as? String }
-            Countly.shared.remoteConfig.downloadOmittingKeys(keys) { result, error, _, _ in
+            Self.countly(instanceName).remoteConfig.downloadOmittingKeys(keys) { result, error, _, _ in
                 callback([[Self.remoteConfigMessage(result, error, success: "Remote Config is updated except for given keys and ready to use !")]])
             }
         }
     }
 
-    @objc(getRemoteConfigValueForKey:callback:)
-    func getRemoteConfigValueForKey(_ arguments: [Any], callback: @escaping RCTResponseSenderBlock) {
+    @objc(getRemoteConfigValueForKey:instanceName:callback:)
+    func getRemoteConfigValueForKey(_ arguments: [Any], instanceName: String,
+                                                        callback: @escaping RCTResponseSenderBlock) {
         Self.onMain {
             guard let key = Self.asString(arguments.first) else {
                 callback(["ConfigKeyNotFound"])
                 return
             }
-            callback([Countly.shared.remoteConfig.getValue(key).value ?? "ConfigKeyNotFound"])
+            callback([Self.countly(instanceName).remoteConfig.getValue(key).value ?? "ConfigKeyNotFound"])
         }
     }
 
-    @objc(remoteConfigClearValues:rejecter:)
-    func remoteConfigClearValues(_ resolve: @escaping RCTPromiseResolveBlock,
+    @objc(remoteConfigClearValues:resolver:rejecter:)
+    func remoteConfigClearValues(_ instanceName: String,
+                                 resolver resolve: @escaping RCTPromiseResolveBlock,
                                  rejecter reject: @escaping RCTPromiseRejectBlock) {
         Self.onMain {
-            Countly.shared.remoteConfig.clearAll()
+            Self.countly(instanceName).remoteConfig.clearAll()
             resolve("Remote Config Cleared.")
         }
     }
@@ -1212,18 +1301,19 @@ public class CountlyReactNative: RCTEventEmitter {
 
     // MARK: - Feedback widgets
 
-    @objc(getFeedbackWidgets:rejecter:)
-    func getFeedbackWidgets(_ resolve: @escaping RCTPromiseResolveBlock,
+    @objc(getFeedbackWidgets:resolver:rejecter:)
+    func getFeedbackWidgets(_ instanceName: String,
+                            resolver resolve: @escaping RCTPromiseResolveBlock,
                             rejecter reject: @escaping RCTPromiseRejectBlock) {
         Self.onMain {
-            Countly.shared.feedback.getAvailableFeedbackWidgets { widgets, error in
+            Self.countly(instanceName).feedback.getAvailableFeedbackWidgets { widgets, error in
                 if let error {
                     reject("getFeedbackWidgets_failure", error.localizedDescription, nil)
                     return
                 }
 
                 let widgets = widgets ?? []
-                Self.feedbackWidgetList = widgets
+                Self.feedbackWidgetLists[Self.instanceKey(instanceName)] = widgets
                 resolve(widgets.map { widget in
                     [
                         "id": widget.id,
@@ -1237,11 +1327,12 @@ public class CountlyReactNative: RCTEventEmitter {
         }
     }
 
-    @objc(getAvailableFeedbackWidgets:rejecter:)
-    func getAvailableFeedbackWidgets(_ resolve: @escaping RCTPromiseResolveBlock,
+    @objc(getAvailableFeedbackWidgets:resolver:rejecter:)
+    func getAvailableFeedbackWidgets(_ instanceName: String,
+                                     resolver resolve: @escaping RCTPromiseResolveBlock,
                                      rejecter reject: @escaping RCTPromiseRejectBlock) {
         Self.onMain {
-            Countly.shared.feedback.getAvailableFeedbackWidgets { widgets, error in
+            Self.countly(instanceName).feedback.getAvailableFeedbackWidgets { widgets, error in
                 if let error {
                     reject("getAvailableFeedbackWidgets_failure", error.localizedDescription, nil)
                     return
@@ -1256,13 +1347,14 @@ public class CountlyReactNative: RCTEventEmitter {
         }
     }
 
-    @objc(getFeedbackWidgetData:resolver:rejecter:)
+    @objc(getFeedbackWidgetData:instanceName:resolver:rejecter:)
     func getFeedbackWidgetData(_ arguments: [Any],
+                               instanceName: String,
                                resolver resolve: @escaping RCTPromiseResolveBlock,
                                rejecter reject: @escaping RCTPromiseRejectBlock) {
         Self.onMain {
             let widgetID = Self.asString(arguments.first) ?? ""
-            guard let widget = Self.feedbackWidget(widgetID) else {
+            guard let widget = Self.feedbackWidget(widgetID, instanceName: instanceName) else {
                 let message = "No feedbackWidget is found against widget Id : '\(widgetID)', always call 'getAvailableFeedbackWidgets' to get an updated list of feedback widgets."
                 Self.log(message)
                 reject("getFeedbackWidgetData_failure", message, nil)
@@ -1279,8 +1371,9 @@ public class CountlyReactNative: RCTEventEmitter {
         }
     }
 
-    @objc(reportFeedbackWidgetManually:resolver:rejecter:)
+    @objc(reportFeedbackWidgetManually:instanceName:resolver:rejecter:)
     func reportFeedbackWidgetManually(_ arguments: [Any],
+                                      instanceName: String,
                                       resolver resolve: @escaping RCTPromiseResolveBlock,
                                       rejecter reject: @escaping RCTPromiseRejectBlock) {
         Self.onMain {
@@ -1288,7 +1381,7 @@ public class CountlyReactNative: RCTEventEmitter {
             let widgetID = Self.asString(widgetInfo.first) ?? ""
             let widgetResult = arguments.count > 2 ? arguments[2] as? [String: Any] : nil
 
-            guard let widget = Self.feedbackWidget(widgetID) else {
+            guard let widget = Self.feedbackWidget(widgetID, instanceName: instanceName) else {
                 let message = "No feedbackWidget is found against widget Id : '\(widgetID)', always call 'getAvailableFeedbackWidgets' to get an updated list of feedback widgets."
                 Self.log(message)
                 reject("reportFeedbackWidgetManually_failure", message, nil)
@@ -1300,22 +1393,22 @@ public class CountlyReactNative: RCTEventEmitter {
         }
     }
 
-    @objc(presentFeedbackWidget:)
-    func presentFeedbackWidget(_ arguments: [Any]) {
+    @objc(presentFeedbackWidget:instanceName:)
+    func presentFeedbackWidget(_ arguments: [Any], instanceName: String) {
         Self.onMain {
             let widgetID = Self.asString(arguments.first) ?? ""
             let widgetType = arguments.count > 1 ? Self.asString(arguments[1]) : nil
             let widgetName = arguments.count > 2 ? Self.asString(arguments[2]) : nil
             let widgetVersion = arguments.count > 4 ? Self.asString(arguments[4]) : nil
 
-            var widget = Self.feedbackWidget(widgetID)
+            var widget = Self.feedbackWidget(widgetID, instanceName: instanceName)
             // Rebuilt from what JavaScript sent, which holds a widget list this side may never have fetched.
             if widget == nil || (widgetVersion?.isEmpty == false && widget?.widgetVersion == nil) {
                 var description: [String: Any] = ["_id": widgetID]
                 if let widgetType { description["type"] = widgetType }
                 if let widgetName { description["name"] = widgetName }
                 if let widgetVersion, !widgetVersion.isEmpty { description["wv"] = widgetVersion }
-                widget = Countly.shared.feedback.widget(from: description)
+                widget = Self.countly(instanceName).feedback.widget(from: description)
             }
 
             guard let widget else {
@@ -1324,191 +1417,187 @@ public class CountlyReactNative: RCTEventEmitter {
             }
 
             widget.present(appearBlock: {
-                Self.emit(Self.widgetShownCallbackName, body: nil)
+                Self.emit(Self.widgetShownCallbackName, instanceName: instanceName)
             }, dismissBlock: {
-                Self.emit(Self.widgetClosedCallbackName, body: nil)
+                Self.emit(Self.widgetClosedCallbackName, instanceName: instanceName)
             })
         }
     }
 
-    @objc(presentNPS:)
-    func presentNPS(_ arguments: [Any]) {
+    @objc(presentNPS:instanceName:)
+    func presentNPS(_ arguments: [Any], instanceName: String) {
         Self.onMain {
-            Countly.shared.feedback.presentNPS(Self.asString(arguments.first), callback: Self.widgetStateCallback)
+            Self.countly(instanceName).feedback.presentNPS(Self.asString(arguments.first), callback: Self.widgetStateCallback(instanceName))
         }
     }
 
-    @objc(presentSurvey:)
-    func presentSurvey(_ arguments: [Any]) {
+    @objc(presentSurvey:instanceName:)
+    func presentSurvey(_ arguments: [Any], instanceName: String) {
         Self.onMain {
-            Countly.shared.feedback.presentSurvey(Self.asString(arguments.first), callback: Self.widgetStateCallback)
+            Self.countly(instanceName).feedback.presentSurvey(Self.asString(arguments.first), callback: Self.widgetStateCallback(instanceName))
         }
     }
 
-    @objc(presentRating:)
-    func presentRating(_ arguments: [Any]) {
+    @objc(presentRating:instanceName:)
+    func presentRating(_ arguments: [Any], instanceName: String) {
         Self.onMain {
-            Countly.shared.feedback.presentRating(Self.asString(arguments.first), callback: Self.widgetStateCallback)
+            Self.countly(instanceName).feedback.presentRating(Self.asString(arguments.first), callback: Self.widgetStateCallback(instanceName))
         }
     }
 
-    @objc(presentRatingWidgetWithID:)
-    func presentRatingWidgetWithID(_ arguments: [Any]) {
+    @objc(presentRatingWidgetWithID:instanceName:)
+    func presentRatingWidgetWithID(_ arguments: [Any], instanceName: String) {
         Self.onMain {
             // Resolved by ID, because presentRating would fall back to the first rating widget.
             guard let widgetID = Self.asString(arguments.first), !widgetID.isEmpty else {
-                Self.emit(Self.ratingWidgetCallbackName, body: "presentRatingWidgetWithID failed: no widget id given")
+                Self.emit(Self.ratingWidgetCallbackName, instanceName: instanceName, payload: ["error": "presentRatingWidgetWithID failed: no widget id given"])
                 return
             }
 
-            Countly.shared.feedback.getAvailableFeedbackWidgets { widgets, error in
+            Self.countly(instanceName).feedback.getAvailableFeedbackWidgets { widgets, error in
                 guard error == nil,
                       let widget = widgets?.first(where: { $0.id == widgetID && $0.type == .rating }) else {
                     let reason = error.map { String(describing: $0) } ?? "no rating widget with the id [\(widgetID)]"
-                    Self.emit(Self.ratingWidgetCallbackName, body: "presentRatingWidgetWithID failed: " + reason)
+                    Self.emit(Self.ratingWidgetCallbackName, instanceName: instanceName, payload: ["error": "presentRatingWidgetWithID failed: " + reason])
                     return
                 }
 
                 widget.present(callback: { state in
-                    Self.widgetStateCallback(state)
+                    Self.widgetStateCallback(instanceName)(state)
                     if state == .appeared {
                         // The error slot of the callback stays empty on a successful presentation.
-                        Self.emit(Self.ratingWidgetCallbackName, body: nil)
+                        Self.emit(Self.ratingWidgetCallbackName, instanceName: instanceName)
                     }
                 })
             }
         }
     }
 
-    @objc(showStarRating:callback:)
-    func showStarRating(_ arguments: [Any], callback: @escaping RCTResponseSenderBlock) {
+    @objc(showStarRating:instanceName:callback:)
+    func showStarRating(_ arguments: [Any], instanceName: String,
+                                            callback: @escaping RCTResponseSenderBlock) {
         // No star rating dialog exists here, so the callback is left uncalled rather than invented.
         Self.log("showStarRating, the star rating dialog is not available on iOS, this call does nothing")
     }
 
-    private static func feedbackWidget(_ widgetID: String) -> CountlyFeedbackWidget? {
-        feedbackWidgetList.first { $0.id == widgetID }
+    /// - Parameter widgetID: the widget the JavaScript layer asked for.
+    /// - Parameter instanceName: the instance that listed it, empty for the default one.
+    /// - Returns: the widget from that instance's last listing, or `nil` when it listed no such widget.
+    private static func feedbackWidget(_ widgetID: String, instanceName: String) -> CountlyFeedbackWidget? {
+        feedbackWidgetLists[instanceKey(instanceName)]?.first { $0.id == widgetID }
     }
 
-    private static let widgetStateCallback: WidgetCallback = { state in
-        switch state {
-        case .appeared: emit(widgetShownCallbackName, body: nil)
-        case .closed: emit(widgetClosedCallbackName, body: nil)
-        default: break
+    /// - Parameter instanceName: the instance presenting the widget, empty for the default one.
+    /// - Returns: a callback that reports the widget's state to JavaScript for that instance.
+    private static func widgetStateCallback(_ instanceName: String) -> WidgetCallback {
+        { state in
+            switch state {
+            case .appeared: emit(widgetShownCallbackName, instanceName: instanceName)
+            case .closed: emit(widgetClosedCallbackName, instanceName: instanceName)
+            default: break
+            }
         }
     }
 
     // MARK: - Content
 
-    @objc(enterContentZone)
-    func enterContentZone() {
-        Self.onMain { Countly.shared.content.enterContentZone() }
+    @objc(enterContentZone:)
+    func enterContentZone(_ instanceName: String) {
+        Self.onMain { Self.countly(instanceName).content.enterContentZone() }
     }
 
-    @objc(refreshContentZone)
-    func refreshContentZone() {
-        Self.onMain { Countly.shared.content.refreshContentZone() }
+    @objc(refreshContentZone:)
+    func refreshContentZone(_ instanceName: String) {
+        Self.onMain { Self.countly(instanceName).content.refreshContentZone() }
     }
 
-    @objc(exitContentZone)
-    func exitContentZone() {
-        Self.onMain { Countly.shared.content.exitContentZone() }
+    @objc(exitContentZone:)
+    func exitContentZone(_ instanceName: String) {
+        Self.onMain { Self.countly(instanceName).content.exitContentZone() }
     }
 
-    @objc(previewContent:)
-    func previewContent(_ arguments: [Any]) {
+    @objc(previewContent:instanceName:)
+    func previewContent(_ arguments: [Any], instanceName: String) {
         Self.onMain {
             guard let contentID = Self.asString(arguments.first) else { return }
-            Countly.shared.content.previewContent(contentID)
+            Self.countly(instanceName).content.previewContent(contentID)
         }
     }
 
     // MARK: - Performance monitoring
 
-    @objc(startTrace:)
-    func startTrace(_ arguments: [Any]) {
+    @objc(startTrace:instanceName:)
+    func startTrace(_ arguments: [Any], instanceName: String) {
         Self.onMain {
             guard let traceKey = Self.asString(arguments.first) else { return }
-            Countly.shared.performance.startCustomTrace(traceKey)
+            Self.countly(instanceName).performance.startCustomTrace(traceKey)
         }
     }
 
-    @objc(cancelTrace:)
-    func cancelTrace(_ arguments: [Any]) {
+    @objc(cancelTrace:instanceName:)
+    func cancelTrace(_ arguments: [Any], instanceName: String) {
         Self.onMain {
             guard let traceKey = Self.asString(arguments.first) else { return }
-            Countly.shared.performance.cancelCustomTrace(traceKey)
+            Self.countly(instanceName).performance.cancelCustomTrace(traceKey)
         }
     }
 
-    @objc(clearAllTraces:)
-    func clearAllTraces(_ arguments: [Any]) {
-        Self.onMain { Countly.shared.performance.clearAllCustomTraces() }
+    @objc(clearAllTraces:instanceName:)
+    func clearAllTraces(_ arguments: [Any], instanceName: String) {
+        Self.onMain { Self.countly(instanceName).performance.clearAllCustomTraces() }
     }
 
-    @objc(endTrace:)
-    func endTrace(_ arguments: [Any]) {
+    @objc(endTrace:instanceName:)
+    func endTrace(_ arguments: [Any], instanceName: String) {
         Self.onMain {
             guard let traceKey = Self.asString(arguments.first) else { return }
-            Countly.shared.performance.endCustomTrace(traceKey, metrics: Self.keyValuePairs(from: arguments, startIndex: 1))
+            Self.countly(instanceName).performance.endCustomTrace(traceKey, metrics: Self.keyValuePairs(from: arguments, startIndex: 1))
         }
     }
 
-    @objc(recordNetworkTrace:)
-    func recordNetworkTrace(_ arguments: [Any]) {
+    @objc(recordNetworkTrace:instanceName:)
+    func recordNetworkTrace(_ arguments: [Any], instanceName: String) {
         Self.onMain {
             guard let traceKey = Self.asString(arguments.first), arguments.count > 5 else { return }
 
-            func integer(_ index: Int) -> Int {
-                if let number = arguments[index] as? NSNumber { return number.intValue }
-                if let text = arguments[index] as? String { return Int(text) ?? 0 }
-                return 0
-            }
-
-            func timestamp(_ index: Int) -> Int64 {
-                if let number = arguments[index] as? NSNumber { return number.int64Value }
-                if let text = arguments[index] as? String { return Int64(text) ?? 0 }
-                return 0
-            }
-
-            Countly.shared.performance.recordNetworkTrace(traceKey,
-                                                          requestPayloadSize: integer(2),
-                                                          responsePayloadSize: integer(3),
-                                                          responseStatusCode: integer(1),
-                                                          startTime: timestamp(4),
-                                                          endTime: timestamp(5))
+            Self.countly(instanceName).performance.recordNetworkTrace(traceKey,
+                                                                      requestPayloadSize: Int(Self.number(arguments, at: 2)),
+                                                                      responsePayloadSize: Int(Self.number(arguments, at: 3)),
+                                                                      responseStatusCode: Int(Self.number(arguments, at: 1)),
+                                                                      startTime: Int64(Self.number(arguments, at: 4)),
+                                                                      endTime: Int64(Self.number(arguments, at: 5)))
         }
     }
 
-    @objc(appLoadingFinished)
-    func appLoadingFinished() {
-        Self.onMain { Countly.shared.performance.appLoadingFinished() }
+    @objc(appLoadingFinished:)
+    func appLoadingFinished(_ instanceName: String) {
+        Self.onMain { Self.countly(instanceName).performance.appLoadingFinished() }
     }
 
     // MARK: - Push notifications
 
-    @objc(disablePushNotifications)
-    func disablePushNotifications() {
+    @objc(disablePushNotifications:)
+    func disablePushNotifications(_ instanceName: String) {
         #if !COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
         CountlyRNPushNotifications.shared.disablePushNotifications()
         #endif
     }
 
-    @objc(sendPushToken:)
-    func sendPushToken(_ arguments: [Any]) {
+    @objc(sendPushToken:instanceName:)
+    func sendPushToken(_ arguments: [Any], instanceName: String) {
         // The SDK reports the token itself from `Countly.didRegisterForRemoteNotifications`.
         Self.log("sendPushToken, the SDK reports the push token itself, this call does nothing")
     }
 
-    @objc(askForNotificationPermission:)
-    func askForNotificationPermission(_ arguments: [Any]) {
+    @objc(askForNotificationPermission:instanceName:)
+    func askForNotificationPermission(_ arguments: [Any], instanceName: String) {
         #if !COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
         CountlyRNPushNotifications.shared.askForNotificationPermission()
         #endif
     }
 
-    @objc(registerForNotification:)
-    func registerForNotification(_ arguments: [Any]) {
+    @objc(registerForNotification:instanceName:)
+    func registerForNotification(_ arguments: [Any], instanceName: String) {
         #if !COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
         CountlyRNPushNotifications.shared.registerForNotification { json in
             Self.emit(Self.pushNotificationCallbackName, body: json)
@@ -1533,8 +1622,9 @@ public class CountlyReactNative: RCTEventEmitter {
 
     // MARK: - Test helpers
 
-    @objc(enableRequestCapture:rejecter:)
-    func enableRequestCapture(_ resolve: @escaping RCTPromiseResolveBlock,
+    @objc(enableRequestCapture:resolver:rejecter:)
+    func enableRequestCapture(_ instanceName: String,
+                              resolver resolve: @escaping RCTPromiseResolveBlock,
                               rejecter reject: @escaping RCTPromiseRejectBlock) {
         Self.onMain {
             CountlyRNRequestCapture.isEnabled = true
@@ -1543,31 +1633,66 @@ public class CountlyReactNative: RCTEventEmitter {
         }
     }
 
-    @objc(getCapturedRequests:rejecter:)
-    func getCapturedRequests(_ resolve: @escaping RCTPromiseResolveBlock,
+    /// The requests capture has collected, across every instance. Testing purposes only.
+    ///
+    /// - Parameter instanceName: unused, the buffer is process wide.
+    @objc(getCapturedRequests:resolver:rejecter:)
+    func getCapturedRequests(_ instanceName: String,
+                             resolver resolve: @escaping RCTPromiseResolveBlock,
                              rejecter reject: @escaping RCTPromiseRejectBlock) {
         Self.onMain { resolve(CountlyRNRequestCapture.captured) }
     }
 
-    @objc(getRequestQueue:rejecter:)
-    func getRequestQueue(_ resolve: @escaping RCTPromiseResolveBlock,
+    @objc(getRequestQueue:resolver:rejecter:)
+    func getRequestQueue(_ instanceName: String,
+                         resolver resolve: @escaping RCTPromiseResolveBlock,
                          rejecter reject: @escaping RCTPromiseRejectBlock) {
-        Self.onMain { resolve(Countly.shared.requestQueue.queuedRequests()) }
+        Self.onMain { resolve(Self.countly(instanceName).requestQueue.queuedRequests()) }
     }
 
-    @objc(getEventQueue:rejecter:)
-    func getEventQueue(_ resolve: @escaping RCTPromiseResolveBlock,
+    @objc(getEventQueue:resolver:rejecter:)
+    func getEventQueue(_ instanceName: String,
+                       resolver resolve: @escaping RCTPromiseResolveBlock,
                        rejecter reject: @escaping RCTPromiseRejectBlock) {
-        Self.onMain { resolve(Countly.shared.events.recordedEvents()) }
+        Self.onMain { resolve(Self.countly(instanceName).events.recordedEvents()) }
     }
 
-    @objc(halt:rejecter:)
-    func halt(_ resolve: @escaping RCTPromiseResolveBlock,
+    @objc(removeInstance:resolver:rejecter:)
+    func removeInstance(_ instanceName: String,
+                        resolver resolve: @escaping RCTPromiseResolveBlock,
+                        rejecter reject: @escaping RCTPromiseRejectBlock) {
+        Self.onMain {
+            guard !Self.isDefaultInstance(instanceName) else {
+                resolve("removeInstance: the default instance can not be removed")
+                return
+            }
+
+            Self.configs[Self.instanceKey(instanceName)] = nil
+            Self.feedbackWidgetLists[Self.instanceKey(instanceName)] = nil
+            Countly.removeInstance(named: instanceName)
+            resolve("removeInstance: success")
+        }
+    }
+
+    @objc(haltAllInstances:rejecter:)
+    func haltAllInstances(_ resolve: @escaping RCTPromiseResolveBlock,
+                          rejecter reject: @escaping RCTPromiseRejectBlock) {
+        Self.onMain {
+            Self.configs.removeAll()
+            Self.feedbackWidgetLists.removeAll()
+            Countly.haltAllInstances(clearStorage: true)
+            resolve("haltAllInstances: success")
+        }
+    }
+
+    @objc(halt:resolver:rejecter:)
+    func halt(_ instanceName: String,
+              resolver resolve: @escaping RCTPromiseResolveBlock,
               rejecter reject: @escaping RCTPromiseRejectBlock) {
         Self.onMain {
-            Countly.shared.halt(clearStorage: true)
-            Self.config = nil
-            Self.feedbackWidgetList = []
+            Self.countly(instanceName).halt(clearStorage: true)
+            Self.configs[Self.instanceKey(instanceName)] = nil
+            Self.feedbackWidgetLists[Self.instanceKey(instanceName)] = nil
             Self.loggingEnabled = false
             #if !COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
             CountlyRNPushNotifications.shared.enablePushNotifications = true

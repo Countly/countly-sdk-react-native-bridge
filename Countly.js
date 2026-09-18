@@ -16,6 +16,7 @@ import Views from "./Views.js";
 import * as L from "./Logger.js";
 import * as Utils from "./Utils.js";
 import * as Validate from "./Validators.js";
+import CountlyInstance from "./lib/countly_instance.js";
 
 const CountlyNativeModule =
   TurboModuleRegistry.get('CountlyReactNative') ??
@@ -36,6 +37,63 @@ Countly.sessions = new Sessions(CountlyState);
 Countly.deviceId = new DeviceId(CountlyState);
 Countly.remoteConfig = new RemoteConfig(CountlyState);
 Countly.views = new Views(CountlyState);
+
+/**
+ * The named instances handed out so far, so asking for the same name twice gives the same object.
+ */
+const _instances = new Map();
+
+/**
+ * A named Countly instance, with its own app key, server, device ID, request queue and storage.
+ * Asking for the same name again returns the same instance.
+ *
+ * @param {String} instanceName name of the instance
+ * @return {CountlyInstance | null} the instance, or null when the name is not usable
+ */
+Countly.instance = function (instanceName) {
+    if (typeof instanceName !== "string" || instanceName.length === 0) {
+        L.e("instance, an instance name is required, the default instance is reached through 'Countly' itself");
+        return null;
+    }
+
+    let instance = _instances.get(instanceName);
+    if (!instance) {
+        instance = new CountlyInstance(instanceName, CountlyNativeModule, eventEmitter, (name) => _instances.delete(name));
+        _instances.set(instanceName, instance);
+    }
+    return instance;
+};
+
+/**
+ * Stops a named instance and drops it from the registry, keeping its stored data.
+ *
+ * @param {String} instanceName name of the instance to remove
+ * @return {Promise<String>} the outcome reported by the native side
+ */
+Countly.removeInstance = async function (instanceName) {
+    if (typeof instanceName !== "string" || instanceName.length === 0) {
+        const message = "removeInstance, an instance name is required";
+        L.e(message);
+        return message;
+    }
+
+    const existing = _instances.get(instanceName);
+    if (existing) {
+        return existing.remove();
+    }
+    return CountlyNativeModule.removeInstance(instanceName);
+};
+
+/**
+ * Stops every instance and wipes what they persisted. Testing purposes only.
+ *
+ * @return {Promise<String>} the outcome reported by the native side
+ */
+Countly.haltAllInstances = async function () {
+    _instances.clear();
+    resetBridgeStateForTesting();
+    return CountlyNativeModule.haltAllInstances();
+};
 
 let _isCrashReportingEnabled = false;
 
@@ -109,7 +167,7 @@ function installJsCrashReportingHandler() {
             stackArr = stackArr.join("\n");
         }
 
-        CountlyNativeModule.logJSException(errorTitle, error.message.trim(), stackArr);
+        CountlyNativeModule.logJSException(errorTitle, error.message.trim(), stackArr, _state.instanceName);
 
         if (previousHandler) {
             previousHandler(error, isFatal);
@@ -158,11 +216,9 @@ Countly.initWithConfig = async function (countlyConfig) {
     if (countlyConfig.content.contentCallback) {
         _state.globalContentCallbackSubscription = eventEmitter.addListener("globalContentCallback", (data) => {
             L.d(`init configuration, Global content callback called with data: ${data}`);
-            try {
-                data = JSON.parse(data);
-                countlyConfig.content.contentCallback(data.status, data.data);
-            } catch (error) {
-                L.e(`init configuration, Error parsing global content callback data: ${error}`);                
+            const payload = Utils.payloadForInstance(data, _state.instanceName);
+            if (payload) {
+                countlyConfig.content.contentCallback(payload.status, payload.data);
             }
         });
     }
@@ -170,11 +226,9 @@ Countly.initWithConfig = async function (countlyConfig) {
     if (countlyConfig.content.contentUrlHandler) {
         _state.contentUrlHandlerSubscription = eventEmitter.addListener("contentUrlHandler", (data) => {
             L.d(`init configuration, Content URL handler called with data: ${data}`);
-            try {
-                const payload = typeof data === "string" ? JSON.parse(data) : data;
+            const payload = Utils.payloadForInstance(data, _state.instanceName);
+            if (payload) {
                 countlyConfig.content.contentUrlHandler(payload.url);
-            } catch (error) {
-                L.e(`init configuration, Error parsing content URL handler data: ${error}`);
             }
         });
     }
@@ -182,7 +236,7 @@ Countly.initWithConfig = async function (countlyConfig) {
     const argsMap = Utils.configToJson(countlyConfig);
     const argsString = JSON.stringify(argsMap);
     args.push(argsString);
-    await CountlyNativeModule.init(args);
+    await CountlyNativeModule.init(args, _state.instanceName);
     if (countlyConfig._crashReporting) {
         installJsCrashReportingHandler();
     }
@@ -196,7 +250,7 @@ Countly.initWithConfig = async function (countlyConfig) {
  * @return {boolean} if true, countly sdk has been initialized
  */
 Countly.isInitialized = async function () {
-    _state.isInitialized = await CountlyNativeModule.isInitialized();
+    _state.isInitialized = await CountlyNativeModule.isInitialized(_state.instanceName);
     L.d(`isInitialized, isInitialized: [${_state.isInitialized}]`);
     return _state.isInitialized;
 };
@@ -233,7 +287,7 @@ Countly.recordView = function (recordView, segments) {
         args.push(key);
         args.push(segments[key]);
     }
-    CountlyNativeModule.recordView(args);
+    CountlyNativeModule.recordView(args, _state.instanceName);
 };
 
 /**
@@ -250,7 +304,7 @@ Countly.disablePushNotifications = function () {
         return "disablePushNotifications : To be implemented";
     }
     L.d("disablePushNotifications, Disabling push notifications");
-    CountlyNativeModule.disablePushNotifications();
+    CountlyNativeModule.disablePushNotifications(_state.instanceName);
 };
 
 /**
@@ -265,7 +319,7 @@ Countly.sendPushToken = function (options) {
     L.d(`sendPushToken, Sending push token: [${JSON.stringify(options)}]`);
     const args = [];
     args.push(options.token || "");
-    CountlyNativeModule.sendPushToken(args);
+    CountlyNativeModule.sendPushToken(args, _state.instanceName);
 };
 
 /**
@@ -284,7 +338,7 @@ Countly.askForNotificationPermission = function (customSoundPath = "null") {
         return message;
     }
     L.d(`askForNotificationPermission, Asking for notification permission at: [${customSoundPath}]`);
-    CountlyNativeModule.askForNotificationPermission([customSoundPath]);
+    CountlyNativeModule.askForNotificationPermission([customSoundPath], _state.instanceName);
 };
 
 /**
@@ -296,7 +350,7 @@ Countly.askForNotificationPermission = function (customSoundPath = "null") {
 Countly.registerForNotification = function (theListener) {
     L.d("registerForNotification, Registering for notification");
     const event = eventEmitter.addListener(pushNotificationCallbackName, theListener);
-    CountlyNativeModule.registerForNotification([]);
+    CountlyNativeModule.registerForNotification([], _state.instanceName);
     return event;
 };
 
@@ -309,7 +363,7 @@ Countly.registerForNotification = function (theListener) {
 Countly.setLoggingEnabled = function (enabled = true) {
     // TODO: init check
     L.d(`setLoggingEnabled, Setting logging enabled to: [${enabled}]`);
-    CountlyNativeModule.setLoggingEnabled([enabled]);
+    CountlyNativeModule.setLoggingEnabled([enabled], _state.instanceName);
 };
 
 /**
@@ -333,7 +387,7 @@ Countly.setLocation = function (countryCode, city, location, ipAddress) {
     args.push(city || "null");
     args.push(location || "null");
     args.push(ipAddress || "null");
-    CountlyNativeModule.setLocation(args);
+    CountlyNativeModule.setLocation(args, _state.instanceName);
 };
 
 /**
@@ -349,7 +403,7 @@ Countly.disableLocation = function () {
         return message;
     }
     L.d("disableLocation, Disabling location");
-    CountlyNativeModule.disableLocation();
+    CountlyNativeModule.disableLocation(_state.instanceName);
 };
 
 /**
@@ -362,7 +416,7 @@ Countly.setHttpPostForced = function (boolean = true) {
     L.d(`setHttpPostForced, Setting http post forced to: [${boolean}]`);
     const args = [];
     args.push(boolean ? "1" : "0");
-    CountlyNativeModule.setHttpPostForced(args);
+    CountlyNativeModule.setHttpPostForced(args, _state.instanceName);
 };
 
 /**
@@ -379,7 +433,7 @@ Countly.addCrashLog = function (crashLog) {
         return message;
     }
     L.d(`addCrashLog, Adding crash log: [${crashLog}]`);
-    CountlyNativeModule.addCrashLog([crashLog]);
+    CountlyNativeModule.addCrashLog([crashLog], _state.instanceName);
 };
 
 /**
@@ -402,7 +456,7 @@ Countly.recordMetrics = function (metricsOverride = {}) {
         args.push(key.toString());
         args.push(metricsOverride[key].toString());
     }
-    CountlyNativeModule.recordMetrics(args);
+    CountlyNativeModule.recordMetrics(args, _state.instanceName);
 };
 
 /**
@@ -433,7 +487,7 @@ Countly.logException = function (exception, nonfatal, segments) {
         args.push(key);
         args.push(segments[key].toString());
     }
-    CountlyNativeModule.logException(args);
+    CountlyNativeModule.logException(args, _state.instanceName);
 };
 
 /**
@@ -449,7 +503,7 @@ Countly.setCustomCrashSegments = function (segments) {
         args.push(key.toString());
         args.push(segments[key].toString());
     }
-    CountlyNativeModule.setCustomCrashSegments(args);
+    CountlyNativeModule.setCustomCrashSegments(args, _state.instanceName);
 };
 
 /**
@@ -539,7 +593,7 @@ Countly.addCustomNetworkRequestHeaders = function (customHeaderValues) {
     }
 
     L.d(`addCustomNetworkRequestHeaders, Adding custom headers: [${JSON.stringify(customHeaderValues)}]`);
-    CountlyNativeModule.addCustomNetworkRequestHeaders(args);
+    CountlyNativeModule.addCustomNetworkRequestHeaders(args, _state.instanceName);
 };
 
 /**
@@ -555,7 +609,7 @@ Countly.pinnedCertificates = function (certificateName) {
         return message;
     }
     L.d(`pinnedCertificates, Setting pinned certificates: [${certificateName}]`);
-    CountlyNativeModule.pinnedCertificates([certificateName]);
+    CountlyNativeModule.pinnedCertificates([certificateName], _state.instanceName);
 };
 
 /**
@@ -601,7 +655,7 @@ Countly.setUserData = async function (userData) {
     }
     args.push(userData);
 
-    await CountlyNativeModule.setUserData(args);
+    await CountlyNativeModule.setUserData(args, _state.instanceName);
 };
 
 /**
@@ -630,7 +684,7 @@ Countly.userData.setProperty = async function (keyName, keyValue) {
     }
     keyName = keyName.toString();
     if (keyName && (keyValue || keyValue == "")) {
-        await CountlyNativeModule.userData_setProperty([keyName, keyValue]);
+        await CountlyNativeModule.userData_setProperty([keyName, keyValue], _state.instanceName);
     }
 };
 
@@ -654,7 +708,7 @@ Countly.userData.increment = async function (keyName) {
     }
     keyName = keyName.toString();
     if (keyName) {
-        await CountlyNativeModule.userData_increment([keyName]);
+        await CountlyNativeModule.userData_increment([keyName], _state.instanceName);
     }
 };
 
@@ -682,7 +736,7 @@ Countly.userData.incrementBy = async function (keyName, keyValue) {
         return message;
     }
     const intValue = parseInt(keyValue, 10).toString();
-    await CountlyNativeModule.userData_incrementBy([keyName, intValue]);
+    await CountlyNativeModule.userData_incrementBy([keyName, intValue], _state.instanceName);
 };
 
 /**
@@ -709,7 +763,7 @@ Countly.userData.multiply = async function (keyName, keyValue) {
         return message;
     }
     const intValue = parseInt(keyValue, 10).toString();
-    await CountlyNativeModule.userData_multiply([keyName, intValue]);
+    await CountlyNativeModule.userData_multiply([keyName, intValue], _state.instanceName);
 };
 
 /**
@@ -736,7 +790,7 @@ Countly.userData.saveMax = async function (keyName, keyValue) {
         return message;
     }
     const intValue = parseInt(keyValue, 10).toString();
-    await CountlyNativeModule.userData_saveMax([keyName, intValue]);
+    await CountlyNativeModule.userData_saveMax([keyName, intValue], _state.instanceName);
 };
 
 /**
@@ -763,7 +817,7 @@ Countly.userData.saveMin = async function (keyName, keyValue) {
         return message;
     }
     const intValue = parseInt(keyValue, 10).toString();
-    await CountlyNativeModule.userData_saveMin([keyName, intValue]);
+    await CountlyNativeModule.userData_saveMin([keyName, intValue], _state.instanceName);
 };
 
 /**
@@ -791,7 +845,7 @@ Countly.userData.setOnce = async function (keyName, keyValue) {
     }
     keyValue = keyValue.toString();
     if (keyValue || keyValue == "") {
-        await CountlyNativeModule.userData_setOnce([keyName, keyValue]);
+        await CountlyNativeModule.userData_setOnce([keyName, keyValue], _state.instanceName);
     }
 };
 
@@ -820,7 +874,7 @@ Countly.userData.pushUniqueValue = async function (keyName, keyValue) {
     }
     keyValue = keyValue.toString();
     if (keyValue || keyValue == "") {
-        await CountlyNativeModule.userData_pushUniqueValue([keyName, keyValue]);
+        await CountlyNativeModule.userData_pushUniqueValue([keyName, keyValue], _state.instanceName);
     }
 };
 
@@ -849,7 +903,7 @@ Countly.userData.pushValue = async function (keyName, keyValue) {
     }
     keyValue = keyValue.toString();
     if (keyValue || keyValue == "") {
-        await CountlyNativeModule.userData_pushValue([keyName, keyValue]);
+        await CountlyNativeModule.userData_pushValue([keyName, keyValue], _state.instanceName);
     }
 };
 
@@ -878,7 +932,7 @@ Countly.userData.pullValue = async function (keyName, keyValue) {
     }
     keyValue = keyValue.toString();
     if (keyValue || keyValue == "") {
-        await CountlyNativeModule.userData_pullValue([keyName, keyValue]);
+        await CountlyNativeModule.userData_pullValue([keyName, keyValue], _state.instanceName);
     }
 };
 
@@ -925,7 +979,7 @@ Countly.userDataBulk.setUserProperties = async function (customAndPredefined) {
         customAndPredefined.byear = customAndPredefined.byear.toString();
     }
 
-    await CountlyNativeModule.userDataBulk_setUserProperties(customAndPredefined);
+    await CountlyNativeModule.userDataBulk_setUserProperties(customAndPredefined, _state.instanceName);
 };
 
 /**
@@ -941,7 +995,7 @@ Countly.userDataBulk.save = async function () {
         return msg;
     }
     L.d("save, Saving user data");
-    await CountlyNativeModule.userDataBulk_save([]);
+    await CountlyNativeModule.userDataBulk_save([], _state.instanceName);
 };
 
 /**
@@ -971,7 +1025,7 @@ Countly.userDataBulk.setProperty = async function (keyName, keyValue) {
     }
     keyName = keyName.toString();
     if (keyName && (keyValue || keyValue == "")) {
-        await CountlyNativeModule.userDataBulk_setProperty([keyName, keyValue]);
+        await CountlyNativeModule.userDataBulk_setProperty([keyName, keyValue], _state.instanceName);
     }
 };
 
@@ -996,7 +1050,7 @@ Countly.userDataBulk.increment = async function (keyName) {
     }
     keyName = keyName.toString();
     if (keyName) {
-        await CountlyNativeModule.userDataBulk_increment([keyName]);
+        await CountlyNativeModule.userDataBulk_increment([keyName], _state.instanceName);
     }
 };
 
@@ -1025,7 +1079,7 @@ Countly.userDataBulk.incrementBy = async function (keyName, keyValue) {
         return message;
     }
     const intValue = parseInt(keyValue, 10).toString();
-    await CountlyNativeModule.userDataBulk_incrementBy([keyName, intValue]);
+    await CountlyNativeModule.userDataBulk_incrementBy([keyName, intValue], _state.instanceName);
 };
 
 /**
@@ -1053,7 +1107,7 @@ Countly.userDataBulk.multiply = async function (keyName, keyValue) {
         return message;
     }
     const intValue = parseInt(keyValue, 10).toString();
-    await CountlyNativeModule.userDataBulk_multiply([keyName, intValue]);
+    await CountlyNativeModule.userDataBulk_multiply([keyName, intValue], _state.instanceName);
 };
 
 /**
@@ -1081,7 +1135,7 @@ Countly.userDataBulk.saveMax = async function (keyName, keyValue) {
         return message;
     }
     const intValue = parseInt(keyValue, 10).toString();
-    await CountlyNativeModule.userDataBulk_saveMax([keyName, intValue]);
+    await CountlyNativeModule.userDataBulk_saveMax([keyName, intValue], _state.instanceName);
 };
 
 /**
@@ -1109,7 +1163,7 @@ Countly.userDataBulk.saveMin = async function (keyName, keyValue) {
         return message;
     }
     const intValue = parseInt(keyValue, 10).toString();
-    await CountlyNativeModule.userDataBulk_saveMin([keyName, intValue]);
+    await CountlyNativeModule.userDataBulk_saveMin([keyName, intValue], _state.instanceName);
 };
 
 /**
@@ -1138,7 +1192,7 @@ Countly.userDataBulk.setOnce = async function (keyName, keyValue) {
     }
     keyValue = keyValue.toString();
     if (keyValue || keyValue == "") {
-        await CountlyNativeModule.userDataBulk_setOnce([keyName, keyValue]);
+        await CountlyNativeModule.userDataBulk_setOnce([keyName, keyValue], _state.instanceName);
     }
 };
 
@@ -1168,7 +1222,7 @@ Countly.userDataBulk.pushUniqueValue = async function (keyName, keyValue) {
     }
     keyValue = keyValue.toString();
     if (keyValue || keyValue == "") {
-        await CountlyNativeModule.userDataBulk_pushUniqueValue([keyName, keyValue]);
+        await CountlyNativeModule.userDataBulk_pushUniqueValue([keyName, keyValue], _state.instanceName);
     }
 };
 
@@ -1198,7 +1252,7 @@ Countly.userDataBulk.pushValue = async function (keyName, keyValue) {
     }
     keyValue = keyValue.toString();
     if (keyValue || keyValue == "") {
-        await CountlyNativeModule.userDataBulk_pushValue([keyName, keyValue]);
+        await CountlyNativeModule.userDataBulk_pushValue([keyName, keyValue], _state.instanceName);
     }
 };
 
@@ -1228,7 +1282,7 @@ Countly.userDataBulk.pullValue = async function (keyName, keyValue) {
     }
     keyValue = keyValue.toString();
     if (keyValue || keyValue == "") {
-        await CountlyNativeModule.userDataBulk_pullValue([keyName, keyValue]);
+        await CountlyNativeModule.userDataBulk_pullValue([keyName, keyValue], _state.instanceName);
     }
 };
 
@@ -1253,7 +1307,7 @@ Countly.giveConsent = function (args) {
     } else {
         features = args;
     }
-    CountlyNativeModule.giveConsent(features);
+    CountlyNativeModule.giveConsent(features, _state.instanceName);
 };
 
 /**
@@ -1277,7 +1331,7 @@ Countly.removeConsent = function (args) {
     } else {
         features = args;
     }
-    CountlyNativeModule.removeConsent(features);
+    CountlyNativeModule.removeConsent(features, _state.instanceName);
 };
 
 /**
@@ -1294,7 +1348,7 @@ Countly.giveAllConsent = function () {
         return message;
     }
     L.d("giveAllConsent, Giving consent for all features");
-    CountlyNativeModule.giveAllConsent();
+    CountlyNativeModule.giveAllConsent(_state.instanceName);
 };
 
 /**
@@ -1311,7 +1365,7 @@ Countly.removeAllConsent = function () {
         return message;
     }
     L.d("removeAllConsent, Removing consent for all features");
-    CountlyNativeModule.removeAllConsent();
+    CountlyNativeModule.removeAllConsent(_state.instanceName);
 };
 
 /**
@@ -1331,7 +1385,7 @@ Countly.remoteConfigUpdate = function (callback) {
     }
     L.w("remoteConfigUpdate, remoteConfigUpdate is deprecated, use Countly.remoteConfig.update instead.");
     L.d("remoteConfigUpdate, Updating remote config");
-    CountlyNativeModule.remoteConfigUpdate([], (stringItem) => {
+    CountlyNativeModule.remoteConfigUpdate([], _state.instanceName, (stringItem) => {
         callback(stringItem);
     });
 };
@@ -1360,7 +1414,7 @@ Countly.updateRemoteConfigForKeysOnly = function (keyNames, callback) {
         for (let i = 0, il = keyNames.length; i < il; i++) {
             args.push(keyNames[i]);
         }
-        CountlyNativeModule.updateRemoteConfigForKeysOnly(args, (stringItem) => {
+        CountlyNativeModule.updateRemoteConfigForKeysOnly(args, _state.instanceName, (stringItem) => {
             callback(stringItem);
         });
     }
@@ -1390,7 +1444,7 @@ Countly.updateRemoteConfigExceptKeys = function (keyNames, callback) {
         for (let i = 0, il = keyNames.length; i < il; i++) {
             args.push(keyNames[i]);
         }
-        CountlyNativeModule.updateRemoteConfigExceptKeys(args, (stringItem) => {
+        CountlyNativeModule.updateRemoteConfigExceptKeys(args, _state.instanceName, (stringItem) => {
             callback(stringItem);
         });
     }
@@ -1414,7 +1468,7 @@ Countly.getRemoteConfigValueForKey = function (keyName, callback) {
         return message;
     }
     L.w("getRemoteConfigValueForKey, getRemoteConfigValueForKey is deprecated, use Countly.remoteConfig.getValue instead.");
-    CountlyNativeModule.getRemoteConfigValueForKey([keyName.toString() || ""], (value) => {
+    CountlyNativeModule.getRemoteConfigValueForKey([keyName.toString() || ""], _state.instanceName, (value) => {
         if (Platform.OS == "android") {
             try {
                 value = JSON.parse(value);
@@ -1447,7 +1501,7 @@ Countly.getRemoteConfigValueForKeyP = function (keyName) {
     if (Platform.OS != "android") {
         return "To be implemented";
     }
-    const promise = CountlyNativeModule.getRemoteConfigValueForKeyP(keyName);
+    const promise = CountlyNativeModule.getRemoteConfigValueForKeyP(keyName, _state.instanceName);
     return promise
         .then((value) => {
             if (Platform.OS == "android") {
@@ -1482,7 +1536,7 @@ Countly.remoteConfigClearValues = async function () {
     }
     L.w("remoteConfigClearValues, remoteConfigClearValues is deprecated, use Countly.remoteConfig.clearValues instead.");
     L.d("remoteConfigClearValues, Clearing remote config values");
-    const result = await CountlyNativeModule.remoteConfigClearValues();
+    const result = await CountlyNativeModule.remoteConfigClearValues(_state.instanceName);
     return result;
 };
 
@@ -1504,7 +1558,7 @@ Countly.showStarRating = function (callback) {
     if (!callback) {
         callback = function () {};
     }
-    CountlyNativeModule.showStarRating([], callback);
+    CountlyNativeModule.showStarRating([], _state.instanceName, callback);
 };
 
 /**
@@ -1535,12 +1589,16 @@ Countly.presentRatingWidgetWithID = function (widgetId, closeButtonText, ratingW
     }
     if (ratingWidgetCallback) {
         // eventEmitter.addListener('ratingWidgetCallback', ratingWidgetCallback);
-        _ratingWidgetListener = eventEmitter.addListener(ratingWidgetCallbackName, (error) => {
-            ratingWidgetCallback(error);
+        _ratingWidgetListener = eventEmitter.addListener(ratingWidgetCallbackName, (data) => {
+            const payload = Utils.payloadForInstance(data, _state.instanceName);
+            if (!payload) {
+                return;
+            }
+            ratingWidgetCallback(payload.error ?? null);
             _ratingWidgetListener.remove();
         });
     }
-    CountlyNativeModule.presentRatingWidgetWithID([widgetId.toString() || "", closeButtonText.toString() || "Done"]);
+    CountlyNativeModule.presentRatingWidgetWithID([widgetId.toString() || "", closeButtonText.toString() || "Done"], _state.instanceName);
 };
 
 /**
@@ -1550,7 +1608,7 @@ Countly.presentRatingWidgetWithID = function (widgetId, closeButtonText, ratingW
  * @param {number} size - event count
  */
 Countly.setEventSendThreshold = function (size) {
-    CountlyNativeModule.setEventSendThreshold([size.toString() || ""]);
+    CountlyNativeModule.setEventSendThreshold([size.toString() || ""], _state.instanceName);
 };
 
 /**
@@ -1569,7 +1627,7 @@ Countly.startTrace = function (traceKey) {
     L.d(`startTrace, Starting trace: [${traceKey}]`);
     const args = [];
     args.push(traceKey);
-    CountlyNativeModule.startTrace(args);
+    CountlyNativeModule.startTrace(args, _state.instanceName);
 };
 
 /**
@@ -1588,7 +1646,7 @@ Countly.cancelTrace = function (traceKey) {
     L.d(`cancelTrace, Canceling trace: [${traceKey}]`);
     const args = [];
     args.push(traceKey);
-    CountlyNativeModule.cancelTrace(args);
+    CountlyNativeModule.cancelTrace(args, _state.instanceName);
 };
 
 /**
@@ -1605,7 +1663,7 @@ Countly.clearAllTraces = function () {
     }
     L.d("clearAllTraces, Clearing all traces");
     const args = [];
-    CountlyNativeModule.clearAllTraces(args);
+    CountlyNativeModule.clearAllTraces(args, _state.instanceName);
 };
 
 /**
@@ -1630,7 +1688,7 @@ Countly.endTrace = function (traceKey, customMetric) {
         args.push(key.toString());
         args.push(customMetric[key].toString());
     }
-    CountlyNativeModule.endTrace(args);
+    CountlyNativeModule.endTrace(args, _state.instanceName);
 };
 
 /**
@@ -1664,7 +1722,7 @@ Countly.recordNetworkTrace = function (networkTraceKey, responseCode, requestPay
     args.push(responsePayloadSize.toString());
     args.push(startTime.toString());
     args.push(endTime.toString());
-    CountlyNativeModule.recordNetworkTrace(args);
+    CountlyNativeModule.recordNetworkTrace(args, _state.instanceName);
 };
 
 /**
@@ -1680,7 +1738,7 @@ Countly.replaceAllAppKeysInQueueWithCurrentAppKey = function () {
         return message;
     }
     L.d("replaceAllAppKeysInQueueWithCurrentAppKey, Replacing all app keys in queue with current app key");
-    CountlyNativeModule.replaceAllAppKeysInQueueWithCurrentAppKey();
+    CountlyNativeModule.replaceAllAppKeysInQueueWithCurrentAppKey(_state.instanceName);
 };
 
 /**
@@ -1699,7 +1757,7 @@ Countly.recordDirectAttribution = function (campaignType, campaignData) {
     const args = [];
     args.push(campaignType);
     args.push(campaignData);
-    CountlyNativeModule.recordDirectAttribution(args);
+    CountlyNativeModule.recordDirectAttribution(args, _state.instanceName);
 };
 
 /**
@@ -1716,7 +1774,7 @@ Countly.recordIndirectAttribution = function (attributionValues) {
     L.d(`recordIndirectAttribution, Recording indirect attribution: [${attributionValues}]`);
     const args = [];
     args.push(attributionValues);
-    CountlyNativeModule.recordIndirectAttribution(args);
+    CountlyNativeModule.recordIndirectAttribution(args, _state.instanceName);
 };
 
 /**
@@ -1732,7 +1790,7 @@ Countly.removeDifferentAppKeysFromQueue = function () {
         return message;
     }
     L.d("removeDifferentAppKeysFromQueue, Removing all requests with a different app key in request queue");
-    CountlyNativeModule.removeDifferentAppKeysFromQueue();
+    CountlyNativeModule.removeDifferentAppKeysFromQueue(_state.instanceName);
 };
 
 /**
@@ -1747,7 +1805,7 @@ Countly.appLoadingFinished = async function () {
         return message;
     }
     L.d("appLoadingFinished, App loading finished");
-    CountlyNativeModule.appLoadingFinished();
+    CountlyNativeModule.appLoadingFinished(_state.instanceName);
 };
 
 /**
@@ -1780,7 +1838,7 @@ Countly.setCustomMetrics = async function (customMetric) {
         }
     }
     if (args.length != 0) {
-        CountlyNativeModule.setCustomMetrics(args);
+        CountlyNativeModule.setCustomMetrics(args, _state.instanceName);
     }
 };
 
@@ -1795,7 +1853,7 @@ Countly.content.enterContentZone = function() {
         L.e(`enterContentZone, ${message}`);
         return;
     }
-    CountlyNativeModule.enterContentZone();
+    CountlyNativeModule.enterContentZone(_state.instanceName);
 };
 
 /**
@@ -1808,7 +1866,7 @@ Countly.content.refreshContentZone = function() {
         L.e(`refreshContentZone, ${message}`);
         return;
     }
-    CountlyNativeModule.refreshContentZone();
+    CountlyNativeModule.refreshContentZone(_state.instanceName);
 };
 
 /**
@@ -1827,7 +1885,7 @@ Countly.content.previewContent = function(contentId) {
         L.e(`previewContent, ${initMessage}`);
         return initMessage;
     }
-    CountlyNativeModule.previewContent([contentId]);
+    CountlyNativeModule.previewContent([contentId], _state.instanceName);
 };
 
 /**
@@ -1841,33 +1899,33 @@ Countly.content.exitContentZone = function() {
         L.e(`exitContentZone, ${message}`);
         return;
     }
-    CountlyNativeModule.exitContentZone();
+    CountlyNativeModule.exitContentZone(_state.instanceName);
 };
 
 /**
  * Test-only helper methods for RN integration tests.
  */
 Countly.test.enableRequestCapture = async function () {
-    await CountlyNativeModule.enableRequestCapture();
+    await CountlyNativeModule.enableRequestCapture(_state.instanceName);
 };
 
 Countly.test.getCapturedRequests = async function () {
-    const requests = await CountlyNativeModule.getCapturedRequests();
+    const requests = await CountlyNativeModule.getCapturedRequests(_state.instanceName);
     return requests || [];
 };
 
 Countly.test.getRequestQueue = async function () {
-    const queue = await CountlyNativeModule.getRequestQueue();
+    const queue = await CountlyNativeModule.getRequestQueue(_state.instanceName);
     return queue || [];
 };
 
 Countly.test.getEventQueue = async function () {
-    const queue = await CountlyNativeModule.getEventQueue();
+    const queue = await CountlyNativeModule.getEventQueue(_state.instanceName);
     return queue || [];
 };
 
 Countly.test.halt = async function () {
-    await CountlyNativeModule.halt();
+    await CountlyNativeModule.halt(_state.instanceName);
     resetBridgeStateForTesting();
 };
 

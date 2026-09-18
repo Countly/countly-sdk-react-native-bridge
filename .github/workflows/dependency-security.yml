@@ -1,0 +1,73 @@
+name: Dependency Security Scan
+
+# Runs on pushes and pull requests so a bad dependency is caught immediately, and on a
+# schedule because a dependency can become vulnerable without this repo changing at all.
+on:
+  push:
+    branches:
+      - master
+      - staging
+  pull_request:
+    branches:
+      - master
+      - staging
+  schedule:
+    # Mondays 06:00 UTC
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # One threshold for both jobs. They look at the same dependencies; if these drift apart,
+  # one job fails a pull request the other has passed.
+  SEVERITY_THRESHOLD: high
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    name: Audit the packages an integration installs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Check that the package ships no runtime dependencies
+        # Everything here is a development dependency on purpose: an analytics SDK that drags a
+        # transitive graph into every integrating application inherits every vulnerability in it.
+        run: |
+          RUNTIME=$(node -p "Object.keys(require('./package.json').dependencies || {}).join(' ')")
+          if [ -n "$RUNTIME" ]; then
+            echo "The package declares runtime dependencies: $RUNTIME"
+            echo "Extend this job into a real audit of them before adding any."
+            exit 1
+          fi
+          echo "No runtime dependencies are declared."
+
+      - name: Audit the development dependencies
+        run: npm audit --audit-level=${{ env.SEVERITY_THRESHOLD }}
+
+  dependency-review:
+    name: Review dependency changes
+    if: github.event_name == 'pull_request' && github.event.repository.private == false
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fail the pull request on newly introduced vulnerable dependencies
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: ${{ env.SEVERITY_THRESHOLD }}
+          comment-summary-in-pr: on-failure

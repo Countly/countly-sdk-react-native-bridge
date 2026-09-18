@@ -7,6 +7,10 @@
 
 * ! Minor breaking change ! `Countly.showStarRating(callback)` now does nothing on iOS and its callback is not called. The underlying SDK provides no star rating dialog. The other platform is unaffected.
 
+* Added multiple instance support. "Countly.instance(name)" returns a named instance with its own app key, server, device ID, request queue and storage, and exposes the same modules as the default one: events, sessions, views, deviceId, userProfile, remoteConfig, feedback, content, consent, crashes, location, apm and attribution. Asking for the same name again returns the same instance.
+
+* Added "Countly.removeInstance(name)", which stops a named instance and drops it from the registry while keeping its stored data, and "Countly.haltAllInstances()", which stops every instance and wipes what they persisted.
+
 * Added a config option "enableClearStoredDeviceId" that clears the stored device ID at init, so the SDK resolves one from scratch instead of reusing the one it persisted on an earlier run.
 
 * Added a config option "setTrackOrientationChanges(shouldTrack)" that controls whether the SDK reports device orientation changes. It is enabled by default.

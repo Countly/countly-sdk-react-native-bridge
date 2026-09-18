@@ -340,4 +340,30 @@ function getStackTrace(e) {
     return jsStackTrace;
 }
 
-export { configToJson, intToDeviceIDType, DeviceIdType, getStackTrace };
+/**
+ * Reads a callback payload the native side sent and tells whether it belongs to an instance.
+ *
+ * @param {any} data the payload, a JSON string or an already decoded object
+ * @param {String} instanceName the instance the listener belongs to, empty for the default one
+ * @return {Object | null} the decoded payload, or null when it belongs to another instance
+ */
+function payloadForInstance(data, instanceName) {
+    let payload = data;
+    if (typeof data === "string") {
+        try {
+            payload = JSON.parse(data);
+        } catch (error) {
+            L.e(`payloadForInstance, Error parsing callback data: ${error}`);
+            return null;
+        }
+    }
+
+    if (payload === null || typeof payload !== "object") {
+        return null;
+    }
+
+    const payloadInstance = typeof payload.instanceName === "string" ? payload.instanceName : "";
+    return payloadInstance === (instanceName || "") ? payload : null;
+}
+
+export { configToJson, intToDeviceIDType, DeviceIdType, getStackTrace, payloadForInstance };

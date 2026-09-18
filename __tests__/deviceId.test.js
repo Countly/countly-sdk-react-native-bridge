@@ -26,7 +26,7 @@ function createDeviceId(isInitialized = true, overrides = {}) {
     };
 
     return {
-        deviceId: new DeviceId({ isInitialized, CountlyReactNative: nativeModule }),
+        deviceId: new DeviceId({ isInitialized, instanceName: '', CountlyReactNative: nativeModule }),
         nativeModule,
     };
 }
@@ -71,8 +71,8 @@ test('setID and changeID validate input before forwarding normalized payloads', 
     deviceId.changeID('device-4', 'merge');
     deviceId.changeID('', false);
 
-    expect(nativeModule.setID).toHaveBeenCalledWith('device-2');
-    expect(nativeModule.changeDeviceId).toHaveBeenCalledWith(['device-3', '1']);
+    expect(nativeModule.setID).toHaveBeenCalledWith('device-2', '');
+    expect(nativeModule.changeDeviceId).toHaveBeenCalledWith(['device-3', '1'], '');
     expect(nativeModule.changeDeviceId).toHaveBeenCalledTimes(1);
     expect(Logger.w).toHaveBeenCalled();
 });

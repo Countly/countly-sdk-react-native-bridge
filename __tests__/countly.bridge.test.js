@@ -50,10 +50,10 @@ function createNativeModuleMock(overrides = {}) {
         getRequestQueue: jest.fn().mockResolvedValue([]),
         getEventQueue: jest.fn().mockResolvedValue([]),
         halt: jest.fn().mockResolvedValue(undefined),
-        remoteConfigUpdate: jest.fn((_args, callback) => callback('ok')),
-        updateRemoteConfigForKeysOnly: jest.fn((_args, callback) => callback('ok')),
-        updateRemoteConfigExceptKeys: jest.fn((_args, callback) => callback('ok')),
-        getRemoteConfigValueForKey: jest.fn((_args, callback) => callback('{}')),
+        remoteConfigUpdate: jest.fn((_args, instanceName, callback) => callback('ok')),
+        updateRemoteConfigForKeysOnly: jest.fn((_args, instanceName, callback) => callback('ok')),
+        updateRemoteConfigExceptKeys: jest.fn((_args, instanceName, callback) => callback('ok')),
+        getRemoteConfigValueForKey: jest.fn((_args, instanceName, callback) => callback('{}')),
         getRemoteConfigValueForKeyP: jest.fn().mockResolvedValue('{}'),
         remoteConfigClearValues: jest.fn().mockResolvedValue(true),
         getFeedbackWidgets: jest.fn().mockResolvedValue([]),
@@ -220,7 +220,7 @@ test('initWithConfig serializes 26.1.0 init options and wires the global content
     expect(listeners.map((listener) => listener.eventName)).toContain('globalContentCallback');
     expect(CountlyState.isInitialized).toBe(true);
 
-    emit('globalContentCallback', JSON.stringify({ status: 'shown', data: { id: 'content-1' } }));
+    emit('globalContentCallback', JSON.stringify({ status: 'shown', data: { id: 'content-1' }, instanceName: '' }));
     expect(contentCallback).toHaveBeenCalledWith('shown', { id: 'content-1' });
 });
 
@@ -255,7 +255,7 @@ test('initWithConfig installs the JS crash handler when crash reporting is enabl
     const handler = global.ErrorUtils.setGlobalHandler.mock.calls[0][0];
     handler(error, false);
 
-    expect(nativeModule.logJSException).toHaveBeenCalledWith('TypeError', 'bridge blew up', error.stack);
+    expect(nativeModule.logJSException).toHaveBeenCalledWith('TypeError', 'bridge blew up', error.stack, '');
     expect(previousHandler).toHaveBeenCalledWith(error, false);
 
     delete global.ErrorUtils;
@@ -271,20 +271,20 @@ test('recordView and event APIs preserve request payload shape', async () => {
     Countly.events.startEvent('checkout');
     Countly.events.endEvent('checkout', { step: 'payment' }, 1, 0);
 
-    expect(nativeModule.recordView).toHaveBeenCalledWith(['Home', 'region', 'eu', 'premium', true, 'visits', 3]);
+    expect(nativeModule.recordView).toHaveBeenCalledWith(['Home', 'region', 'eu', 'premium', true, 'visits', 3], '');
     expect(nativeModule.recordEvent).toHaveBeenCalledWith({
         n: 'purchase',
         c: 4,
         s: 19.99,
         g: ['sku', 'sku-1', 'qty', 2],
-    });
-    expect(nativeModule.startEvent).toHaveBeenCalledWith(['checkout']);
+    }, '');
+    expect(nativeModule.startEvent).toHaveBeenCalledWith(['checkout'], '');
     expect(nativeModule.endEvent).toHaveBeenCalledWith({
         n: 'checkout',
         c: 1,
         s: 0,
         g: ['step', 'payment'],
-    });
+    }, '');
     expect(nativeModule.startEvent.mock.invocationCallOrder[0]).toBeLessThan(nativeModule.endEvent.mock.invocationCallOrder[0]);
 });
 
@@ -311,17 +311,17 @@ test('views interface forwards payloads and resolves view IDs', async () => {
     Countly.views.updateGlobalViewSegmentation({ tab: 'views' });
     Countly.views.stopAllViews({ closedBy: 'test' });
 
-    expect(nativeModule.startAutoStoppedView).toHaveBeenCalledWith(['Home', 'region', 'eu', 'premium', true, 'labels', ['vip', 'beta']]);
-    expect(nativeModule.startView).toHaveBeenCalledWith(['Checkout', 'step', 2]);
-    expect(nativeModule.pauseViewWithID).toHaveBeenCalledWith(['manual-1']);
-    expect(nativeModule.resumeViewWithID).toHaveBeenCalledWith(['manual-1']);
-    expect(nativeModule.addSegmentationToViewWithID).toHaveBeenCalledWith(['manual-1', 'result', 'pending']);
-    expect(nativeModule.addSegmentationToViewWithName).toHaveBeenCalledWith(['Checkout', 'stage', 'payment']);
-    expect(nativeModule.stopViewWithID).toHaveBeenCalledWith(['manual-1', 'result', 'success']);
-    expect(nativeModule.stopViewWithName).toHaveBeenCalledWith(['Checkout', 'source', 'button']);
-    expect(nativeModule.setGlobalViewSegmentation).toHaveBeenCalledWith(['app', 'example']);
-    expect(nativeModule.updateGlobalViewSegmentation).toHaveBeenCalledWith(['tab', 'views']);
-    expect(nativeModule.stopAllViews).toHaveBeenCalledWith(['closedBy', 'test']);
+    expect(nativeModule.startAutoStoppedView).toHaveBeenCalledWith(['Home', 'region', 'eu', 'premium', true, 'labels', ['vip', 'beta']], '');
+    expect(nativeModule.startView).toHaveBeenCalledWith(['Checkout', 'step', 2], '');
+    expect(nativeModule.pauseViewWithID).toHaveBeenCalledWith(['manual-1'], '');
+    expect(nativeModule.resumeViewWithID).toHaveBeenCalledWith(['manual-1'], '');
+    expect(nativeModule.addSegmentationToViewWithID).toHaveBeenCalledWith(['manual-1', 'result', 'pending'], '');
+    expect(nativeModule.addSegmentationToViewWithName).toHaveBeenCalledWith(['Checkout', 'stage', 'payment'], '');
+    expect(nativeModule.stopViewWithID).toHaveBeenCalledWith(['manual-1', 'result', 'success'], '');
+    expect(nativeModule.stopViewWithName).toHaveBeenCalledWith(['Checkout', 'source', 'button'], '');
+    expect(nativeModule.setGlobalViewSegmentation).toHaveBeenCalledWith(['app', 'example'], '');
+    expect(nativeModule.updateGlobalViewSegmentation).toHaveBeenCalledWith(['tab', 'views'], '');
+    expect(nativeModule.stopAllViews).toHaveBeenCalledWith(['closedBy', 'test'], '');
 });
 
 test('sessions, device, and content bridge calls keep their caller order', async () => {
@@ -339,9 +339,9 @@ test('sessions, device, and content bridge calls keep their caller order', async
     Countly.content.previewContent('content-42');
     Countly.content.exitContentZone();
 
-    expect(nativeModule.giveConsent).toHaveBeenCalledWith(['sessions', 'events']);
-    expect(nativeModule.setID).toHaveBeenCalledWith('device-2');
-    expect(nativeModule.previewContent).toHaveBeenCalledWith(['content-42']);
+    expect(nativeModule.giveConsent).toHaveBeenCalledWith(['sessions', 'events'], '');
+    expect(nativeModule.setID).toHaveBeenCalledWith('device-2', '');
+    expect(nativeModule.previewContent).toHaveBeenCalledWith(['content-42'], '');
 
     const callOrder = [
         nativeModule.giveConsent.mock.invocationCallOrder[0],
@@ -391,8 +391,8 @@ test('deviceId.changeID forwards explicit merge selection to the native bridge',
     Countly.deviceId.changeID('device-2', true);
     Countly.deviceId.changeID('device-3', false);
 
-    expect(nativeModule.changeDeviceId).toHaveBeenNthCalledWith(1, ['device-2', '1']);
-    expect(nativeModule.changeDeviceId).toHaveBeenNthCalledWith(2, ['device-3', '0']);
+    expect(nativeModule.changeDeviceId).toHaveBeenNthCalledWith(1, ['device-2', '1'], '');
+    expect(nativeModule.changeDeviceId).toHaveBeenNthCalledWith(2, ['device-3', '0'], '');
 });
 
 test('addCustomNetworkRequestHeaders skips invalid values and stringifies the rest', async () => {
@@ -408,7 +408,7 @@ test('addCustomNetworkRequestHeaders skips invalid values and stringifies the re
         skipUndefined: undefined,
     });
 
-    expect(nativeModule.addCustomNetworkRequestHeaders).toHaveBeenCalledWith(['Authorization', 'Bearer token', 'attempts', '3', 'empty', '']);
+    expect(nativeModule.addCustomNetworkRequestHeaders).toHaveBeenCalledWith(['Authorization', 'Bearer token', 'attempts', '3', 'empty', ''], '');
 });
 
 test('notification, location, trace, and attribution helpers forward expected payloads', async () => {
@@ -442,27 +442,27 @@ test('notification, location, trace, and attribution helpers forward expected pa
     await Countly.appLoadingFinished();
 
     emit('pushNotificationCallback', { aps: { alert: 'hi' } });
-    nativeModule.showStarRating.mock.calls[0][1]('rated');
+    nativeModule.showStarRating.mock.calls[0][2]('rated');
 
     expect(nativeModule.disablePushNotifications).toHaveBeenCalledTimes(1);
-    expect(nativeModule.sendPushToken).toHaveBeenCalledWith(['push-token']);
-    expect(nativeModule.registerForNotification).toHaveBeenCalledWith([]);
-    expect(nativeModule.setLoggingEnabled).toHaveBeenCalledWith([false]);
-    expect(nativeModule.setHttpPostForced).toHaveBeenCalledWith(['0']);
-    expect(nativeModule.setEventSendThreshold).toHaveBeenCalledWith(['11']);
-    expect(nativeModule.askForNotificationPermission).toHaveBeenCalledWith(['ding.wav']);
-    expect(nativeModule.setLocation).toHaveBeenCalledWith(['US', 'Boston', '1.2,3.4', '8.8.8.8']);
+    expect(nativeModule.sendPushToken).toHaveBeenCalledWith(['push-token'], '');
+    expect(nativeModule.registerForNotification).toHaveBeenCalledWith([], '');
+    expect(nativeModule.setLoggingEnabled).toHaveBeenCalledWith([false], '');
+    expect(nativeModule.setHttpPostForced).toHaveBeenCalledWith(['0'], '');
+    expect(nativeModule.setEventSendThreshold).toHaveBeenCalledWith(['11'], '');
+    expect(nativeModule.askForNotificationPermission).toHaveBeenCalledWith(['ding.wav'], '');
+    expect(nativeModule.setLocation).toHaveBeenCalledWith(['US', 'Boston', '1.2,3.4', '8.8.8.8'], '');
     expect(nativeModule.disableLocation).toHaveBeenCalledTimes(1);
-    expect(nativeModule.addCrashLog).toHaveBeenCalledWith(['line 1']);
-    expect(nativeModule.showStarRating).toHaveBeenCalledWith([], expect.any(Function));
-    expect(nativeModule.startTrace).toHaveBeenCalledWith(['trace-1']);
-    expect(nativeModule.cancelTrace).toHaveBeenCalledWith(['trace-2']);
-    expect(nativeModule.clearAllTraces).toHaveBeenCalledWith([]);
-    expect(nativeModule.endTrace).toHaveBeenCalledWith(['trace-3', 'db', '2']);
-    expect(nativeModule.recordNetworkTrace).toHaveBeenCalledWith(['GET /users', '200', '10', '20', '1000', '2000']);
+    expect(nativeModule.addCrashLog).toHaveBeenCalledWith(['line 1'], '');
+    expect(nativeModule.showStarRating).toHaveBeenCalledWith([], '', expect.any(Function));
+    expect(nativeModule.startTrace).toHaveBeenCalledWith(['trace-1'], '');
+    expect(nativeModule.cancelTrace).toHaveBeenCalledWith(['trace-2'], '');
+    expect(nativeModule.clearAllTraces).toHaveBeenCalledWith([], '');
+    expect(nativeModule.endTrace).toHaveBeenCalledWith(['trace-3', 'db', '2'], '');
+    expect(nativeModule.recordNetworkTrace).toHaveBeenCalledWith(['GET /users', '200', '10', '20', '1000', '2000'], '');
     expect(nativeModule.replaceAllAppKeysInQueueWithCurrentAppKey).toHaveBeenCalledTimes(1);
-    expect(nativeModule.recordDirectAttribution).toHaveBeenCalledWith(['click', 'ad-1']);
-    expect(nativeModule.recordIndirectAttribution).toHaveBeenCalledWith(['campaign-2']);
+    expect(nativeModule.recordDirectAttribution).toHaveBeenCalledWith(['click', 'ad-1'], '');
+    expect(nativeModule.recordIndirectAttribution).toHaveBeenCalledWith(['campaign-2'], '');
     expect(nativeModule.removeDifferentAppKeysFromQueue).toHaveBeenCalledTimes(1);
     expect(nativeModule.appLoadingFinished).toHaveBeenCalledTimes(1);
     expect(pushListener).toHaveBeenCalledWith({ aps: { alert: 'hi' } });
@@ -481,11 +481,11 @@ test('metrics, crash, and custom metric helpers normalize payloads', async () =>
     Countly.pinnedCertificates('cert.pem');
     await Countly.setCustomMetrics({ platform: 'ios', build: 1, release: '26.1.0' });
 
-    expect(nativeModule.recordMetrics).toHaveBeenCalledWith(['os', 'ios', 'build', '17']);
-    expect(nativeModule.logException).toHaveBeenCalledWith(['boom\nline2\n', true, 'region', 'eu', 'retries', '2']);
-    expect(nativeModule.setCustomCrashSegments).toHaveBeenCalledWith(['region', 'eu', 'retries', '2']);
-    expect(nativeModule.pinnedCertificates).toHaveBeenCalledWith(['cert.pem']);
-    expect(nativeModule.setCustomMetrics).toHaveBeenCalledWith(['platform', 'ios', 'release', '26.1.0']);
+    expect(nativeModule.recordMetrics).toHaveBeenCalledWith(['os', 'ios', 'build', '17'], '');
+    expect(nativeModule.logException).toHaveBeenCalledWith(['boom\nline2\n', true, 'region', 'eu', 'retries', '2'], '');
+    expect(nativeModule.setCustomCrashSegments).toHaveBeenCalledWith(['region', 'eu', 'retries', '2'], '');
+    expect(nativeModule.pinnedCertificates).toHaveBeenCalledWith(['cert.pem'], '');
+    expect(nativeModule.setCustomMetrics).toHaveBeenCalledWith(['platform', 'ios', 'release', '26.1.0'], '');
 });
 
 test('user data helpers normalize aliases and forward payloads', async () => {
@@ -525,29 +525,29 @@ test('user data helpers normalize aliases and forward payloads', async () => {
     await Countly.userDataBulk.pushValue('segments', 'vip');
     await Countly.userDataBulk.pullValue('segments', 'vip');
 
-    expect(nativeModule.setUserData).toHaveBeenCalledWith([{ name: 'Ada', organization: 'Countly', byear: '1990', premium: true, tags: ['vip'] }]);
-    expect(nativeModule.userData_setProperty).toHaveBeenCalledWith(['plan', 'pro']);
-    expect(nativeModule.userData_increment).toHaveBeenCalledWith(['visits']);
-    expect(nativeModule.userData_incrementBy).toHaveBeenCalledWith(['coins', '7']);
-    expect(nativeModule.userData_multiply).toHaveBeenCalledWith(['xp', '3']);
-    expect(nativeModule.userData_saveMax).toHaveBeenCalledWith(['maxLevel', '9']);
-    expect(nativeModule.userData_saveMin).toHaveBeenCalledWith(['minLevel', '2']);
-    expect(nativeModule.userData_setOnce).toHaveBeenCalledWith(['joined', 'yes']);
-    expect(nativeModule.userData_pushUniqueValue).toHaveBeenCalledWith(['labels', 'alpha']);
-    expect(nativeModule.userData_pushValue).toHaveBeenCalledWith(['labels', 'beta']);
-    expect(nativeModule.userData_pullValue).toHaveBeenCalledWith(['labels', 'beta']);
-    expect(nativeModule.userDataBulk_setUserProperties).toHaveBeenCalledWith({ organization: 'Countly', byear: '1991', plan: 'enterprise' });
-    expect(nativeModule.userDataBulk_save).toHaveBeenCalledWith([]);
-    expect(nativeModule.userDataBulk_setProperty).toHaveBeenCalledWith(['tier', 'gold']);
-    expect(nativeModule.userDataBulk_increment).toHaveBeenCalledWith(['logins']);
-    expect(nativeModule.userDataBulk_incrementBy).toHaveBeenCalledWith(['coins', '4']);
-    expect(nativeModule.userDataBulk_multiply).toHaveBeenCalledWith(['xp', '2']);
-    expect(nativeModule.userDataBulk_saveMax).toHaveBeenCalledWith(['best', '10']);
-    expect(nativeModule.userDataBulk_saveMin).toHaveBeenCalledWith(['worst', '1']);
-    expect(nativeModule.userDataBulk_setOnce).toHaveBeenCalledWith(['firstSeen', 'today']);
-    expect(nativeModule.userDataBulk_pushUniqueValue).toHaveBeenCalledWith(['segments', 'beta']);
-    expect(nativeModule.userDataBulk_pushValue).toHaveBeenCalledWith(['segments', 'vip']);
-    expect(nativeModule.userDataBulk_pullValue).toHaveBeenCalledWith(['segments', 'vip']);
+    expect(nativeModule.setUserData).toHaveBeenCalledWith([{ name: 'Ada', organization: 'Countly', byear: '1990', premium: true, tags: ['vip'] }], '');
+    expect(nativeModule.userData_setProperty).toHaveBeenCalledWith(['plan', 'pro'], '');
+    expect(nativeModule.userData_increment).toHaveBeenCalledWith(['visits'], '');
+    expect(nativeModule.userData_incrementBy).toHaveBeenCalledWith(['coins', '7'], '');
+    expect(nativeModule.userData_multiply).toHaveBeenCalledWith(['xp', '3'], '');
+    expect(nativeModule.userData_saveMax).toHaveBeenCalledWith(['maxLevel', '9'], '');
+    expect(nativeModule.userData_saveMin).toHaveBeenCalledWith(['minLevel', '2'], '');
+    expect(nativeModule.userData_setOnce).toHaveBeenCalledWith(['joined', 'yes'], '');
+    expect(nativeModule.userData_pushUniqueValue).toHaveBeenCalledWith(['labels', 'alpha'], '');
+    expect(nativeModule.userData_pushValue).toHaveBeenCalledWith(['labels', 'beta'], '');
+    expect(nativeModule.userData_pullValue).toHaveBeenCalledWith(['labels', 'beta'], '');
+    expect(nativeModule.userDataBulk_setUserProperties).toHaveBeenCalledWith({ organization: 'Countly', byear: '1991', plan: 'enterprise' }, '');
+    expect(nativeModule.userDataBulk_save).toHaveBeenCalledWith([], '');
+    expect(nativeModule.userDataBulk_setProperty).toHaveBeenCalledWith(['tier', 'gold'], '');
+    expect(nativeModule.userDataBulk_increment).toHaveBeenCalledWith(['logins'], '');
+    expect(nativeModule.userDataBulk_incrementBy).toHaveBeenCalledWith(['coins', '4'], '');
+    expect(nativeModule.userDataBulk_multiply).toHaveBeenCalledWith(['xp', '2'], '');
+    expect(nativeModule.userDataBulk_saveMax).toHaveBeenCalledWith(['best', '10'], '');
+    expect(nativeModule.userDataBulk_saveMin).toHaveBeenCalledWith(['worst', '1'], '');
+    expect(nativeModule.userDataBulk_setOnce).toHaveBeenCalledWith(['firstSeen', 'today'], '');
+    expect(nativeModule.userDataBulk_pushUniqueValue).toHaveBeenCalledWith(['segments', 'beta'], '');
+    expect(nativeModule.userDataBulk_pushValue).toHaveBeenCalledWith(['segments', 'vip'], '');
+    expect(nativeModule.userDataBulk_pullValue).toHaveBeenCalledWith(['segments', 'vip'], '');
 });
 
 test('disablePushNotifications returns the android stub message without calling native', () => {
@@ -574,10 +574,10 @@ test('feedback.showNPS selects the matching widget and removes the close listene
     Countly.feedback.showNPS('vip', widgetClosedCallback);
     await flushPromises();
 
-    expect(nativeModule.presentFeedbackWidget).toHaveBeenCalledWith(['nps-2', 'nps', 'Priority NPS', '', 'v2']);
+    expect(nativeModule.presentFeedbackWidget).toHaveBeenCalledWith(['nps-2', 'nps', 'Priority NPS', '', 'v2'], '');
 
     const closedListener = listeners.find((listener) => listener.eventName === 'widgetClosedCallback');
-    emit('widgetClosedCallback');
+    emit('widgetClosedCallback', JSON.stringify({ instanceName: '' }));
 
     expect(widgetClosedCallback).toHaveBeenCalledTimes(1);
     expect(closedListener.subscription.remove).toHaveBeenCalledTimes(1);
@@ -586,8 +586,8 @@ test('feedback.showNPS selects the matching widget and removes the close listene
 test('remote config key filters forward their arrays and callback results', async () => {
     const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge({
         nativeOverrides: {
-            updateRemoteConfigForKeysOnly: jest.fn((args, callback) => callback(`only:${args.join(',')}`)),
-            updateRemoteConfigExceptKeys: jest.fn((args, callback) => callback(`except:${args.join(',')}`)),
+            updateRemoteConfigForKeysOnly: jest.fn((args, instanceName, callback) => callback(`only:${args.join(',')}`)),
+            updateRemoteConfigExceptKeys: jest.fn((args, instanceName, callback) => callback(`except:${args.join(',')}`)),
         },
     });
     const onlyCallback = jest.fn();
@@ -598,8 +598,8 @@ test('remote config key filters forward their arrays and callback results', asyn
     Countly.updateRemoteConfigForKeysOnly(['theme', 'banner'], onlyCallback);
     Countly.updateRemoteConfigExceptKeys(['secret'], exceptCallback);
 
-    expect(nativeModule.updateRemoteConfigForKeysOnly).toHaveBeenCalledWith(['theme', 'banner'], expect.any(Function));
-    expect(nativeModule.updateRemoteConfigExceptKeys).toHaveBeenCalledWith(['secret'], expect.any(Function));
+    expect(nativeModule.updateRemoteConfigForKeysOnly).toHaveBeenCalledWith(['theme', 'banner'], '', expect.any(Function));
+    expect(nativeModule.updateRemoteConfigExceptKeys).toHaveBeenCalledWith(['secret'], '', expect.any(Function));
     expect(onlyCallback).toHaveBeenCalledWith('only:theme,banner');
     expect(exceptCallback).toHaveBeenCalledWith('except:secret');
 });
@@ -607,9 +607,9 @@ test('remote config key filters forward their arrays and callback results', asyn
 test('remoteConfig.update methods await the native callback result', async () => {
     const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge({
         nativeOverrides: {
-            remoteConfigUpdate: jest.fn((_args, callback) => callback('Remote Config is updated and ready to use!')),
-            updateRemoteConfigForKeysOnly: jest.fn((args, callback) => callback(`only:${args.join(',')}`)),
-            updateRemoteConfigExceptKeys: jest.fn((args, callback) => callback(`except:${args.join(',')}`)),
+            remoteConfigUpdate: jest.fn((_args, instanceName, callback) => callback('Remote Config is updated and ready to use!')),
+            updateRemoteConfigForKeysOnly: jest.fn((args, instanceName, callback) => callback(`only:${args.join(',')}`)),
+            updateRemoteConfigExceptKeys: jest.fn((args, instanceName, callback) => callback(`except:${args.join(',')}`)),
         },
     });
 
@@ -619,15 +619,15 @@ test('remoteConfig.update methods await the native callback result', async () =>
     await expect(Countly.remoteConfig.updateForKeysOnly(['theme', 'banner'])).resolves.toBeUndefined();
     await expect(Countly.remoteConfig.updateExceptKeys(['secret'])).resolves.toBeUndefined();
 
-    expect(nativeModule.remoteConfigUpdate).toHaveBeenCalledWith([], expect.any(Function));
-    expect(nativeModule.updateRemoteConfigForKeysOnly).toHaveBeenCalledWith(['theme', 'banner'], expect.any(Function));
-    expect(nativeModule.updateRemoteConfigExceptKeys).toHaveBeenCalledWith(['secret'], expect.any(Function));
+    expect(nativeModule.remoteConfigUpdate).toHaveBeenCalledWith([], '', expect.any(Function));
+    expect(nativeModule.updateRemoteConfigForKeysOnly).toHaveBeenCalledWith(['theme', 'banner'], '', expect.any(Function));
+    expect(nativeModule.updateRemoteConfigExceptKeys).toHaveBeenCalledWith(['secret'], '', expect.any(Function));
 });
 
 test('remoteConfig.updateForKeysOnly resolves when the native layer reports an update error', async () => {
     const { Countly, CountlyConfig } = loadCountlyBridge({
         nativeOverrides: {
-            updateRemoteConfigForKeysOnly: jest.fn((_args, callback) => callback('There was an error while updating Remote Config: NetworkError')),
+            updateRemoteConfigForKeysOnly: jest.fn((_args, instanceName, callback) => callback('There was an error while updating Remote Config: NetworkError')),
         },
     });
 
@@ -640,21 +640,21 @@ test('remoteConfig.getValue returns null when the key is missing', async () => {
     const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge({
         platform: 'android',
         nativeOverrides: {
-            getRemoteConfigValueForKey: jest.fn((_args, callback) => callback('ConfigKeyNotFound')),
+            getRemoteConfigValueForKey: jest.fn((_args, instanceName, callback) => callback('ConfigKeyNotFound')),
         },
     });
 
     await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
 
     await expect(Countly.remoteConfig.getValue('missing-key')).resolves.toBeNull();
-    expect(nativeModule.getRemoteConfigValueForKey).toHaveBeenCalledWith(['missing-key'], expect.any(Function));
+    expect(nativeModule.getRemoteConfigValueForKey).toHaveBeenCalledWith(['missing-key'], '', expect.any(Function));
 });
 
 test('remoteConfig.getValue parses JSON payloads on android', async () => {
     const { Countly, CountlyConfig } = loadCountlyBridge({
         platform: 'android',
         nativeOverrides: {
-            getRemoteConfigValueForKey: jest.fn((_args, callback) => callback('{"enabled":true}')),
+            getRemoteConfigValueForKey: jest.fn((_args, instanceName, callback) => callback('{"enabled":true}')),
         },
     });
 
@@ -681,10 +681,10 @@ test('legacy remote config and rating widget helpers preserve callback behavior'
     const { Countly, CountlyConfig, nativeModule, listeners, emit } = loadCountlyBridge({
         platform: 'android',
         nativeOverrides: {
-            remoteConfigUpdate: jest.fn((_args, callback) => callback('updated')),
-            updateRemoteConfigForKeysOnly: jest.fn((args, callback) => callback(`only:${args.join(',')}`)),
-            updateRemoteConfigExceptKeys: jest.fn((args, callback) => callback(`except:${args.join(',')}`)),
-            getRemoteConfigValueForKey: jest.fn((_args, callback) => callback('{"feature":true}')),
+            remoteConfigUpdate: jest.fn((_args, instanceName, callback) => callback('updated')),
+            updateRemoteConfigForKeysOnly: jest.fn((args, instanceName, callback) => callback(`only:${args.join(',')}`)),
+            updateRemoteConfigExceptKeys: jest.fn((args, instanceName, callback) => callback(`except:${args.join(',')}`)),
+            getRemoteConfigValueForKey: jest.fn((_args, instanceName, callback) => callback('{"feature":true}')),
         },
     });
 
@@ -696,7 +696,7 @@ test('legacy remote config and rating widget helpers preserve callback behavior'
     Countly.getRemoteConfigValueForKey('feature', getValueCallback);
     Countly.presentRatingWidgetWithID('rating-1', 99, ratingWidgetCallback);
 
-    emit('ratingWidgetCallback', 'closed');
+    emit('ratingWidgetCallback', JSON.stringify({ error: 'closed', instanceName: '' }));
 
     const ratingListener = listeners.find((listener) => listener.eventName === 'ratingWidgetCallback');
 
@@ -704,7 +704,7 @@ test('legacy remote config and rating widget helpers preserve callback behavior'
     expect(keysOnlyCallback).toHaveBeenCalledWith('only:theme');
     expect(exceptKeysCallback).toHaveBeenCalledWith('except:secret');
     expect(getValueCallback).toHaveBeenCalledWith({ feature: true });
-    expect(nativeModule.presentRatingWidgetWithID).toHaveBeenCalledWith(['rating-1', 'Done']);
+    expect(nativeModule.presentRatingWidgetWithID).toHaveBeenCalledWith(['rating-1', 'Done'], '');
     expect(ratingWidgetCallback).toHaveBeenCalledWith('closed');
     expect(ratingListener.subscription.remove).toHaveBeenCalledTimes(1);
 });
@@ -739,7 +739,7 @@ test('getRemoteConfigValueForKeyP returns ConfigKeyNotFound on android when the 
     await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
 
     await expect(Countly.getRemoteConfigValueForKeyP('missing-key')).resolves.toBe('ConfigKeyNotFound');
-    expect(nativeModule.getRemoteConfigValueForKeyP).toHaveBeenCalledWith('missing-key');
+    expect(nativeModule.getRemoteConfigValueForKeyP).toHaveBeenCalledWith('missing-key', '');
 });
 
 test('getRemoteConfigValueForKeyP parses JSON payloads on android', async () => {
@@ -782,7 +782,7 @@ test('test helpers expose native queues and halt resets JS bridge state for rein
     secondConfig.content.setGlobalContentCallback(secondContentCallback);
     await Countly.initWithConfig(secondConfig);
 
-    emit('globalContentCallback', JSON.stringify({ status: 'updated', data: { id: 'content-2' } }));
+    emit('globalContentCallback', JSON.stringify({ status: 'updated', data: { id: 'content-2' }, instanceName: '' }));
 
     expect(firstContentCallback).not.toHaveBeenCalled();
     expect(secondContentCallback).toHaveBeenCalledWith('updated', { id: 'content-2' });

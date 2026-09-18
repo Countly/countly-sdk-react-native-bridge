@@ -1,0 +1,93 @@
+name: iOS checks
+
+on:
+  push:
+    branches:
+      - master
+      - staging
+  pull_request:
+    branches:
+      - master
+      - staging
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # The branch the bridge is developed against until the matching Swift SDK version is tagged.
+  SWIFT_SDK_REF: pre-release
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  typecheck:
+    name: Type check the bridge against the Swift SDK
+    runs-on: macos-15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Checkout the Countly Swift SDK
+        uses: actions/checkout@v4
+        with:
+          repository: Countly/countly-sdk-swift
+          ref: ${{ env.SWIFT_SDK_REF }}
+          path: countly-sdk-swift
+
+      - name: Set up Xcode
+        run: sudo xcode-select -switch /Applications/Xcode_16.4.app
+
+      - name: Build the Countly module
+        run: |
+          SDK_PATH=$(xcrun --sdk iphonesimulator --show-sdk-path)
+          mkdir -p build/modules
+          xcrun swiftc -emit-module -module-name Countly \
+            -sdk "$SDK_PATH" -target arm64-apple-ios15.0-simulator \
+            -emit-module-path build/modules/Countly.swiftmodule \
+            $(find countly-sdk-swift/Sources/Countly -name '*.swift')
+
+      - name: Build a stand-in for the React module
+        run: |
+          SDK_PATH=$(xcrun --sdk iphonesimulator --show-sdk-path)
+          cat > build/ReactStub.swift <<'EOF'
+          import Foundation
+
+          public typealias RCTPromiseResolveBlock = (Any?) -> Void
+          public typealias RCTPromiseRejectBlock = (String?, String?, Error?) -> Void
+          public typealias RCTResponseSenderBlock = ([Any]) -> Void
+
+          open class RCTEventEmitter: NSObject {
+              public override init() { super.init() }
+              open func supportedEvents() -> [String] { [] }
+              open class func requiresMainQueueSetup() -> Bool { false }
+              open func sendEvent(withName name: String, body: Any?) {}
+          }
+          EOF
+          xcrun swiftc -emit-module -module-name React \
+            -sdk "$SDK_PATH" -target arm64-apple-ios15.0-simulator \
+            -emit-module-path build/modules/React.swiftmodule \
+            build/ReactStub.swift
+
+      - name: Type check the bridge
+        run: |
+          SDK_PATH=$(xcrun --sdk iphonesimulator --show-sdk-path)
+          xcrun swiftc -typecheck -sdk "$SDK_PATH" -target arm64-apple-ios15.0-simulator \
+            -I build/modules -module-name CountlyReactNative ios/src/*.swift
+
+      - name: Check that every exported method is implemented
+        run: python3 .github/scripts/check_bridge_parity.py
+
+  podspec:
+    name: Validate the podspec
+    runs-on: macos-15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Lint the podspec syntax
+        # A full "pod lib lint" builds the pod, which needs React Native and the Swift SDK
+        # release tag; this catches the mistakes that make the file unreadable on its own.
+        run: ruby -c CountlyReactNative.podspec

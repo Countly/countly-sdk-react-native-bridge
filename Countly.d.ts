@@ -1094,6 +1094,93 @@ declare module "countly-sdk-react-native-bridge" {
      */
     export function recordIndirectAttribution(attributionValues): void;
 
+  /**
+   * A named Countly instance, with its own app key, server, device ID, request queue and storage.
+   * Asking for the same name again returns the same instance.
+   */
+  export function instance(instanceName: string): CountlyInstance | null;
+
+  /**
+   * Stops a named instance and drops it from the registry, keeping its stored data.
+   */
+  export function removeInstance(instanceName: string): Promise<string>;
+
+  /**
+   * Stops every instance and wipes what they persisted. Testing purposes only.
+   */
+  export function haltAllInstances(): Promise<string>;
+
+  interface CountlyInstance {
+    readonly name: string;
+    readonly events: typeof events;
+    readonly sessions: typeof sessions;
+    readonly views: typeof views;
+    readonly deviceId: typeof deviceId;
+    readonly remoteConfig: typeof remoteConfig;
+    readonly feedback: typeof feedback;
+    readonly userProfile: {
+      setProperties(properties: Record<string, any>): Promise<void>;
+      setProperty(keyName: string, keyValue: any): Promise<void>;
+      increment(keyName: string): Promise<void>;
+      incrementBy(keyName: string, keyValue: number): Promise<void>;
+      multiply(keyName: string, keyValue: number): Promise<void>;
+      saveMax(keyName: string, keyValue: number): Promise<void>;
+      saveMin(keyName: string, keyValue: number): Promise<void>;
+      setOnce(keyName: string, keyValue: any): Promise<void>;
+      pushUniqueValue(keyName: string, keyValue: any): Promise<void>;
+      pushValue(keyName: string, keyValue: any): Promise<void>;
+      pullValue(keyName: string, keyValue: any): Promise<void>;
+      save(): Promise<void>;
+    };
+    readonly consent: {
+      giveConsent(features: readonly string[]): void;
+      removeConsent(features: readonly string[]): void;
+      giveAllConsent(): void;
+      removeAllConsent(): void;
+    };
+    readonly crashes: {
+      addCrashLog(crashLog: string): void;
+      logException(exception: string, nonfatal?: boolean, segments?: Record<string, any>): void;
+      setCustomCrashSegments(segments: Record<string, any>): void;
+    };
+    readonly location: {
+      setLocation(countryCode: string, city: string, location: string, ipAddress: string): void;
+      disableLocation(): void;
+    };
+    readonly apm: {
+      startTrace(traceKey: string): void;
+      cancelTrace(traceKey: string): void;
+      clearAllTraces(): void;
+      endTrace(traceKey: string, customMetric?: Record<string, number>): void;
+      recordNetworkTrace(
+        networkTraceKey: string,
+        responseCode: number,
+        requestPayloadSize: number,
+        responsePayloadSize: number,
+        startTime: number,
+        endTime: number,
+      ): void;
+      appLoadingFinished(): void;
+    };
+    readonly attribution: {
+      recordDirectAttribution(campaignType: string, campaignData: string): void;
+      recordIndirectAttribution(attributionValues: Record<string, string>): void;
+    };
+    readonly content: {
+      enterContentZone(): void;
+      refreshContentZone(): void;
+      exitContentZone(): void;
+      previewContent(contentId: string): void;
+    };
+
+    initWithConfig(countlyConfig: CountlyConfig): Promise<void>;
+    isInitialized(): Promise<boolean>;
+    halt(): Promise<void>;
+    remove(): Promise<string>;
+    getRequestQueue(): Promise<string[]>;
+    getEventQueue(): Promise<string[]>;
+  }
+
     /**
      * Removes all requests with a different app key in request queue.
      * In request queue, if there are any request whose app key is different than the current app key,

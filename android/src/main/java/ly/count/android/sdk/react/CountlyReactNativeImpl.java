@@ -106,7 +106,7 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     private String COUNTLY_RN_SDK_VERSION_STRING = "26.8.0";
     private String COUNTLY_RN_SDK_NAME = "js-rnb-android";
 
-    private static CountlyConfig config = new CountlyConfig();
+    private static final Map<String, CountlyConfig> configs = new HashMap<>();
     private static String channelName = "General Notifications";
     private static String channelDescription = "Receive notifications about important updates and events.";
     private static CCallback notificationListener = null;
@@ -124,10 +124,10 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     private static String ratingWidgetCallbackName = "ratingWidgetCallback";
     private static String pushNotificationCallbackName = "pushNotificationCallback";
     private static boolean requestCaptureEnabled = false;
-    private static boolean requestCaptureGeneratorInstalled = false;
+    private static final Set<String> requestCaptureGeneratorInstances = new HashSet<>();
     private static boolean applicationCallbacksConfigured = false;
     private static final List<String> capturedRequests = new ArrayList<>();
-    private List<CountlyFeedbackWidget> retrievedWidgetList = null;
+    private final Map<String, List<CountlyFeedbackWidget>> retrievedWidgetLists = new HashMap<>();
 
     private final Set<String> validConsentFeatureNames = new HashSet<>(Arrays.asList(
         Countly.CountlyFeatureNames.sessions,
@@ -152,7 +152,7 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     }
 
     private void resetTestingState() {
-        config = new CountlyConfig();
+        configs.clear();
         channelName = "General Notifications";
         channelDescription = "Receive notifications about important updates and events.";
         notificationListener = null;
@@ -160,9 +160,9 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         allowedIntentClassNames.clear();
         allowedIntentPackageNames.clear();
         useAdditionalIntentRedirectionChecks = true;
-        retrievedWidgetList = null;
+        retrievedWidgetLists.clear();
         requestCaptureEnabled = false;
-        requestCaptureGeneratorInstalled = false;
+        requestCaptureGeneratorInstances.clear();
         synchronized (capturedRequests) {
             capturedRequests.clear();
         }
@@ -276,11 +276,13 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         return Proxy.newProxyInstance(immediateRequestInterface.getClassLoader(), new Class<?>[] { immediateRequestInterface }, requestHandler);
     }
 
-    private void installRequestCaptureGenerator() {
-        if (requestCaptureGeneratorInstalled) {
+    private void installRequestCaptureGenerator(String instanceName) {
+        final String instanceKey = instanceKey(instanceName);
+        if (requestCaptureGeneratorInstances.contains(instanceKey)) {
             return;
         }
 
+        final CountlyConfig config = configFor(instanceName);
         try {
             Field generatorField = CountlyConfig.class.getDeclaredField("immediateRequestGenerator");
             generatorField.setAccessible(true);
@@ -326,9 +328,9 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
             );
 
             generatorField.set(config, capturingGenerator);
-            requestCaptureGeneratorInstalled = true;
+            requestCaptureGeneratorInstances.add(instanceKey);
         } catch (Exception exception) {
-            requestCaptureGeneratorInstalled = false;
+            requestCaptureGeneratorInstances.remove(instanceKey);
             log("installRequestCaptureGenerator, Failed to install capture generator: " + exception, LogLevel.WARNING);
         }
     }
@@ -344,19 +346,20 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     }
 
     
-    public void init(ReadableArray args, Promise promise) {
+    public void init(ReadableArray args, String instanceName, Promise promise) {
         try {
             log("Initializing...", LogLevel.DEBUG);
 
             String argsMap = args.getString(0);
             JSONObject argsObject = new JSONObject(argsMap);
-            populateConfig(argsObject);
+            populateConfig(argsObject, instanceName);
         } catch (Exception e) {
             log("Failed to parse Config Object. [" + e.toString() + "]", LogLevel.DEBUG);
         }
 
-        Countly.sharedInstance().COUNTLY_SDK_NAME = COUNTLY_RN_SDK_NAME;
-        Countly.sharedInstance().COUNTLY_SDK_VERSION_STRING = COUNTLY_RN_SDK_VERSION_STRING;
+        final CountlyConfig config = configFor(instanceName);
+        countlyFor(instanceName).COUNTLY_SDK_NAME = COUNTLY_RN_SDK_NAME;
+        countlyFor(instanceName).COUNTLY_SDK_VERSION_STRING = COUNTLY_RN_SDK_VERSION_STRING;
 
         config.setContext(_reactContext);
         Activity activity = getActivity();
@@ -371,9 +374,11 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
 
         try {
             if (requestCaptureEnabled) {
-                installRequestCaptureGenerator();
+                installRequestCaptureGenerator(instanceName);
             }
-            Countly.sharedInstance().init(config);
+            countlyFor(instanceName).init(config);
+            // Dropped so options an earlier init set do not stick to the next one in the same process.
+            configs.remove(instanceKey(instanceName));
             if (activity != null) {
                 applicationCallbacksConfigured = true;
             }
@@ -384,7 +389,8 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         }
     }
 
-    private void populateConfig(JSONObject _config) {
+    private void populateConfig(JSONObject _config, String instanceName) {
+        final CountlyConfig config = configFor(instanceName);
         try {
             if (_config.has("serverURL")) {
                 config.setServerURL(_config.getString("serverURL"));
@@ -471,9 +477,7 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
                             log("onContentCallback, JSON exception: ", e, LogLevel.ERROR);
                         }
                         
-                        ((ReactApplicationContext) _reactContext)
-                            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                            .emit("globalContentCallback", contentMap.toString());
+                        emitForInstance("globalContentCallback", instanceName, contentMap);
                     }
                 });
             }
@@ -507,9 +511,7 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
                             log("onContentUrl, JSON exception: ", e, LogLevel.ERROR);
                             return false;
                         }
-                        ((ReactApplicationContext) _reactContext)
-                            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                            .emit("contentUrlHandler", urlData.toString());
+                        emitForInstance("contentUrlHandler", instanceName, urlData);
                         return true;
                     }
                 });
@@ -725,6 +727,65 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
             }
         }
         return false;
+    }
+
+    /**
+     * Resolves the Countly instance a call is meant for, creating a named one when it does not exist.
+     *
+     * @param instanceName the instance name the JavaScript layer sent, empty for the default one
+     * @return the instance the call applies to
+     */
+    private static Countly countlyFor(String instanceName) {
+        return isDefaultInstance(instanceName) ? Countly.sharedInstance() : Countly.instance(instanceName);
+    }
+
+    /**
+     * Resolves the Countly instance a call is meant for without creating one.
+     *
+     * @param instanceName the instance name the JavaScript layer sent, empty for the default one
+     * @return the instance, or null when no instance carries that name
+     */
+    private static Countly existingCountly(String instanceName) {
+        return isDefaultInstance(instanceName) ? Countly.sharedInstance() : Countly.getInstance(instanceName);
+    }
+
+    /**
+     * Whether a call is meant for the default instance.
+     *
+     * @param instanceName the instance name the JavaScript layer sent
+     * @return true when the call carries no name or the default one
+     */
+    private static boolean isDefaultInstance(String instanceName) {
+        return instanceName == null || instanceName.isEmpty() || Countly.DEFAULT_NAME.equals(instanceName);
+    }
+
+    /**
+     * Opens the storage of one instance, which the test only queue readers read straight out of.
+     *
+     * @param instanceName the instance name the JavaScript layer sent, empty for the default one
+     * @return the store holding that instance's persisted state
+     */
+    private CountlyStore storeFor(String instanceName) {
+        if (isDefaultInstance(instanceName)) {
+            return new CountlyStore(_reactContext, new ModuleLog());
+        }
+        return new CountlyStore(_reactContext, new ModuleLog(), false, CountlyStore.sanitizeNamespace(instanceName));
+    }
+
+    /**
+     * The configuration the next init of an instance starts with, created on first use.
+     *
+     * @param instanceName the instance name the JavaScript layer sent, empty for the default one
+     * @return the configuration being assembled for that instance
+     */
+    private static CountlyConfig configFor(String instanceName) {
+        String key = instanceKey(instanceName);
+        CountlyConfig existing = configs.get(key);
+        if (existing == null) {
+            existing = new CountlyConfig();
+            configs.put(key, existing);
+        }
+        return existing;
     }
 
     public static Map<String, String> toMapString(JSONObject jsonobj) {
@@ -994,28 +1055,29 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     }
 
     
-    public void setLoggingEnabled(ReadableArray args) {
+    public void setLoggingEnabled(ReadableArray args, String instanceName) {
+        final CountlyConfig config = configFor(instanceName);
         boolean enabled = args.getBoolean(0);
         config.setLoggingEnabled(enabled);
         loggingEnabled = enabled;
     }
 
     
-    public void isLoggingEnabled(final Promise promise) {
+    public void isLoggingEnabled(String instanceName, final Promise promise) {
         boolean result;
         result = loggingEnabled;
         promise.resolve(result);
     }
 
     
-    public void isInitialized(Promise promise) {
-        Boolean result = Countly.sharedInstance().isInitialized();
-        promise.resolve(result);
+    public void isInitialized(String instanceName, Promise promise) {
+        Countly existing = existingCountly(instanceName);
+        promise.resolve(existing != null && existing.isInitialized());
     }
 
     
-    public void getCurrentDeviceId(Promise promise) {
-        String deviceID = Countly.sharedInstance().deviceId().getID();
+    public void getCurrentDeviceId(String instanceName, Promise promise) {
+        String deviceID = countlyFor(instanceName).deviceId().getID();
         if (deviceID == null) {
             log("getCurrentDeviceId, deviceIdNotFound", LogLevel.DEBUG);
             promise.resolve("deviceIdNotFound");
@@ -1026,8 +1088,8 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     }
 
     
-    public void getDeviceIDType(Promise promise) {
-        DeviceIdType deviceIDType = Countly.sharedInstance().deviceId().getType();
+    public void getDeviceIDType(String instanceName, Promise promise) {
+        DeviceIdType deviceIDType = countlyFor(instanceName).deviceId().getType();
         int deviceIDTypeInt = 10101;
         if (deviceIDType.equals(DeviceIdType.DEVELOPER_SUPPLIED)) {
             deviceIDTypeInt = 20202;
@@ -1039,22 +1101,23 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     }
 
     
-    public void changeDeviceId(ReadableArray args) {
+    public void changeDeviceId(ReadableArray args, String instanceName) {
         String newDeviceID = args.getString(0);
         String onServerString = args.getString(1);
         if (newDeviceID.equals("TemporaryDeviceID")) {
-            Countly.sharedInstance().deviceId().enableTemporaryIdMode();
+            countlyFor(instanceName).deviceId().enableTemporaryIdMode();
         } else {
             if ("1".equals(onServerString)) {
-                Countly.sharedInstance().deviceId().changeWithMerge(newDeviceID);
+                countlyFor(instanceName).deviceId().changeWithMerge(newDeviceID);
             } else {
-                Countly.sharedInstance().deviceId().changeWithoutMerge(newDeviceID);
+                countlyFor(instanceName).deviceId().changeWithoutMerge(newDeviceID);
             }
         }
     }
 
     
-    public void setHttpPostForced(ReadableArray args) {
+    public void setHttpPostForced(ReadableArray args, String instanceName) {
+        final CountlyConfig config = configFor(instanceName);
         int isEnabled = Integer.parseInt(args.getString(0));
         if (isEnabled == 1) {
             config.setHttpPostForced(true);
@@ -1064,7 +1127,8 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     }
 
     
-    public void pinnedCertificates(ReadableArray args) {
+    public void pinnedCertificates(ReadableArray args, String instanceName) {
+        final CountlyConfig config = configFor(instanceName);
         String certificateName = args.getString(0);
         config.enablePublicKeyPinning(this.readCertificate(certificateName));
     }
@@ -1098,7 +1162,7 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     }
 
     
-    public void setLocation(ReadableArray args) {
+    public void setLocation(ReadableArray args, String instanceName) {
         String countryCode = args.getString(0);
         String city = args.getString(1);
         String location = args.getString(2);
@@ -1115,53 +1179,54 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         if ("null".equals(ipAddress)) {
             ipAddress = null;
         }
-        Countly.sharedInstance().location().setLocation(countryCode, city, location, ipAddress);
+        countlyFor(instanceName).location().setLocation(countryCode, city, location, ipAddress);
     }
 
     
-    public void disableLocation() {
-        if (Countly.sharedInstance().isInitialized()) {
-            Countly.sharedInstance().location().disableLocation();
+    public void disableLocation(String instanceName) {
+        Countly countly = countlyFor(instanceName);
+        if (countly.isInitialized()) {
+            countly.location().disableLocation();
         } else {
-            config.setDisableLocation();
+            configFor(instanceName).setDisableLocation();
         }
     }
 
     
-    public void addCrashLog(ReadableArray args) {
+    public void addCrashLog(ReadableArray args, String instanceName) {
         String record = args.getString(0);
-        Countly.sharedInstance().crashes().addCrashBreadcrumb(record);
+        countlyFor(instanceName).crashes().addCrashBreadcrumb(record);
     }
 
-    public void recordMetrics(ReadableArray args) {
+    public void recordMetrics(ReadableArray args, String instanceName) {
         Map<String, String> metricsMap = new HashMap<>();
         for (int i = 0; i < args.size(); i += 2) {
             String key = args.getString(i);
             String value = args.getString(i + 1);
             metricsMap.put(key, value);
         }
-        Countly.sharedInstance().requestQueue().recordMetrics(metricsMap);
+        countlyFor(instanceName).requestQueue().recordMetrics(metricsMap);
     }
 
-    public void startSession() {
-        Countly.sharedInstance().sessions().beginSession();
+    public void startSession(String instanceName) {
+        countlyFor(instanceName).sessions().beginSession();
     }
 
-    public void updateSession() {
-        Countly.sharedInstance().sessions().updateSession();
+    public void updateSession(String instanceName) {
+        countlyFor(instanceName).sessions().updateSession();
     }
 
-    public void endSession() {
-        Countly.sharedInstance().sessions().endSession();
+    public void endSession(String instanceName) {
+        countlyFor(instanceName).sessions().endSession();
     }
 
     
-    public void logException(ReadableArray args) {
+    public void logException(ReadableArray args, String instanceName) {
         String exceptionString = args.getString(0);
         Exception exception = new Exception(exceptionString);
 
         if (args.size() == 2 ) {
-            Countly.sharedInstance().crashes().recordHandledException(exception);
+            countlyFor(instanceName).crashes().recordHandledException(exception);
             return;
         }
         
@@ -1179,17 +1244,18 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
             }
         }
 
-        Countly.sharedInstance().crashes().recordHandledException(exception, segmentationMap);
+        countlyFor(instanceName).crashes().recordHandledException(exception, segmentationMap);
     }
 
     
-    public void logJSException(String err, String message, String stack) {
-        Countly.sharedInstance().crashes().addCrashBreadcrumb(stack);
-        Countly.sharedInstance().crashes().recordHandledException(new CountlyReactException(err, message, stack));
+    public void logJSException(String err, String message, String stack, String instanceName) {
+        countlyFor(instanceName).crashes().addCrashBreadcrumb(stack);
+        countlyFor(instanceName).crashes().recordHandledException(new CountlyReactException(err, message, stack));
     }
 
     
-    public void setCustomCrashSegments(ReadableArray args) {
+    public void setCustomCrashSegments(ReadableArray args, String instanceName) {
+        final CountlyConfig config = configFor(instanceName);
         Map<String, Object> segments = new HashMap<>();
         for (int i = 0, il = args.size(); i < il; i += 2) {
             segments.put(args.getString(i), args.getString(i + 1));
@@ -1203,7 +1269,7 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     // {number} s: event sum (0 or a number)
     // {array} g: event segmentation (optional, as an array of key-value pairs consecutively)
     
-    public void recordEvent(ReadableMap args) {
+    public void recordEvent(ReadableMap args, String instanceName) {
         String eventName = args.getString("n");
         int eventCount = args.getInt("c");
         double eventSum = args.getDouble("s");
@@ -1212,23 +1278,23 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
             segmentation = convertToEventMap(args.getArray("g"));
         }     
 
-        Countly.sharedInstance().events().recordEvent(eventName, segmentation, eventCount, eventSum);
+        countlyFor(instanceName).events().recordEvent(eventName, segmentation, eventCount, eventSum);
     }
 
     
-    public void startEvent(ReadableArray args) {
+    public void startEvent(ReadableArray args, String instanceName) {
         String startEvent = args.getString(0);
-        Countly.sharedInstance().events().startEvent(startEvent);
+        countlyFor(instanceName).events().startEvent(startEvent);
     }
 
     
-    public void cancelEvent(ReadableArray args) {
+    public void cancelEvent(ReadableArray args, String instanceName) {
         String cancelEvent = args.getString(0);
-        Countly.sharedInstance().events().cancelEvent(cancelEvent);
+        countlyFor(instanceName).events().cancelEvent(cancelEvent);
     }
 
     
-    public void endEvent(ReadableMap args) {
+    public void endEvent(ReadableMap args, String instanceName) {
         String eventName = args.getString("n");
         int eventCount = args.getInt("c");
         double eventSum = args.getDouble("s");
@@ -1237,85 +1303,84 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
             segmentation = convertToEventMap(args.getArray("g"));
         }     
 
-        Countly.sharedInstance().events().endEvent(eventName, segmentation, eventCount, eventSum);
+        countlyFor(instanceName).events().endEvent(eventName, segmentation, eventCount, eventSum);
     }
 
     
-    public void recordView(ReadableArray args) {
+    public void recordView(ReadableArray args, String instanceName) {
         String viewName = args.getString(0);
         Map<String, Object> segmentation = convertReadableArrayToSegmentation(args, 1);
-        Countly.sharedInstance().views().startAutoStoppedView(viewName, segmentation);
+        countlyFor(instanceName).views().startAutoStoppedView(viewName, segmentation);
     }
 
-    public void startAutoStoppedView(ReadableArray args, Promise promise) {
+    public void startAutoStoppedView(ReadableArray args, String instanceName, Promise promise) {
         String viewName = args.getString(0);
         Map<String, Object> segmentation = convertReadableArrayToSegmentation(args, 1);
-        promise.resolve(Countly.sharedInstance().views().startAutoStoppedView(viewName, segmentation));
+        promise.resolve(countlyFor(instanceName).views().startAutoStoppedView(viewName, segmentation));
     }
 
-    public void startView(ReadableArray args, Promise promise) {
+    public void startView(ReadableArray args, String instanceName, Promise promise) {
         String viewName = args.getString(0);
         Map<String, Object> segmentation = convertReadableArrayToSegmentation(args, 1);
-        promise.resolve(Countly.sharedInstance().views().startView(viewName, segmentation));
+        promise.resolve(countlyFor(instanceName).views().startView(viewName, segmentation));
     }
 
-    public void stopViewWithName(ReadableArray args) {
+    public void stopViewWithName(ReadableArray args, String instanceName) {
         String viewName = args.getString(0);
         Map<String, Object> segmentation = convertReadableArrayToSegmentation(args, 1);
-        Countly.sharedInstance().views().stopViewWithName(viewName, segmentation);
+        countlyFor(instanceName).views().stopViewWithName(viewName, segmentation);
     }
 
-    public void stopViewWithID(ReadableArray args) {
+    public void stopViewWithID(ReadableArray args, String instanceName) {
         String viewID = args.getString(0);
         Map<String, Object> segmentation = convertReadableArrayToSegmentation(args, 1);
-        Countly.sharedInstance().views().stopViewWithID(viewID, segmentation);
+        countlyFor(instanceName).views().stopViewWithID(viewID, segmentation);
     }
 
-    public void stopAllViews(ReadableArray args) {
+    public void stopAllViews(ReadableArray args, String instanceName) {
         Map<String, Object> segmentation = convertReadableArrayToSegmentation(args, 0);
-        Countly.sharedInstance().views().stopAllViews(segmentation);
+        countlyFor(instanceName).views().stopAllViews(segmentation);
     }
 
-    public void pauseViewWithID(ReadableArray args) {
-        Countly.sharedInstance().views().pauseViewWithID(args.getString(0));
+    public void pauseViewWithID(ReadableArray args, String instanceName) {
+        countlyFor(instanceName).views().pauseViewWithID(args.getString(0));
     }
 
-    public void resumeViewWithID(ReadableArray args) {
-        Countly.sharedInstance().views().resumeViewWithID(args.getString(0));
+    public void resumeViewWithID(ReadableArray args, String instanceName) {
+        countlyFor(instanceName).views().resumeViewWithID(args.getString(0));
     }
 
-    public void addSegmentationToViewWithID(ReadableArray args) {
+    public void addSegmentationToViewWithID(ReadableArray args, String instanceName) {
         String viewID = args.getString(0);
         Map<String, Object> segmentation = convertReadableArrayToSegmentation(args, 1);
-        Countly.sharedInstance().views().addSegmentationToViewWithID(viewID, segmentation);
+        countlyFor(instanceName).views().addSegmentationToViewWithID(viewID, segmentation);
     }
 
-    public void addSegmentationToViewWithName(ReadableArray args) {
+    public void addSegmentationToViewWithName(ReadableArray args, String instanceName) {
         String viewName = args.getString(0);
         Map<String, Object> segmentation = convertReadableArrayToSegmentation(args, 1);
-        Countly.sharedInstance().views().addSegmentationToViewWithName(viewName, segmentation);
+        countlyFor(instanceName).views().addSegmentationToViewWithName(viewName, segmentation);
     }
 
-    public void setGlobalViewSegmentation(ReadableArray args) {
+    public void setGlobalViewSegmentation(ReadableArray args, String instanceName) {
         Map<String, Object> segmentation = convertReadableArrayToSegmentation(args, 0);
-        Countly.sharedInstance().views().setGlobalViewSegmentation(segmentation);
+        countlyFor(instanceName).views().setGlobalViewSegmentation(segmentation);
     }
 
-    public void updateGlobalViewSegmentation(ReadableArray args) {
+    public void updateGlobalViewSegmentation(ReadableArray args, String instanceName) {
         Map<String, Object> segmentation = convertReadableArrayToSegmentation(args, 0);
-        Countly.sharedInstance().views().updateGlobalViewSegmentation(segmentation);
+        countlyFor(instanceName).views().updateGlobalViewSegmentation(segmentation);
     }
 
     
-    public void setUserData(ReadableArray args, Promise promise) {
-        Countly.sharedInstance();
+    public void setUserData(ReadableArray args, String instanceName, Promise promise) {
         ReadableMap userData = args.getMap(0);
-        Countly.sharedInstance().userProfile().setProperties(userData.toHashMap());
+        countlyFor(instanceName).userProfile().setProperties(userData.toHashMap());
         promise.resolve("Success");
     }
 
     
-    public void sendPushToken(ReadableArray args) {
+    public void sendPushToken(ReadableArray args, String instanceName) {
         String pushToken = args.getString(0);
         CountlyPush.onTokenRefresh(pushToken);
     }
@@ -1342,7 +1407,7 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     }
 
     
-    public void registerForNotification(ReadableArray args) {
+    public void registerForNotification(ReadableArray args, String instanceName) {
         notificationListener = new CCallback() {
             @Override
             public void callback(String result) {
@@ -1360,7 +1425,7 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     }
 
     
-    public void askForNotificationPermission(ReadableArray args) {
+    public void askForNotificationPermission(ReadableArray args, String instanceName) {
         Activity activity = this.getActivity();
         if (activity == null) {
             log("askForNotificationPermission failed, Activity is null", LogLevel.ERROR);
@@ -1437,201 +1502,179 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     }
 
     
-    public void userData_setProperty(ReadableArray args, Promise promise) {
-        Countly.sharedInstance();
+    public void userData_setProperty(ReadableArray args, String instanceName, Promise promise) {
         String keyName = args.getString(0);
         Object keyValue = getReadableArrayValue(args, 1);
-        Countly.sharedInstance().userProfile().setProperty(keyName, keyValue);
+        countlyFor(instanceName).userProfile().setProperty(keyName, keyValue);
         promise.resolve("Success");
     }
 
     
-    public void userData_increment(ReadableArray args, Promise promise) {
-        Countly.sharedInstance();
+    public void userData_increment(ReadableArray args, String instanceName, Promise promise) {
         String keyName = args.getString(0);
-        Countly.sharedInstance().userProfile().increment(keyName);
+        countlyFor(instanceName).userProfile().increment(keyName);
         promise.resolve("Success");
     }
 
     
-    public void userData_incrementBy(ReadableArray args, Promise promise) {
-        Countly.sharedInstance();
+    public void userData_incrementBy(ReadableArray args, String instanceName, Promise promise) {
         String keyName = args.getString(0);
         int keyIncrement = Integer.parseInt(args.getString(1));
-        Countly.sharedInstance().userProfile().incrementBy(keyName, keyIncrement);
+        countlyFor(instanceName).userProfile().incrementBy(keyName, keyIncrement);
         promise.resolve("Success");
     }
 
     
-    public void userData_multiply(ReadableArray args, Promise promise) {
-        Countly.sharedInstance();
+    public void userData_multiply(ReadableArray args, String instanceName, Promise promise) {
         String keyName = args.getString(0);
         int multiplyValue = Integer.parseInt(args.getString(1));
-        Countly.sharedInstance().userProfile().multiply(keyName, multiplyValue);
+        countlyFor(instanceName).userProfile().multiply(keyName, multiplyValue);
         promise.resolve("Success");
     }
 
     
-    public void userData_saveMax(ReadableArray args, Promise promise) {
-        Countly.sharedInstance();
+    public void userData_saveMax(ReadableArray args, String instanceName, Promise promise) {
         String keyName = args.getString(0);
         int maxScore = Integer.parseInt(args.getString(1));
-        Countly.sharedInstance().userProfile().saveMax(keyName, maxScore);
+        countlyFor(instanceName).userProfile().saveMax(keyName, maxScore);
         promise.resolve("Success");
     }
 
     
-    public void userData_saveMin(ReadableArray args, Promise promise) {
-        Countly.sharedInstance();
+    public void userData_saveMin(ReadableArray args, String instanceName, Promise promise) {
         String keyName = args.getString(0);
         int minScore = Integer.parseInt(args.getString(1));
-        Countly.sharedInstance().userProfile().saveMin(keyName, minScore);
+        countlyFor(instanceName).userProfile().saveMin(keyName, minScore);
         promise.resolve("Success");
     }
 
     
-    public void userData_setOnce(ReadableArray args, Promise promise) {
-        Countly.sharedInstance();
+    public void userData_setOnce(ReadableArray args, String instanceName, Promise promise) {
         String keyName = args.getString(0);
         String minScore = args.getString(1);
-        Countly.sharedInstance().userProfile().setOnce(keyName, minScore);
+        countlyFor(instanceName).userProfile().setOnce(keyName, minScore);
         promise.resolve("Success");
     }
 
     
-    public void userData_pushUniqueValue(ReadableArray args, Promise promise) {
-        Countly.sharedInstance();
+    public void userData_pushUniqueValue(ReadableArray args, String instanceName, Promise promise) {
         String keyName = args.getString(0);
         String keyValue = args.getString(1);
-        Countly.sharedInstance().userProfile().pushUnique(keyName, keyValue);
+        countlyFor(instanceName).userProfile().pushUnique(keyName, keyValue);
         promise.resolve("Success");
     }
 
     
-    public void userData_pushValue(ReadableArray args, Promise promise) {
-        Countly.sharedInstance();
+    public void userData_pushValue(ReadableArray args, String instanceName, Promise promise) {
         String keyName = args.getString(0);
         String keyValue = args.getString(1);
-        Countly.sharedInstance().userProfile().push(keyName, keyValue);
+        countlyFor(instanceName).userProfile().push(keyName, keyValue);
         promise.resolve("Success");
     }
 
     
-    public void userData_pullValue(ReadableArray args, Promise promise) {
-        Countly.sharedInstance();
+    public void userData_pullValue(ReadableArray args, String instanceName, Promise promise) {
         String keyName = args.getString(0);
         String keyValue = args.getString(1);
-        Countly.sharedInstance().userProfile().pull(keyName, keyValue);
+        countlyFor(instanceName).userProfile().pull(keyName, keyValue);
         promise.resolve("Success");
     }
 
     
-    public void userDataBulk_setUserProperties(ReadableMap userData, Promise promise) {
-        Countly.sharedInstance();
-        Countly.sharedInstance().userProfile().setProperties(userData.toHashMap());
+    public void userDataBulk_setUserProperties(ReadableMap userData, String instanceName, Promise promise) {
+        countlyFor(instanceName).userProfile().setProperties(userData.toHashMap());
         promise.resolve("Success");
     }
 
     
-    public void userDataBulk_save(ReadableArray args, Promise promise) {
-        Countly.sharedInstance();
-        Countly.sharedInstance().userProfile().save();
+    public void userDataBulk_save(ReadableArray args, String instanceName, Promise promise) {
+        countlyFor(instanceName).userProfile().save();
         promise.resolve("Success");
     }
 
     
-    public void userDataBulk_setProperty(ReadableArray args, Promise promise) {
-        Countly.sharedInstance();
+    public void userDataBulk_setProperty(ReadableArray args, String instanceName, Promise promise) {
         String keyName = args.getString(0);
         Object keyValue = getReadableArrayValue(args, 1);
-        Countly.sharedInstance().userProfile().setProperty(keyName, keyValue);
+        countlyFor(instanceName).userProfile().setProperty(keyName, keyValue);
         promise.resolve("Success");
     }
 
     
-    public void userDataBulk_increment(ReadableArray args, Promise promise) {
-        Countly.sharedInstance();
+    public void userDataBulk_increment(ReadableArray args, String instanceName, Promise promise) {
         String keyName = args.getString(0);
-        Countly.sharedInstance().userProfile().increment(keyName);
+        countlyFor(instanceName).userProfile().increment(keyName);
         promise.resolve("Success");
     }
 
     
-    public void userDataBulk_incrementBy(ReadableArray args, Promise promise) {
-        Countly.sharedInstance();
+    public void userDataBulk_incrementBy(ReadableArray args, String instanceName, Promise promise) {
         String keyName = args.getString(0);
         int keyIncrement = Integer.parseInt(args.getString(1));
-        Countly.sharedInstance().userProfile().incrementBy(keyName, keyIncrement);
+        countlyFor(instanceName).userProfile().incrementBy(keyName, keyIncrement);
         promise.resolve("Success");
     }
 
     
-    public void userDataBulk_multiply(ReadableArray args, Promise promise) {
-        Countly.sharedInstance();
+    public void userDataBulk_multiply(ReadableArray args, String instanceName, Promise promise) {
         String keyName = args.getString(0);
         int multiplyValue = Integer.parseInt(args.getString(1));
-        Countly.sharedInstance().userProfile().multiply(keyName, multiplyValue);
+        countlyFor(instanceName).userProfile().multiply(keyName, multiplyValue);
         promise.resolve("Success");
     }
 
     
-    public void userDataBulk_saveMax(ReadableArray args, Promise promise) {
-        Countly.sharedInstance();
+    public void userDataBulk_saveMax(ReadableArray args, String instanceName, Promise promise) {
         String keyName = args.getString(0);
         int maxScore = Integer.parseInt(args.getString(1));
-        Countly.sharedInstance().userProfile().saveMax(keyName, maxScore);
+        countlyFor(instanceName).userProfile().saveMax(keyName, maxScore);
         promise.resolve("Success");
     }
 
     
-    public void userDataBulk_saveMin(ReadableArray args, Promise promise) {
-        Countly.sharedInstance();
+    public void userDataBulk_saveMin(ReadableArray args, String instanceName, Promise promise) {
         String keyName = args.getString(0);
         int minScore = Integer.parseInt(args.getString(1));
-        Countly.sharedInstance().userProfile().saveMin(keyName, minScore);
+        countlyFor(instanceName).userProfile().saveMin(keyName, minScore);
         promise.resolve("Success");
     }
 
     
-    public void userDataBulk_setOnce(ReadableArray args, Promise promise) {
-        Countly.sharedInstance();
+    public void userDataBulk_setOnce(ReadableArray args, String instanceName, Promise promise) {
         String keyName = args.getString(0);
         String minScore = args.getString(1);
-        Countly.sharedInstance().userProfile().setOnce(keyName, minScore);
+        countlyFor(instanceName).userProfile().setOnce(keyName, minScore);
         promise.resolve("Success");
     }
 
     
-    public void userDataBulk_pushUniqueValue(ReadableArray args, Promise promise) {
-        Countly.sharedInstance();
+    public void userDataBulk_pushUniqueValue(ReadableArray args, String instanceName, Promise promise) {
         String keyName = args.getString(0);
         String keyValue = args.getString(1);
-        Countly.sharedInstance().userProfile().pushUnique(keyName, keyValue);
+        countlyFor(instanceName).userProfile().pushUnique(keyName, keyValue);
         promise.resolve("Success");
     }
 
     
-    public void userDataBulk_pushValue(ReadableArray args, Promise promise) {
-        Countly.sharedInstance();
+    public void userDataBulk_pushValue(ReadableArray args, String instanceName, Promise promise) {
         String keyName = args.getString(0);
         String keyValue = args.getString(1);
-        Countly.sharedInstance().userProfile().push(keyName, keyValue);
+        countlyFor(instanceName).userProfile().push(keyName, keyValue);
         promise.resolve("Success");
     }
 
     
-    public void userDataBulk_pullValue(ReadableArray args, Promise promise) {
-        Countly.sharedInstance();
+    public void userDataBulk_pullValue(ReadableArray args, String instanceName, Promise promise) {
         String keyName = args.getString(0);
         String keyValue = args.getString(1);
-        Countly.sharedInstance().userProfile().pull(keyName, keyValue);
+        countlyFor(instanceName).userProfile().pull(keyName, keyValue);
         promise.resolve("Success");
     }
 
     // GDPR
 
     
-    public void giveConsent(ReadableArray featureNames) {
+    public void giveConsent(ReadableArray featureNames, String instanceName) {
         List<String> features = new ArrayList<>();
         for (int i = 0; i < featureNames.size(); i++) {
             String featureName = featureNames.getString(i);
@@ -1641,11 +1684,11 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
                 log("Not a valid consent feature to add: " + featureName, LogLevel.DEBUG);
             }
         }
-        Countly.sharedInstance().consent().giveConsent(features.toArray(new String[features.size()]));
+        countlyFor(instanceName).consent().giveConsent(features.toArray(new String[features.size()]));
     }
 
     
-    public void removeConsent(ReadableArray featureNames) {
+    public void removeConsent(ReadableArray featureNames, String instanceName) {
         List<String> features = new ArrayList<>();
         for (int i = 0; i < featureNames.size(); i++) {
             String featureName = featureNames.getString(i);
@@ -1655,22 +1698,22 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
                 log("Not a valid consent feature to remove: " + featureName, LogLevel.DEBUG);
             }
         }
-        Countly.sharedInstance().consent().removeConsent(features.toArray(new String[features.size()]));
+        countlyFor(instanceName).consent().removeConsent(features.toArray(new String[features.size()]));
     }
 
     
-    public void giveAllConsent() {
-        Countly.sharedInstance().consent().giveConsentAll();
+    public void giveAllConsent(String instanceName) {
+        countlyFor(instanceName).consent().giveConsentAll();
     }
 
     
-    public void removeAllConsent() {
-        Countly.sharedInstance().consent().removeConsentAll();
+    public void removeAllConsent(String instanceName) {
+        countlyFor(instanceName).consent().removeConsentAll();
     }
 
     
-    public void remoteConfigUpdate(ReadableArray args, final Callback myCallback) {
-        Countly.sharedInstance().remoteConfig().downloadAllKeys(new RCDownloadCallback() {
+    public void remoteConfigUpdate(ReadableArray args, String instanceName, final Callback myCallback) {
+        countlyFor(instanceName).remoteConfig().downloadAllKeys(new RCDownloadCallback() {
             @Override public void callback(RequestResult downloadResult, String error, boolean fullValueUpdate, Map<String, RCData> downloadedValues) {
                 String resultString = "";
                 if (error == null) {
@@ -1684,12 +1727,12 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     }
 
     
-    public void updateRemoteConfigForKeysOnly(ReadableArray args, final Callback myCallback) {
+    public void updateRemoteConfigForKeysOnly(ReadableArray args, String instanceName, final Callback myCallback) {
         String[] newArray = new String[args.size()];
         for (int cnt = 0; cnt < args.size(); cnt++) {
             newArray[cnt] = args.getString(cnt);
         }
-        Countly.sharedInstance().remoteConfig().downloadSpecificKeys(newArray, new RCDownloadCallback() {
+        countlyFor(instanceName).remoteConfig().downloadSpecificKeys(newArray, new RCDownloadCallback() {
             @Override public void callback(RequestResult downloadResult, String error, boolean fullValueUpdate, Map<String, RCData> downloadedValues) {
                 String resultString = "";
                 if (error == null) {
@@ -1703,12 +1746,12 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     }
 
     
-    public void updateRemoteConfigExceptKeys(ReadableArray args, final Callback myCallback) {
+    public void updateRemoteConfigExceptKeys(ReadableArray args, String instanceName, final Callback myCallback) {
         String[] newArray = new String[args.size()];
         for (int cnt = 0; cnt < args.size(); cnt++) {
             newArray[cnt] = args.getString(cnt);
         }
-        Countly.sharedInstance().remoteConfig().downloadOmittingKeys(newArray, new RCDownloadCallback() {
+        countlyFor(instanceName).remoteConfig().downloadOmittingKeys(newArray, new RCDownloadCallback() {
             @Override public void callback(RequestResult downloadResult, String error, boolean fullValueUpdate, Map<String, RCData> downloadedValues) {
                 String resultString = "";
                 if (error == null) {
@@ -1722,9 +1765,9 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     }
 
     
-    public void getRemoteConfigValueForKey(ReadableArray args, final Callback myCallback) {
+    public void getRemoteConfigValueForKey(ReadableArray args, String instanceName, final Callback myCallback) {
         String keyName = args.getString(0);
-        RCData keyValue = Countly.sharedInstance().remoteConfig().getValue(keyName);
+        RCData keyValue = countlyFor(instanceName).remoteConfig().getValue(keyName);
         if (keyValue.value == null) {
             log("getRemoteConfigValueForKey, [" + keyName + "]: ConfigKeyNotFound", LogLevel.DEBUG);
             myCallback.invoke("ConfigKeyNotFound");
@@ -1736,8 +1779,8 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     }
 
     
-    public void getRemoteConfigValueForKeyP(String keyName, Promise promise) {
-        RCData keyValue = Countly.sharedInstance().remoteConfig().getValue(keyName);
+    public void getRemoteConfigValueForKeyP(String keyName, String instanceName, Promise promise) {
+        RCData keyValue = countlyFor(instanceName).remoteConfig().getValue(keyName);
         if (keyValue.value == null) {
             log("getRemoteConfigValueForKeyP, [" + keyName + "]: ConfigKeyNotFound", LogLevel.DEBUG);
             promise.resolve("ConfigKeyNotFound");
@@ -1749,19 +1792,19 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     }
 
     
-    public void remoteConfigClearValues(Promise promise) {
-        Countly.sharedInstance().remoteConfig().clearAll();
+    public void remoteConfigClearValues(String instanceName, Promise promise) {
+        countlyFor(instanceName).remoteConfig().clearAll();
         promise.resolve("Remote Config Cleared.");
     }
 
     
-    public void showStarRating(ReadableArray args, final Callback callback) {
+    public void showStarRating(ReadableArray args, String instanceName, final Callback callback) {
         Activity activity = getActivity();
         if (activity == null) {
             log("showStarRating failed, Activity is null", LogLevel.ERROR);
             return;
         }
-        activity.runOnUiThread(() -> Countly.sharedInstance().ratings().showStarRating(activity, new StarRatingCallback() {
+        activity.runOnUiThread(() -> countlyFor(instanceName).ratings().showStarRating(activity, new StarRatingCallback() {
 
             @Override
             public void onRate(int rating) {
@@ -1776,7 +1819,7 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     }
 
     
-    public void presentRatingWidgetWithID(ReadableArray args) {
+    public void presentRatingWidgetWithID(ReadableArray args, String instanceName) {
         Activity activity = getActivity();
         if (activity == null) {
             log("presentRatingWidgetWithID failed, Activity is null", LogLevel.ERROR);
@@ -1785,12 +1828,18 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         String widgetId = args.getString(0);
         String closeButtonText = args.getString(1);
 
-        activity.runOnUiThread(() -> Countly.sharedInstance().ratings().presentRatingWidgetWithID(widgetId, closeButtonText, activity, new FeedbackRatingCallback() {
+        activity.runOnUiThread(() -> countlyFor(instanceName).ratings().presentRatingWidgetWithID(widgetId, closeButtonText, activity, new FeedbackRatingCallback() {
             @Override
             public void callback(String error) {
-                ((ReactApplicationContext) _reactContext)
-                    .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                    .emit(ratingWidgetCallbackName, error);
+                JSONObject payload = new JSONObject();
+                if (error != null) {
+                    try {
+                        payload.put("error", error);
+                    } catch (JSONException e) {
+                        log("presentRatingWidgetWithID, JSON exception: ", e, LogLevel.ERROR);
+                    }
+                }
+                emitForInstance(ratingWidgetCallbackName, instanceName, payload);
             }
         }));
     }
@@ -1803,13 +1852,31 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         return args.getString(index);
     }
 
-    private void emitWidgetEvent(String eventName) {
+    /**
+     * Sends an event to JavaScript tagged with the instance it came from, so it can be routed there.
+     *
+     * @param eventName the event name the JavaScript layer subscribed to
+     * @param instanceName the instance the event came from, empty for the default one
+     * @param payload the fields of the event, which the instance name is added to
+     */
+    private void emitForInstance(String eventName, String instanceName, JSONObject payload) {
+        JSONObject tagged = payload == null ? new JSONObject() : payload;
+        try {
+            tagged.put("instanceName", instanceKey(instanceName));
+        } catch (JSONException e) {
+            log("emitForInstance, JSON exception: ", e, LogLevel.ERROR);
+        }
+        // Sent as a map rather than a string, so the JavaScript side does not parse what was just built.
         ((ReactApplicationContext) _reactContext)
             .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-            .emit(eventName, null);
+            .emit(eventName, toWritableMap(tagged));
     }
 
-    private FeedbackCallback createWidgetPresentationCallback(String operationName) {
+    private void emitWidgetEvent(String eventName, String instanceName) {
+        emitForInstance(eventName, instanceName, null);
+    }
+
+    private FeedbackCallback createWidgetPresentationCallback(String operationName, String instanceName) {
         return new FeedbackCallback() {
             @Override
             public void onFinished(String error) {
@@ -1818,17 +1885,17 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
                     return;
                 }
 
-                emitWidgetEvent(widgetShownCallbackName);
+                emitWidgetEvent(widgetShownCallbackName, instanceName);
             }
 
             @Override
             public void onClosed() {
-                emitWidgetEvent(widgetClosedCallbackName);
+                emitWidgetEvent(widgetClosedCallbackName, instanceName);
             }
         };
     }
 
-    public void presentNPS(ReadableArray args) {
+    public void presentNPS(ReadableArray args, String instanceName) {
         Activity activity = getActivity();
         if (activity == null) {
             log("presentNPS failed, Activity is null", LogLevel.ERROR);
@@ -1836,10 +1903,10 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         }
 
         String nameIDorTag = getOptionalStringArg(args, 0);
-        activity.runOnUiThread(() -> Countly.sharedInstance().feedback().presentNPS(activity, nameIDorTag, createWidgetPresentationCallback("presentNPS")));
+        activity.runOnUiThread(() -> countlyFor(instanceName).feedback().presentNPS(activity, nameIDorTag, createWidgetPresentationCallback("presentNPS", instanceName)));
     }
 
-    public void presentSurvey(ReadableArray args) {
+    public void presentSurvey(ReadableArray args, String instanceName) {
         Activity activity = getActivity();
         if (activity == null) {
             log("presentSurvey failed, Activity is null", LogLevel.ERROR);
@@ -1847,10 +1914,10 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         }
 
         String nameIDorTag = getOptionalStringArg(args, 0);
-        activity.runOnUiThread(() -> Countly.sharedInstance().feedback().presentSurvey(activity, nameIDorTag, createWidgetPresentationCallback("presentSurvey")));
+        activity.runOnUiThread(() -> countlyFor(instanceName).feedback().presentSurvey(activity, nameIDorTag, createWidgetPresentationCallback("presentSurvey", instanceName)));
     }
 
-    public void presentRating(ReadableArray args) {
+    public void presentRating(ReadableArray args, String instanceName) {
         Activity activity = getActivity();
         if (activity == null) {
             log("presentRating failed, Activity is null", LogLevel.ERROR);
@@ -1858,12 +1925,12 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         }
 
         String nameIDorTag = getOptionalStringArg(args, 0);
-        activity.runOnUiThread(() -> Countly.sharedInstance().feedback().presentRating(activity, nameIDorTag, createWidgetPresentationCallback("presentRating")));
+        activity.runOnUiThread(() -> countlyFor(instanceName).feedback().presentRating(activity, nameIDorTag, createWidgetPresentationCallback("presentRating", instanceName)));
     }
 
     
-    public void getFeedbackWidgets(final Promise promise) {
-        Countly.sharedInstance().feedback().getAvailableFeedbackWidgets(new RetrieveFeedbackWidgets() {
+    public void getFeedbackWidgets(String instanceName, final Promise promise) {
+        countlyFor(instanceName).feedback().getAvailableFeedbackWidgets(new RetrieveFeedbackWidgets() {
             @Override
             public void onFinished(List<CountlyFeedbackWidget> retrievedWidgets, String error) {
                 if (error != null) {
@@ -1888,14 +1955,22 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
                     }
                     retrievedWidgetsArray.pushMap(feedbackWidget);
                 }
-                retrievedWidgetList = new ArrayList(retrievedWidgets);
+                retrievedWidgetLists.put(instanceKey(instanceName), new ArrayList<>(retrievedWidgets));
                 promise.resolve(retrievedWidgetsArray);
             }
         });
     }
 
     
-    public CountlyFeedbackWidget getFeedbackWidget(String widgetId) {
+    /**
+     * The widget an instance listed under an ID.
+     *
+     * @param widgetId the widget the JavaScript layer asked for
+     * @param instanceName the instance that listed it, empty for the default one
+     * @return the widget, or null when that instance listed no such widget
+     */
+    public CountlyFeedbackWidget getFeedbackWidget(String widgetId, String instanceName) {
+        List<CountlyFeedbackWidget> retrievedWidgetList = retrievedWidgetLists.get(instanceKey(instanceName));
         if (retrievedWidgetList == null) {
             return null;
         }
@@ -1908,14 +1983,14 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     }
 
     
-    public void getFeedbackWidgetData(ReadableArray args, final Promise promise) {
+    public void getFeedbackWidgetData(ReadableArray args, String instanceName, final Promise promise) {
         String widgetId = args.getString(0);
-        CountlyFeedbackWidget feedbackWidget = getFeedbackWidget(widgetId);
+        CountlyFeedbackWidget feedbackWidget = getFeedbackWidget(widgetId, instanceName);
         if (feedbackWidget == null) {
             String errorMessage = "No feedbackWidget is found against widget id : '" + widgetId + "' , always call 'getFeedbackWidgets' to get updated list of feedback widgets.";
             promise.reject("getFeedbackWidgetData_failure", errorMessage);
         } else {
-            Countly.sharedInstance().feedback().getFeedbackWidgetData(feedbackWidget, new RetrieveFeedbackWidgetData() {
+            countlyFor(instanceName).feedback().getFeedbackWidgetData(feedbackWidget, new RetrieveFeedbackWidgetData() {
                 @Override
                 public void onFinished(JSONObject retrievedWidgetData, String error) {
                     if (error != null) {
@@ -1929,7 +2004,7 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     }
 
     
-    public void reportFeedbackWidgetManually(ReadableArray args, final Promise promise) {
+    public void reportFeedbackWidgetManually(ReadableArray args, String instanceName, final Promise promise) {
         try {
             ReadableArray widgetInfo = args.getArray(0);
             ReadableMap widgetData = args.getMap(1);
@@ -1940,12 +2015,12 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
                 widgetResultMap.put("rating", ((Number) widgetResultMap.get("rating")).intValue());
             }
             String widgetId = widgetInfo.getString(0);
-            CountlyFeedbackWidget feedbackWidget = getFeedbackWidget(widgetId);
+            CountlyFeedbackWidget feedbackWidget = getFeedbackWidget(widgetId, instanceName);
             if (feedbackWidget == null) {
                 String errorMessage = "No feedbackWidget is found against widget id : '" + widgetId + "' , always call 'getFeedbackWidgets' to get updated list of feedback widgets.";
                 promise.reject("reportFeedbackWidgetManually_failure", errorMessage);
             } else {
-                Countly.sharedInstance().feedback().reportFeedbackWidgetManually(feedbackWidget, toJSONObject(widgetData), widgetResultMap);
+                countlyFor(instanceName).feedback().reportFeedbackWidgetManually(feedbackWidget, toJSONObject(widgetData), widgetResultMap);
                 promise.resolve("reportFeedbackWidgetManually success");
             }
         } catch (Exception e) {
@@ -1954,8 +2029,8 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     }
 
     
-    public void getAvailableFeedbackWidgets(final Promise promise) {
-        Countly.sharedInstance().feedback().getAvailableFeedbackWidgets(new RetrieveFeedbackWidgets() {
+    public void getAvailableFeedbackWidgets(String instanceName, final Promise promise) {
+        countlyFor(instanceName).feedback().getAvailableFeedbackWidgets(new RetrieveFeedbackWidgets() {
             @Override
             public void onFinished(List<CountlyFeedbackWidget> retrievedWidgets, String error) {
                 if (error != null) {
@@ -1972,7 +2047,7 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     }
 
     
-    public void presentFeedbackWidget(ReadableArray args, final Promise promise) {
+    public void presentFeedbackWidget(ReadableArray args, String instanceName, final Promise promise) {
         Activity activity = getActivity();
         if (activity == null) {
             log("presentFeedbackWidget failed : Activity is null", LogLevel.ERROR);
@@ -1984,7 +2059,7 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         String name = args.getString(2);
         String widgetVersion = args.size() > 4 && !args.isNull(4) ? args.getString(4) : null;
 
-        CountlyFeedbackWidget presentableFeedback = getFeedbackWidget(widgetId);
+        CountlyFeedbackWidget presentableFeedback = getFeedbackWidget(widgetId, instanceName);
         if (presentableFeedback == null) {
             presentableFeedback = new CountlyFeedbackWidget();
             presentableFeedback.widgetId = widgetId;
@@ -2000,71 +2075,72 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
             }
         }
         CountlyFeedbackWidget feedbackWidgetToPresent = presentableFeedback;
-        activity.runOnUiThread(() -> Countly.sharedInstance().feedback().presentFeedbackWidget(feedbackWidgetToPresent, activity, new FeedbackCallback() {
+        activity.runOnUiThread(() -> countlyFor(instanceName).feedback().presentFeedbackWidget(feedbackWidgetToPresent, activity, new FeedbackCallback() {
             @Override
             public void onFinished(String error) {
                 if (error != null) {
                     promise.reject("presentFeedbackWidget", error);
                 } else {
                     promise.resolve("presentFeedbackWidget success");
-                    emitWidgetEvent(widgetShownCallbackName);
+                    emitWidgetEvent(widgetShownCallbackName, instanceName);
                 }
             }
 
             @Override
             public void onClosed() {
                 promise.resolve("presentFeedbackWidget success");
-                emitWidgetEvent(widgetClosedCallbackName);
+                emitWidgetEvent(widgetClosedCallbackName, instanceName);
             }
         }));
     }
 
     
-    public void replaceAllAppKeysInQueueWithCurrentAppKey() {
-        Countly.sharedInstance().requestQueue().overwriteAppKeys();
+    public void replaceAllAppKeysInQueueWithCurrentAppKey(String instanceName) {
+        countlyFor(instanceName).requestQueue().overwriteAppKeys();
     }
 
     
-    public void removeDifferentAppKeysFromQueue() {
-        Countly.sharedInstance().requestQueue().eraseWrongAppKeyRequests();
+    public void removeDifferentAppKeysFromQueue(String instanceName) {
+        countlyFor(instanceName).requestQueue().eraseWrongAppKeyRequests();
     }
 
     
-    public void setEventSendThreshold(ReadableArray args) {
+    public void setEventSendThreshold(ReadableArray args, String instanceName) {
+        final CountlyConfig config = configFor(instanceName);
         int size = Integer.parseInt(args.getString(0));
         config.setEventQueueSizeToSend(size);
-        // Countly.sharedInstance().setEventQueueSizeToSend(size);
+        // countlyFor(instanceName).setEventQueueSizeToSend(size);
     }
 
-    public void addCustomNetworkRequestHeaders(ReadableArray args) {
+    public void addCustomNetworkRequestHeaders(ReadableArray args, String instanceName) {
         Map<String, String> customHeaderValues = new HashMap<>();
         for (int i = 0; i < args.size(); i += 2) {
             String key = args.getString(i);
             String value = args.getString(i + 1);
             customHeaderValues.put(key, value);
         }
-        Countly.sharedInstance().requestQueue().addCustomNetworkRequestHeaders(customHeaderValues);
+        countlyFor(instanceName).requestQueue().addCustomNetworkRequestHeaders(customHeaderValues);
     }
 
     
-    public void startTrace(ReadableArray args) {
+    public void startTrace(ReadableArray args, String instanceName) {
         String traceKey = args.getString(0);
-        Countly.sharedInstance().apm().startTrace(traceKey);
+        countlyFor(instanceName).apm().startTrace(traceKey);
     }
 
     
-    public void cancelTrace(ReadableArray args) {
+    public void cancelTrace(ReadableArray args, String instanceName) {
         String traceKey = args.getString(0);
-        Countly.sharedInstance().apm().cancelTrace(traceKey);
+        countlyFor(instanceName).apm().cancelTrace(traceKey);
     }
 
     
-    public void clearAllTraces(ReadableArray args) {
-        Countly.sharedInstance().apm().cancelAllTraces();
+    public void clearAllTraces(ReadableArray args, String instanceName) {
+        countlyFor(instanceName).apm().cancelAllTraces();
     }
 
     
-    public void endTrace(ReadableArray args) {
+    public void endTrace(ReadableArray args, String instanceName) {
         String traceKey = args.getString(0);
         HashMap<String, Integer> customMetric = new HashMap<>();
         for (int i = 1, il = args.size(); i < il; i += 2) {
@@ -2074,11 +2150,11 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
                 log("endTrace, could not parse metrics, skipping it. ", LogLevel.ERROR);
             }
         }
-        Countly.sharedInstance().apm().endTrace(traceKey, customMetric);
+        countlyFor(instanceName).apm().endTrace(traceKey, customMetric);
     }
 
     
-    public void recordNetworkTrace(ReadableArray args) {
+    public void recordNetworkTrace(ReadableArray args, String instanceName) {
         try {
             String networkTraceKey = args.getString(0);
             int responseCode = Integer.parseInt(args.getString(1));
@@ -2086,14 +2162,14 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
             int responsePayloadSize = Integer.parseInt(args.getString(3));
             long startTime = Long.parseLong(args.getString(4));
             long endTime = Long.parseLong(args.getString(5));
-            Countly.sharedInstance().apm().recordNetworkTrace(networkTraceKey, responseCode, requestPayloadSize, responsePayloadSize, startTime, endTime);
+            countlyFor(instanceName).apm().recordNetworkTrace(networkTraceKey, responseCode, requestPayloadSize, responsePayloadSize, startTime, endTime);
         } catch (Exception exception) {
             log("Exception occurred at recordNetworkTrace method: " + exception, LogLevel.ERROR);
         }
     }
 
     
-    public void recordIndirectAttribution(ReadableArray args) {
+    public void recordIndirectAttribution(ReadableArray args, String instanceName) {
         ReadableMap values = args.getMap(0);
         Map<String, Object> objectMap = values.toHashMap();
         if (values != null) {
@@ -2104,37 +2180,43 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
                 }
             }
 
-            Countly.sharedInstance().attribution().recordIndirectAttribution(map);
+            countlyFor(instanceName).attribution().recordIndirectAttribution(map);
         } else {
             log("RecordIndirectAttribution: failure, no attribution values provided", LogLevel.DEBUG);
         }
     }
 
     
-    public void recordDirectAttribution(ReadableArray args) {
+    public void recordDirectAttribution(ReadableArray args, String instanceName) {
         String campaignType = args.getString(0);
         String campaignData = args.getString(1);
 
-        Countly.sharedInstance().attribution().recordDirectAttribution(campaignType, campaignData);
+        countlyFor(instanceName).attribution().recordDirectAttribution(campaignType, campaignData);
     }
 
     
-    public void appLoadingFinished() {
-        Countly.sharedInstance().apm().setAppIsLoaded();
+    public void appLoadingFinished(String instanceName) {
+        countlyFor(instanceName).apm().setAppIsLoaded();
     }
 
-    public void enableRequestCapture(Promise promise) {
+    public void enableRequestCapture(String instanceName, Promise promise) {
         synchronized (capturedRequests) {
             capturedRequests.clear();
         }
         requestCaptureEnabled = true;
-        if (Countly.sharedInstance().isInitialized() && !requestCaptureGeneratorInstalled) {
-            installRequestCaptureGenerator();
+        if (countlyFor(instanceName).isInitialized()) {
+            installRequestCaptureGenerator(instanceName);
         }
         promise.resolve(null);
     }
 
-    public void getCapturedRequests(Promise promise) {
+    /**
+     * The requests capture has collected, across every instance. Testing purposes only.
+     *
+     * @param instanceName unused, the buffer is process wide
+     * @param promise resolved with the captured requests
+     */
+    public void getCapturedRequests(String instanceName, Promise promise) {
         WritableArray directRequestLog = Arguments.createArray();
         synchronized (capturedRequests) {
             for (String request : capturedRequests) {
@@ -2144,8 +2226,8 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         promise.resolve(directRequestLog);
     }
 
-    public void getRequestQueue(Promise promise) {
-        CountlyStore countlyStore = new CountlyStore(_reactContext, new ModuleLog());
+    public void getRequestQueue(String instanceName, Promise promise) {
+        CountlyStore countlyStore = storeFor(instanceName);
         String[] requests = countlyStore.getRequests();
         WritableArray requestQueue = Arguments.createArray();
         if (requests != null) {
@@ -2156,8 +2238,8 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         promise.resolve(requestQueue);
     }
 
-    public void getEventQueue(Promise promise) {
-        CountlyStore countlyStore = new CountlyStore(_reactContext, new ModuleLog());
+    public void getEventQueue(String instanceName, Promise promise) {
+        CountlyStore countlyStore = storeFor(instanceName);
         String[] events = countlyStore.getEvents();
         WritableArray eventQueue = Arguments.createArray();
         if (events != null) {
@@ -2168,42 +2250,91 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         promise.resolve(eventQueue);
     }
 
-    public void halt(Promise promise) {
-        Countly.sharedInstance().halt();
-        resetTestingState();
+    public void halt(String instanceName, Promise promise) {
+        countlyFor(instanceName).halt();
+        if (isDefaultInstance(instanceName)) {
+            resetTestingState();
+        } else {
+            configs.remove(instanceKey(instanceName));
+            retrievedWidgetLists.remove(instanceKey(instanceName));
+            requestCaptureGeneratorInstances.remove(instanceKey(instanceName));
+        }
         promise.resolve(null);
     }
 
+    /**
+     * Stops a named instance and drops it from the registry, keeping its stored data.
+     *
+     * @param instanceName the instance to remove, empty for the default one which can not be removed
+     * @param promise resolved with the outcome
+     */
+    public void removeInstance(String instanceName, Promise promise) {
+        if (isDefaultInstance(instanceName)) {
+            promise.resolve("removeInstance: the default instance can not be removed");
+            return;
+        }
+
+        configs.remove(instanceKey(instanceName));
+        retrievedWidgetLists.remove(instanceKey(instanceName));
+        requestCaptureGeneratorInstances.remove(instanceKey(instanceName));
+        Countly.removeInstance(instanceName);
+        promise.resolve("removeInstance: success");
+    }
+
+    /**
+     * Stops every instance and wipes what they persisted. Testing purposes only.
+     *
+     * @param promise resolved with the outcome
+     */
+    public void haltAllInstances(Promise promise) {
+        configs.clear();
+        retrievedWidgetLists.clear();
+        requestCaptureGeneratorInstances.clear();
+        Countly.haltAllInstances();
+        promise.resolve("haltAllInstances: success");
+    }
+
+    /**
+     * The key an instance's state is stored under.
+     *
+     * @param instanceName the instance name the JavaScript layer sent
+     * @return the name, or the empty string for the default instance
+     */
+    private static String instanceKey(String instanceName) {
+        return isDefaultInstance(instanceName) ? "" : instanceName;
+    }
+
     
-    public void enterContentZone() {
-        Countly.sharedInstance().contents().enterContentZone();
+    public void enterContentZone(String instanceName) {
+        countlyFor(instanceName).contents().enterContentZone();
     }
 
-    public void refreshContentZone() {
-        Countly.sharedInstance().contents().refreshContentZone();
+    public void refreshContentZone(String instanceName) {
+        countlyFor(instanceName).contents().refreshContentZone();
     }
 
-    public void previewContent(ReadableArray args) {
+    public void previewContent(ReadableArray args, String instanceName) {
         String contentId = args.getString(0);
-        Countly.sharedInstance().contents().previewContent(contentId);
+        countlyFor(instanceName).contents().previewContent(contentId);
     }
 
     
-    public void exitContentZone() {
-        Countly.sharedInstance().contents().exitContentZone();
+    public void exitContentZone(String instanceName) {
+        countlyFor(instanceName).contents().exitContentZone();
     }
 
     
-    public void setID(String newDeviceID) {
+    public void setID(String newDeviceID, String instanceName) {
         if ("TemporaryDeviceID".equals(newDeviceID)) {
-            Countly.sharedInstance().deviceId().enableTemporaryIdMode();
+            countlyFor(instanceName).deviceId().enableTemporaryIdMode();
         } else {
-            Countly.sharedInstance().deviceId().setID(newDeviceID);
+            countlyFor(instanceName).deviceId().setID(newDeviceID);
         }
     }
 
     
-    public void setCustomMetrics(ReadableArray args) {
+    public void setCustomMetrics(ReadableArray args, String instanceName) {
+        final CountlyConfig config = configFor(instanceName);
         Map<String, String> customMetric = new HashMap<>();
         for (int i = 0, il = args.size(); i < il; i += 2) {
             try {
