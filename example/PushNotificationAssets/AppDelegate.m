@@ -1,4 +1,6 @@
-#import "CountlyReactNative.h"
+// The bridge is written in Swift, so the header Xcode generates for it is what
+// an Objective-C AppDelegate imports.
+#import <CountlyReactNative/CountlyReactNative-Swift.h>
 #import <UserNotifications/UserNotifications.h>
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions

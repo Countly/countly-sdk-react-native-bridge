@@ -1094,6 +1094,93 @@ declare module "countly-sdk-react-native-bridge" {
      */
     export function recordIndirectAttribution(attributionValues): void;
 
+  /**
+   * A named Countly instance, with its own app key, server, device ID, request queue and storage.
+   * Asking for the same name again returns the same instance.
+   */
+  export function instance(instanceName: string): CountlyInstance | null;
+
+  /**
+   * Stops a named instance and drops it from the registry, keeping its stored data.
+   */
+  export function removeInstance(instanceName: string): Promise<string>;
+
+  /**
+   * Stops every instance and wipes what they persisted. Testing purposes only.
+   */
+  export function haltAllInstances(): Promise<string>;
+
+  interface CountlyInstance {
+    readonly name: string;
+    readonly events: typeof events;
+    readonly sessions: typeof sessions;
+    readonly views: typeof views;
+    readonly deviceId: typeof deviceId;
+    readonly remoteConfig: typeof remoteConfig;
+    readonly feedback: typeof feedback;
+    readonly userProfile: {
+      setProperties(properties: Record<string, any>): Promise<void>;
+      setProperty(keyName: string, keyValue: any): Promise<void>;
+      increment(keyName: string): Promise<void>;
+      incrementBy(keyName: string, keyValue: number): Promise<void>;
+      multiply(keyName: string, keyValue: number): Promise<void>;
+      saveMax(keyName: string, keyValue: number): Promise<void>;
+      saveMin(keyName: string, keyValue: number): Promise<void>;
+      setOnce(keyName: string, keyValue: any): Promise<void>;
+      pushUniqueValue(keyName: string, keyValue: any): Promise<void>;
+      pushValue(keyName: string, keyValue: any): Promise<void>;
+      pullValue(keyName: string, keyValue: any): Promise<void>;
+      save(): Promise<void>;
+    };
+    readonly consent: {
+      giveConsent(features: readonly string[]): void;
+      removeConsent(features: readonly string[]): void;
+      giveAllConsent(): void;
+      removeAllConsent(): void;
+    };
+    readonly crashes: {
+      addCrashLog(crashLog: string): void;
+      logException(exception: string, nonfatal?: boolean, segments?: Record<string, any>): void;
+      setCustomCrashSegments(segments: Record<string, any>): void;
+    };
+    readonly location: {
+      setLocation(countryCode: string, city: string, location: string, ipAddress: string): void;
+      disableLocation(): void;
+    };
+    readonly apm: {
+      startTrace(traceKey: string): void;
+      cancelTrace(traceKey: string): void;
+      clearAllTraces(): void;
+      endTrace(traceKey: string, customMetric?: Record<string, number>): void;
+      recordNetworkTrace(
+        networkTraceKey: string,
+        responseCode: number,
+        requestPayloadSize: number,
+        responsePayloadSize: number,
+        startTime: number,
+        endTime: number,
+      ): void;
+      appLoadingFinished(): void;
+    };
+    readonly attribution: {
+      recordDirectAttribution(campaignType: string, campaignData: string): void;
+      recordIndirectAttribution(attributionValues: Record<string, string>): void;
+    };
+    readonly content: {
+      enterContentZone(): void;
+      refreshContentZone(): void;
+      exitContentZone(): void;
+      previewContent(contentId: string): void;
+    };
+
+    initWithConfig(countlyConfig: CountlyConfig): Promise<void>;
+    isInitialized(): Promise<boolean>;
+    halt(): Promise<void>;
+    remove(): Promise<string>;
+    getRequestQueue(): Promise<string[]>;
+    getEventQueue(): Promise<string[]>;
+  }
+
     /**
      * Removes all requests with a different app key in request queue.
      * In request queue, if there are any request whose app key is different than the current app key,
@@ -1157,6 +1244,30 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
      * Controls how Content and feedback widgets are displayed.
      */
     setWebViewDisplayOption(displayOption: import("countly-sdk-react-native-bridge").WebViewDisplayOption): this;
+
+    /**
+     * Take over the links opened from content blocks and feedback widgets, which is how an application
+     * routes its own deep links. A link whose URL starts with one of the given prefixes, compared
+     * ignoring case, is handed to the handler and not opened by the SDK; every other link is opened by
+     * the SDK as usual. Without prefixes every link is handed over.
+     * @param handler - called with each matching URL
+     * @param urlPrefixes - the beginnings of the URLs the application handles
+     */
+    setContentUrlHandler(handler: (url: string) => void, urlPrefixes?: string[]): this;
+
+    /**
+     * Set the corner radius of the overlay, in points, when widgets are shown within the application's
+     * window. Only has an effect together with showWidgetsWithinApp.
+     * macOS only, ignored on every other platform
+     */
+    setOverlayCornerRadius(radius: number): this;
+
+    /**
+     * Show content blocks and feedback widgets inside the application's own window rather than over the
+     * whole screen.
+     * macOS only, ignored on every other platform
+     */
+    showWidgetsWithinApp(): this;
   }
 
   /**
@@ -1227,6 +1338,13 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
      * @param stackTraceLineLengthLimit - maximum length of each stack trace line (default 200)
      */
     setMaxStackTraceLineLength(stackTraceLineLengthLimit: number): CountlyConfigSDKInternalLimits;
+
+    /**
+     * Limits the maximum size of the user profile picture URL or path, which is not covered by
+     * setMaxValueSize because a picture value is regularly longer than any other value
+     * @param pictureValueSizeLimit - maximum char size of the picture value (default 4096)
+     */
+    setMaxValueSizePicture(pictureValueSizeLimit: number): CountlyConfigSDKInternalLimits;
   }
 
   /**
@@ -1397,6 +1515,29 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
    * @param {object} attributionValues attribution values
    */
     recordIndirectAttribution(attributionValues: object): CountlyConfig;
+
+    /**
+     * Clear the stored device ID during initialization so the SDK resolves a device ID from scratch
+     * instead of reusing the one it persisted on an earlier run.
+     * @return {CountlyConfig}
+     */
+    enableClearStoredDeviceId(): CountlyConfig;
+
+    /**
+     * Set whether the SDK reports device orientation changes
+     * @param shouldTrack - "false" stops the orientation reporting, it is enabled by default
+     * @return {CountlyConfig}
+     */
+    setTrackOrientationChanges(shouldTrack: boolean): CountlyConfig;
+
+    /**
+     * Override the device metrics the SDK reports, keyed by their wire names such as "_os",
+     * "_os_version", "_device", "_manufacturer", "_resolution", "_density", "_carrier", "_locale",
+     * "_app_version", "_store" and "_device_type".
+     * @param metrics - the metric values to report in place of the detected ones
+     * @return {CountlyConfig}
+     */
+    setMetricOverride(metrics: Record<string, string>): CountlyConfig;
 
     /**
      * Method to disable SDK behavior settings updates requests.

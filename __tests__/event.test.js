@@ -24,7 +24,7 @@ function createEvent(isInitialized = true) {
     };
 
     return {
-        event: new Event({ isInitialized, CountlyReactNative: nativeModule }),
+        event: new Event({ isInitialized, instanceName: '', CountlyReactNative: nativeModule }),
         nativeModule,
     };
 }
@@ -43,11 +43,11 @@ test('recordEvent and timed-event helpers forward expected payloads', () => {
     event.cancelEvent('checkout');
     event.endEvent('checkout', { step: 'payment' }, 1, 0);
 
-    expect(nativeModule.recordEvent).toHaveBeenNthCalledWith(1, { n: 'purchase', c: 1, s: 0 });
-    expect(nativeModule.recordEvent).toHaveBeenNthCalledWith(2, { n: 'upgrade', c: 2, s: 19.99, g: ['tier', 'pro'] });
-    expect(nativeModule.startEvent).toHaveBeenCalledWith(['checkout']);
-    expect(nativeModule.cancelEvent).toHaveBeenCalledWith(['checkout']);
-    expect(nativeModule.endEvent).toHaveBeenCalledWith({ n: 'checkout', c: 1, s: 0, g: ['step', 'payment'] });
+    expect(nativeModule.recordEvent).toHaveBeenNthCalledWith(1, { n: 'purchase', c: 1, s: 0 }, '');
+    expect(nativeModule.recordEvent).toHaveBeenNthCalledWith(2, { n: 'upgrade', c: 2, s: 19.99, g: ['tier', 'pro'] }, '');
+    expect(nativeModule.startEvent).toHaveBeenCalledWith(['checkout'], '');
+    expect(nativeModule.cancelEvent).toHaveBeenCalledWith(['checkout'], '');
+    expect(nativeModule.endEvent).toHaveBeenCalledWith({ n: 'checkout', c: 1, s: 0, g: ['step', 'payment'] }, '');
 });
 
 test('event helpers do nothing before init', () => {

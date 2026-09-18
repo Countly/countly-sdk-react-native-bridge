@@ -42,6 +42,7 @@ function createFeedback({ isInitialized = true, nativeOverrides = {}, existingSh
 
     const state = {
         isInitialized,
+        instanceName: '',
         CountlyReactNative: nativeModule,
         eventEmitter,
         widgetShownCallbackName: 'widgetShownCallback',
@@ -77,12 +78,12 @@ test('presentNPS uses the direct native method and cleans up callback subscripti
     const shownListener = listeners.find((listener) => listener.eventName === 'widgetShownCallback');
     const closedListener = listeners.find((listener) => listener.eventName === 'widgetClosedCallback');
 
-    shownListener.handler();
-    closedListener.handler();
+    shownListener.handler(JSON.stringify({ instanceName: '' }));
+    closedListener.handler(JSON.stringify({ instanceName: '' }));
 
     expect(previousShownCallback.remove).toHaveBeenCalledTimes(1);
     expect(previousClosedCallback.remove).toHaveBeenCalledTimes(1);
-    expect(nativeModule.presentNPS).toHaveBeenCalledWith(['']);
+    expect(nativeModule.presentNPS).toHaveBeenCalledWith([''], '');
     expect(widgetShownCallback).toHaveBeenCalledTimes(1);
     expect(widgetClosedCallback).toHaveBeenCalledTimes(1);
     expect(shownListener.subscription.remove).toHaveBeenCalledTimes(1);
@@ -110,10 +111,10 @@ test('presentSurvey falls back to widget lookup when the direct native method is
     const shownListener = listeners.find((listener) => listener.eventName === 'widgetShownCallback');
     const closedListener = listeners.find((listener) => listener.eventName === 'widgetClosedCallback');
 
-    shownListener.handler();
-    closedListener.handler();
+    shownListener.handler(JSON.stringify({ instanceName: '' }));
+    closedListener.handler(JSON.stringify({ instanceName: '' }));
 
-    expect(nativeModule.presentFeedbackWidget).toHaveBeenCalledWith(['survey-1', 'survey', 'Customer Survey', '', 'v1']);
+    expect(nativeModule.presentFeedbackWidget).toHaveBeenCalledWith(['survey-1', 'survey', 'Customer Survey', '', 'v1'], '');
     expect(widgetShownCallback).toHaveBeenCalledTimes(1);
     expect(widgetClosedCallback).toHaveBeenCalledTimes(1);
 });
@@ -149,10 +150,10 @@ test('presentFeedbackWidget normalizes close button text, widget name, and widge
     const shownListener = listeners.find((listener) => listener.eventName === 'widgetShownCallback');
     const closedListener = listeners.find((listener) => listener.eventName === 'widgetClosedCallback');
 
-    shownListener.handler();
-    closedListener.handler();
+    shownListener.handler(JSON.stringify({ instanceName: '' }));
+    closedListener.handler(JSON.stringify({ instanceName: '' }));
 
-    expect(nativeModule.presentFeedbackWidget).toHaveBeenCalledWith(['rating-1', 'rating', '', '', '']);
+    expect(nativeModule.presentFeedbackWidget).toHaveBeenCalledWith(['rating-1', 'rating', '', '', ''], '');
     expect(widgetShownCallback).toHaveBeenCalledTimes(1);
     expect(widgetClosedCallback).toHaveBeenCalledTimes(1);
     expect(Logger.w).toHaveBeenCalledWith(expect.stringContaining('presentFeedbackWidget, unsupported data type of closeButtonText'));
@@ -186,7 +187,7 @@ test('getFeedbackWidgetData and reportFeedbackWidgetManually forward successful 
     await expect(feedback.getFeedbackWidgetData(widgetInfo, onFinished)).resolves.toEqual({ error: null, data: widgetData });
     await expect(feedback.reportFeedbackWidgetManually(widgetInfo, widgetData, widgetResult)).resolves.toEqual({ error: null });
 
-    expect(nativeModule.getFeedbackWidgetData).toHaveBeenCalledWith(['widget-1', 'survey', 'Survey']);
-    expect(nativeModule.reportFeedbackWidgetManually).toHaveBeenCalledWith([['widget-1', 'survey', 'Survey'], widgetData, widgetResult]);
+    expect(nativeModule.getFeedbackWidgetData).toHaveBeenCalledWith(['widget-1', 'survey', 'Survey'], '');
+    expect(nativeModule.reportFeedbackWidgetManually).toHaveBeenCalledWith([['widget-1', 'survey', 'Survey'], widgetData, widgetResult], '');
     expect(onFinished).toHaveBeenCalledWith(widgetData, null);
 });

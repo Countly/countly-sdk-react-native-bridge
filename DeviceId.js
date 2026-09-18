@@ -21,7 +21,7 @@ class DeviceId {
             return null;
         }
         L.d("getID, Getting current device ID");
-        const result = await this.#state.CountlyReactNative.getCurrentDeviceId();
+        const result = await this.#state.CountlyReactNative.getCurrentDeviceId(this.#state.instanceName);
         return result;
     };
 
@@ -37,7 +37,7 @@ class DeviceId {
             return null;
         }
         L.d("getType, Getting device ID type");
-        const result = await this.#state.CountlyReactNative.getDeviceIDType();
+        const result = await this.#state.CountlyReactNative.getDeviceIDType(this.#state.instanceName);
         return Utils.intToDeviceIDType(result);
     };
 
@@ -58,7 +58,7 @@ class DeviceId {
             return;
         }
         L.d(`setID, Setting device id as: [${newDeviceID}]`);
-        this.#state.CountlyReactNative.setID(newDeviceID);
+        this.#state.CountlyReactNative.setID(newDeviceID, this.#state.instanceName);
     };
 
     /**
@@ -82,7 +82,7 @@ class DeviceId {
         }
 
         L.d(`changeID, Changing to new device id: [${newDeviceID}], with merge: [${merge}]`);
-        this.#state.CountlyReactNative.changeDeviceId([newDeviceID, merge ? "1" : "0"]);
+        this.#state.CountlyReactNative.changeDeviceId([newDeviceID, merge ? "1" : "0"], this.#state.instanceName);
     };
 }
 

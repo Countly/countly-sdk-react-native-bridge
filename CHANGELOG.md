@@ -1,3 +1,33 @@
+## 26.8.0
+* !! Major breaking change !! The iOS layer is now built on the Countly Swift SDK instead of the vendored Objective-C SDK. The minimum supported iOS version is now 15.0, and the Swift SDK is resolved through Swift Package Manager, which needs React Native 0.75 or newer.
+
+* !! Major breaking change !! Push notification setups that call the bridge from an Objective-C `AppDelegate` must now import `<CountlyReactNative/CountlyReactNative-Swift.h>` instead of `CountlyReactNative.h`. The calls themselves are unchanged.
+
+* !! Major breaking change !! The `CountlyReactNative/NotificationService` pod subspec is gone. A notification service extension now adds the `countly-sdk-swift` package and its `CountlyNotificationService` product.
+
+* ! Minor breaking change ! `Countly.showStarRating(callback)` now does nothing on iOS and its callback is not called. The underlying SDK provides no star rating dialog. The other platform is unaffected.
+
+* Added multiple instance support. "Countly.instance(name)" returns a named instance with its own app key, server, device ID, request queue and storage, and exposes the same modules as the default one: events, sessions, views, deviceId, userProfile, remoteConfig, feedback, content, consent, crashes, location, apm and attribution. Asking for the same name again returns the same instance.
+
+* Added "Countly.removeInstance(name)", which stops a named instance and drops it from the registry while keeping its stored data, and "Countly.haltAllInstances()", which stops every instance and wipes what they persisted.
+
+* Added a config option "enableClearStoredDeviceId" that clears the stored device ID at init, so the SDK resolves one from scratch instead of reusing the one it persisted on an earlier run.
+
+* Added a config option "setTrackOrientationChanges(shouldTrack)" that controls whether the SDK reports device orientation changes. It is enabled by default.
+
+* Added a config option "setMetricOverride(metrics)" that replaces the device metrics the SDK reports, keyed by their wire names.
+
+* Added a content config option "setContentUrlHandler(handler, urlPrefixes)" that hands the links opened from content blocks and feedback widgets to the application, so it can route its own deep links. A link matching one of the given prefixes is handed over and not opened by the SDK; without prefixes every link is handed over.
+
+* Added an SDK internal limit "setMaxValueSizePicture(limit)" for the user profile picture URL or path, which is not covered by "setMaxValueSize".
+
+* Added two content config options for the widget overlay, "setOverlayCornerRadius(radius)" and "showWidgetsWithinApp()". They take effect on macOS only and are ignored elsewhere.
+
+* Mitigated an issue where "presentRatingWidgetWithID" could present a different rating widget than the one requested on iOS. It now presents exactly the requested widget or reports an error.
+
+* Updated the underlying Android SDK version to 26.8.0
+* Updated the underlying iOS SDK version to the Countly Swift SDK 26.8.0
+
 ## 26.1.0
 * Added a new `Countly.sessions` interface for manual session control:
   * `beginSession()`

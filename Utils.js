@@ -124,6 +124,20 @@ function configToJson(config) {
             json.webViewDisplayOption = config.content.webViewDisplayOption;
             L.i(`init configuration, WebView display option: ${config.content.webViewDisplayOption}`);
         }
+        if (config.content.contentUrlHandler) {
+            json.contentUrlHandler = true;
+            json.contentUrlPrefixes = config.content.contentUrlPrefixes;
+            L.i(`init configuration, Content URL handler with prefixes: ${JSON.stringify(config.content.contentUrlPrefixes)}`);
+        }
+        // Sent as they are, macOS only in the underlying SDK and ignored everywhere else.
+        if (config.content.overlayCornerRadius !== null && config.content.overlayCornerRadius !== undefined) {
+            json.overlayCornerRadius = config.content.overlayCornerRadius;
+            L.i(`init configuration, Overlay corner radius: ${config.content.overlayCornerRadius}`);
+        }
+        if (config.content.widgetsWithinAppEnabled) {
+            json.showWidgetsWithinApp = true;
+            L.i("init configuration, Show widgets within the application window");
+        }
         if (config._disableIntentRedirectionCheck) {
             json.disableAdditionalIntentRedirectionChecks = true;
             L.i("init configuration, Disabled additional intent redirection checks");
@@ -252,6 +266,11 @@ function configToJson(config) {
                 L.i(`init configuration, Max stack trace line length: ${config.sdkInternalLimits.maxStackTraceLineLength}`);
             }
         }
+        // Already refused at the setter when it is not a positive number, so it is sent as it is.
+        if (config.sdkInternalLimits.maxValueSizePicture) {
+            json.maxValueSizePicture = config.sdkInternalLimits.maxValueSizePicture;
+            L.i(`init configuration, Max picture value size: ${config.sdkInternalLimits.maxValueSizePicture}`);
+        }
         // Limits End --------------------------------------------
         if (config._disableSDKBehaviorSettingsUpdates) {
             L.i("init configuration, disabled SDK behavior settings updates");
@@ -268,6 +287,19 @@ function configToJson(config) {
         if (config._disableViewRestartForManualRecording) {
             L.i("init configuration, disabled view restart for manual recordings");
             json.disableViewRestartForManualRecording = true;
+        }
+        if (config._clearStoredDeviceIdEnabled) {
+            L.i("init configuration, Clear the stored device ID at init");
+            json.clearStoredDeviceId = true;
+        }
+        // Sent whenever it was set, because "false" is the value that turns the reporting off.
+        if (config._trackOrientationChanges !== undefined) {
+            L.i(`init configuration, Track orientation changes: ${config._trackOrientationChanges}`);
+            json.trackOrientationChanges = config._trackOrientationChanges;
+        }
+        if (config._metricOverride) {
+            L.i(`init configuration, Metric override: ${JSON.stringify(config._metricOverride)}`);
+            json.metricOverride = config._metricOverride;
         }
         if (config._sdkBehaviorSettings) {
             L.i(`init configuration, SDK behavior settings: ${JSON.stringify(config._sdkBehaviorSettings)}`);
@@ -308,4 +340,30 @@ function getStackTrace(e) {
     return jsStackTrace;
 }
 
-export { configToJson, intToDeviceIDType, DeviceIdType, getStackTrace };
+/**
+ * Reads a callback payload the native side sent and tells whether it belongs to an instance.
+ *
+ * @param {any} data the payload, a JSON string or an already decoded object
+ * @param {String} instanceName the instance the listener belongs to, empty for the default one
+ * @return {Object | null} the decoded payload, or null when it belongs to another instance
+ */
+function payloadForInstance(data, instanceName) {
+    let payload = data;
+    if (typeof data === "string") {
+        try {
+            payload = JSON.parse(data);
+        } catch (error) {
+            L.e(`payloadForInstance, Error parsing callback data: ${error}`);
+            return null;
+        }
+    }
+
+    if (payload === null || typeof payload !== "object") {
+        return null;
+    }
+
+    const payloadInstance = typeof payload.instanceName === "string" ? payload.instanceName : "";
+    return payloadInstance === (instanceName || "") ? payload : null;
+}
+
+export { configToJson, intToDeviceIDType, DeviceIdType, getStackTrace, payloadForInstance };

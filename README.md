@@ -32,6 +32,24 @@ This SDK supports the following features:
 * [Performance Monitoring](https://support.count.ly/hc/en-us/articles/4734457847705-Performance)
 * [Feedback Widgets](https://support.count.ly/hc/en-us/articles/4652903481753-Feedback-Surveys-NPS-and-Ratings-)
 
+## Multiple instances
+
+Next to the default instance, which the root level `Countly` calls use, the SDK can run named instances. Each one carries its own app key, server, device ID, request queue and storage, so two of them never mix their data.
+
+```js
+const shop = Countly.instance("shop");
+
+await shop.initWithConfig(new CountlyConfig("https://your.server.ly", "YOUR_APP_KEY"));
+shop.events.recordEvent({ eventName: "purchase", eventCount: 1 });
+await shop.userProfile.increment("visits");
+```
+
+A named instance exposes the same modules as the default one: `events`, `sessions`, `views`, `deviceId`, `userProfile`, `remoteConfig`, `feedback`, `content`, `consent`, `crashes`, `location`, `apm` and `attribution`. Asking for the same name again returns the same instance.
+
+`Countly.removeInstance(name)` stops an instance and drops it from the registry while keeping its stored data. `Countly.haltAllInstances()` stops every instance and wipes what they persisted, which is meant for tests.
+
+Push notifications stay with the default instance.
+
 ## Acknowledgements
 
 From 2014 to 2020 it was maintained by Trinisoft Technologies developers (trinisofttechnologies@gmail.com).

@@ -21,7 +21,7 @@ class Sessions {
         }
 
         L.d("beginSession, Starting session");
-        this.#state.CountlyReactNative.startSession();
+        this.#state.CountlyReactNative.startSession(this.#state.instanceName);
     }
 
     /**
@@ -38,7 +38,7 @@ class Sessions {
         }
 
         L.d("updateSession, Updating session");
-        this.#state.CountlyReactNative.updateSession();
+        this.#state.CountlyReactNative.updateSession(this.#state.instanceName);
     }
 
     /**
@@ -55,7 +55,7 @@ class Sessions {
         }
 
         L.d("endSession, Ending session");
-        this.#state.CountlyReactNative.endSession();
+        this.#state.CountlyReactNative.endSession(this.#state.instanceName);
     }
 }
 

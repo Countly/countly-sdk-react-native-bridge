@@ -129,7 +129,7 @@ class RemoteConfig {
         L.d(`remoteConfig.getValue, Getting remote config value for key: [${keyName}]`);
         try {
             const rawValue = await new Promise((resolve) => {
-                this.#state.CountlyReactNative.getRemoteConfigValueForKey([keyName.toString()], (value) => {
+                this.#state.CountlyReactNative.getRemoteConfigValueForKey([keyName.toString()], this.#state.instanceName, (value) => {
                     resolve(value);
                 });
             });
@@ -154,7 +154,7 @@ class RemoteConfig {
 
         L.d("remoteConfig.clearValues, Clearing remote config values");
         try {
-            await this.#state.CountlyReactNative.remoteConfigClearValues();
+            await this.#state.CountlyReactNative.remoteConfigClearValues(this.#state.instanceName);
         } catch (error) {
             L.e(`remoteConfig.clearValues, ${toErrorMessage(error)}`);
         }
@@ -195,7 +195,7 @@ class RemoteConfig {
     async #runUpdate(nativeMethodName, args) {
         try {
             const status = await new Promise((resolve) => {
-                this.#state.CountlyReactNative[nativeMethodName](args, (result) => {
+                this.#state.CountlyReactNative[nativeMethodName](args, this.#state.instanceName, (result) => {
                     resolve(result);
                 });
             });

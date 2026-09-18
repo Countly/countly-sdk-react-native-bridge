@@ -94,7 +94,7 @@ STEP 3: Place below code in there respective files.
 ### AppDelegate.m
 
 Add header file 
-`#import "CountlyReactNative.h"`
+`#import <CountlyReactNative/CountlyReactNative-Swift.h>`
 `#import <UserNotifications/UserNotifications.h>`
 
 Before `@end` add these method
@@ -121,44 +121,46 @@ Before `@end` add these method
 ### Rich Push Notification
 
 STEP 1: Creating Notification Service Extension
-        Editor -> Add Target -> 
-        Make sure `ios` is selected 
+        Editor -> Add Target ->
+        Make sure `ios` is selected
         Make sure `Notification Service Extension` is selected
         Click `Next`
         Enter Product Name e.g. `CountlyNSE`
-        Language `Objective-C`
+        Language `Swift`
         Click `Finish`
-        It will ask for a modal / popup `Activate “CountlyNSE” scheme?`
+        It will ask for a modal / popup `Activate "CountlyNSE" scheme?`
         Choose `Cancel`
 
-STEP 2: Adding Compile Source
-        Under `TARGETS` select `CountlyNSE`
-        Select `Build Phases` 
-        Expand `Compile Sources`
-        Drag and Drop `CountlyNotificationService.h` and `CountlyNotificationService.m` file
-        Note: You may also find this file in `Xcode` under `Pods(Project) -> Pods(Folder) -> Countly`
-        Note: You may also find this file in `Finder` under `AwesomeProject/ios/Pods/Countly`
-        Note: You may also find this file in `Xcode` under `AwesomeProject(Project) -> Libraries(Folder) -> countly-sdk-react-native-bridge(Project)->src(Folder)`
-        Note: You may also find this file in `Finder` under `node_modules/countly-sdk-react-native-bridge/ios/Pods/Countly`
+STEP 2: Adding the Countly package to the extension
+        The notification service ships with the Countly Swift SDK, so the extension
+        target depends on the package directly.
+        File -> Add Package Dependencies...
+        Enter `https://github.com/Countly/countly-sdk-swift.git`
+        Dependency Rule `Branch` -> `pre-release`
+        Add to Target `CountlyNSE`
+        Pick the `CountlyNotificationService` product (not `Countly`)
 
-STEP 3: Updating NotificationService file
-        Under `AwesomeProject(Project) -> CountlyNSE(Folder) -> NotificationService.m`
-        Add import header `#import "CountlyNotificationService.h"`
-        Add the following line at the end of `didReceiveNotificationRequest:withContentHandler:`
+STEP 3: Updating the NotificationService file
+        Under `AwesomeProject(Project) -> CountlyNSE(Folder) -> NotificationService.swift`
+        Replace the body of `didReceive(_:withContentHandler:)` with the Countly call
 
-```objc
-- (void)didReceiveNotificationRequest:(UNNotificationRequest *)request withContentHandler:(void (^)(UNNotificationContent * _Nonnull))contentHandler
-{
-  self.contentHandler = contentHandler;
-  self.bestAttemptContent = [request.content mutableCopy];
-  //delete existing template code, and add this line
-  [CountlyNotificationService didReceiveNotificationRequest:request withContentHandler:contentHandler];
+```swift
+import CountlyNotificationService
+import UserNotifications
+
+class NotificationService: UNNotificationServiceExtension {
+
+    override func didReceive(_ request: UNNotificationRequest,
+                             withContentHandler contentHandler: @escaping (UNNotificationContent) -> Void) {
+        // delete existing template code, and add this line
+        CountlyNotificationService.didReceive(request, withContentHandler: contentHandler)
+    }
 }
 ```
 
 Note: Please make sure you configure App Transport Security setting in extension's Info.plist file also, just like the main application. Otherwise media attachments from non-https sources can not be loaded.
 
-Note: Please make sure you check Deployment Target version of extension target is 10, not 10.3 (or whatever minor version Xcode set automatically). Otherwise users running iOS versions lower than Deployment Target value can not get rich push notifications.
+Note: Please make sure you check Deployment Target version of extension target is 15, not 15.x (or whatever minor version Xcode set automatically). Otherwise users running iOS versions lower than Deployment Target value can not get rich push notifications.
 
 Note: To send push messages to applications that are Debug build use Countly.messagingMode.DEVELOPMENT, for App Store built ones use Countly.messagingMode.PRODUCTION, and for TestFlight/Ad Hoc builds use Countly.messagingMode.ADHOC.
         

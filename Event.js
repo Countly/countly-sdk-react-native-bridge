@@ -41,7 +41,7 @@ class Event {
                 args.g.push(segmentation[key]);
             }
         }
-        this.#state.CountlyReactNative.recordEvent(args);
+        this.#state.CountlyReactNative.recordEvent(args, this.#state.instanceName);
     }
 
     /**
@@ -62,7 +62,7 @@ class Event {
         if (!areParamsValid) {
             return;
         }
-        this.#state.CountlyReactNative.startEvent([eventName]);
+        this.#state.CountlyReactNative.startEvent([eventName], this.#state.instanceName);
     }
 
     /**
@@ -82,7 +82,7 @@ class Event {
         if (!areParamsValid) {
             return;
         }
-        this.#state.CountlyReactNative.cancelEvent([eventName]);
+        this.#state.CountlyReactNative.cancelEvent([eventName], this.#state.instanceName);
     }
 
     /**
@@ -120,7 +120,7 @@ class Event {
                 args.g.push(segmentation[key]);
             }
         }
-        this.#state.CountlyReactNative.endEvent(args);
+        this.#state.CountlyReactNative.endEvent(args, this.#state.instanceName);
     }
 }
 

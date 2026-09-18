@@ -1,4 +1,5 @@
 import * as L from "./Logger.js";
+import * as Utils from "./Utils.js";
 
 class Feedback {
     #state;
@@ -102,14 +103,20 @@ class Feedback {
         }
 
         if (typeof widgetShownCallback === "function") {
-            this.#state.widgetShownCallback = this.#state.eventEmitter.addListener(this.#state.widgetShownCallbackName, () => {
+            this.#state.widgetShownCallback = this.#state.eventEmitter.addListener(this.#state.widgetShownCallbackName, (data) => {
+                if (!Utils.payloadForInstance(data, this.#state.instanceName)) {
+                    return;
+                }
                 widgetShownCallback();
                 this.#state.widgetShownCallback.remove();
                 this.#state.widgetShownCallback = null;
             });
         }
         if (typeof widgetClosedCallback === "function") {
-            this.#state.widgetClosedCallback = this.#state.eventEmitter.addListener(this.#state.widgetClosedCallbackName, () => {
+            this.#state.widgetClosedCallback = this.#state.eventEmitter.addListener(this.#state.widgetClosedCallbackName, (data) => {
+                if (!Utils.payloadForInstance(data, this.#state.instanceName)) {
+                    return;
+                }
                 widgetClosedCallback();
                 this.#state.widgetClosedCallback.remove();
                 this.#state.widgetClosedCallback = null;
@@ -128,7 +135,7 @@ class Feedback {
 
         if (typeof nativeMethod === "function") {
             this.#registerPresentationCallbacks(widgetShownCallback, widgetClosedCallback);
-            nativeMethod.call(this.#state.CountlyReactNative, [normalizedNameIDorTag]);
+            nativeMethod.call(this.#state.CountlyReactNative, [normalizedNameIDorTag], this.#state.instanceName);
             return;
         }
 
@@ -186,7 +193,7 @@ class Feedback {
         let result = null;
         let error = null;
         try {
-            result = await this.#state.CountlyReactNative.getFeedbackWidgets();
+            result = await this.#state.CountlyReactNative.getFeedbackWidgets(this.#state.instanceName);
         } catch (e) {
             error = e.message;
         }
@@ -241,7 +248,7 @@ class Feedback {
         feedbackWidget.name = feedbackWidget.name || "";
         closeButtonText = closeButtonText || "";
         const widgetVersion = typeof feedbackWidget.widgetVersion === "string" ? feedbackWidget.widgetVersion : "";
-        this.#state.CountlyReactNative.presentFeedbackWidget([feedbackWidget.id, feedbackWidget.type, feedbackWidget.name, closeButtonText, widgetVersion]);
+        this.#state.CountlyReactNative.presentFeedbackWidget([feedbackWidget.id, feedbackWidget.type, feedbackWidget.name, closeButtonText, widgetVersion], this.#state.instanceName);
         return { error: null };
     }
 
@@ -267,7 +274,7 @@ class Feedback {
         let result = null;
         let error = null;
         try {
-            result = await this.#state.CountlyReactNative.getFeedbackWidgetData(args);
+            result = await this.#state.CountlyReactNative.getFeedbackWidgetData(args, this.#state.instanceName);
         } catch (e) {
             error = e.message;
         }
@@ -305,7 +312,7 @@ class Feedback {
 
         let error = null;
         try {
-            await this.#state.CountlyReactNative.reportFeedbackWidgetManually(args);
+            await this.#state.CountlyReactNative.reportFeedbackWidgetManually(args, this.#state.instanceName);
         } catch (e) {
             error = e.message;
         }

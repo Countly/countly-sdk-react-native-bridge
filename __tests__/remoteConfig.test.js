@@ -61,10 +61,11 @@ test('update helpers reject invalid key arrays and skip invalid entries', async 
     const { Logger, RemoteConfig } = loadRemoteConfig();
     const nativeModule = {
         updateRemoteConfigForKeysOnly: jest.fn(),
-        updateRemoteConfigExceptKeys: jest.fn((args, callback) => callback({ status: 'ok' })),
+        updateRemoteConfigExceptKeys: jest.fn((args, instanceName, callback) => callback({ status: 'ok' })),
     };
     const remoteConfig = new RemoteConfig({
         isInitialized: true,
+        instanceName: '',
         CountlyReactNative: nativeModule,
     });
 
@@ -72,7 +73,7 @@ test('update helpers reject invalid key arrays and skip invalid entries', async 
     await expect(remoteConfig.updateExceptKeys(['theme', '', 7])).resolves.toBeUndefined();
 
     expect(nativeModule.updateRemoteConfigForKeysOnly).not.toHaveBeenCalled();
-    expect(nativeModule.updateRemoteConfigExceptKeys).toHaveBeenCalledWith(['theme'], expect.any(Function));
+    expect(nativeModule.updateRemoteConfigExceptKeys).toHaveBeenCalledWith(['theme'], '', expect.any(Function));
     expect(Logger.e).toHaveBeenCalledWith('remoteConfig.updateForKeysOnly, keyNames must be an array of strings');
     expect(Logger.w).toHaveBeenCalledWith('remoteConfig.updateExceptKeys, keyNames[1] should not be null, undefined or empty');
     expect(Logger.w).toHaveBeenCalledWith("remoteConfig.updateExceptKeys, skipping value for 'keyNames[2]', due to unsupported data type 'number', its data type should be 'string'");

@@ -45,6 +45,12 @@ class CountlyConfig {
 
     #globalViewSegmentation;
 
+    #clearStoredDeviceIdEnabled = false;
+
+    #trackOrientationChanges;
+
+    #metricOverride;
+
     constructor(serverURL, appKey) {
         this.serverURL = serverURL;
         this.appKey = appKey;
@@ -52,6 +58,18 @@ class CountlyConfig {
         this._countlyConfigSDKLimitsInstance = new CountlyConfigSDKInternalLimits();
         this._countlyConfigExpInstance = new CountlyConfigExp();
         this._countlyConfigContentInstance = new CountlyConfigContent();
+    }
+
+    get _clearStoredDeviceIdEnabled() {
+        return this.#clearStoredDeviceIdEnabled;
+    }
+
+    get _trackOrientationChanges() {
+        return this.#trackOrientationChanges;
+    }
+
+    get _metricOverride() {
+        return this.#metricOverride;
     }
 
     /**
@@ -440,6 +458,40 @@ class CountlyConfig {
      */
     recordIndirectAttribution(attributionValues) {
         this.attributionValues = attributionValues;
+        return this;
+    }
+
+    /**
+     * Clear the stored device ID during initialization so the SDK resolves a device ID from scratch
+     * instead of reusing the one it persisted on an earlier run.
+     * A provided device ID wins, otherwise temporary ID mode is applied if requested, otherwise a new ID
+     * is generated.
+     */
+    enableClearStoredDeviceId() {
+        this.#clearStoredDeviceIdEnabled = true;
+        return this;
+    }
+
+    /**
+     * Set whether the SDK reports device orientation changes
+     *
+     * @param {boolean} shouldTrack "false" stops the orientation reporting, it is enabled by default
+     */
+    setTrackOrientationChanges(shouldTrack) {
+        this.#trackOrientationChanges = shouldTrack;
+        return this;
+    }
+
+    /**
+     * Override the device metrics the SDK reports, keyed by their wire names such as "_os",
+     * "_os_version", "_device", "_manufacturer", "_resolution", "_density", "_carrier", "_locale",
+     * "_app_version", "_store" and "_device_type". A key the platform does not detect itself is sent as
+     * an additional metric.
+     *
+     * @param {Object} metrics the metric values to report in place of the detected ones
+     */
+    setMetricOverride(metrics) {
+        this.#metricOverride = metrics;
         return this;
     }
 }

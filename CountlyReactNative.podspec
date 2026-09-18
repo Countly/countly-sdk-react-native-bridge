@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name = 'CountlyReactNative'
-  s.version = '26.1.0'
+  s.version = '26.8.0'
   s.license = {
     :type => 'COMMUNITY',
     :text => <<-LICENSE
@@ -33,17 +33,26 @@ Pod::Spec.new do |s|
   s.social_media_url = 'https://twitter.com/gocountly'
   s.author = {'Countly' => 'hello@count.ly'}
   s.source = { :git => 'https://github.com/Countly/countly-sdk-react-native-bridge.git', :tag => s.version.to_s }
-  s.source_files = 'ios/src/*.{h,m}'
-  s.public_header_files = 'ios/src/CountlyReactNative.h, ios/src/CountlyPushNotifications.h'
+  s.source_files = 'ios/src/*.{h,m,swift}'
+  s.preserve_paths = 'ios/src/countly_dsym_uploader.sh'
   s.requires_arc = true
-  s.ios.deployment_target = '10.0'
-  s.osx.deployment_target = '10.14'
-  s.watchos.deployment_target = '4.0'
-  s.tvos.deployment_target = '10.0'
-  s.static_framework = true
+  s.swift_version = '5.9'
+  # The Countly Swift SDK's own floor, a lower target is rejected when it is built.
+  s.ios.deployment_target = '15.0'
 
-  s.subspec 'NotificationService' do |ns|
-    ns.source_files = 'ios/src/CountlyNotificationService.{m,h}'
+  # Resolved through Swift Package Manager: the Swift SDK is not published to CocoaPods.
+  # Pinned to one exact version, so a "pod install" never picks up an untested one.
+  # Looked up including private methods, which is what the helper is inside a podspec.
+  if respond_to?(:spm_dependency, true)
+    spm_dependency(s,
+      url: 'https://github.com/Countly/countly-sdk-swift.git',
+      requirement: { kind: 'exactVersion', version: '26.8.0' },
+      products: ['Countly']
+    )
+  else
+    raise 'countly-sdk-react-native-bridge needs React Native 0.75 or newer on iOS: ' \
+          'the Countly Swift SDK is resolved through Swift Package Manager, and the ' \
+          '"spm_dependency" helper that does it ships with react_native_pods.rb.'
   end
 
   s.dependency "React"

@@ -70,7 +70,7 @@ class Views {
         }
 
         const args = appendSegmentationArgs([String(viewName)], segmentation);
-        return (await this.#state.CountlyReactNative.startAutoStoppedView(args)) ?? null;
+        return (await this.#state.CountlyReactNative.startAutoStoppedView(args, this.#state.instanceName)) ?? null;
     }
 
     async startView(viewName, segmentation) {
@@ -87,7 +87,7 @@ class Views {
         }
 
         const args = appendSegmentationArgs([String(viewName)], segmentation);
-        return (await this.#state.CountlyReactNative.startView(args)) ?? null;
+        return (await this.#state.CountlyReactNative.startView(args, this.#state.instanceName)) ?? null;
     }
 
     stopViewWithName(viewName, segmentation) {
@@ -104,7 +104,7 @@ class Views {
         }
 
         const args = appendSegmentationArgs([String(viewName)], segmentation);
-        this.#state.CountlyReactNative.stopViewWithName(args);
+        this.#state.CountlyReactNative.stopViewWithName(args, this.#state.instanceName);
     }
 
     stopViewWithID(viewID, segmentation) {
@@ -121,7 +121,7 @@ class Views {
         }
 
         const args = appendSegmentationArgs([String(viewID)], segmentation);
-        this.#state.CountlyReactNative.stopViewWithID(args);
+        this.#state.CountlyReactNative.stopViewWithID(args, this.#state.instanceName);
     }
 
     stopAllViews(segmentation) {
@@ -136,7 +136,7 @@ class Views {
             return;
         }
 
-        this.#state.CountlyReactNative.stopAllViews(appendSegmentationArgs([], segmentation));
+        this.#state.CountlyReactNative.stopAllViews(appendSegmentationArgs([], segmentation), this.#state.instanceName);
     }
 
     pauseViewWithID(viewID) {
@@ -152,7 +152,7 @@ class Views {
             return;
         }
 
-        this.#state.CountlyReactNative.pauseViewWithID([String(viewID)]);
+        this.#state.CountlyReactNative.pauseViewWithID([String(viewID)], this.#state.instanceName);
     }
 
     resumeViewWithID(viewID) {
@@ -168,7 +168,7 @@ class Views {
             return;
         }
 
-        this.#state.CountlyReactNative.resumeViewWithID([String(viewID)]);
+        this.#state.CountlyReactNative.resumeViewWithID([String(viewID)], this.#state.instanceName);
     }
 
     addSegmentationToViewWithID(viewID, segmentation) {
@@ -185,7 +185,7 @@ class Views {
         }
 
         const args = appendSegmentationArgs([String(viewID)], segmentation);
-        this.#state.CountlyReactNative.addSegmentationToViewWithID(args);
+        this.#state.CountlyReactNative.addSegmentationToViewWithID(args, this.#state.instanceName);
     }
 
     addSegmentationToViewWithName(viewName, segmentation) {
@@ -202,7 +202,7 @@ class Views {
         }
 
         const args = appendSegmentationArgs([String(viewName)], segmentation);
-        this.#state.CountlyReactNative.addSegmentationToViewWithName(args);
+        this.#state.CountlyReactNative.addSegmentationToViewWithName(args, this.#state.instanceName);
     }
 
     setGlobalViewSegmentation(segmentation) {
@@ -217,7 +217,7 @@ class Views {
             return;
         }
 
-        this.#state.CountlyReactNative.setGlobalViewSegmentation(appendSegmentationArgs([], segmentation));
+        this.#state.CountlyReactNative.setGlobalViewSegmentation(appendSegmentationArgs([], segmentation), this.#state.instanceName);
     }
 
     updateGlobalViewSegmentation(segmentation) {
@@ -232,7 +232,7 @@ class Views {
             return;
         }
 
-        this.#state.CountlyReactNative.updateGlobalViewSegmentation(appendSegmentationArgs([], segmentation));
+        this.#state.CountlyReactNative.updateGlobalViewSegmentation(appendSegmentationArgs([], segmentation), this.#state.instanceName);
     }
 }
 
