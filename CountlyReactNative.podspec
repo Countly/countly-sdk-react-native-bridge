@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name = 'CountlyReactNative'
-  s.version = '26.1.0'
+  s.version = '26.8.0'
   s.license = {
     :type => 'COMMUNITY',
     :text => <<-LICENSE
@@ -37,24 +37,16 @@ Pod::Spec.new do |s|
   s.preserve_paths = 'ios/src/countly_dsym_uploader.sh'
   s.requires_arc = true
   s.swift_version = '5.9'
-  # The Countly Swift SDK's own floor. A lower target here is rejected when it is
-  # built.
+  # The Countly Swift SDK's own floor, a lower target is rejected when it is built.
   s.ios.deployment_target = '15.0'
 
-  # The Countly Swift SDK is resolved through Swift Package Manager, using the
-  # helper React Native ships from 0.75 onwards. It is not a pod dependency: the
-  # Swift SDK is not published to CocoaPods, and a podspec that cannot resolve
-  # fails at "pod install" with a message that sends people to update their spec
-  # repo for nothing.
-  #
-  # Pinned to a branch because countly-sdk-swift has no tags yet. Move to
-  # {kind: 'upToNextMajorVersion', minimumVersion: '26.8.0'} once one is cut.
-  # The helper is a private top-level method by the time a podspec is evaluated,
-  # so it has to be looked up including private methods.
+  # Resolved through Swift Package Manager: the Swift SDK is not published to CocoaPods.
+  # Pinned to one exact version, so a "pod install" never picks up an untested one.
+  # Looked up including private methods, which is what the helper is inside a podspec.
   if respond_to?(:spm_dependency, true)
     spm_dependency(s,
       url: 'https://github.com/Countly/countly-sdk-swift.git',
-      requirement: { kind: 'branch', branch: 'pre-release' },
+      requirement: { kind: 'exactVersion', version: '26.8.0' },
       products: ['Countly']
     )
   else

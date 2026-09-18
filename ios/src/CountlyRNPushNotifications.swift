@@ -113,12 +113,7 @@ public class CountlyRNPushNotifications: NSObject {
     /// Forwards the tap to JavaScript, holding it for replay if the SDK cannot see
     /// it yet.
     @objc public func onNotificationResponse(_ response: UNNotificationResponse) {
-        // Hold the response only when the SDK cannot have handled it, so a tap is
-        // never both handled live and replayed. The SDK installs itself as the
-        // notification centre delegate during start and chains back to this object,
-        // so still holding the delegate directly is proof that its handling did not
-        // run. The started check alone would leave a window between the SDK
-        // subscribing and its instance reporting started.
+        // Still holding the delegate proves the SDK did not handle this tap, so it is safe to replay.
         let isStillFrontDelegate = UNUserNotificationCenter.current().delegate === self
         if isStillFrontDelegate, !Countly.shared.isStarted {
             pendingResponses.append(response)

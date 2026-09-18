@@ -63,6 +63,7 @@ function removeSubscription(stateKey) {
 
 function resetBridgeStateForTesting() {
     removeSubscription("globalContentCallbackSubscription");
+    removeSubscription("contentUrlHandlerSubscription");
     removeSubscription("widgetShownCallback");
     removeSubscription("widgetClosedCallback");
 
@@ -162,6 +163,18 @@ Countly.initWithConfig = async function (countlyConfig) {
                 countlyConfig.content.contentCallback(data.status, data.data);
             } catch (error) {
                 L.e(`init configuration, Error parsing global content callback data: ${error}`);                
+            }
+        });
+    }
+    removeSubscription("contentUrlHandlerSubscription");
+    if (countlyConfig.content.contentUrlHandler) {
+        _state.contentUrlHandlerSubscription = eventEmitter.addListener("contentUrlHandler", (data) => {
+            L.d(`init configuration, Content URL handler called with data: ${data}`);
+            try {
+                const payload = typeof data === "string" ? JSON.parse(data) : data;
+                countlyConfig.content.contentUrlHandler(payload.url);
+            } catch (error) {
+                L.e(`init configuration, Error parsing content URL handler data: ${error}`);
             }
         });
     }

@@ -31,6 +31,7 @@ import ly.count.android.sdk.RCDownloadCallback;
 import ly.count.android.sdk.RemoteConfigCallback;
 import ly.count.android.sdk.FeedbackRatingCallback;
 import ly.count.android.sdk.ContentCallback;
+import ly.count.android.sdk.ContentUrlHandler;
 import ly.count.android.sdk.ContentStatus;
 import ly.count.android.sdk.WebViewDisplayOption;
 
@@ -51,6 +52,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Locale;
 
 //Push Plugin
 import android.os.Build;
@@ -101,7 +103,7 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
 
     public static final String NAME = "CountlyReactNative";
     public static final String TAG = "CountlyRNPlugin";
-    private String COUNTLY_RN_SDK_VERSION_STRING = "26.1.0";
+    private String COUNTLY_RN_SDK_VERSION_STRING = "26.8.0";
     private String COUNTLY_RN_SDK_NAME = "js-rnb-android";
 
     private static CountlyConfig config = new CountlyConfig();
@@ -483,6 +485,38 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
                     config.setWebviewDisplayOption(WebViewDisplayOption.IMMERSIVE);
                 }
             }
+            if (_config.has("contentUrlHandler") && _config.getBoolean("contentUrlHandler")) {
+                // Decided here rather than in JavaScript, which can not answer a synchronous handler.
+                final List<String> urlPrefixes = new ArrayList<>();
+                if (_config.has("contentUrlPrefixes")) {
+                    JSONArray prefixes = _config.getJSONArray("contentUrlPrefixes");
+                    for (int i = 0; i < prefixes.length(); i++) {
+                        urlPrefixes.add(prefixes.getString(i).toLowerCase(Locale.ROOT));
+                    }
+                }
+                config.content.setContentUrlHandler(new ContentUrlHandler() {
+                    @Override
+                    public boolean onContentUrl(String url) {
+                        if (!urlPrefixes.isEmpty() && !hasAnyPrefix(url.toLowerCase(Locale.ROOT), urlPrefixes)) {
+                            return false;
+                        }
+                        JSONObject urlData = new JSONObject();
+                        try {
+                            urlData.put("url", url);
+                        } catch (JSONException e) {
+                            log("onContentUrl, JSON exception: ", e, LogLevel.ERROR);
+                            return false;
+                        }
+                        ((ReactApplicationContext) _reactContext)
+                            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                            .emit("contentUrlHandler", urlData.toString());
+                        return true;
+                    }
+                });
+            }
+            if (_config.has("metricOverride")) {
+                config.setMetricOverride(toMapString(_config.getJSONObject("metricOverride")));
+            }
             // Limits -----------------------------------------------
             if(_config.has("maxKeyLength")) {
                 config.sdkInternalLimits.setMaxKeyLength(_config.getInt("maxKeyLength"));
@@ -501,6 +535,9 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
             }
             if(_config.has("maxStackTraceLineLength")) {
                 config.sdkInternalLimits.setMaxStackTraceLineLength(_config.getInt("maxStackTraceLineLength"));
+            }
+            if(_config.has("maxValueSizePicture")) {
+                config.sdkInternalLimits.setMaxValueSizePicture(_config.getInt("maxValueSizePicture"));
             }
             // Limits End -------------------------------------------
             if (_config.has("crashReporting")) {
@@ -631,6 +668,12 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
             if (_config.has("disableViewRestartForManualRecording") && _config.getBoolean("disableViewRestartForManualRecording")) {
                 config.disableViewRestartForManualRecording();
             }
+            if (_config.has("clearStoredDeviceId") && _config.getBoolean("clearStoredDeviceId")) {
+                config.enableClearStoredDeviceId();
+            }
+            if (_config.has("trackOrientationChanges")) {
+                config.setTrackOrientationChanges(_config.getBoolean("trackOrientationChanges"));
+            }
             if (_config.has("sdkBehaviorSettings")) {
                 JSONObject sdkBehaviorSettings = _config.getJSONObject("sdkBehaviorSettings");
                 String sdkBehaviorSettingsString = sdkBehaviorSettings.toString();
@@ -666,6 +709,22 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         } catch (IllegalArgumentException e) {
             log("setHexNotificationAccentColor: invalid HEX color value: " + hex + " Error: " + e, LogLevel.ERROR);
         }
+    }
+
+    /**
+     * Whether a URL starts with one of the given prefixes, both already lower cased.
+     *
+     * @param url the URL a content web view is opening
+     * @param prefixes the beginnings of the URLs the application handles itself
+     * @return true when one of the prefixes matches
+     */
+    private static boolean hasAnyPrefix(String url, List<String> prefixes) {
+        for (String prefix : prefixes) {
+            if (url.startsWith(prefix)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static Map<String, String> toMapString(JSONObject jsonobj) {

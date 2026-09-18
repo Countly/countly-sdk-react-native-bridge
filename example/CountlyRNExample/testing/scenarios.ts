@@ -698,6 +698,82 @@ function createMetricsScenario() {
     } satisfies IntegrationScenario;
 }
 
+function createMetricOverrideScenario() {
+    return {
+        id: "metric-override-payload",
+        title: "Metric Override Payload",
+        description: "Initializes with overridden device metrics and verifies that the metrics the SDK reports carry the overridden values instead of the detected ones.",
+        async run() {
+            await haltBridgeForScenario();
+
+            const overriddenDevice = "IntegrationDevice";
+            const config = createCountlyConfig()
+                .disableSDKBehaviorSettingsUpdates()
+                .setMetricOverride({ _device: overriddenDevice, _app_version: "9.9.9" });
+
+            const baselineQueue = await getStableRequestQueue();
+            await Countly.initWithConfig(config);
+
+            const finalQueue = await waitForRequestGrowth(baselineQueue, 1);
+            const appendedRequests = takeAppendedEntries(baselineQueue, finalQueue);
+            const metricsRequest = findLastRequestWithField(appendedRequests, "metrics");
+            const metricsPayload = safeParseJson(metricsRequest?.params.metrics || "");
+
+            assertCondition(metricsRequest !== null, "Expected init to send a request carrying metrics, but none was appended.");
+            assertCondition(metricsPayload?._device === overriddenDevice, `Expected the overridden device metric '${overriddenDevice}', received '${metricsPayload?._device || ""}'.`);
+            assertCondition(metricsPayload?._app_version === "9.9.9", `Expected the overridden app version '9.9.9', received '${metricsPayload?._app_version || ""}'.`);
+
+            return {
+                summary: "The reported metrics carry the overridden values.",
+                details: [
+                    `Appended requests: ${appendedRequests.length}`,
+                    `Metrics request: ${metricsRequest?.entry || ""}`,
+                ],
+            };
+        },
+    } satisfies IntegrationScenario;
+}
+
+function createClearStoredDeviceIdScenario() {
+    return {
+        id: "clear-stored-device-id",
+        title: "Clear Stored Device ID Resolution",
+        description: "Checks which device ID wins when the stored one is cleared at init: a provided ID, then temporary ID mode, then a generated one.",
+        async run() {
+            // A stored ID can not be seeded from here, so this checks the resolution order instead.
+            await haltBridgeForScenario();
+
+            await Countly.initWithConfig(createCountlyConfig().disableSDKBehaviorSettingsUpdates().enableClearStoredDeviceId());
+            const generatedID = await Countly.deviceId.getID();
+            const generatedType = await Countly.deviceId.getType();
+
+            await haltBridgeForScenario();
+            await Countly.initWithConfig(createCountlyConfig().disableSDKBehaviorSettingsUpdates().enableClearStoredDeviceId().setDeviceID("provided_id"));
+            const providedID = await Countly.deviceId.getID();
+            const providedType = await Countly.deviceId.getType();
+
+            await haltBridgeForScenario();
+            await Countly.initWithConfig(createCountlyConfig().disableSDKBehaviorSettingsUpdates().enableClearStoredDeviceId().setDeviceID(Countly.TemporaryDeviceIDString));
+            const temporaryType = await Countly.deviceId.getType();
+
+            assertCondition(typeof generatedID === "string" && generatedID.length > 0, "Expected the SDK to generate a device ID when the stored one is cleared.");
+            assertCondition(generatedType === "SDK_GENERATED", `Expected a generated device ID type, received '${generatedType || ""}'.`);
+            assertCondition(providedID === "provided_id", `Expected the provided device ID to win, received '${providedID || ""}'.`);
+            assertCondition(providedType === "DEVELOPER_SUPPLIED", `Expected a developer supplied device ID type, received '${providedType || ""}'.`);
+            assertCondition(temporaryType === "TEMPORARY_ID", `Expected temporary ID mode to win, received '${temporaryType || ""}'.`);
+
+            return {
+                summary: "A provided ID and temporary ID mode both win over the cleared stored ID, which is otherwise generated.",
+                details: [
+                    `Generated ID: ${generatedID || ""}`,
+                    `Provided ID: ${providedID || ""}`,
+                    `Temporary ID type: ${temporaryType || ""}`,
+                ],
+            };
+        },
+    } satisfies IntegrationScenario;
+}
+
 function createServerConfigDirectScenario() {
     return {
         id: "server-config-direct-request",
@@ -773,6 +849,8 @@ const integrationScenarios = [
     createDeviceIdMergeScenario(),
     createUserDetailsScenario(),
     createMetricsScenario(),
+    createMetricOverrideScenario(),
+    createClearStoredDeviceIdScenario(),
     createServerConfigDirectScenario(),
     createRemoteConfigDirectScenario(),
 ];

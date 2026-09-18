@@ -21,7 +21,7 @@ public class CountlyReactNative: RCTEventEmitter {
 
     // MARK: - Identity
 
-    static let sdkVersion = "26.1.0"
+    static let sdkVersion = "26.8.0"
     static let sdkName = "js-rnb-ios"
 
     // MARK: - Event names
@@ -31,6 +31,7 @@ public class CountlyReactNative: RCTEventEmitter {
     static let ratingWidgetCallbackName = "ratingWidgetCallback"
     static let pushNotificationCallbackName = "pushNotificationCallback"
     static let contentCallbackName = "globalContentCallback"
+    static let contentUrlHandlerName = "contentUrlHandler"
 
     // MARK: - State
 
@@ -67,6 +68,7 @@ public class CountlyReactNative: RCTEventEmitter {
             Self.widgetShownCallbackName,
             Self.widgetClosedCallbackName,
             Self.contentCallbackName,
+            Self.contentUrlHandlerName,
         ]
     }
 
@@ -275,6 +277,9 @@ public class CountlyReactNative: RCTEventEmitter {
         if let maxStackTraceLinesPerThread = json["maxStackTraceLinesPerThread"] as? Int {
             config.sdkInternalLimits.maxStackTraceLinesPerThread = maxStackTraceLinesPerThread
         }
+        if let maxValueSizePicture = json["maxValueSizePicture"] as? Int {
+            config.sdkInternalLimits.maxValueSizePicture = maxValueSizePicture
+        }
         // Limits End -------------------------------------------
 
         if let zoneTimerInterval = json["setZoneTimerInterval"] as? Int {
@@ -290,6 +295,25 @@ public class CountlyReactNative: RCTEventEmitter {
 
         if let displayOption = json["webViewDisplayOption"] as? String {
             config.content.webViewDisplayOption = displayOption == "SAFE_AREA" ? .safeArea : .immersive
+        }
+
+        if let hasContentUrlHandler = json["contentUrlHandler"] as? Bool, hasContentUrlHandler {
+            // Decided here rather than in JavaScript, which can not answer a synchronous handler.
+            let urlPrefixes = (json["contentUrlPrefixes"] as? [String] ?? []).map { $0.lowercased() }
+            config.content.contentURLHandler = { url in
+                let link = url.absoluteString
+                if !urlPrefixes.isEmpty, !urlPrefixes.contains(where: { link.lowercased().hasPrefix($0) }) {
+                    return false
+                }
+                Self.emit(Self.contentUrlHandlerName, body: Self.toJSONString(["url": link]))
+                return true
+            }
+        }
+        if let overlayCornerRadius = json["overlayCornerRadius"] as? Double {
+            config.content.overlayCornerRadius = CGFloat(overlayCornerRadius)
+        }
+        if let showWidgetsWithinApp = json["showWidgetsWithinApp"] as? Bool, showWidgetsWithinApp {
+            config.content.showWidgetsWithinApp = true
         }
 
         // APM ------------------------------------------------
@@ -330,9 +354,7 @@ public class CountlyReactNative: RCTEventEmitter {
         #if !COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
         if let pushJson = json["pushNotification"] as? [String: Any] {
             config.sendPushTokenAlways = true
-            // The JavaScript layer sends the Android numbering, where "1" is
-            // development and "2" is ad hoc. Anything else is production, which the
-            // Swift SDK expresses by leaving the test mode unset.
+            // Production is the unset test mode, so only the two test modes are mapped.
             switch pushJson["tokenType"] as? String {
             case "1": config.pushTestMode = .development
             case "2": config.pushTestMode = .testFlightOrAdHoc
@@ -397,8 +419,18 @@ public class CountlyReactNative: RCTEventEmitter {
             config.disableViewRestartForManualRecording = Self.asBool(disableViewRestart)
         }
 
-        // The capture protocol has to sit on the session the SDK will use, so it is
-        // installed here rather than when capture is switched on.
+        if let clearStoredDeviceId = json["clearStoredDeviceId"] as? Bool, clearStoredDeviceId {
+            config.resetStoredDeviceID = true
+        }
+        if let trackOrientationChanges = json["trackOrientationChanges"] as? Bool {
+            config.enableOrientationTracking = trackOrientationChanges
+        }
+        if let metricOverride = json["metricOverride"] as? [String: Any] {
+            // Dropped per key, so one unusable value does not take the whole override down.
+            config.customMetrics = metricOverride.compactMapValues { $0 as? String }
+        }
+
+        // Installed here because it has to sit on the session the SDK will use.
         config.urlSessionConfiguration = CountlyRNRequestCapture.configuration(from: config.urlSessionConfiguration)
         CountlyRNRequestCapture.capturedHost = URLComponents(string: config.host)?.host
 
@@ -777,15 +809,13 @@ public class CountlyReactNative: RCTEventEmitter {
             guard let exceptionString = Self.asString(arguments.first) else { return }
 
             var segmentation = Self.keyValuePairs(from: arguments, startIndex: 2) ?? [:]
-            // The fatality flag rides along as segmentation, which is what the
-            // Objective-C bridge did and what the dashboard already shows.
+            // The flag rides along as segmentation, which is what the dashboard already shows.
             segmentation["nonfatal"] = arguments.count > 1 ? arguments[1] : true
 
             let exception = NSException(name: NSExceptionName("Exception"),
                                         reason: exceptionString,
                                         userInfo: nil)
-            // Always handled, the same as the Android bridge: the JavaScript layer's
-            // fatality argument has never chosen the crash type on either platform.
+            // Always handled: the fatality argument has never chosen the crash type here.
             Countly.shared.crashes.recordException(exception,
                                                    isFatal: false,
                                                    stackTrace: exceptionString.components(separatedBy: "\n"),
@@ -972,8 +1002,7 @@ public class CountlyReactNative: RCTEventEmitter {
         }
     }
 
-    // The bulk variants stage the same operations; the SDK sends them when the
-    // queue is flushed or `userDataBulk_save` is called.
+    // The bulk variants stage the same operations and are sent on a flush or an explicit save.
     @objc(userDataBulk_setProperty:resolver:rejecter:)
     func userDataBulkSetProperty(_ arguments: [Any],
                                  resolver resolve: @escaping RCTPromiseResolveBlock,
@@ -1280,10 +1309,7 @@ public class CountlyReactNative: RCTEventEmitter {
             let widgetVersion = arguments.count > 4 ? Self.asString(arguments[4]) : nil
 
             var widget = Self.feedbackWidget(widgetID)
-            // The JavaScript layer holds its own widget list, so a widget it asks for
-            // is not necessarily one this side fetched. Rebuilding it from what
-            // JavaScript sent is what lets the widget be presented at all, and the
-            // version matters because it decides how the widget renders.
+            // Rebuilt from what JavaScript sent, which holds a widget list this side may never have fetched.
             if widget == nil || (widgetVersion?.isEmpty == false && widget?.widgetVersion == nil) {
                 var description: [String: Any] = ["_id": widgetID]
                 if let widgetType { description["type"] = widgetType }
@@ -1329,24 +1355,34 @@ public class CountlyReactNative: RCTEventEmitter {
     @objc(presentRatingWidgetWithID:)
     func presentRatingWidgetWithID(_ arguments: [Any]) {
         Self.onMain {
-            guard let widgetID = Self.asString(arguments.first) else { return }
-            Countly.shared.feedback.presentRating(widgetID) { state in
-                Self.widgetStateCallback(state)
-                if state == .closed {
-                    // The Objective-C SDK reported a presentation failure through this
-                    // event; the Swift SDK reports the widget's state instead, so the
-                    // error slot stays empty.
-                    Self.emit(Self.ratingWidgetCallbackName, body: nil)
+            // Resolved by ID, because presentRating would fall back to the first rating widget.
+            guard let widgetID = Self.asString(arguments.first), !widgetID.isEmpty else {
+                Self.emit(Self.ratingWidgetCallbackName, body: "presentRatingWidgetWithID failed: no widget id given")
+                return
+            }
+
+            Countly.shared.feedback.getAvailableFeedbackWidgets { widgets, error in
+                guard error == nil,
+                      let widget = widgets?.first(where: { $0.id == widgetID && $0.type == .rating }) else {
+                    let reason = error.map { String(describing: $0) } ?? "no rating widget with the id [\(widgetID)]"
+                    Self.emit(Self.ratingWidgetCallbackName, body: "presentRatingWidgetWithID failed: " + reason)
+                    return
                 }
+
+                widget.present(callback: { state in
+                    Self.widgetStateCallback(state)
+                    if state == .appeared {
+                        // The error slot of the callback stays empty on a successful presentation.
+                        Self.emit(Self.ratingWidgetCallbackName, body: nil)
+                    }
+                })
             }
         }
     }
 
     @objc(showStarRating:callback:)
     func showStarRating(_ arguments: [Any], callback: @escaping RCTResponseSenderBlock) {
-        // The Swift SDK has no star rating dialog, so there is no rating to report
-        // and the callback is left uncalled rather than invented. Android is
-        // unaffected.
+        // No star rating dialog exists here, so the callback is left uncalled rather than invented.
         Self.log("showStarRating, the star rating dialog is not available on iOS, this call does nothing")
     }
 
@@ -1460,9 +1496,7 @@ public class CountlyReactNative: RCTEventEmitter {
 
     @objc(sendPushToken:)
     func sendPushToken(_ arguments: [Any]) {
-        // The SDK reports the token itself once the application hands it to
-        // `Countly.didRegisterForRemoteNotifications`. The Objective-C bridge built
-        // a token request here and never sent it, so nothing is lost by saying so.
+        // The SDK reports the token itself from `Countly.didRegisterForRemoteNotifications`.
         Self.log("sendPushToken, the SDK reports the push token itself, this call does nothing")
     }
 
