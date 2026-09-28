@@ -1,3 +1,6 @@
+## XX.XX.XX
+* !! Major breaking change !! Updated minimum supported platform versions to iOS 15.0, macOS 12.0, watchOS 9.0 and tvOS 15.0
+
 ## 26.1.0
 * Added a new `Countly.sessions` interface for manual session control:
   * `beginSession()`
