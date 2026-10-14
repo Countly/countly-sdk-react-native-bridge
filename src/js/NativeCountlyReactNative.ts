@@ -30,7 +30,6 @@ export interface Spec extends TurboModule {
     startEvent(args: Array<string>): void;
     cancelEvent(args: Array<string>): void;
     endEvent(args: UnsafeObject): void;
-    recordView(args: Array<SegmentationArg>): void;
     startAutoStoppedView(args: Array<SegmentationArg>): Promise<string | null>;
     startView(args: Array<SegmentationArg>): Promise<string | null>;
     stopViewWithName(args: Array<SegmentationArg>): void;
@@ -76,7 +75,6 @@ export interface Spec extends TurboModule {
     updateRemoteConfigForKeysOnly(args: Array<UnsafeObject>, callback: () => void): void;
     updateRemoteConfigExceptKeys(args: Array<UnsafeObject>, callback: () => void): void;
     getRemoteConfigValueForKey(args: Array<string>, callback: () => void): void;
-    getRemoteConfigValueForKeyP(keyName: string): Promise<UnsafeObject>;
     remoteConfigClearValues(): Promise<void>;
     showStarRating(args: Array<string>, callback: () => void): void;
     presentRatingWidgetWithID(args: Array<string>): void;

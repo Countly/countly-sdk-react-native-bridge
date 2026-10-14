@@ -1,3 +1,12 @@
+## XX.XX.XX
+* Removed the following deprecated functions, as the underlying SDKs no longer provide them. The remote config replacements return a promise instead of taking a callback:
+  * `Countly.recordView(...)`, use `Countly.views.startAutoStoppedView(viewName, segmentation)` instead
+  * `Countly.remoteConfigUpdate(...)`, use `Countly.remoteConfig.update()` instead
+  * `Countly.updateRemoteConfigForKeysOnly(...)`, use `Countly.remoteConfig.updateForKeysOnly(keyNames)` instead
+  * `Countly.updateRemoteConfigExceptKeys(...)`, use `Countly.remoteConfig.updateExceptKeys(keyNames)` instead
+  * `Countly.getRemoteConfigValueForKey(...)` and `Countly.getRemoteConfigValueForKeyP(...)`, use `Countly.remoteConfig.getValue(keyName)` instead
+  * `Countly.remoteConfigClearValues()`, use `Countly.remoteConfig.clearValues()` instead
+
 ## 26.1.0
 * Added a new `Countly.sessions` interface for manual session control:
   * `beginSession()`

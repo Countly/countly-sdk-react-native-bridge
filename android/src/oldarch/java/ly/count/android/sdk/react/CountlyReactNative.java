@@ -138,11 +138,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void recordView(ReadableArray args) {
-        this.impl.recordView(args);
-    }
-
-    @ReactMethod
     public void startAutoStoppedView(ReadableArray args, Promise promise) {
         this.impl.startAutoStoppedView(args, promise);
     }
@@ -370,11 +365,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void getRemoteConfigValueForKey(ReadableArray args, final Callback myCallback) {
         this.impl.getRemoteConfigValueForKey(args, myCallback);
-    }
-
-    @ReactMethod
-    public void getRemoteConfigValueForKeyP(String keyName, Promise promise) {
-        this.impl.getRemoteConfigValueForKeyP(keyName, promise);
     }
 
     @ReactMethod

@@ -28,7 +28,6 @@ import ly.count.android.sdk.DeviceIdType;
 import ly.count.android.sdk.ModuleLog;
 import ly.count.android.sdk.RCData;
 import ly.count.android.sdk.RCDownloadCallback;
-import ly.count.android.sdk.RemoteConfigCallback;
 import ly.count.android.sdk.FeedbackRatingCallback;
 import ly.count.android.sdk.ContentCallback;
 import ly.count.android.sdk.ContentStatus;
@@ -1181,13 +1180,6 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         Countly.sharedInstance().events().endEvent(eventName, segmentation, eventCount, eventSum);
     }
 
-    
-    public void recordView(ReadableArray args) {
-        String viewName = args.getString(0);
-        Map<String, Object> segmentation = convertReadableArrayToSegmentation(args, 1);
-        Countly.sharedInstance().views().startAutoStoppedView(viewName, segmentation);
-    }
-
     public void startAutoStoppedView(ReadableArray args, Promise promise) {
         String viewName = args.getString(0);
         Map<String, Object> segmentation = convertReadableArrayToSegmentation(args, 1);
@@ -1673,19 +1665,6 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
             String resultString = (keyValue.value).toString();
             log("getRemoteConfigValueForKey, [" + keyName + "]: " + resultString, LogLevel.DEBUG);
             myCallback.invoke(resultString);
-        }
-    }
-
-    
-    public void getRemoteConfigValueForKeyP(String keyName, Promise promise) {
-        RCData keyValue = Countly.sharedInstance().remoteConfig().getValue(keyName);
-        if (keyValue.value == null) {
-            log("getRemoteConfigValueForKeyP, [" + keyName + "]: ConfigKeyNotFound", LogLevel.DEBUG);
-            promise.resolve("ConfigKeyNotFound");
-        } else {
-            String resultString = (keyValue.value).toString();
-            log("getRemoteConfigValueForKeyP, [" + keyName + "]: " + resultString, LogLevel.DEBUG);
-            promise.resolve(resultString);
         }
     }
 

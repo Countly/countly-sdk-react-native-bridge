@@ -6,7 +6,6 @@ function createNativeModuleMock(overrides = {}) {
     return {
         init: jest.fn().mockResolvedValue(undefined),
         isInitialized: jest.fn().mockResolvedValue(false),
-        recordView: jest.fn(),
         disablePushNotifications: jest.fn(),
         sendPushToken: jest.fn(),
         askForNotificationPermission: jest.fn(),
@@ -54,7 +53,6 @@ function createNativeModuleMock(overrides = {}) {
         updateRemoteConfigForKeysOnly: jest.fn((_args, callback) => callback('ok')),
         updateRemoteConfigExceptKeys: jest.fn((_args, callback) => callback('ok')),
         getRemoteConfigValueForKey: jest.fn((_args, callback) => callback('{}')),
-        getRemoteConfigValueForKeyP: jest.fn().mockResolvedValue('{}'),
         remoteConfigClearValues: jest.fn().mockResolvedValue(true),
         getFeedbackWidgets: jest.fn().mockResolvedValue([]),
         getFeedbackWidgetData: jest.fn().mockResolvedValue({}),
@@ -261,17 +259,15 @@ test('initWithConfig installs the JS crash handler when crash reporting is enabl
     delete global.ErrorUtils;
 });
 
-test('recordView and event APIs preserve request payload shape', async () => {
+test('event APIs preserve request payload shape', async () => {
     const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge();
 
     await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
 
-    Countly.recordView('Home', { region: 'eu', premium: true, visits: 3 });
     Countly.events.recordEvent('purchase', { sku: 'sku-1', qty: 2 }, 4, 19.99);
     Countly.events.startEvent('checkout');
     Countly.events.endEvent('checkout', { step: 'payment' }, 1, 0);
 
-    expect(nativeModule.recordView).toHaveBeenCalledWith(['Home', 'region', 'eu', 'premium', true, 'visits', 3]);
     expect(nativeModule.recordEvent).toHaveBeenCalledWith({
         n: 'purchase',
         c: 4,
@@ -583,27 +579,6 @@ test('feedback.showNPS selects the matching widget and removes the close listene
     expect(closedListener.subscription.remove).toHaveBeenCalledTimes(1);
 });
 
-test('remote config key filters forward their arrays and callback results', async () => {
-    const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge({
-        nativeOverrides: {
-            updateRemoteConfigForKeysOnly: jest.fn((args, callback) => callback(`only:${args.join(',')}`)),
-            updateRemoteConfigExceptKeys: jest.fn((args, callback) => callback(`except:${args.join(',')}`)),
-        },
-    });
-    const onlyCallback = jest.fn();
-    const exceptCallback = jest.fn();
-
-    await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
-
-    Countly.updateRemoteConfigForKeysOnly(['theme', 'banner'], onlyCallback);
-    Countly.updateRemoteConfigExceptKeys(['secret'], exceptCallback);
-
-    expect(nativeModule.updateRemoteConfigForKeysOnly).toHaveBeenCalledWith(['theme', 'banner'], expect.any(Function));
-    expect(nativeModule.updateRemoteConfigExceptKeys).toHaveBeenCalledWith(['secret'], expect.any(Function));
-    expect(onlyCallback).toHaveBeenCalledWith('only:theme,banner');
-    expect(exceptCallback).toHaveBeenCalledWith('except:secret');
-});
-
 test('remoteConfig.update methods await the native callback result', async () => {
     const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge({
         nativeOverrides: {
@@ -672,38 +647,18 @@ test('remoteConfig.clearValues resolves after clearing the native cache', async 
     expect(nativeModule.remoteConfigClearValues).toHaveBeenCalledTimes(1);
 });
 
-test('legacy remote config and rating widget helpers preserve callback behavior', async () => {
-    const remoteConfigUpdateCallback = jest.fn();
-    const keysOnlyCallback = jest.fn();
-    const exceptKeysCallback = jest.fn();
-    const getValueCallback = jest.fn();
+test('rating widget helper preserves callback behavior', async () => {
     const ratingWidgetCallback = jest.fn();
-    const { Countly, CountlyConfig, nativeModule, listeners, emit } = loadCountlyBridge({
-        platform: 'android',
-        nativeOverrides: {
-            remoteConfigUpdate: jest.fn((_args, callback) => callback('updated')),
-            updateRemoteConfigForKeysOnly: jest.fn((args, callback) => callback(`only:${args.join(',')}`)),
-            updateRemoteConfigExceptKeys: jest.fn((args, callback) => callback(`except:${args.join(',')}`)),
-            getRemoteConfigValueForKey: jest.fn((_args, callback) => callback('{"feature":true}')),
-        },
-    });
+    const { Countly, CountlyConfig, nativeModule, listeners, emit } = loadCountlyBridge({ platform: 'android' });
 
     await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
 
-    Countly.remoteConfigUpdate(remoteConfigUpdateCallback);
-    Countly.updateRemoteConfigForKeysOnly(['theme'], keysOnlyCallback);
-    Countly.updateRemoteConfigExceptKeys(['secret'], exceptKeysCallback);
-    Countly.getRemoteConfigValueForKey('feature', getValueCallback);
     Countly.presentRatingWidgetWithID('rating-1', 99, ratingWidgetCallback);
 
     emit('ratingWidgetCallback', 'closed');
 
     const ratingListener = listeners.find((listener) => listener.eventName === 'ratingWidgetCallback');
 
-    expect(remoteConfigUpdateCallback).toHaveBeenCalledWith('updated');
-    expect(keysOnlyCallback).toHaveBeenCalledWith('only:theme');
-    expect(exceptKeysCallback).toHaveBeenCalledWith('except:secret');
-    expect(getValueCallback).toHaveBeenCalledWith({ feature: true });
     expect(nativeModule.presentRatingWidgetWithID).toHaveBeenCalledWith(['rating-1', 'Done']);
     expect(ratingWidgetCallback).toHaveBeenCalledWith('closed');
     expect(ratingListener.subscription.remove).toHaveBeenCalledTimes(1);
@@ -726,33 +681,6 @@ test('remoteConfig.getValue returns null for invalid keys instead of throwing', 
 
     await expect(Countly.remoteConfig.getValue('')).resolves.toBeNull();
     expect(nativeModule.getRemoteConfigValueForKey).not.toHaveBeenCalled();
-});
-
-test('getRemoteConfigValueForKeyP returns ConfigKeyNotFound on android when the native promise rejects for a missing key', async () => {
-    const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge({
-        platform: 'android',
-        nativeOverrides: {
-            getRemoteConfigValueForKeyP: jest.fn().mockResolvedValue('ConfigKeyNotFound'),
-        },
-    });
-
-    await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
-
-    await expect(Countly.getRemoteConfigValueForKeyP('missing-key')).resolves.toBe('ConfigKeyNotFound');
-    expect(nativeModule.getRemoteConfigValueForKeyP).toHaveBeenCalledWith('missing-key');
-});
-
-test('getRemoteConfigValueForKeyP parses JSON payloads on android', async () => {
-    const { Countly, CountlyConfig } = loadCountlyBridge({
-        platform: 'android',
-        nativeOverrides: {
-            getRemoteConfigValueForKeyP: jest.fn().mockResolvedValue('{"enabled":true}'),
-        },
-    });
-
-    await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
-
-    await expect(Countly.getRemoteConfigValueForKeyP('feature-flag')).resolves.toEqual({ enabled: true });
 });
 
 test('test helpers expose native queues and halt resets JS bridge state for reinit', async () => {

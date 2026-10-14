@@ -413,10 +413,6 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
     if (startTSOverride) {
         [config.apm setAppStartTimestampOverride:[startTSOverride longLongValue]];
     }
-    // Legacy APM
-    if (json[@"enableApm"]) {
-        config.enablePerformanceMonitoring = YES;
-    }
     // APM END --------------------------------------------
     if (json[@"enablePreviousNameRecording"]) {
         config.experimental.enablePreviousNameRecording = YES;
@@ -456,15 +452,6 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
         CountlyPushNotifications.sharedInstance.pushTestMode = config.pushTestMode;
     }
 #endif
-
-    if (json[@"attributionID"]) {
-          NSString *attributionID = json[@"attributionID"];
-          if (CountlyCommon.sharedInstance.hasStarted) {
-              [Countly.sharedInstance recordAttributionID:attributionID];
-          } else {
-              config.attributionID = attributionID;
-          }
-    }
 
     if (json[@"locationCountryCode"]) {
         NSString *countryCode = json[@"locationCountryCode"];
@@ -590,14 +577,6 @@ RCT_EXPORT_METHOD(recordEvent : (NSDictionary *)arguments) {
             }
         }
         [[Countly sharedInstance] recordEvent:eventName segmentation:dict count:countInt sum:sumFloat];
-    });
-}
-
-RCT_EXPORT_METHOD(recordView : (NSArray *)arguments) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-            NSString *recordView = arguments.count > 0 ? [arguments objectAtIndex:0] : nil;
-            NSDictionary *dict = [self segmentationDictionaryFromArguments:arguments startIndex:1];
-            [[Countly.sharedInstance views] startAutoStoppedView:recordView segmentation:dict];
     });
 }
 
@@ -803,9 +782,9 @@ RCT_EXPORT_METHOD(changeDeviceId : (NSArray *)arguments) {
 
         NSString *onServerString = [arguments objectAtIndex:1];
         if ([onServerString isEqual:@"1"]) {
-            [Countly.sharedInstance setNewDeviceID:newDeviceID onServer:YES];
+            [Countly.sharedInstance changeDeviceIDWithMerge:newDeviceID];
         } else {
-            [Countly.sharedInstance setNewDeviceID:newDeviceID onServer:NO];
+            [Countly.sharedInstance changeDeviceIDWithoutMerge:newDeviceID];
         }
     });
 }
@@ -965,7 +944,7 @@ RCT_EXPORT_METHOD(logException : (NSArray *)arguments) {
 
       NSException *myException = [NSException exceptionWithName:@"Exception" reason:execption userInfo:dict];
 
-      [Countly.sharedInstance recordHandledException:myException withStackTrace:nsException];
+      [Countly.sharedInstance recordException:myException isFatal:NO stackTrace:nsException segmentation:nil];
     });
 }
 
@@ -1019,7 +998,7 @@ RCT_EXPORT_METHOD(logJSException : (NSString *)errTitle withMessage : (NSString 
     dispatch_async(dispatch_get_main_queue(), ^{
       NSException *myException = [NSException exceptionWithName:errTitle reason:message userInfo:@{@"nonfatal" : @"1"}];
       NSArray *stack = [stackTrace componentsSeparatedByString:@"\n"];
-      [Countly.sharedInstance recordHandledException:myException withStackTrace:stack];
+      [Countly.sharedInstance recordException:myException isFatal:NO stackTrace:stack segmentation:nil];
     });
 }
 
@@ -1280,7 +1259,7 @@ RCT_EXPORT_METHOD(removeConsent : (NSArray *)arguments) {
 RCT_EXPORT_METHOD(giveAllConsent) {
     dispatch_async(dispatch_get_main_queue(), ^{
       [Countly.sharedInstance giveConsentForFeature:CLYConsentLocation];
-      [Countly.sharedInstance giveConsentForAllFeatures];
+      [Countly.sharedInstance giveAllConsents];
     });
 }
 
@@ -1292,7 +1271,7 @@ RCT_EXPORT_METHOD(removeAllConsent) {
 
 RCT_EXPORT_METHOD(remoteConfigUpdate : (NSArray *)arguments callback : (RCTResponseSenderBlock)callback) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      [Countly.sharedInstance updateRemoteConfigWithCompletionHandler:^(NSError *error) {
+      [Countly.sharedInstance.remoteConfig downloadKeys:^(CLYRequestResult response, NSError *error, BOOL fullValueUpdate, NSDictionary<NSString *, CountlyRCData *> *downloadedValues) {
         if (!error) {
             NSArray *result = @[ @"Remote Config is updated and ready to use!" ];
             callback(@[ result ]);
@@ -1312,17 +1291,17 @@ RCT_EXPORT_METHOD(updateRemoteConfigForKeysOnly : (NSArray *)arguments callback 
           [randomSelection addObject:[arguments objectAtIndex:i]];
       }
       NSArray *keyNames = [randomSelection copy];
-      [Countly.sharedInstance updateRemoteConfigOnlyForKeys:keyNames
-                                          completionHandler:^(NSError *error) {
-                                            if (!error) {
-                                                NSArray *result = @[ @"Remote Config is updated only for given keys and ready to use!" ];
-                                                callback(@[ result ]);
-                                            } else {
-                                                NSString *returnString = [NSString stringWithFormat:@"There was an error while updating Remote Config: %@", error];
-                                                NSArray *result = @[ returnString ];
-                                                callback(@[ result ]);
-                                            }
-                                          }];
+      [Countly.sharedInstance.remoteConfig downloadSpecificKeys:keyNames
+                                              completionHandler:^(CLYRequestResult response, NSError *error, BOOL fullValueUpdate, NSDictionary<NSString *, CountlyRCData *> *downloadedValues) {
+                                                if (!error) {
+                                                    NSArray *result = @[ @"Remote Config is updated only for given keys and ready to use!" ];
+                                                    callback(@[ result ]);
+                                                } else {
+                                                    NSString *returnString = [NSString stringWithFormat:@"There was an error while updating Remote Config: %@", error];
+                                                    NSArray *result = @[ returnString ];
+                                                    callback(@[ result ]);
+                                                }
+                                              }];
     });
 }
 
@@ -1333,23 +1312,23 @@ RCT_EXPORT_METHOD(updateRemoteConfigExceptKeys : (NSArray *)arguments callback :
           [randomSelection addObject:[arguments objectAtIndex:i]];
       }
       NSArray *keyNames = [randomSelection copy];
-      [Countly.sharedInstance updateRemoteConfigExceptForKeys:keyNames
-                                            completionHandler:^(NSError *error) {
-                                              if (!error) {
-                                                  NSArray *result = @[ @"Remote Config is updated except for given keys and ready to use !" ];
-                                                  callback(@[ result ]);
-                                              } else {
-                                                  NSString *returnString = [NSString stringWithFormat:@"There was an error while updating Remote Config: %@", error];
-                                                  NSArray *result = @[ returnString ];
-                                                  callback(@[ result ]);
-                                              }
-                                            }];
+      [Countly.sharedInstance.remoteConfig downloadOmittingKeys:keyNames
+                                              completionHandler:^(CLYRequestResult response, NSError *error, BOOL fullValueUpdate, NSDictionary<NSString *, CountlyRCData *> *downloadedValues) {
+                                                if (!error) {
+                                                    NSArray *result = @[ @"Remote Config is updated except for given keys and ready to use !" ];
+                                                    callback(@[ result ]);
+                                                } else {
+                                                    NSString *returnString = [NSString stringWithFormat:@"There was an error while updating Remote Config: %@", error];
+                                                    NSArray *result = @[ returnString ];
+                                                    callback(@[ result ]);
+                                                }
+                                              }];
     });
 }
 
 RCT_EXPORT_METHOD(getRemoteConfigValueForKey : (NSArray *)arguments callback : (RCTResponseSenderBlock)callback) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      id value = [Countly.sharedInstance remoteConfigValueForKey:[arguments objectAtIndex:0]];
+      id value = [Countly.sharedInstance.remoteConfig getValue:[arguments objectAtIndex:0]].value;
       if (value) {
           callback(@[ value ]);
       } else {
