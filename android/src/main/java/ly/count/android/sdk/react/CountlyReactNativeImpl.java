@@ -440,12 +440,6 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
             if (_config.has("trackAppStartTime")) {
                 config.apm.enableAppStartTimeTracking();
             }
-            // Legacy APM
-            if (_config.has("enableApm")) {
-                if (_config.getBoolean("enableApm")) {
-                    config.apm.enableAppStartTimeTracking();
-                }
-            }
             // APM END --------------------------------------------
             if (_config.has("enablePreviousNameRecording")) {
                 config.experimental.enablePreviousNameRecording();
@@ -514,9 +508,6 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
                         setHexNotificationAccentColor(pushObject.getString("accentColor"));
                     }
                 }
-            }
-            if (_config.has("attributionID")) {
-                log("recordAttributionID: Not implemented for Android", LogLevel.DEBUG);
             }
             if (_config.has("disableAdditionalIntentRedirectionChecks")) {
                 useAdditionalIntentRedirectionChecks = false;
@@ -1099,13 +1090,12 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     public void logException(ReadableArray args) {
         String exceptionString = args.getString(0);
         Exception exception = new Exception(exceptionString);
+        boolean nonfatal = args.size() < 2 || args.getType(1) != ReadableType.Boolean || args.getBoolean(1);
 
-        if (args.size() == 2 ) {
-            Countly.sharedInstance().crashes().recordHandledException(exception);
-            return;
+        Map<String, Object> segmentationMap = null;
+        if (args.size() > 2) {
+            segmentationMap = new HashMap<>();
         }
-        
-        Map<String, Object> segmentationMap = new HashMap<>();
 
         // TODO: refactor this tandem to iOS in the future
         // starting from index 2 because we are skipping the exceptionString and the fatality
@@ -1119,13 +1109,22 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
             }
         }
 
-        Countly.sharedInstance().crashes().recordHandledException(exception, segmentationMap);
+        if (nonfatal) {
+            Countly.sharedInstance().crashes().recordHandledException(exception, segmentationMap);
+        } else {
+            Countly.sharedInstance().crashes().recordUnhandledException(exception, segmentationMap);
+        }
     }
 
-    
-    public void logJSException(String err, String message, String stack) {
+
+    public void logJSException(String err, String message, String stack, boolean isFatal) {
         Countly.sharedInstance().crashes().addCrashBreadcrumb(stack);
-        Countly.sharedInstance().crashes().recordHandledException(new CountlyReactException(err, message, stack));
+        CountlyReactException exception = new CountlyReactException(err, message, stack);
+        if (isFatal) {
+            Countly.sharedInstance().crashes().recordUnhandledException(exception);
+        } else {
+            Countly.sharedInstance().crashes().recordHandledException(exception);
+        }
     }
 
     
@@ -1601,60 +1600,54 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         Countly.sharedInstance().consent().removeConsentAll();
     }
 
-    
-    public void remoteConfigUpdate(ReadableArray args, final Callback myCallback) {
-        Countly.sharedInstance().remoteConfig().downloadAllKeys(new RCDownloadCallback() {
+    /**
+     * Builds a remote config download callback that reports the outcome to a JS callback.
+     *
+     * @param successMessage message reported when the download succeeds
+     * @param callback JS callback that receives the success or error message
+     * @return callback for the remote config download calls
+     */
+    private RCDownloadCallback remoteConfigDownloadCallback(final String successMessage, final Callback callback) {
+        return new RCDownloadCallback() {
             @Override public void callback(RequestResult downloadResult, String error, boolean fullValueUpdate, Map<String, RCData> downloadedValues) {
-                String resultString = "";
-                if (error == null) {
-                    resultString = "Remote Config is updated and ready to use!";
-                } else {
-                    resultString = "There was an error while updating Remote Config: " + error;
+                if (downloadResult == RequestResult.Success) {
+                    callback.invoke(successMessage);
+                    return;
                 }
-                myCallback.invoke(resultString);
+
+                String reason = error;
+                if (reason == null) {
+                    boolean hasConsent = Countly.sharedInstance().consent().getConsent(Countly.CountlyFeatureNames.remoteConfig);
+                    reason = hasConsent ? "the download did not succeed" : "remote config consent is not given";
+                }
+                callback.invoke("There was an error while updating Remote Config: " + reason);
             }
-        });
+        };
     }
 
-    
+    public void remoteConfigUpdate(ReadableArray args, final Callback myCallback) {
+        Countly.sharedInstance().remoteConfig().downloadAllKeys(remoteConfigDownloadCallback("Remote Config is updated and ready to use!", myCallback));
+    }
+
+
     public void updateRemoteConfigForKeysOnly(ReadableArray args, final Callback myCallback) {
         String[] newArray = new String[args.size()];
         for (int cnt = 0; cnt < args.size(); cnt++) {
             newArray[cnt] = args.getString(cnt);
         }
-        Countly.sharedInstance().remoteConfig().downloadSpecificKeys(newArray, new RCDownloadCallback() {
-            @Override public void callback(RequestResult downloadResult, String error, boolean fullValueUpdate, Map<String, RCData> downloadedValues) {
-                String resultString = "";
-                if (error == null) {
-                    resultString = "Remote Config is updated only for given keys and ready to use!";
-                } else {
-                    resultString = "There was an error while updating Remote Config: " + error;
-                }
-                myCallback.invoke(resultString);
-            }
-        });
+        Countly.sharedInstance().remoteConfig().downloadSpecificKeys(newArray, remoteConfigDownloadCallback("Remote Config is updated only for given keys and ready to use!", myCallback));
     }
 
-    
+
     public void updateRemoteConfigExceptKeys(ReadableArray args, final Callback myCallback) {
         String[] newArray = new String[args.size()];
         for (int cnt = 0; cnt < args.size(); cnt++) {
             newArray[cnt] = args.getString(cnt);
         }
-        Countly.sharedInstance().remoteConfig().downloadOmittingKeys(newArray, new RCDownloadCallback() {
-            @Override public void callback(RequestResult downloadResult, String error, boolean fullValueUpdate, Map<String, RCData> downloadedValues) {
-                String resultString = "";
-                if (error == null) {
-                    resultString = "Remote Config is updated except for given keys and ready to use !";
-                } else {
-                    resultString = "There was an error while updating Remote Config: " + error;
-                }
-                myCallback.invoke(resultString);
-            }
-        });
+        Countly.sharedInstance().remoteConfig().downloadOmittingKeys(newArray, remoteConfigDownloadCallback("Remote Config is updated except for given keys and ready to use !", myCallback));
     }
 
-    
+
     public void getRemoteConfigValueForKey(ReadableArray args, final Callback myCallback) {
         String keyName = args.getString(0);
         RCData keyValue = Countly.sharedInstance().remoteConfig().getValue(keyName);
@@ -1662,7 +1655,8 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
             log("getRemoteConfigValueForKey, [" + keyName + "]: ConfigKeyNotFound", LogLevel.DEBUG);
             myCallback.invoke("ConfigKeyNotFound");
         } else {
-            String resultString = (keyValue.value).toString();
+            // Sent as JSON text so the JS side restores the value with the server's type.
+            String resultString = keyValue.value instanceof String ? JSONObject.quote((String) keyValue.value) : keyValue.value.toString();
             log("getRemoteConfigValueForKey, [" + keyName + "]: " + resultString, LogLevel.DEBUG);
             myCallback.invoke(resultString);
         }

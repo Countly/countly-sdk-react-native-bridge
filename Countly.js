@@ -108,7 +108,7 @@ function installJsCrashReportingHandler() {
             stackArr = stackArr.join("\n");
         }
 
-        CountlyNativeModule.logJSException(errorTitle, error.message.trim(), stackArr);
+        CountlyNativeModule.logJSException(errorTitle, error.message.trim(), stackArr, isFatal === true);
 
         if (previousHandler) {
             previousHandler(error, isFatal);
@@ -362,7 +362,7 @@ Countly.recordMetrics = function (metricsOverride = {}) {
  * Log exception for Countly
  *
  * @param {string} exception exception
- * @param {boolean} nonfatal nonfatal
+ * @param {boolean} nonfatal false records the exception as a fatal crash, anything else as non-fatal
  * @param {object} segments segments
  * @return {string | void} error message or void
  */
@@ -380,7 +380,7 @@ Countly.logException = function (exception, nonfatal, segments) {
     }
     const args = [];
     args.push(exceptionString || "");
-    args.push(nonfatal || false);
+    args.push(nonfatal !== false);
     for (const key in segments) {
         args.push(key);
         args.push(segments[key].toString());

@@ -6,9 +6,12 @@
 #import "Countly.h"
 
 #import "CountlyCommon.h"
+#import "CountlyConsentManager.h"
+#import "CountlyDeviceInfo.h"
 #import "CountlyPersistency.h"
 #import "CountlyPushNotifications.h"
 #import "CountlyReactNative.h"
+#import "CountlyServerConfig.h"
 
 #ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
 #import "CountlyRNPushNotifications.h"
@@ -453,7 +456,7 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
     }
 #endif
 
-    if (json[@"locationCountryCode"]) {
+    if (json[@"locationCountryCode"] || json[@"locationCity"] || json[@"locationGpsCoordinates"] || json[@"locationIpAddress"]) {
         NSString *countryCode = json[@"locationCountryCode"];
         NSString *city = json[@"locationCity"];
         NSString *locationString = json[@"locationGpsCoordinates"];
@@ -932,7 +935,8 @@ RCT_EXPORT_METHOD(setCustomCrashSegments : (NSArray *)arguments) {
 RCT_EXPORT_METHOD(logException : (NSArray *)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^{
       NSString *execption = [arguments objectAtIndex:0];
-      NSString *nonfatal = [arguments objectAtIndex:1];
+      id nonfatal = [arguments objectAtIndex:1];
+      BOOL isFatal = [nonfatal respondsToSelector:@selector(boolValue)] && ![nonfatal boolValue];
       NSArray *nsException = [execption componentsSeparatedByString:@"\n"];
 
       NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
@@ -944,7 +948,7 @@ RCT_EXPORT_METHOD(logException : (NSArray *)arguments) {
 
       NSException *myException = [NSException exceptionWithName:@"Exception" reason:execption userInfo:dict];
 
-      [Countly.sharedInstance recordException:myException isFatal:NO stackTrace:nsException segmentation:nil];
+      [Countly.sharedInstance recordException:myException isFatal:isFatal stackTrace:nsException segmentation:nil];
     });
 }
 
@@ -994,11 +998,11 @@ RCT_EXPORT_METHOD(addCustomNetworkRequestHeaders : (NSArray *)arguments) {
         });
 }
 
-RCT_EXPORT_METHOD(logJSException : (NSString *)errTitle withMessage : (NSString *)message withStack : (NSString *)stackTrace) {
+RCT_EXPORT_METHOD(logJSException : (NSString *)errTitle withMessage : (NSString *)message withStack : (NSString *)stackTrace isFatal : (BOOL)isFatal) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      NSException *myException = [NSException exceptionWithName:errTitle reason:message userInfo:@{@"nonfatal" : @"1"}];
+      NSException *myException = [NSException exceptionWithName:errTitle reason:message userInfo:@{@"nonfatal" : isFatal ? @"0" : @"1"}];
       NSArray *stack = [stackTrace componentsSeparatedByString:@"\n"];
-      [Countly.sharedInstance recordException:myException isFatal:NO stackTrace:stack segmentation:nil];
+      [Countly.sharedInstance recordException:myException isFatal:isFatal stackTrace:stack segmentation:nil];
     });
 }
 
@@ -1258,7 +1262,6 @@ RCT_EXPORT_METHOD(removeConsent : (NSArray *)arguments) {
 
 RCT_EXPORT_METHOD(giveAllConsent) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      [Countly.sharedInstance giveConsentForFeature:CLYConsentLocation];
       [Countly.sharedInstance giveAllConsents];
     });
 }
@@ -1269,60 +1272,68 @@ RCT_EXPORT_METHOD(removeAllConsent) {
     });
 }
 
+/**
+ * Builds a remote config download completion that reports the outcome to a JS callback.
+ *
+ * @param successMessage message reported when the download succeeds
+ * @param callback JS callback that receives the success or error message
+ * @return completion handler for the remote config download calls
+ */
+- (RCDownloadCallback)remoteConfigDownloadCallback:(NSString *)successMessage callback:(RCTResponseSenderBlock)callback {
+    return ^(CLYRequestResult response, NSError *error, BOOL fullValueUpdate, NSDictionary<NSString *, CountlyRCData *> *downloadedValues) {
+      NSString *message = error ? [NSString stringWithFormat:@"There was an error while updating Remote Config: %@", error.localizedDescription] : successMessage;
+      callback(@[ message ]);
+    };
+}
+
+/**
+ * Answers a remote config download with an error when the iOS SDK would skip it without calling back.
+ *
+ * @param completion completion handler of the download
+ * @return YES when the download was answered here and must not be started
+ */
+- (BOOL)rejectRemoteConfigDownloadIfUnavailable:(RCDownloadCallback)completion {
+    NSString *reason = nil;
+    if (!CountlyConsentManager.sharedInstance.consentForRemoteConfig) {
+        reason = @"remote config consent is not given";
+    } else if (CountlyDeviceInfo.sharedInstance.isDeviceIDTemporary) {
+        reason = @"remote config is not available in temporary device ID mode";
+    } else if (!CountlyServerConfig.sharedInstance.networkingEnabled) {
+        reason = @"SDK networking is disabled by SDK behavior settings";
+    }
+
+    if (!reason) {
+        return NO;
+    }
+    NSError *error = [NSError errorWithDomain:@"CountlyReactNative" code:0 userInfo:@{NSLocalizedDescriptionKey : reason}];
+    completion(CLYResponseError, error, NO, @{});
+    return YES;
+}
+
 RCT_EXPORT_METHOD(remoteConfigUpdate : (NSArray *)arguments callback : (RCTResponseSenderBlock)callback) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      [Countly.sharedInstance.remoteConfig downloadKeys:^(CLYRequestResult response, NSError *error, BOOL fullValueUpdate, NSDictionary<NSString *, CountlyRCData *> *downloadedValues) {
-        if (!error) {
-            NSArray *result = @[ @"Remote Config is updated and ready to use!" ];
-            callback(@[ result ]);
-        } else {
-            NSString *returnString = [NSString stringWithFormat:@"There was an error while updating Remote Config: %@", error];
-            NSArray *result = @[ returnString ];
-            callback(@[ result ]);
-        }
-      }];
+      RCDownloadCallback completion = [self remoteConfigDownloadCallback:@"Remote Config is updated and ready to use!" callback:callback];
+      if (![self rejectRemoteConfigDownloadIfUnavailable:completion]) {
+          [Countly.sharedInstance.remoteConfig downloadKeys:completion];
+      }
     });
 }
 
 RCT_EXPORT_METHOD(updateRemoteConfigForKeysOnly : (NSArray *)arguments callback : (RCTResponseSenderBlock)callback) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      NSMutableArray *randomSelection = [[NSMutableArray alloc] init];
-      for (int i = 0; i < (int)arguments.count; i++) {
-          [randomSelection addObject:[arguments objectAtIndex:i]];
+      RCDownloadCallback completion = [self remoteConfigDownloadCallback:@"Remote Config is updated only for given keys and ready to use!" callback:callback];
+      if (![self rejectRemoteConfigDownloadIfUnavailable:completion]) {
+          [Countly.sharedInstance.remoteConfig downloadSpecificKeys:arguments completionHandler:completion];
       }
-      NSArray *keyNames = [randomSelection copy];
-      [Countly.sharedInstance.remoteConfig downloadSpecificKeys:keyNames
-                                              completionHandler:^(CLYRequestResult response, NSError *error, BOOL fullValueUpdate, NSDictionary<NSString *, CountlyRCData *> *downloadedValues) {
-                                                if (!error) {
-                                                    NSArray *result = @[ @"Remote Config is updated only for given keys and ready to use!" ];
-                                                    callback(@[ result ]);
-                                                } else {
-                                                    NSString *returnString = [NSString stringWithFormat:@"There was an error while updating Remote Config: %@", error];
-                                                    NSArray *result = @[ returnString ];
-                                                    callback(@[ result ]);
-                                                }
-                                              }];
     });
 }
 
 RCT_EXPORT_METHOD(updateRemoteConfigExceptKeys : (NSArray *)arguments callback : (RCTResponseSenderBlock)callback) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      NSMutableArray *randomSelection = [[NSMutableArray alloc] init];
-      for (int i = 0; i < (int)arguments.count; i++) {
-          [randomSelection addObject:[arguments objectAtIndex:i]];
+      RCDownloadCallback completion = [self remoteConfigDownloadCallback:@"Remote Config is updated except for given keys and ready to use !" callback:callback];
+      if (![self rejectRemoteConfigDownloadIfUnavailable:completion]) {
+          [Countly.sharedInstance.remoteConfig downloadOmittingKeys:arguments completionHandler:completion];
       }
-      NSArray *keyNames = [randomSelection copy];
-      [Countly.sharedInstance.remoteConfig downloadOmittingKeys:keyNames
-                                              completionHandler:^(CLYRequestResult response, NSError *error, BOOL fullValueUpdate, NSDictionary<NSString *, CountlyRCData *> *downloadedValues) {
-                                                if (!error) {
-                                                    NSArray *result = @[ @"Remote Config is updated except for given keys and ready to use !" ];
-                                                    callback(@[ result ]);
-                                                } else {
-                                                    NSString *returnString = [NSString stringWithFormat:@"There was an error while updating Remote Config: %@", error];
-                                                    NSArray *result = @[ returnString ];
-                                                    callback(@[ result ]);
-                                                }
-                                              }];
     });
 }
 

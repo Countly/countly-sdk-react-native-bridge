@@ -5,6 +5,18 @@ import * as Validate from "./Validators.js";
 
 const REMOTE_CONFIG_KEY_NOT_FOUND = "ConfigKeyNotFound";
 const REMOTE_CONFIG_UPDATE_ERROR_PREFIX = "There was an error while updating Remote Config:";
+const KEY_NAMES_TYPE_ERROR = "keyNames must be an array of strings";
+const NO_KEYS_ERROR = "No valid keys provided";
+
+/**
+ * Builds the result of a remote config update that downloaded no values.
+ *
+ * @param {string} error - why no values were downloaded
+ * @returns {{success: boolean, error: string}} the failed update result
+ */
+function failedUpdate(error) {
+    return { success: false, error: error };
+}
 
 function parseRemoteConfigValue(rawValue) {
     if (rawValue == null || rawValue === REMOTE_CONFIG_KEY_NOT_FOUND) {
@@ -45,15 +57,16 @@ class RemoteConfig {
      * Replaces all stored Remote Config values with new values from server.
      * Logs any failures and returns without throwing.
      *
-     * @returns {Promise<void>}
+     * @returns {Promise<{success: boolean, error: string | null}>} whether new values were downloaded, and why not
      */
     async update() {
-        if (!this.#ensureInitialized("update")) {
-            return;
+        const initializationError = this.#initializationError("update");
+        if (initializationError) {
+            return failedUpdate(initializationError);
         }
 
         L.d("remoteConfig.update, Updating remote config");
-        await this.#runUpdate("remoteConfigUpdate", []);
+        return this.#runUpdate("remoteConfigUpdate", []);
     }
 
     /**
@@ -61,25 +74,26 @@ class RemoteConfig {
      * Invalid keys are skipped, and failures are only logged.
      *
      * @param {string[]} keyNames - Keys to update.
-     * @returns {Promise<void>}
+     * @returns {Promise<{success: boolean, error: string | null}>} whether new values were downloaded, and why not
      */
     async updateForKeysOnly(keyNames) {
-        if (!this.#ensureInitialized("updateForKeysOnly")) {
-            return;
+        const initializationError = this.#initializationError("updateForKeysOnly");
+        if (initializationError) {
+            return failedUpdate(initializationError);
         }
 
         const normalizedKeyNames = this.#normalizeKeyNames(keyNames, "updateForKeysOnly");
         if (normalizedKeyNames == null) {
-            return;
+            return failedUpdate(KEY_NAMES_TYPE_ERROR);
         }
 
         if (normalizedKeyNames.length === 0) {
             L.d("remoteConfig.updateForKeysOnly, No keys provided. Skipping remote config update.");
-            return;
+            return failedUpdate(NO_KEYS_ERROR);
         }
 
         L.d(`remoteConfig.updateForKeysOnly, Updating remote config for keys: [${normalizedKeyNames}]`);
-        await this.#runUpdate("updateRemoteConfigForKeysOnly", normalizedKeyNames);
+        return this.#runUpdate("updateRemoteConfigForKeysOnly", normalizedKeyNames);
     }
 
     /**
@@ -87,25 +101,26 @@ class RemoteConfig {
      * Invalid keys are skipped, and failures are only logged.
      *
      * @param {string[]} keyNames - Keys to exclude from the update.
-     * @returns {Promise<void>}
+     * @returns {Promise<{success: boolean, error: string | null}>} whether new values were downloaded, and why not
      */
     async updateExceptKeys(keyNames) {
-        if (!this.#ensureInitialized("updateExceptKeys")) {
-            return;
+        const initializationError = this.#initializationError("updateExceptKeys");
+        if (initializationError) {
+            return failedUpdate(initializationError);
         }
 
         const normalizedKeyNames = this.#normalizeKeyNames(keyNames, "updateExceptKeys");
         if (normalizedKeyNames == null) {
-            return;
+            return failedUpdate(KEY_NAMES_TYPE_ERROR);
         }
 
         if (normalizedKeyNames.length === 0) {
             L.d("remoteConfig.updateExceptKeys, No keys provided. Skipping remote config update.");
-            return;
+            return failedUpdate(NO_KEYS_ERROR);
         }
 
         L.d(`remoteConfig.updateExceptKeys, Updating remote config except keys: [${normalizedKeyNames}]`);
-        await this.#runUpdate("updateRemoteConfigExceptKeys", normalizedKeyNames);
+        return this.#runUpdate("updateRemoteConfigExceptKeys", normalizedKeyNames);
     }
 
     /**
@@ -116,7 +131,7 @@ class RemoteConfig {
      * @returns {Promise<any | null>}
      */
     async getValue(keyName) {
-        if (!this.#ensureInitialized("getValue")) {
+        if (this.#initializationError("getValue")) {
             return null;
         }
 
@@ -148,7 +163,7 @@ class RemoteConfig {
      * @returns {Promise<void>}
      */
     async clearValues() {
-        if (!this.#ensureInitialized("clearValues")) {
+        if (this.#initializationError("clearValues")) {
             return;
         }
 
@@ -160,20 +175,25 @@ class RemoteConfig {
         }
     }
 
-    #ensureInitialized(functionName) {
+    /**
+     * Logs and returns the error for a call made before init.
+     *
+     * @param {string} functionName - name of the called function
+     * @returns {string | null} the error message, or null when the SDK is initialized
+     */
+    #initializationError(functionName) {
         if (!this.#state.isInitialized) {
             const message = `'init' must be called before 'Countly.remoteConfig.${functionName}'`;
             L.e(`remoteConfig.${functionName}, ${message}`);
-            return false;
+            return message;
         }
 
-        return true;
+        return null;
     }
 
     #normalizeKeyNames(keyNames, functionName) {
         if (!Array.isArray(keyNames)) {
-            const message = "keyNames must be an array of strings";
-            L.e(`remoteConfig.${functionName}, ${message}`);
+            L.e(`remoteConfig.${functionName}, ${KEY_NAMES_TYPE_ERROR}`);
             return null;
         }
 
@@ -202,14 +222,17 @@ class RemoteConfig {
 
             if (typeof status === "string" && status.startsWith(REMOTE_CONFIG_UPDATE_ERROR_PREFIX)) {
                 L.e(`remoteConfig.${nativeMethodName}, ${status}`);
-                return;
+                return failedUpdate(status.slice(REMOTE_CONFIG_UPDATE_ERROR_PREFIX.length).trim());
             }
 
             if (status != null && typeof status !== "string") {
                 L.d(`remoteConfig.${nativeMethodName}, completed with result: ${toErrorMessage(status)}`);
             }
+            return { success: true, error: null };
         } catch (error) {
-            L.e(`remoteConfig.${nativeMethodName}, ${toErrorMessage(error)}`);
+            const message = toErrorMessage(error);
+            L.e(`remoteConfig.${nativeMethodName}, ${message}`);
+            return failedUpdate(message);
         }
     }
 }

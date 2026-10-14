@@ -24,7 +24,7 @@ export interface Spec extends TurboModule {
     startSession(): void;
     updateSession(): void;
     endSession(): void;
-    logJSException(err: string, message: string, stack: string): void;
+    logJSException(err: string, message: string, stack: string, isFatal: boolean): void;
     setCustomCrashSegments(args: Array<UnsafeObject>): void;
     recordEvent(args: UnsafeObject): void;
     startEvent(args: Array<string>): void;

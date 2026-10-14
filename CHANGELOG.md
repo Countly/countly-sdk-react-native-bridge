@@ -1,5 +1,17 @@
 ## XX.XX.XX
-* Removed the following deprecated functions, as the underlying SDKs no longer provide them. The remote config replacements return a promise instead of taking a callback:
+* ! Minor breaking change ! `Countly.remoteConfig.updateForKeysOnly(...)` and `Countly.remoteConfig.updateExceptKeys(...)` now enroll the user only in the A/B tests of the keys they download in iOS. Previously they enrolled the user in all running A/B tests.
+* ! Minor breaking change ! `Countly.remoteConfig.getValue(keyName)` now returns string values as strings in Android. Previously a string that looked like a number, a boolean or JSON was converted, for example "2.10" came back as 2.1.
+* ! Minor breaking change ! Uncaught JS errors that the app reports as fatal are now recorded as fatal crashes, and `Countly.logException(exception, nonfatal, segments)` records a fatal crash when `nonfatal` is `false`. Previously both were always recorded as non-fatal.
+
+* Added a result to `Countly.remoteConfig.update()`, `Countly.remoteConfig.updateForKeysOnly(keyNames)` and `Countly.remoteConfig.updateExceptKeys(keyNames)`. They now resolve to `{ success, error }`, which tells whether new values were downloaded and, if not, why.
+
+* Mitigated an issue where `Countly.remoteConfig` updates never completed without remote config consent, in temporary device ID mode or with SDK networking disabled in iOS.
+* Mitigated an issue where failed `Countly.remoteConfig` updates were not logged as errors in iOS.
+* Mitigated an issue where a `Countly.remoteConfig` update without remote config consent was treated as successful in Android.
+* Mitigated an issue where the location given with `CountlyConfig.setLocation(...)` was ignored without a country code in iOS.
+* Mitigated an issue where `Countly.giveAllConsent()` sent two consent requests in iOS.
+
+* Removed the following deprecated functions. The remote config replacements return a promise instead of taking a callback, and `Countly.remoteConfig.getValue(keyName)` returns `null` for a missing key instead of `"ConfigKeyNotFound"`:
   * `Countly.recordView(...)`, use `Countly.views.startAutoStoppedView(viewName, segmentation)` instead
   * `Countly.remoteConfigUpdate(...)`, use `Countly.remoteConfig.update()` instead
   * `Countly.updateRemoteConfigForKeysOnly(...)`, use `Countly.remoteConfig.updateForKeysOnly(keyNames)` instead

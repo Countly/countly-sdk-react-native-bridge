@@ -252,9 +252,12 @@ test('initWithConfig installs the JS crash handler when crash reporting is enabl
 
     const handler = global.ErrorUtils.setGlobalHandler.mock.calls[0][0];
     handler(error, false);
+    handler(error, true);
 
-    expect(nativeModule.logJSException).toHaveBeenCalledWith('TypeError', 'bridge blew up', error.stack);
+    expect(nativeModule.logJSException).toHaveBeenNthCalledWith(1, 'TypeError', 'bridge blew up', error.stack, false);
+    expect(nativeModule.logJSException).toHaveBeenNthCalledWith(2, 'TypeError', 'bridge blew up', error.stack, true);
     expect(previousHandler).toHaveBeenCalledWith(error, false);
+    expect(previousHandler).toHaveBeenCalledWith(error, true);
 
     delete global.ErrorUtils;
 });
@@ -484,6 +487,20 @@ test('metrics, crash, and custom metric helpers normalize payloads', async () =>
     expect(nativeModule.setCustomMetrics).toHaveBeenCalledWith(['platform', 'ios', 'release', '26.1.0']);
 });
 
+test('logException records fatal only for an explicit false nonfatal flag', async () => {
+    const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge();
+
+    await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
+
+    Countly.logException('fatal', false, { screen: 'home' });
+    Countly.logException('omitted flag');
+    Countly.logException('text flag', 'false');
+
+    expect(nativeModule.logException).toHaveBeenNthCalledWith(1, ['fatal\n', false, 'screen', 'home']);
+    expect(nativeModule.logException).toHaveBeenNthCalledWith(2, ['omitted flag\n', true]);
+    expect(nativeModule.logException).toHaveBeenNthCalledWith(3, ['text flag\n', true]);
+});
+
 test('user data helpers normalize aliases and forward payloads', async () => {
     const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge();
 
@@ -590,9 +607,9 @@ test('remoteConfig.update methods await the native callback result', async () =>
 
     await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
 
-    await expect(Countly.remoteConfig.update()).resolves.toBeUndefined();
-    await expect(Countly.remoteConfig.updateForKeysOnly(['theme', 'banner'])).resolves.toBeUndefined();
-    await expect(Countly.remoteConfig.updateExceptKeys(['secret'])).resolves.toBeUndefined();
+    await expect(Countly.remoteConfig.update()).resolves.toEqual({ success: true, error: null });
+    await expect(Countly.remoteConfig.updateForKeysOnly(['theme', 'banner'])).resolves.toEqual({ success: true, error: null });
+    await expect(Countly.remoteConfig.updateExceptKeys(['secret'])).resolves.toEqual({ success: true, error: null });
 
     expect(nativeModule.remoteConfigUpdate).toHaveBeenCalledWith([], expect.any(Function));
     expect(nativeModule.updateRemoteConfigForKeysOnly).toHaveBeenCalledWith(['theme', 'banner'], expect.any(Function));
@@ -608,7 +625,7 @@ test('remoteConfig.updateForKeysOnly resolves when the native layer reports an u
 
     await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
 
-    await expect(Countly.remoteConfig.updateForKeysOnly(['theme'])).resolves.toBeUndefined();
+    await expect(Countly.remoteConfig.updateForKeysOnly(['theme'])).resolves.toEqual({ success: false, error: 'NetworkError' });
 });
 
 test('remoteConfig.getValue returns null when the key is missing', async () => {
@@ -638,6 +655,21 @@ test('remoteConfig.getValue parses JSON payloads on android', async () => {
     await expect(Countly.remoteConfig.getValue('feature-flag')).resolves.toEqual({ enabled: true });
 });
 
+test('remoteConfig.getValue keeps android string values that look like other types', async () => {
+    const { Countly, CountlyConfig } = loadCountlyBridge({
+        platform: 'android',
+        nativeOverrides: {
+            getRemoteConfigValueForKey: jest.fn((args, callback) => callback({ price: '"2.10"', flag: '"true"', count: '7' }[args[0]])),
+        },
+    });
+
+    await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
+
+    await expect(Countly.remoteConfig.getValue('price')).resolves.toBe('2.10');
+    await expect(Countly.remoteConfig.getValue('flag')).resolves.toBe('true');
+    await expect(Countly.remoteConfig.getValue('count')).resolves.toBe(7);
+});
+
 test('remoteConfig.clearValues resolves after clearing the native cache', async () => {
     const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge();
 
@@ -649,7 +681,7 @@ test('remoteConfig.clearValues resolves after clearing the native cache', async 
 
 test('rating widget helper preserves callback behavior', async () => {
     const ratingWidgetCallback = jest.fn();
-    const { Countly, CountlyConfig, nativeModule, listeners, emit } = loadCountlyBridge({ platform: 'android' });
+    const { Countly, CountlyConfig, nativeModule, listeners, emit } = loadCountlyBridge();
 
     await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
 
@@ -667,9 +699,9 @@ test('rating widget helper preserves callback behavior', async () => {
 test('remoteConfig methods do not throw when the SDK is not initialized', async () => {
     const { Countly } = loadCountlyBridge();
 
-    await expect(Countly.remoteConfig.update()).resolves.toBeUndefined();
-    await expect(Countly.remoteConfig.updateForKeysOnly(['theme'])).resolves.toBeUndefined();
-    await expect(Countly.remoteConfig.updateExceptKeys(['theme'])).resolves.toBeUndefined();
+    await expect(Countly.remoteConfig.update()).resolves.toEqual({ success: false, error: "'init' must be called before 'Countly.remoteConfig.update'" });
+    await expect(Countly.remoteConfig.updateForKeysOnly(['theme'])).resolves.toEqual({ success: false, error: "'init' must be called before 'Countly.remoteConfig.updateForKeysOnly'" });
+    await expect(Countly.remoteConfig.updateExceptKeys(['theme'])).resolves.toEqual({ success: false, error: "'init' must be called before 'Countly.remoteConfig.updateExceptKeys'" });
     await expect(Countly.remoteConfig.getValue('theme')).resolves.toBeNull();
     await expect(Countly.remoteConfig.clearValues()).resolves.toBeUndefined();
 });

@@ -65,23 +65,36 @@ interface ResultObject {
 }
 interface ErrorObject { error: string | null }
 
+/**
+ * Outcome of a Remote Config update.
+ */
+interface RemoteConfigUpdateResult {
+  /** true when new values were downloaded */
+  success: boolean,
+  /** why no values were downloaded, null on success */
+  error: string | null,
+}
+
 interface CountlyRemoteConfigModule {
   /**
    * Replaces all stored Remote Config values with new values from server.
+   * @return {Promise<RemoteConfigUpdateResult>} whether new values were downloaded, and why not
    */
-  update(): Promise<void>;
+  update(): Promise<RemoteConfigUpdateResult>;
 
   /**
    * Replaces specific Remote Config key/value pairs with new values from server.
    * @param {string[]} keyNames array of keys to replace.
+   * @return {Promise<RemoteConfigUpdateResult>} whether new values were downloaded, and why not
    */
-  updateForKeysOnly(keyNames: readonly string[]): Promise<void>;
+  updateForKeysOnly(keyNames: readonly string[]): Promise<RemoteConfigUpdateResult>;
 
   /**
    * Replaces all except specific Remote Config key/value pairs with new values from server.
    * @param {string[]} keyNames array of keys to skip.
+   * @return {Promise<RemoteConfigUpdateResult>} whether new values were downloaded, and why not
    */
-  updateExceptKeys(keyNames: readonly string[]): Promise<void>;
+  updateExceptKeys(keyNames: readonly string[]): Promise<RemoteConfigUpdateResult>;
 
   /**
    * Gets the current Remote Config value for a specific key.
@@ -572,7 +585,7 @@ declare module "countly-sdk-react-native-bridge" {
      * Log exception for Countly
      *
      * @param {string} exception exception
-     * @param {boolean} nonfatal nonfatal
+     * @param {boolean} nonfatal false records the exception as a fatal crash, anything else as non-fatal
      * @param {object} segments segments
      * @return {string | void} error message or void
      */
