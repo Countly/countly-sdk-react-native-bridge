@@ -220,13 +220,15 @@ class RemoteConfig {
                 });
             });
 
-            if (typeof status === "string" && status.startsWith(REMOTE_CONFIG_UPDATE_ERROR_PREFIX)) {
-                L.e(`remoteConfig.${nativeMethodName}, ${status}`);
-                return failedUpdate(status.slice(REMOTE_CONFIG_UPDATE_ERROR_PREFIX.length).trim());
+            if (typeof status !== "string") {
+                const message = `unexpected native result: ${toErrorMessage(status)}`;
+                L.e(`remoteConfig.${nativeMethodName}, ${message}`);
+                return failedUpdate(message);
             }
 
-            if (status != null && typeof status !== "string") {
-                L.d(`remoteConfig.${nativeMethodName}, completed with result: ${toErrorMessage(status)}`);
+            if (status.startsWith(REMOTE_CONFIG_UPDATE_ERROR_PREFIX)) {
+                L.e(`remoteConfig.${nativeMethodName}, ${status}`);
+                return failedUpdate(status.slice(REMOTE_CONFIG_UPDATE_ERROR_PREFIX.length).trim());
             }
             return { success: true, error: null };
         } catch (error) {

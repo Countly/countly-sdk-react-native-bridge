@@ -22,7 +22,7 @@ setLocation(ReadableArray args)
 disableLocation()
 addCrashLog(ReadableArray args)
 logException(ReadableArray args)
-logJSException(String err, String message, String stack, boolean isFatal)
+logJSException(String err, String message, String stack)
 setCustomCrashSegments(ReadableArray args)
 recordEvent(ReadableMap args)
 startEvent(ReadableArray args)
@@ -189,8 +189,8 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     }
 
     @Override
-    public void logJSException(String err, String message, String stack, boolean isFatal) {
-        this.impl.logJSException(err, message, stack, isFatal);
+    public void logJSException(String err, String message, String stack) {
+        this.impl.logJSException(err, message, stack);
     }
 
     @Override

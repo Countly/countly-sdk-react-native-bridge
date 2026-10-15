@@ -61,7 +61,7 @@ test('update helpers reject invalid key arrays and skip invalid entries', async 
     const { Logger, RemoteConfig } = loadRemoteConfig();
     const nativeModule = {
         updateRemoteConfigForKeysOnly: jest.fn(),
-        updateRemoteConfigExceptKeys: jest.fn((args, callback) => callback({ status: 'ok' })),
+        updateRemoteConfigExceptKeys: jest.fn((args, callback) => callback('Remote Config is updated except for given keys and ready to use !')),
     };
     const remoteConfig = new RemoteConfig({
         isInitialized: true,
@@ -76,7 +76,6 @@ test('update helpers reject invalid key arrays and skip invalid entries', async 
     expect(Logger.e).toHaveBeenCalledWith('remoteConfig.updateForKeysOnly, keyNames must be an array of strings');
     expect(Logger.w).toHaveBeenCalledWith('remoteConfig.updateExceptKeys, keyNames[1] should not be null, undefined or empty');
     expect(Logger.w).toHaveBeenCalledWith("remoteConfig.updateExceptKeys, skipping value for 'keyNames[2]', due to unsupported data type 'number', its data type should be 'string'");
-    expect(Logger.d).toHaveBeenCalledWith('remoteConfig.updateRemoteConfigExceptKeys, completed with result: [object Object]');
 });
 
 test('update logs thrown native errors without rejecting', async () => {
@@ -137,4 +136,20 @@ test('update results explain why no download was started', async () => {
     expect(nativeModule.remoteConfigUpdate).not.toHaveBeenCalled();
     expect(nativeModule.updateRemoteConfigForKeysOnly).not.toHaveBeenCalled();
     expect(nativeModule.updateRemoteConfigExceptKeys).not.toHaveBeenCalled();
+});
+
+test('update reports an unexpected native result as a failure', async () => {
+    const { Logger, RemoteConfig } = loadRemoteConfig();
+    const remoteConfig = new RemoteConfig({
+        isInitialized: true,
+        CountlyReactNative: {
+            remoteConfigUpdate: jest.fn()
+                .mockImplementationOnce((args, callback) => callback(['Remote Config is updated and ready to use!']))
+                .mockImplementationOnce((args, callback) => callback()),
+        },
+    });
+
+    await expect(remoteConfig.update()).resolves.toEqual({ success: false, error: 'unexpected native result: Remote Config is updated and ready to use!' });
+    await expect(remoteConfig.update()).resolves.toEqual({ success: false, error: 'unexpected native result: undefined' });
+    expect(Logger.e).toHaveBeenCalledTimes(2);
 });

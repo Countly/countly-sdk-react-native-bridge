@@ -62,30 +62,18 @@ function RemoteConfigScreen() {
     };
 
     const remoteConfigUpdate = async () => {
-        try {
-            await countly.remoteConfig.update();
-            setStatus("Updated all remote config values.");
-        } catch (error) {
-            updateStatus("Failed to update remote config", error);
-        }
+        const result = await countly.remoteConfig.update();
+        setStatus(result.success ? "Updated all remote config values." : `Failed to update remote config: ${result.error}`);
     };
 
     const updateRemoteConfigForKeysOnly = async () => {
-        try {
-            await countly.remoteConfig.updateForKeysOnly([currentKey]);
-            setStatus(`Updated only '${currentKey}'.`);
-        } catch (error) {
-            updateStatus(`Failed to update only '${currentKey}'`, error);
-        }
+        const result = await countly.remoteConfig.updateForKeysOnly([currentKey]);
+        setStatus(result.success ? `Updated only '${currentKey}'.` : `Failed to update only '${currentKey}': ${result.error}`);
     };
 
     const updateRemoteConfigExceptKeys = async () => {
-        try {
-            await countly.remoteConfig.updateExceptKeys([currentKey]);
-            setStatus(`Updated all keys except '${currentKey}'.`);
-        } catch (error) {
-            updateStatus(`Failed to update all keys except '${currentKey}'`, error);
-        }
+        const result = await countly.remoteConfig.updateExceptKeys([currentKey]);
+        setStatus(result.success ? `Updated all keys except '${currentKey}'.` : `Failed to update all keys except '${currentKey}': ${result.error}`);
     };
 
     const getRemoteConfigValueForKey = async () => {

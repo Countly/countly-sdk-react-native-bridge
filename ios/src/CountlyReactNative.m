@@ -998,11 +998,11 @@ RCT_EXPORT_METHOD(addCustomNetworkRequestHeaders : (NSArray *)arguments) {
         });
 }
 
-RCT_EXPORT_METHOD(logJSException : (NSString *)errTitle withMessage : (NSString *)message withStack : (NSString *)stackTrace isFatal : (BOOL)isFatal) {
+RCT_EXPORT_METHOD(logJSException : (NSString *)errTitle withMessage : (NSString *)message withStack : (NSString *)stackTrace) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      NSException *myException = [NSException exceptionWithName:errTitle reason:message userInfo:@{@"nonfatal" : isFatal ? @"0" : @"1"}];
+      NSException *myException = [NSException exceptionWithName:errTitle reason:message userInfo:@{@"nonfatal" : @"1"}];
       NSArray *stack = [stackTrace componentsSeparatedByString:@"\n"];
-      [Countly.sharedInstance recordException:myException isFatal:isFatal stackTrace:stack segmentation:nil];
+      [Countly.sharedInstance recordException:myException isFatal:NO stackTrace:stack segmentation:nil];
     });
 }
 

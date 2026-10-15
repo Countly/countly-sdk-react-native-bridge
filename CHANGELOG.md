@@ -1,7 +1,8 @@
 ## XX.XX.XX
 * ! Minor breaking change ! `Countly.remoteConfig.updateForKeysOnly(...)` and `Countly.remoteConfig.updateExceptKeys(...)` now enroll the user only in the A/B tests of the keys they download in iOS. Previously they enrolled the user in all running A/B tests.
 * ! Minor breaking change ! `Countly.remoteConfig.getValue(keyName)` now returns string values as strings in Android. Previously a string that looked like a number, a boolean or JSON was converted, for example "2.10" came back as 2.1.
-* ! Minor breaking change ! Uncaught JS errors that the app reports as fatal are now recorded as fatal crashes, and `Countly.logException(exception, nonfatal, segments)` records a fatal crash when `nonfatal` is `false`. Previously both were always recorded as non-fatal.
+* ! Minor breaking change ! `Countly.logException(exception, nonfatal, segments)` now records a fatal crash when `nonfatal` is `false`. Previously it always recorded a non-fatal crash.
+* ! Minor breaking change ! An uncaught JS error that crashes a release build is now recorded once, by the native crash report, which gets the JS error in its breadcrumbs. Previously it was also recorded as a separate non-fatal crash.
 
 * Added a result to `Countly.remoteConfig.update()`, `Countly.remoteConfig.updateForKeysOnly(keyNames)` and `Countly.remoteConfig.updateExceptKeys(keyNames)`. They now resolve to `{ success, error }`, which tells whether new values were downloaded and, if not, why.
 
@@ -10,6 +11,8 @@
 * Mitigated an issue where a `Countly.remoteConfig` update without remote config consent was treated as successful in Android.
 * Mitigated an issue where the location given with `CountlyConfig.setLocation(...)` was ignored without a country code in iOS.
 * Mitigated an issue where `Countly.giveAllConsent()` sent two consent requests in iOS.
+* Mitigated an issue where the JS crash handler failed, and skipped the app's previous error handler, when the app threw a value that is not an Error.
+* Mitigated an issue where `Countly.logException(...)` failed when a segment value was `null` or `undefined`. Such segments are now skipped.
 
 * Removed the following deprecated functions. The remote config replacements return a promise instead of taking a callback, and `Countly.remoteConfig.getValue(keyName)` returns `null` for a missing key instead of `"ConfigKeyNotFound"`:
   * `Countly.recordView(...)`, use `Countly.views.startAutoStoppedView(viewName, segmentation)` instead

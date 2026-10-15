@@ -108,8 +108,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void logJSException(String err, String message, String stack, boolean isFatal) {
-        this.impl.logJSException(err, message, stack, isFatal);
+    public void logJSException(String err, String message, String stack) {
+        this.impl.logJSException(err, message, stack);
     }
 
     @ReactMethod

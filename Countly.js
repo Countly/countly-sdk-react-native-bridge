@@ -74,6 +74,68 @@ function resetBridgeStateForTesting() {
     _state.isInitialized = false;
 }
 
+/**
+ * Converts any thrown value into an error object that can be reported.
+ *
+ * @param {any} thrown - value the app threw
+ * @return {Error} the value itself when it is error-like, otherwise an Error describing it
+ */
+function toReportableError(thrown) {
+    if (thrown instanceof Error || (thrown && typeof thrown.message === "string")) {
+        return thrown;
+    }
+    if (typeof thrown === "string") {
+        return new Error(thrown);
+    }
+    try {
+        const description = JSON.stringify(thrown);
+        if (description !== undefined) {
+            return new Error(description);
+        }
+    } catch (error) {
+        // Values that cannot be serialized fall back to their string form.
+    }
+    return new Error(String(thrown));
+}
+
+/**
+ * Describes an error caught by the global JS error handler for crash reporting.
+ *
+ * @param {any} thrown - value the app threw
+ * @return {{title: string, message: string, stack: string}} the error's title, message and JS stack
+ */
+function describeGlobalJSError(thrown) {
+    const error = toReportableError(thrown);
+    const errorName = error.name || "Error";
+    const jsStackTrace = Utils.getStackTrace(error);
+    let errorTitle;
+    let stackArr;
+    if (jsStackTrace == null || jsStackTrace.length === 0) {
+        errorTitle = errorName;
+        stackArr = error.stack;
+    } else {
+        let fname = jsStackTrace[0].file || "";
+        if (fname.startsWith("http")) {
+            const chunks = fname.split("/");
+            fname = chunks[chunks.length - 1].split("?")[0];
+        }
+        errorTitle = `${errorName} (${jsStackTrace[0].methodName}@${fname})`;
+        const regExp = "(.*)(@?)http(s?).*/(.*)\\?(.*):(.*):(.*)";
+        stackArr = error.stack.split("\n").map((row) => {
+            row = row.trim();
+            if (!row.includes("http")) {
+                return row;
+            }
+
+            const matches = row.match(regExp);
+            return matches && matches.length == 8 ? `${matches[1]}${matches[2]}${matches[4]}(${matches[6]}:${matches[7]})` : row;
+        });
+        stackArr = stackArr.join("\n");
+    }
+
+    return { title: errorTitle, message: error.message.trim(), stack: stackArr || "" };
+}
+
 function installJsCrashReportingHandler() {
     if (_isCrashReportingEnabled || typeof ErrorUtils === "undefined") {
         return;
@@ -82,33 +144,17 @@ function installJsCrashReportingHandler() {
     L.i("initWithConfig, Adding Countly JS error handler.");
     const previousHandler = ErrorUtils.getGlobalHandler();
     ErrorUtils.setGlobalHandler((error, isFatal) => {
-        const jsStackTrace = Utils.getStackTrace(error);
-        let errorTitle;
-        let stackArr;
-        if (jsStackTrace == null || jsStackTrace.length === 0) {
-            errorTitle = error.name;
-            stackArr = error.stack;
-        } else {
-            let fname = jsStackTrace[0].file;
-            if (fname.startsWith("http")) {
-                const chunks = fname.split("/");
-                fname = chunks[chunks.length - 1].split("?")[0];
+        try {
+            const description = describeGlobalJSError(error);
+            if (isFatal && !__DEV__) {
+                // RN turns this error into a native crash that is reported natively, so its JS details go into that report as a breadcrumb.
+                CountlyNativeModule.addCrashLog([`${description.title}: ${description.message}\n${description.stack}`]);
+            } else {
+                CountlyNativeModule.logJSException(description.title, description.message, description.stack);
             }
-            errorTitle = `${error.name} (${jsStackTrace[0].methodName}@${fname})`;
-            const regExp = "(.*)(@?)http(s?).*/(.*)\\?(.*):(.*):(.*)";
-            stackArr = error.stack.split("\n").map((row) => {
-                row = row.trim();
-                if (!row.includes("http")) {
-                    return row;
-                }
-
-                const matches = row.match(regExp);
-                return matches && matches.length == 8 ? `${matches[1]}${matches[2]}${matches[4]}(${matches[6]}:${matches[7]})` : row;
-            });
-            stackArr = stackArr.join("\n");
+        } catch (reportError) {
+            L.e(`JS error handler, could not report the error: ${reportError}`);
         }
-
-        CountlyNativeModule.logJSException(errorTitle, error.message.trim(), stackArr, isFatal === true);
 
         if (previousHandler) {
             previousHandler(error, isFatal);
@@ -382,8 +428,13 @@ Countly.logException = function (exception, nonfatal, segments) {
     args.push(exceptionString || "");
     args.push(nonfatal !== false);
     for (const key in segments) {
+        const value = segments[key];
+        if (value === null || value === undefined) {
+            L.w(`logException, skipping segment [${key}], its value is [${value}]`);
+            continue;
+        }
         args.push(key);
-        args.push(segments[key].toString());
+        args.push(value.toString());
     }
     CountlyNativeModule.logException(args);
 };

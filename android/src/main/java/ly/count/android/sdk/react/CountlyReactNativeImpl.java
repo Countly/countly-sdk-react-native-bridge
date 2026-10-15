@@ -1117,14 +1117,9 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     }
 
 
-    public void logJSException(String err, String message, String stack, boolean isFatal) {
+    public void logJSException(String err, String message, String stack) {
         Countly.sharedInstance().crashes().addCrashBreadcrumb(stack);
-        CountlyReactException exception = new CountlyReactException(err, message, stack);
-        if (isFatal) {
-            Countly.sharedInstance().crashes().recordUnhandledException(exception);
-        } else {
-            Countly.sharedInstance().crashes().recordHandledException(exception);
-        }
+        Countly.sharedInstance().crashes().recordHandledException(new CountlyReactException(err, message, stack));
     }
 
     
