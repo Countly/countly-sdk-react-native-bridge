@@ -1,26 +1,28 @@
 ## XX.XX.XX
-* ! Minor breaking change ! `Countly.remoteConfig.updateForKeysOnly(...)` and `Countly.remoteConfig.updateExceptKeys(...)` now enroll the user only in the A/B tests of the keys they download in iOS. Previously they enrolled the user in all running A/B tests.
-* ! Minor breaking change ! `Countly.remoteConfig.getValue(keyName)` now returns string values as strings in Android. Previously a string that looked like a number, a boolean or JSON was converted, for example "2.10" came back as 2.1.
-* ! Minor breaking change ! `Countly.logException(exception, nonfatal, segments)` now records a fatal crash when `nonfatal` is `false`. Previously it always recorded a non-fatal crash.
-* ! Minor breaking change ! An uncaught JS error that crashes a release build is now recorded once, as a fatal crash with its JS error and stack. Previously it could be recorded twice, as a non-fatal crash from JS and as a fatal native crash.
+* ! Minor breaking change ! `Countly.remoteConfig.updateForKeysOnly` and `updateExceptKeys` now enroll the user only in the A/B tests of the downloaded keys in iOS, not in all running A/B tests.
+* ! Minor breaking change ! `Countly.remoteConfig.getValue` now returns string values as strings in Android. Before, "2.10" came back as 2.1.
+* ! Minor breaking change ! `Countly.logException(exception, false)` now records a fatal crash.
+* ! Minor breaking change ! An uncaught JS error that crashes a release build is now recorded once, as a fatal crash with its JS stack, instead of twice.
 
-* Added a result to `Countly.remoteConfig.update()`, `Countly.remoteConfig.updateForKeysOnly(keyNames)` and `Countly.remoteConfig.updateExceptKeys(keyNames)`. They now resolve to `{ success, error }`, which tells whether new values were downloaded and, if not, why.
+* Added a `{ success, error }` result to `Countly.remoteConfig.update`, `updateForKeysOnly` and `updateExceptKeys`.
 
-* Mitigated an issue where `Countly.remoteConfig` updates never completed without remote config consent, in temporary device ID mode or with SDK networking disabled in iOS.
-* Mitigated an issue where failed `Countly.remoteConfig` updates were not logged as errors in iOS.
-* Mitigated an issue where a `Countly.remoteConfig` update without remote config consent was treated as successful in Android.
-* Mitigated an issue where the location given with `CountlyConfig.setLocation(...)` was ignored without a country code in iOS.
-* Mitigated an issue where `Countly.giveAllConsent()` sent two consent requests in iOS.
-* Mitigated an issue where the JS crash handler failed, and skipped the app's previous error handler, when the app threw a value that is not an Error.
-* Mitigated an issue where `Countly.logException(...)` failed when a segment value was `null` or `undefined`. Such segments are now skipped.
+* Mitigated remote config update issues:
+  * Updates without remote config consent, in temporary device ID mode or with SDK networking disabled now complete with an error in iOS, instead of never completing.
+  * Failed updates are now logged as errors in iOS.
+  * An update without remote config consent is now reported as failed in Android.
+* Mitigated crash reporting issues:
+  * The JS crash handler no longer fails, or skips the app's previous error handler, when the app throws a value that is not an Error.
+  * `Countly.logException` now skips `null` and `undefined` segment values instead of failing.
+* Mitigated an issue where `CountlyConfig.setLocation` was ignored without a country code in iOS.
+* Mitigated an issue where `Countly.giveAllConsent` sent two consent requests in iOS.
 
-* Removed the following deprecated functions. The remote config replacements return a promise instead of taking a callback, and `Countly.remoteConfig.getValue(keyName)` returns `null` for a missing key instead of `"ConfigKeyNotFound"`:
-  * `Countly.recordView(...)`, use `Countly.views.startAutoStoppedView(viewName, segmentation)` instead
-  * `Countly.remoteConfigUpdate(...)`, use `Countly.remoteConfig.update()` instead
-  * `Countly.updateRemoteConfigForKeysOnly(...)`, use `Countly.remoteConfig.updateForKeysOnly(keyNames)` instead
-  * `Countly.updateRemoteConfigExceptKeys(...)`, use `Countly.remoteConfig.updateExceptKeys(keyNames)` instead
-  * `Countly.getRemoteConfigValueForKey(...)` and `Countly.getRemoteConfigValueForKeyP(...)`, use `Countly.remoteConfig.getValue(keyName)` instead
-  * `Countly.remoteConfigClearValues()`, use `Countly.remoteConfig.clearValues()` instead
+* Removed these deprecated functions. The remote config replacements return a promise, and `getValue` returns `null` for a missing key:
+  * `Countly.recordView`, use `Countly.views.startAutoStoppedView`
+  * `Countly.remoteConfigUpdate`, use `Countly.remoteConfig.update`
+  * `Countly.updateRemoteConfigForKeysOnly`, use `Countly.remoteConfig.updateForKeysOnly`
+  * `Countly.updateRemoteConfigExceptKeys`, use `Countly.remoteConfig.updateExceptKeys`
+  * `Countly.getRemoteConfigValueForKey` and `Countly.getRemoteConfigValueForKeyP`, use `Countly.remoteConfig.getValue`
+  * `Countly.remoteConfigClearValues`, use `Countly.remoteConfig.clearValues`
 
 ## 26.1.0
 * Added a new `Countly.sessions` interface for manual session control:
