@@ -38,6 +38,7 @@ Countly.remoteConfig = new RemoteConfig(CountlyState);
 Countly.views = new Views(CountlyState);
 
 let _isCrashReportingEnabled = false;
+const MAX_THROWN_VALUE_DESCRIPTION_LENGTH = 1000;
 
 Countly.userData = {}; // userData interface
 Countly.userDataBulk = {}; // userDataBulk interface
@@ -74,6 +75,68 @@ function resetBridgeStateForTesting() {
     _state.isInitialized = false;
 }
 
+/**
+ * Converts any thrown value into an error object that can be reported.
+ *
+ * @param {any} thrown - value the app threw
+ * @return {Error} the value itself when it is error-like, otherwise an Error describing it
+ */
+function toReportableError(thrown) {
+    if (thrown instanceof Error || (thrown && typeof thrown.message === "string")) {
+        return thrown;
+    }
+    if (typeof thrown === "string") {
+        return new Error(thrown.substring(0, MAX_THROWN_VALUE_DESCRIPTION_LENGTH));
+    }
+    try {
+        const description = JSON.stringify(thrown);
+        if (description !== undefined) {
+            return new Error(description.substring(0, MAX_THROWN_VALUE_DESCRIPTION_LENGTH));
+        }
+    } catch (error) {
+        // Values that cannot be serialized fall back to their string form.
+    }
+    return new Error(String(thrown).substring(0, MAX_THROWN_VALUE_DESCRIPTION_LENGTH));
+}
+
+/**
+ * Describes an error caught by the global JS error handler for crash reporting.
+ *
+ * @param {any} thrown - value the app threw
+ * @return {{title: string, message: string, stack: string}} the error's title, message and JS stack
+ */
+function describeGlobalJSError(thrown) {
+    const error = toReportableError(thrown);
+    const errorName = typeof error.name === "string" && error.name ? error.name : "Error";
+    const jsStackTrace = Utils.getStackTrace(error);
+    let errorTitle;
+    let stackArr;
+    if (jsStackTrace == null || jsStackTrace.length === 0) {
+        errorTitle = errorName;
+        stackArr = typeof error.stack === "string" ? error.stack : "";
+    } else {
+        let fname = jsStackTrace[0].file || "";
+        if (fname.startsWith("http")) {
+            const chunks = fname.split("/");
+            fname = chunks[chunks.length - 1].split("?")[0];
+        }
+        errorTitle = `${errorName} (${jsStackTrace[0].methodName}@${fname})`;
+        const regExp = "(.*)(@?)http(s?).*/(.*)\\?(.*):(.*):(.*)";
+        stackArr = error.stack.split("\n").map((row) => {
+            row = row.trim();
+            if (!row.includes("http")) {
+                return row;
+            }
+
+            const matches = row.match(regExp);
+            return matches && matches.length == 8 ? `${matches[1]}${matches[2]}${matches[4]}(${matches[6]}:${matches[7]})` : row;
+        });
+        stackArr = stackArr.join("\n");
+    }
+
+    return { title: errorTitle, message: error.message.trim(), stack: stackArr || "" };
+}
+
 function installJsCrashReportingHandler() {
     if (_isCrashReportingEnabled || typeof ErrorUtils === "undefined") {
         return;
@@ -82,33 +145,13 @@ function installJsCrashReportingHandler() {
     L.i("initWithConfig, Adding Countly JS error handler.");
     const previousHandler = ErrorUtils.getGlobalHandler();
     ErrorUtils.setGlobalHandler((error, isFatal) => {
-        const jsStackTrace = Utils.getStackTrace(error);
-        let errorTitle;
-        let stackArr;
-        if (jsStackTrace == null || jsStackTrace.length === 0) {
-            errorTitle = error.name;
-            stackArr = error.stack;
-        } else {
-            let fname = jsStackTrace[0].file;
-            if (fname.startsWith("http")) {
-                const chunks = fname.split("/");
-                fname = chunks[chunks.length - 1].split("?")[0];
-            }
-            errorTitle = `${error.name} (${jsStackTrace[0].methodName}@${fname})`;
-            const regExp = "(.*)(@?)http(s?).*/(.*)\\?(.*):(.*):(.*)";
-            stackArr = error.stack.split("\n").map((row) => {
-                row = row.trim();
-                if (!row.includes("http")) {
-                    return row;
-                }
-
-                const matches = row.match(regExp);
-                return matches && matches.length == 8 ? `${matches[1]}${matches[2]}${matches[4]}(${matches[6]}:${matches[7]})` : row;
-            });
-            stackArr = stackArr.join("\n");
+        try {
+            const description = describeGlobalJSError(error);
+            // Debug builds show a fatal error instead of crashing, so only release builds record it as a fatal crash.
+            CountlyNativeModule.logJSException(description.title, description.message, description.stack, isFatal === true && !__DEV__);
+        } catch (reportError) {
+            L.e(`JS error handler, could not report the error: ${reportError}`);
         }
-
-        CountlyNativeModule.logJSException(errorTitle, error.message.trim(), stackArr);
 
         if (previousHandler) {
             previousHandler(error, isFatal);
@@ -186,41 +229,6 @@ Countly.isInitialized = async function () {
     _state.isInitialized = await CountlyNativeModule.isInitialized();
     L.d(`isInitialized, isInitialized: [${_state.isInitialized}]`);
     return _state.isInitialized;
-};
-
-/**
- * @deprecated in 26.1.0 : use 'Countly.views.startAutoStoppedView' instead.
- *
- * Record custom view to Countly.
- *
- * @param {string} recordView - name of the view
- * @param {object} segments - allows to add optional segmentation,
- * Supported data type for segments values are string, int, double and boolean
- * @return {string | void} error message or void
- */
-Countly.recordView = function (recordView, segments) {
-    if (!_state.isInitialized) {
-        const msg = "'init' must be called before 'recordView'";
-        L.e(`recordView, ${msg}`);
-        return msg;
-    }
-    L.w("recordView, deprecated legacy alias. Use 'Countly.views.startAutoStoppedView(viewName, segmentation)' instead.");
-    const message = Validate.String(recordView, "view name", "recordView");
-    if (message) {
-        return message;
-    }
-    L.d(`recordView, Recording view: ${recordView}]`);
-
-    const args = [];
-    args.push(String(recordView));
-    if (!segments) {
-        segments = {};
-    }
-    for (const key in segments) {
-        args.push(key);
-        args.push(segments[key]);
-    }
-    CountlyNativeModule.recordView(args);
 };
 
 /**
@@ -397,7 +405,7 @@ Countly.recordMetrics = function (metricsOverride = {}) {
  * Log exception for Countly
  *
  * @param {string} exception exception
- * @param {boolean} nonfatal nonfatal
+ * @param {boolean} nonfatal false records the exception as a fatal crash, anything else as non-fatal
  * @param {object} segments segments
  * @return {string | void} error message or void
  */
@@ -415,10 +423,15 @@ Countly.logException = function (exception, nonfatal, segments) {
     }
     const args = [];
     args.push(exceptionString || "");
-    args.push(nonfatal || false);
+    args.push(nonfatal !== false);
     for (const key in segments) {
+        const value = segments[key];
+        if (value === null || value === undefined) {
+            L.w(`logException, skipping segment [${key}], its value is [${value}]`);
+            continue;
+        }
         args.push(key);
-        args.push(segments[key].toString());
+        args.push(value.toString());
     }
     CountlyNativeModule.logException(args);
 };
@@ -1299,178 +1312,6 @@ Countly.removeAllConsent = function () {
     }
     L.d("removeAllConsent, Removing consent for all features");
     CountlyNativeModule.removeAllConsent();
-};
-
-/**
- * @deprecated in 26.1.0 : use 'Countly.remoteConfig.update' instead of 'remoteConfigUpdate'.
- *
- * Replaces all stored Remote Config values with new values from server.
- *
- * @param {function} callback function to be called after fetching values.
- * @return {string | void} error message or void
- */
-Countly.remoteConfigUpdate = function (callback) {
-    if (!_state.isInitialized) {
-        const message = "'init' must be called before 'remoteConfigUpdate'";
-        L.e(`remoteConfigUpdate, ${message}`);
-        callback(message);
-        return message;
-    }
-    L.w("remoteConfigUpdate, remoteConfigUpdate is deprecated, use Countly.remoteConfig.update instead.");
-    L.d("remoteConfigUpdate, Updating remote config");
-    CountlyNativeModule.remoteConfigUpdate([], (stringItem) => {
-        callback(stringItem);
-    });
-};
-
-/**
- * @deprecated in 26.1.0 : use 'Countly.remoteConfig.updateForKeysOnly' instead of 'updateRemoteConfigForKeysOnly'.
- *
- *
- * Replace specific Remote Config key value pairs with new values from server.
- *
- * @param {string[]} keyNames array of keys to replace.
- * @param {function} callback function to be called after fetching values.
- * @return {string | void} error message or void
- */
-Countly.updateRemoteConfigForKeysOnly = function (keyNames, callback) {
-    if (!_state.isInitialized) {
-        const message = "'init' must be called before 'updateRemoteConfigForKeysOnly'";
-        L.e(`updateRemoteConfigForKeysOnly, ${message}`);
-        callback(message);
-        return message;
-    }
-    L.w("updateRemoteConfigForKeysOnly, updateRemoteConfigForKeysOnly is deprecated, use Countly.remoteConfig.updateForKeysOnly instead.");
-    L.d(`updateRemoteConfigForKeysOnly, Updating remote config for keys: [${keyNames}]`);
-    const args = [];
-    if (keyNames.length) {
-        for (let i = 0, il = keyNames.length; i < il; i++) {
-            args.push(keyNames[i]);
-        }
-        CountlyNativeModule.updateRemoteConfigForKeysOnly(args, (stringItem) => {
-            callback(stringItem);
-        });
-    }
-};
-
-/**
- * @deprecated in 26.1.0 : use 'Countly.remoteConfig.updateExceptKeys' instead of 'updateRemoteConfigExceptKeys'.
- *
- *
- * Replace all except specific Remote Config key value pairs with new values from server.
- *
- * @param {string[]} keyNames array of keys to skip.
- * @param {function} callback function to be called after fetching values.
- * @return {string | void} error message or void
- */
-Countly.updateRemoteConfigExceptKeys = function (keyNames, callback) {
-    if (!_state.isInitialized) {
-        const message = "'init' must be called before 'updateRemoteConfigExceptKeys'";
-        L.e(`updateRemoteConfigExceptKeys, ${message}`);
-        callback(message);
-        return message;
-    }
-    L.w("updateRemoteConfigExceptKeys, updateRemoteConfigExceptKeys is deprecated, use Countly.remoteConfig.updateExceptKeys instead.");
-    L.d(`updateRemoteConfigExceptKeys, Updating remote config except keys: [${keyNames}]`);
-    const args = [];
-    if (keyNames.length) {
-        for (let i = 0, il = keyNames.length; i < il; i++) {
-            args.push(keyNames[i]);
-        }
-        CountlyNativeModule.updateRemoteConfigExceptKeys(args, (stringItem) => {
-            callback(stringItem);
-        });
-    }
-};
-
-/**
- * @deprecated in 26.1.0 : use 'Countly.remoteConfig.getValue' instead of 'getRemoteConfigValueForKey'.
- *
- *
- * Replace Remote Config key value for a specific key with new values from server.
- *
- * @param {string} keyNames key to fetch.
- * @param {function} callback function to be called after fetching new values.
- * @return {string | void} error message or void
- */
-Countly.getRemoteConfigValueForKey = function (keyName, callback) {
-    if (!_state.isInitialized) {
-        const message = "'init' must be called before 'getRemoteConfigValueForKey'";
-        L.e(`getRemoteConfigValueForKey ${message}`);
-        callback(message);
-        return message;
-    }
-    L.w("getRemoteConfigValueForKey, getRemoteConfigValueForKey is deprecated, use Countly.remoteConfig.getValue instead.");
-    CountlyNativeModule.getRemoteConfigValueForKey([keyName.toString() || ""], (value) => {
-        if (Platform.OS == "android") {
-            try {
-                value = JSON.parse(value);
-            } catch (e) {
-                // L.e('getRemoteConfigValueForKey', e.message);
-                // noop. value will remain string if not JSON parsable and returned as string
-            }
-        }
-        callback(value);
-    });
-};
-
-/**
- * @deprecated in 26.1.0 : use 'Countly.remoteConfig.getValue' instead of 'getRemoteConfigValueForKeyP'.
- *
- *
- * Replace Remote Config key value for a specific key with new values from server.
- *
- * @param {string} keyName key to fetch.
- * @return {string | promise} error message or promise
- */
-Countly.getRemoteConfigValueForKeyP = function (keyName) {
-    if (!_state.isInitialized) {
-        const message = "'init' must be called before 'getRemoteConfigValueForKeyP'";
-        L.e(`getRemoteConfigValueForKeyP, ${message}`);
-        return message;
-    }
-    L.w("getRemoteConfigValueForKeyP, getRemoteConfigValueForKeyP is deprecated, use Countly.remoteConfig.getValue instead.");
-    L.d(`getRemoteConfigValueForKeyP, Getting remote config value for key: [${keyName}]`);
-    if (Platform.OS != "android") {
-        return "To be implemented";
-    }
-    const promise = CountlyNativeModule.getRemoteConfigValueForKeyP(keyName);
-    return promise
-        .then((value) => {
-            if (Platform.OS == "android") {
-                try {
-                    value = JSON.parse(value);
-                } catch (e) {
-                    // L.e('getRemoteConfigValueForKeyP', e.message);
-                    // noop. value will remain string if not JSON parsable and returned as string
-                }
-            }
-            return value;
-        })
-        .catch((e) => {
-            L.e(`getRemoteConfigValueForKeyP, Catch Error: ${e?.message || String(e)}`);
-            return undefined;
-        });
-};
-
-/**
- * @deprecated in 26.1.0 : use 'Countly.remoteConfig.clearValues' instead of 'remoteConfigClearValues'.
- *
- *
- * Clear all Remote Config values downloaded from the server.
- *
- * @return {string | promise} error message or promise
- */
-Countly.remoteConfigClearValues = async function () {
-    if (!_state.isInitialized) {
-        const message = "'init' must be called before 'remoteConfigClearValues'";
-        L.e(`remoteConfigClearValues, ${message}`);
-        return message;
-    }
-    L.w("remoteConfigClearValues, remoteConfigClearValues is deprecated, use Countly.remoteConfig.clearValues instead.");
-    L.d("remoteConfigClearValues, Clearing remote config values");
-    const result = await CountlyNativeModule.remoteConfigClearValues();
-    return result;
 };
 
 /**

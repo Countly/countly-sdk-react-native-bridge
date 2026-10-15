@@ -1,3 +1,29 @@
+## XX.XX.XX
+* ! Minor breaking change ! `Countly.remoteConfig.updateForKeysOnly` and `updateExceptKeys` now enroll the user only in the A/B tests of the downloaded keys in iOS, not in all running A/B tests.
+* ! Minor breaking change ! `Countly.remoteConfig.getValue` now returns string values as strings in Android. Before, "2.10" came back as 2.1.
+* ! Minor breaking change ! `Countly.logException(exception, false)` now records a fatal crash.
+* ! Minor breaking change ! An uncaught JS error that crashes a release build is now recorded once, as a fatal crash with its JS stack, instead of twice.
+
+* Added a `{ success, error }` result to `Countly.remoteConfig.update`, `updateForKeysOnly` and `updateExceptKeys`.
+
+* Mitigated remote config update issues:
+  * Updates without remote config consent, in temporary device ID mode or with SDK networking disabled now complete with an error in iOS, instead of never completing.
+  * Failed updates are now logged as errors in iOS.
+  * An update without remote config consent is now reported as failed in Android.
+* Mitigated crash reporting issues:
+  * The JS crash handler no longer fails, or skips the app's previous error handler, when the app throws a value that is not an Error.
+  * `Countly.logException` now skips `null` and `undefined` segment values instead of failing.
+* Mitigated an issue where `CountlyConfig.setLocation` was ignored without a country code in iOS.
+* Mitigated an issue where `Countly.giveAllConsent` sent two consent requests in iOS.
+
+* Removed these deprecated functions. The remote config replacements return a promise, and `getValue` returns `null` for a missing key:
+  * `Countly.recordView`, use `Countly.views.startAutoStoppedView`
+  * `Countly.remoteConfigUpdate`, use `Countly.remoteConfig.update`
+  * `Countly.updateRemoteConfigForKeysOnly`, use `Countly.remoteConfig.updateForKeysOnly`
+  * `Countly.updateRemoteConfigExceptKeys`, use `Countly.remoteConfig.updateExceptKeys`
+  * `Countly.getRemoteConfigValueForKey` and `Countly.getRemoteConfigValueForKeyP`, use `Countly.remoteConfig.getValue`
+  * `Countly.remoteConfigClearValues`, use `Countly.remoteConfig.clearValues`
+
 ## 26.1.0
 * Added a new `Countly.sessions` interface for manual session control:
   * `beginSession()`

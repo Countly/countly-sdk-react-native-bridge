@@ -61,22 +61,21 @@ test('update helpers reject invalid key arrays and skip invalid entries', async 
     const { Logger, RemoteConfig } = loadRemoteConfig();
     const nativeModule = {
         updateRemoteConfigForKeysOnly: jest.fn(),
-        updateRemoteConfigExceptKeys: jest.fn((args, callback) => callback({ status: 'ok' })),
+        updateRemoteConfigExceptKeys: jest.fn((args, callback) => callback('Remote Config is updated except for given keys and ready to use !')),
     };
     const remoteConfig = new RemoteConfig({
         isInitialized: true,
         CountlyReactNative: nativeModule,
     });
 
-    await expect(remoteConfig.updateForKeysOnly('theme')).resolves.toBeUndefined();
-    await expect(remoteConfig.updateExceptKeys(['theme', '', 7])).resolves.toBeUndefined();
+    await expect(remoteConfig.updateForKeysOnly('theme')).resolves.toEqual({ success: false, error: 'keyNames must be an array of strings' });
+    await expect(remoteConfig.updateExceptKeys(['theme', '', 7])).resolves.toEqual({ success: true, error: null });
 
     expect(nativeModule.updateRemoteConfigForKeysOnly).not.toHaveBeenCalled();
     expect(nativeModule.updateRemoteConfigExceptKeys).toHaveBeenCalledWith(['theme'], expect.any(Function));
     expect(Logger.e).toHaveBeenCalledWith('remoteConfig.updateForKeysOnly, keyNames must be an array of strings');
     expect(Logger.w).toHaveBeenCalledWith('remoteConfig.updateExceptKeys, keyNames[1] should not be null, undefined or empty');
     expect(Logger.w).toHaveBeenCalledWith("remoteConfig.updateExceptKeys, skipping value for 'keyNames[2]', due to unsupported data type 'number', its data type should be 'string'");
-    expect(Logger.d).toHaveBeenCalledWith('remoteConfig.updateRemoteConfigExceptKeys, completed with result: [object Object]');
 });
 
 test('update logs thrown native errors without rejecting', async () => {
@@ -90,7 +89,67 @@ test('update logs thrown native errors without rejecting', async () => {
         },
     });
 
-    await expect(remoteConfig.update()).resolves.toBeUndefined();
+    await expect(remoteConfig.update()).resolves.toEqual({ success: false, error: 'update failed' });
 
     expect(Logger.e).toHaveBeenCalledWith('remoteConfig.remoteConfigUpdate, update failed');
+});
+test.each([
+    ['update', 'remoteConfigUpdate', []],
+    ['updateForKeysOnly', 'updateRemoteConfigForKeysOnly', [['theme']]],
+    ['updateExceptKeys', 'updateRemoteConfigExceptKeys', [['theme']]],
+])('%s resolves the native success and failure as an update result', async (functionName, nativeMethodName, functionArgs) => {
+    const { Logger, RemoteConfig } = loadRemoteConfig();
+    const nativeMethod = jest.fn()
+        .mockImplementationOnce((args, callback) => callback('Remote Config is updated and ready to use!'))
+        .mockImplementationOnce((args, callback) => callback('There was an error while updating Remote Config: remote config consent is not given'));
+    const remoteConfig = new RemoteConfig({
+        isInitialized: true,
+        CountlyReactNative: { [nativeMethodName]: nativeMethod },
+    });
+
+    await expect(remoteConfig[functionName](...functionArgs)).resolves.toEqual({ success: true, error: null });
+    expect(Logger.e).not.toHaveBeenCalled();
+
+    await expect(remoteConfig[functionName](...functionArgs)).resolves.toEqual({ success: false, error: 'remote config consent is not given' });
+    expect(Logger.e).toHaveBeenCalledWith(`remoteConfig.${nativeMethodName}, There was an error while updating Remote Config: remote config consent is not given`);
+    expect(nativeMethod).toHaveBeenCalledTimes(2);
+});
+
+test('update results explain why no download was started', async () => {
+    const { RemoteConfig } = loadRemoteConfig();
+    const nativeModule = {
+        remoteConfigUpdate: jest.fn(),
+        updateRemoteConfigForKeysOnly: jest.fn(),
+        updateRemoteConfigExceptKeys: jest.fn(),
+    };
+    const state = { isInitialized: false, CountlyReactNative: nativeModule };
+    const remoteConfig = new RemoteConfig(state);
+
+    await expect(remoteConfig.update()).resolves.toEqual({ success: false, error: "'init' must be called before 'Countly.remoteConfig.update'" });
+    await expect(remoteConfig.updateForKeysOnly(['theme'])).resolves.toEqual({ success: false, error: "'init' must be called before 'Countly.remoteConfig.updateForKeysOnly'" });
+
+    state.isInitialized = true;
+    await expect(remoteConfig.updateForKeysOnly([])).resolves.toEqual({ success: false, error: 'No valid keys provided' });
+    await expect(remoteConfig.updateExceptKeys(['', null])).resolves.toEqual({ success: false, error: 'No valid keys provided' });
+    await expect(remoteConfig.updateExceptKeys(null)).resolves.toEqual({ success: false, error: 'keyNames must be an array of strings' });
+
+    expect(nativeModule.remoteConfigUpdate).not.toHaveBeenCalled();
+    expect(nativeModule.updateRemoteConfigForKeysOnly).not.toHaveBeenCalled();
+    expect(nativeModule.updateRemoteConfigExceptKeys).not.toHaveBeenCalled();
+});
+
+test('update reports an unexpected native result as a failure', async () => {
+    const { Logger, RemoteConfig } = loadRemoteConfig();
+    const remoteConfig = new RemoteConfig({
+        isInitialized: true,
+        CountlyReactNative: {
+            remoteConfigUpdate: jest.fn()
+                .mockImplementationOnce((args, callback) => callback(['Remote Config is updated and ready to use!']))
+                .mockImplementationOnce((args, callback) => callback()),
+        },
+    });
+
+    await expect(remoteConfig.update()).resolves.toEqual({ success: false, error: 'unexpected native result: Remote Config is updated and ready to use!' });
+    await expect(remoteConfig.update()).resolves.toEqual({ success: false, error: 'unexpected native result: undefined' });
+    expect(Logger.e).toHaveBeenCalledTimes(2);
 });

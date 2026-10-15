@@ -22,13 +22,12 @@ setLocation(ReadableArray args)
 disableLocation()
 addCrashLog(ReadableArray args)
 logException(ReadableArray args)
-logJSException(String err, String message, String stack)
+logJSException(String err, String message, String stack, boolean isFatal)
 setCustomCrashSegments(ReadableArray args)
 recordEvent(ReadableMap args)
 startEvent(ReadableArray args)
 cancelEvent(ReadableArray args)
 endEvent(ReadableMap args)
-recordView(ReadableArray args)
 setUserData(ReadableArray args, Promise promise)
 sendPushToken(ReadableArray args)
 onNotification(Map<String, String> notification)
@@ -64,7 +63,6 @@ remoteConfigUpdate(ReadableArray args, final Callback myCallback)
 updateRemoteConfigForKeysOnly(ReadableArray args, final Callback myCallback)
 updateRemoteConfigExceptKeys(ReadableArray args, final Callback myCallback)
 getRemoteConfigValueForKey(ReadableArray args, final Callback myCallback)
-getRemoteConfigValueForKeyP(String keyName, Promise promise)
 remoteConfigClearValues(Promise promise)
 showStarRating(ReadableArray args, final Callback callback)
 presentRatingWidgetWithID(ReadableArray args)
@@ -191,8 +189,8 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     }
 
     @Override
-    public void logJSException(String err, String message, String stack) {
-        this.impl.logJSException(err, message, stack);
+    public void logJSException(String err, String message, String stack, boolean isFatal) {
+        this.impl.logJSException(err, message, stack, isFatal);
     }
 
     @Override
@@ -218,11 +216,6 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     @Override
     public void endEvent(ReadableMap args) {
         this.impl.endEvent(args);
-    }
-
-    @Override
-    public void recordView(ReadableArray args) {
-        this.impl.recordView(args);
     }
 
     @Override
@@ -452,11 +445,6 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     @Override
     public void getRemoteConfigValueForKey(ReadableArray args, final Callback myCallback) {
         this.impl.getRemoteConfigValueForKey(args, myCallback);
-    }
-
-    @Override
-    public void getRemoteConfigValueForKeyP(String keyName, Promise promise) {
-        this.impl.getRemoteConfigValueForKeyP(keyName, promise);
     }
 
     @Override

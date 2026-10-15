@@ -65,23 +65,36 @@ interface ResultObject {
 }
 interface ErrorObject { error: string | null }
 
+/**
+ * Outcome of a Remote Config update.
+ */
+interface RemoteConfigUpdateResult {
+  /** true when new values were downloaded */
+  success: boolean,
+  /** why no values were downloaded, null on success */
+  error: string | null,
+}
+
 interface CountlyRemoteConfigModule {
   /**
    * Replaces all stored Remote Config values with new values from server.
+   * @return {Promise<RemoteConfigUpdateResult>} whether new values were downloaded, and why not
    */
-  update(): Promise<void>;
+  update(): Promise<RemoteConfigUpdateResult>;
 
   /**
    * Replaces specific Remote Config key/value pairs with new values from server.
    * @param {string[]} keyNames array of keys to replace.
+   * @return {Promise<RemoteConfigUpdateResult>} whether new values were downloaded, and why not
    */
-  updateForKeysOnly(keyNames: readonly string[]): Promise<void>;
+  updateForKeysOnly(keyNames: readonly string[]): Promise<RemoteConfigUpdateResult>;
 
   /**
    * Replaces all except specific Remote Config key/value pairs with new values from server.
    * @param {string[]} keyNames array of keys to skip.
+   * @return {Promise<RemoteConfigUpdateResult>} whether new values were downloaded, and why not
    */
-  updateExceptKeys(keyNames: readonly string[]): Promise<void>;
+  updateExceptKeys(keyNames: readonly string[]): Promise<RemoteConfigUpdateResult>;
 
   /**
    * Gets the current Remote Config value for a specific key.
@@ -438,18 +451,6 @@ declare module "countly-sdk-react-native-bridge" {
     export function isInitialized(): Promise<boolean>;
 
     /**
-     * @deprecated in 26.1.0 : use 'Countly.views.startAutoStoppedView' instead.
-     *
-     * Record custom view to Countly.
-     *
-     * @param {string} recordView - name of the view
-     * @param {Segmentation} segments - allows to add optional segmentation,
-     * Supported data type for segments values are string, int, double and boolean
-     * @return {string | null} error message or void
-     */
-    export function recordView(recordView: string, segments?: Segmentation): string | null;
-
-    /**
      * Disable push notifications feature, by default it is enabled.
      * Currently implemented for iOS only
      * Should be called before Countly init
@@ -584,7 +585,7 @@ declare module "countly-sdk-react-native-bridge" {
      * Log exception for Countly
      *
      * @param {string} exception exception
-     * @param {boolean} nonfatal nonfatal
+     * @param {boolean} nonfatal false records the exception as a fatal crash, anything else as non-fatal
      * @param {object} segments segments
      * @return {string | void} error message or void
      */
@@ -910,74 +911,6 @@ declare module "countly-sdk-react-native-bridge" {
      * @return {string | void} error message or void
      */
     export function removeAllConsent(): string | void;
-
-    /**
-     * @deprecated in 26.1.0 : use 'Countly.remoteConfig.update' instead of 'remoteConfigUpdate'.
-     *
-     * Replaces all stored Remote Config values with new values from server.
-     *
-     * @param {function} callback function to be called after fetching values.
-     * @return {string | void} error message or void
-     */
-    export function remoteConfigUpdate(callback: CountlyCallback): string | void;
-
-    /**
-     * @deprecated in 26.1.0 : use 'Countly.remoteConfig.updateForKeysOnly' instead of 'updateRemoteConfigForKeysOnly'.
-     *
-     *
-     * Replace specific Remote Config key value pairs with new values from server.
-     *
-     * @param {string[]} keyNames array of keys to replace.
-     * @param {function} callback function to be called after fetching values.
-     * @return {string | void} error message or void
-     */
-    export function updateRemoteConfigForKeysOnly(keyNames: readonly string[], callback: CountlyCallback): string | void;
-
-    /**
-      * @deprecated in 26.1.0 : use 'Countly.remoteConfig.updateExceptKeys' instead of 'updateRemoteConfigExceptKeys'.
-      *
-     *
-     * Replace all except specific Remote Config key value pairs with new values from server.
-     *
-     * @param {string[]} keyNames array of keys to skip.
-     * @param {function} callback function to be called after fetching values.
-     * @return {string | void} error message or void
-     */
-    export function updateRemoteConfigExceptKeys(keyNames: readonly string[], callback: CountlyCallback): string | void;
-
-    /**
-      * @deprecated in 26.1.0 : use 'Countly.remoteConfig.getValue' instead of 'getRemoteConfigValueForKey'.
-      *
-     *
-     * Replace Remote Config key value for a specific key with new values from server.
-     * This takes in a callback that is called after new values are fetched.
-     *
-     * @param {string} keyNames key to fetch.
-     * @param {function} callback function to be called after fetching new values.
-     * @return {string | void} error message or void
-     */
-    export function getRemoteConfigValueForKey(keyName: string, callback: (value: any) => void): string | void;
-
-    /**
-      * @deprecated in 26.1.0 : use 'Countly.remoteConfig.getValue' instead of 'getRemoteConfigValueForKeyP'.
-      *
-     *
-     * Replace Remote Config key value for a specific key with new values from server. This returns a promise that can be listened to.
-     *
-     * @param {string} keyName key to fetch.
-     * @return {string | promise} error message or promise
-     */
-    export function getRemoteConfigValueForKeyP(keyName: string): string | Promise<any>;
-
-    /**
-      * @deprecated in 26.1.0 : use 'Countly.remoteConfig.clearValues' instead of 'remoteConfigClearValues'.
-      *
-     *
-     * Clear all Remote Config values downloaded from the server.
-     *
-     * @return {string | promise} error message or promise
-     */
-    export function remoteConfigClearValues(): string | Promise<string>;
 
     /**
      *

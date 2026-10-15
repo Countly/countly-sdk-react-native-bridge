@@ -108,8 +108,8 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void logJSException(String err, String message, String stack) {
-        this.impl.logJSException(err, message, stack);
+    public void logJSException(String err, String message, String stack, boolean isFatal) {
+        this.impl.logJSException(err, message, stack, isFatal);
     }
 
     @ReactMethod
@@ -135,11 +135,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void endEvent(ReadableMap args) {
         this.impl.endEvent(args);
-    }
-
-    @ReactMethod
-    public void recordView(ReadableArray args) {
-        this.impl.recordView(args);
     }
 
     @ReactMethod
@@ -370,11 +365,6 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
     @ReactMethod
     public void getRemoteConfigValueForKey(ReadableArray args, final Callback myCallback) {
         this.impl.getRemoteConfigValueForKey(args, myCallback);
-    }
-
-    @ReactMethod
-    public void getRemoteConfigValueForKeyP(String keyName, Promise promise) {
-        this.impl.getRemoteConfigValueForKeyP(keyName, promise);
     }
 
     @ReactMethod

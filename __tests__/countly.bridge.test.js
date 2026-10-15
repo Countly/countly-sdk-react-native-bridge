@@ -6,7 +6,6 @@ function createNativeModuleMock(overrides = {}) {
     return {
         init: jest.fn().mockResolvedValue(undefined),
         isInitialized: jest.fn().mockResolvedValue(false),
-        recordView: jest.fn(),
         disablePushNotifications: jest.fn(),
         sendPushToken: jest.fn(),
         askForNotificationPermission: jest.fn(),
@@ -54,7 +53,6 @@ function createNativeModuleMock(overrides = {}) {
         updateRemoteConfigForKeysOnly: jest.fn((_args, callback) => callback('ok')),
         updateRemoteConfigExceptKeys: jest.fn((_args, callback) => callback('ok')),
         getRemoteConfigValueForKey: jest.fn((_args, callback) => callback('{}')),
-        getRemoteConfigValueForKeyP: jest.fn().mockResolvedValue('{}'),
         remoteConfigClearValues: jest.fn().mockResolvedValue(true),
         getFeedbackWidgets: jest.fn().mockResolvedValue([]),
         getFeedbackWidgetData: jest.fn().mockResolvedValue({}),
@@ -254,24 +252,64 @@ test('initWithConfig installs the JS crash handler when crash reporting is enabl
 
     const handler = global.ErrorUtils.setGlobalHandler.mock.calls[0][0];
     handler(error, false);
+    handler(error, true);
 
-    expect(nativeModule.logJSException).toHaveBeenCalledWith('TypeError', 'bridge blew up', error.stack);
-    expect(previousHandler).toHaveBeenCalledWith(error, false);
+    expect(nativeModule.logJSException).toHaveBeenNthCalledWith(1, 'TypeError', 'bridge blew up', error.stack, false);
+    expect(nativeModule.logJSException).toHaveBeenNthCalledWith(2, 'TypeError', 'bridge blew up', error.stack, true);
+    expect(previousHandler).toHaveBeenNthCalledWith(1, error, false);
+    expect(previousHandler).toHaveBeenNthCalledWith(2, error, true);
+
+    global.__DEV__ = true;
+    handler(error, true);
+
+    expect(nativeModule.logJSException).toHaveBeenNthCalledWith(3, 'TypeError', 'bridge blew up', error.stack, false);
+    expect(previousHandler).toHaveBeenNthCalledWith(3, error, true);
+    expect(nativeModule.addCrashLog).not.toHaveBeenCalled();
+
+    global.__DEV__ = false;
+    delete global.ErrorUtils;
+});
+
+test('JS crash handler reports values that are not errors and always calls the previous handler', async () => {
+    const previousHandler = jest.fn();
+    global.ErrorUtils = {
+        getGlobalHandler: jest.fn(() => previousHandler),
+        setGlobalHandler: jest.fn(),
+    };
+
+    const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge();
+    await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key').enableCrashReporting());
+    const handler = global.ErrorUtils.setGlobalHandler.mock.calls[0][0];
+
+    handler('oops', false);
+    handler({ code: 1 }, false);
+    handler({ name: 404, message: 'Not found', stack: ['frame'] }, false);
+    handler({ state: 'x'.repeat(5000) }, false);
+    nativeModule.logJSException.mockImplementationOnce(() => {
+        throw new Error('native module unavailable');
+    });
+    handler(new Error('still forwarded'), false);
+
+    expect(nativeModule.logJSException).toHaveBeenNthCalledWith(1, 'Error', 'oops', expect.any(String), false);
+    expect(nativeModule.logJSException).toHaveBeenNthCalledWith(2, 'Error', '{"code":1}', expect.any(String), false);
+    expect(nativeModule.logJSException).toHaveBeenNthCalledWith(3, 'Error', 'Not found', '', false);
+    expect(nativeModule.logJSException.mock.calls[3][1]).toHaveLength(1000);
+    expect(previousHandler).toHaveBeenNthCalledWith(1, 'oops', false);
+    expect(previousHandler).toHaveBeenNthCalledWith(2, { code: 1 }, false);
+    expect(previousHandler).toHaveBeenCalledTimes(5);
 
     delete global.ErrorUtils;
 });
 
-test('recordView and event APIs preserve request payload shape', async () => {
+test('event APIs preserve request payload shape', async () => {
     const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge();
 
     await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
 
-    Countly.recordView('Home', { region: 'eu', premium: true, visits: 3 });
     Countly.events.recordEvent('purchase', { sku: 'sku-1', qty: 2 }, 4, 19.99);
     Countly.events.startEvent('checkout');
     Countly.events.endEvent('checkout', { step: 'payment' }, 1, 0);
 
-    expect(nativeModule.recordView).toHaveBeenCalledWith(['Home', 'region', 'eu', 'premium', true, 'visits', 3]);
     expect(nativeModule.recordEvent).toHaveBeenCalledWith({
         n: 'purchase',
         c: 4,
@@ -488,6 +526,22 @@ test('metrics, crash, and custom metric helpers normalize payloads', async () =>
     expect(nativeModule.setCustomMetrics).toHaveBeenCalledWith(['platform', 'ios', 'release', '26.1.0']);
 });
 
+test('logException records fatal only for an explicit false nonfatal flag', async () => {
+    const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge();
+
+    await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
+
+    Countly.logException('fatal', false, { screen: 'home' });
+    Countly.logException('omitted flag');
+    Countly.logException('text flag', 'false');
+    Countly.logException('empty segments', true, { missing: null, unset: undefined, screen: 'home' });
+
+    expect(nativeModule.logException).toHaveBeenNthCalledWith(1, ['fatal\n', false, 'screen', 'home']);
+    expect(nativeModule.logException).toHaveBeenNthCalledWith(2, ['omitted flag\n', true]);
+    expect(nativeModule.logException).toHaveBeenNthCalledWith(3, ['text flag\n', true]);
+    expect(nativeModule.logException).toHaveBeenNthCalledWith(4, ['empty segments\n', true, 'screen', 'home']);
+});
+
 test('user data helpers normalize aliases and forward payloads', async () => {
     const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge();
 
@@ -583,27 +637,6 @@ test('feedback.showNPS selects the matching widget and removes the close listene
     expect(closedListener.subscription.remove).toHaveBeenCalledTimes(1);
 });
 
-test('remote config key filters forward their arrays and callback results', async () => {
-    const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge({
-        nativeOverrides: {
-            updateRemoteConfigForKeysOnly: jest.fn((args, callback) => callback(`only:${args.join(',')}`)),
-            updateRemoteConfigExceptKeys: jest.fn((args, callback) => callback(`except:${args.join(',')}`)),
-        },
-    });
-    const onlyCallback = jest.fn();
-    const exceptCallback = jest.fn();
-
-    await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
-
-    Countly.updateRemoteConfigForKeysOnly(['theme', 'banner'], onlyCallback);
-    Countly.updateRemoteConfigExceptKeys(['secret'], exceptCallback);
-
-    expect(nativeModule.updateRemoteConfigForKeysOnly).toHaveBeenCalledWith(['theme', 'banner'], expect.any(Function));
-    expect(nativeModule.updateRemoteConfigExceptKeys).toHaveBeenCalledWith(['secret'], expect.any(Function));
-    expect(onlyCallback).toHaveBeenCalledWith('only:theme,banner');
-    expect(exceptCallback).toHaveBeenCalledWith('except:secret');
-});
-
 test('remoteConfig.update methods await the native callback result', async () => {
     const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge({
         nativeOverrides: {
@@ -615,9 +648,9 @@ test('remoteConfig.update methods await the native callback result', async () =>
 
     await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
 
-    await expect(Countly.remoteConfig.update()).resolves.toBeUndefined();
-    await expect(Countly.remoteConfig.updateForKeysOnly(['theme', 'banner'])).resolves.toBeUndefined();
-    await expect(Countly.remoteConfig.updateExceptKeys(['secret'])).resolves.toBeUndefined();
+    await expect(Countly.remoteConfig.update()).resolves.toEqual({ success: true, error: null });
+    await expect(Countly.remoteConfig.updateForKeysOnly(['theme', 'banner'])).resolves.toEqual({ success: true, error: null });
+    await expect(Countly.remoteConfig.updateExceptKeys(['secret'])).resolves.toEqual({ success: true, error: null });
 
     expect(nativeModule.remoteConfigUpdate).toHaveBeenCalledWith([], expect.any(Function));
     expect(nativeModule.updateRemoteConfigForKeysOnly).toHaveBeenCalledWith(['theme', 'banner'], expect.any(Function));
@@ -633,7 +666,7 @@ test('remoteConfig.updateForKeysOnly resolves when the native layer reports an u
 
     await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
 
-    await expect(Countly.remoteConfig.updateForKeysOnly(['theme'])).resolves.toBeUndefined();
+    await expect(Countly.remoteConfig.updateForKeysOnly(['theme'])).resolves.toEqual({ success: false, error: 'NetworkError' });
 });
 
 test('remoteConfig.getValue returns null when the key is missing', async () => {
@@ -663,6 +696,34 @@ test('remoteConfig.getValue parses JSON payloads on android', async () => {
     await expect(Countly.remoteConfig.getValue('feature-flag')).resolves.toEqual({ enabled: true });
 });
 
+test('remoteConfig.getValue tells a missing key from a stored "ConfigKeyNotFound" value on ios', async () => {
+    const { Countly, CountlyConfig } = loadCountlyBridge({
+        nativeOverrides: {
+            getRemoteConfigValueForKey: jest.fn((args, callback) => callback({ missing: null, status: 'ConfigKeyNotFound' }[args[0]])),
+        },
+    });
+
+    await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
+
+    await expect(Countly.remoteConfig.getValue('missing')).resolves.toBeNull();
+    await expect(Countly.remoteConfig.getValue('status')).resolves.toBe('ConfigKeyNotFound');
+});
+
+test('remoteConfig.getValue keeps android string values that look like other types', async () => {
+    const { Countly, CountlyConfig } = loadCountlyBridge({
+        platform: 'android',
+        nativeOverrides: {
+            getRemoteConfigValueForKey: jest.fn((args, callback) => callback({ price: '"2.10"', flag: '"true"', count: '7' }[args[0]])),
+        },
+    });
+
+    await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
+
+    await expect(Countly.remoteConfig.getValue('price')).resolves.toBe('2.10');
+    await expect(Countly.remoteConfig.getValue('flag')).resolves.toBe('true');
+    await expect(Countly.remoteConfig.getValue('count')).resolves.toBe(7);
+});
+
 test('remoteConfig.clearValues resolves after clearing the native cache', async () => {
     const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge();
 
@@ -672,38 +733,18 @@ test('remoteConfig.clearValues resolves after clearing the native cache', async 
     expect(nativeModule.remoteConfigClearValues).toHaveBeenCalledTimes(1);
 });
 
-test('legacy remote config and rating widget helpers preserve callback behavior', async () => {
-    const remoteConfigUpdateCallback = jest.fn();
-    const keysOnlyCallback = jest.fn();
-    const exceptKeysCallback = jest.fn();
-    const getValueCallback = jest.fn();
+test('rating widget helper preserves callback behavior', async () => {
     const ratingWidgetCallback = jest.fn();
-    const { Countly, CountlyConfig, nativeModule, listeners, emit } = loadCountlyBridge({
-        platform: 'android',
-        nativeOverrides: {
-            remoteConfigUpdate: jest.fn((_args, callback) => callback('updated')),
-            updateRemoteConfigForKeysOnly: jest.fn((args, callback) => callback(`only:${args.join(',')}`)),
-            updateRemoteConfigExceptKeys: jest.fn((args, callback) => callback(`except:${args.join(',')}`)),
-            getRemoteConfigValueForKey: jest.fn((_args, callback) => callback('{"feature":true}')),
-        },
-    });
+    const { Countly, CountlyConfig, nativeModule, listeners, emit } = loadCountlyBridge();
 
     await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
 
-    Countly.remoteConfigUpdate(remoteConfigUpdateCallback);
-    Countly.updateRemoteConfigForKeysOnly(['theme'], keysOnlyCallback);
-    Countly.updateRemoteConfigExceptKeys(['secret'], exceptKeysCallback);
-    Countly.getRemoteConfigValueForKey('feature', getValueCallback);
     Countly.presentRatingWidgetWithID('rating-1', 99, ratingWidgetCallback);
 
     emit('ratingWidgetCallback', 'closed');
 
     const ratingListener = listeners.find((listener) => listener.eventName === 'ratingWidgetCallback');
 
-    expect(remoteConfigUpdateCallback).toHaveBeenCalledWith('updated');
-    expect(keysOnlyCallback).toHaveBeenCalledWith('only:theme');
-    expect(exceptKeysCallback).toHaveBeenCalledWith('except:secret');
-    expect(getValueCallback).toHaveBeenCalledWith({ feature: true });
     expect(nativeModule.presentRatingWidgetWithID).toHaveBeenCalledWith(['rating-1', 'Done']);
     expect(ratingWidgetCallback).toHaveBeenCalledWith('closed');
     expect(ratingListener.subscription.remove).toHaveBeenCalledTimes(1);
@@ -712,9 +753,9 @@ test('legacy remote config and rating widget helpers preserve callback behavior'
 test('remoteConfig methods do not throw when the SDK is not initialized', async () => {
     const { Countly } = loadCountlyBridge();
 
-    await expect(Countly.remoteConfig.update()).resolves.toBeUndefined();
-    await expect(Countly.remoteConfig.updateForKeysOnly(['theme'])).resolves.toBeUndefined();
-    await expect(Countly.remoteConfig.updateExceptKeys(['theme'])).resolves.toBeUndefined();
+    await expect(Countly.remoteConfig.update()).resolves.toEqual({ success: false, error: "'init' must be called before 'Countly.remoteConfig.update'" });
+    await expect(Countly.remoteConfig.updateForKeysOnly(['theme'])).resolves.toEqual({ success: false, error: "'init' must be called before 'Countly.remoteConfig.updateForKeysOnly'" });
+    await expect(Countly.remoteConfig.updateExceptKeys(['theme'])).resolves.toEqual({ success: false, error: "'init' must be called before 'Countly.remoteConfig.updateExceptKeys'" });
     await expect(Countly.remoteConfig.getValue('theme')).resolves.toBeNull();
     await expect(Countly.remoteConfig.clearValues()).resolves.toBeUndefined();
 });
@@ -726,33 +767,6 @@ test('remoteConfig.getValue returns null for invalid keys instead of throwing', 
 
     await expect(Countly.remoteConfig.getValue('')).resolves.toBeNull();
     expect(nativeModule.getRemoteConfigValueForKey).not.toHaveBeenCalled();
-});
-
-test('getRemoteConfigValueForKeyP returns ConfigKeyNotFound on android when the native promise rejects for a missing key', async () => {
-    const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge({
-        platform: 'android',
-        nativeOverrides: {
-            getRemoteConfigValueForKeyP: jest.fn().mockResolvedValue('ConfigKeyNotFound'),
-        },
-    });
-
-    await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
-
-    await expect(Countly.getRemoteConfigValueForKeyP('missing-key')).resolves.toBe('ConfigKeyNotFound');
-    expect(nativeModule.getRemoteConfigValueForKeyP).toHaveBeenCalledWith('missing-key');
-});
-
-test('getRemoteConfigValueForKeyP parses JSON payloads on android', async () => {
-    const { Countly, CountlyConfig } = loadCountlyBridge({
-        platform: 'android',
-        nativeOverrides: {
-            getRemoteConfigValueForKeyP: jest.fn().mockResolvedValue('{"enabled":true}'),
-        },
-    });
-
-    await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
-
-    await expect(Countly.getRemoteConfigValueForKeyP('feature-flag')).resolves.toEqual({ enabled: true });
 });
 
 test('test helpers expose native queues and halt resets JS bridge state for reinit', async () => {
