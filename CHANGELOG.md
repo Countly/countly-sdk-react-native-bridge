@@ -2,7 +2,7 @@
 * ! Minor breaking change ! `Countly.remoteConfig.updateForKeysOnly(...)` and `Countly.remoteConfig.updateExceptKeys(...)` now enroll the user only in the A/B tests of the keys they download in iOS. Previously they enrolled the user in all running A/B tests.
 * ! Minor breaking change ! `Countly.remoteConfig.getValue(keyName)` now returns string values as strings in Android. Previously a string that looked like a number, a boolean or JSON was converted, for example "2.10" came back as 2.1.
 * ! Minor breaking change ! `Countly.logException(exception, nonfatal, segments)` now records a fatal crash when `nonfatal` is `false`. Previously it always recorded a non-fatal crash.
-* ! Minor breaking change ! An uncaught JS error that crashes a release build is now recorded once, by the native crash report, which gets the JS error in its breadcrumbs. Previously it was also recorded as a separate non-fatal crash.
+* ! Minor breaking change ! An uncaught JS error that crashes a release build is now recorded once, as a fatal crash with its JS error and stack. Previously it could be recorded twice, as a non-fatal crash from JS and as a fatal native crash.
 
 * Added a result to `Countly.remoteConfig.update()`, `Countly.remoteConfig.updateForKeysOnly(keyNames)` and `Countly.remoteConfig.updateExceptKeys(keyNames)`. They now resolve to `{ success, error }`, which tells whether new values were downloaded and, if not, why.
 

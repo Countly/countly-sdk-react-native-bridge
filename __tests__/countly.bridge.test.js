@@ -254,19 +254,17 @@ test('initWithConfig installs the JS crash handler when crash reporting is enabl
     handler(error, false);
     handler(error, true);
 
-    expect(nativeModule.logJSException).toHaveBeenCalledTimes(1);
-    expect(nativeModule.logJSException).toHaveBeenCalledWith('TypeError', 'bridge blew up', error.stack);
-    expect(nativeModule.addCrashLog).toHaveBeenCalledTimes(1);
-    expect(nativeModule.addCrashLog).toHaveBeenCalledWith([`TypeError: bridge blew up\n${error.stack}`]);
+    expect(nativeModule.logJSException).toHaveBeenNthCalledWith(1, 'TypeError', 'bridge blew up', error.stack, false);
+    expect(nativeModule.logJSException).toHaveBeenNthCalledWith(2, 'TypeError', 'bridge blew up', error.stack, true);
     expect(previousHandler).toHaveBeenNthCalledWith(1, error, false);
     expect(previousHandler).toHaveBeenNthCalledWith(2, error, true);
 
     global.__DEV__ = true;
     handler(error, true);
 
-    expect(nativeModule.logJSException).toHaveBeenCalledTimes(2);
-    expect(nativeModule.addCrashLog).toHaveBeenCalledTimes(1);
+    expect(nativeModule.logJSException).toHaveBeenNthCalledWith(3, 'TypeError', 'bridge blew up', error.stack, false);
     expect(previousHandler).toHaveBeenNthCalledWith(3, error, true);
+    expect(nativeModule.addCrashLog).not.toHaveBeenCalled();
 
     global.__DEV__ = false;
     delete global.ErrorUtils;
@@ -285,16 +283,20 @@ test('JS crash handler reports values that are not errors and always calls the p
 
     handler('oops', false);
     handler({ code: 1 }, false);
+    handler({ name: 404, message: 'Not found', stack: ['frame'] }, false);
+    handler({ state: 'x'.repeat(5000) }, false);
     nativeModule.logJSException.mockImplementationOnce(() => {
         throw new Error('native module unavailable');
     });
     handler(new Error('still forwarded'), false);
 
-    expect(nativeModule.logJSException).toHaveBeenNthCalledWith(1, 'Error', 'oops', expect.any(String));
-    expect(nativeModule.logJSException).toHaveBeenNthCalledWith(2, 'Error', '{"code":1}', expect.any(String));
+    expect(nativeModule.logJSException).toHaveBeenNthCalledWith(1, 'Error', 'oops', expect.any(String), false);
+    expect(nativeModule.logJSException).toHaveBeenNthCalledWith(2, 'Error', '{"code":1}', expect.any(String), false);
+    expect(nativeModule.logJSException).toHaveBeenNthCalledWith(3, 'Error', 'Not found', '', false);
+    expect(nativeModule.logJSException.mock.calls[3][1]).toHaveLength(1000);
     expect(previousHandler).toHaveBeenNthCalledWith(1, 'oops', false);
     expect(previousHandler).toHaveBeenNthCalledWith(2, { code: 1 }, false);
-    expect(previousHandler).toHaveBeenCalledTimes(3);
+    expect(previousHandler).toHaveBeenCalledTimes(5);
 
     delete global.ErrorUtils;
 });
@@ -692,6 +694,19 @@ test('remoteConfig.getValue parses JSON payloads on android', async () => {
     await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
 
     await expect(Countly.remoteConfig.getValue('feature-flag')).resolves.toEqual({ enabled: true });
+});
+
+test('remoteConfig.getValue tells a missing key from a stored "ConfigKeyNotFound" value on ios', async () => {
+    const { Countly, CountlyConfig } = loadCountlyBridge({
+        nativeOverrides: {
+            getRemoteConfigValueForKey: jest.fn((args, callback) => callback({ missing: null, status: 'ConfigKeyNotFound' }[args[0]])),
+        },
+    });
+
+    await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
+
+    await expect(Countly.remoteConfig.getValue('missing')).resolves.toBeNull();
+    await expect(Countly.remoteConfig.getValue('status')).resolves.toBe('ConfigKeyNotFound');
 });
 
 test('remoteConfig.getValue keeps android string values that look like other types', async () => {

@@ -22,6 +22,7 @@ import android.content.Context;
 import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.ReadableType;
 import ly.count.android.sdk.Countly;
+import ly.count.android.sdk.CrashData;
 import ly.count.android.sdk.CountlyConfig;
 import ly.count.android.sdk.CountlyStore;
 import ly.count.android.sdk.DeviceIdType;
@@ -109,6 +110,8 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     private static CCallback notificationListener = null;
     private static String lastStoredNotification = null;
     protected static boolean loggingEnabled = false;
+    private static final long JS_FATAL_ECHO_WINDOW_MS = 5000;
+    private static volatile long jsFatalCrashRecordedAt = 0;
 
     private List<String> allowedIntentClassNames = new ArrayList<>();
     private List<String> allowedIntentPackageNames = new ArrayList<>();
@@ -498,6 +501,7 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
             // Limits End -------------------------------------------
             if (_config.has("crashReporting")) {
                 config.crashes.enableCrashReporting();
+                config.crashes.setGlobalCrashFilterCallback(CountlyReactNativeImpl::isEchoOfRecordedJSFatal);
             }
             if (_config.has("pushNotification")) {
                 JSONObject pushObject = _config.getJSONObject("pushNotification");
@@ -1117,9 +1121,36 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     }
 
 
-    public void logJSException(String err, String message, String stack) {
+    public void logJSException(String err, String message, String stack, boolean isFatal) {
         Countly.sharedInstance().crashes().addCrashBreadcrumb(stack);
-        Countly.sharedInstance().crashes().recordHandledException(new CountlyReactException(err, message, stack));
+        CountlyReactException exception = new CountlyReactException(err, message, stack);
+        if (!isFatal) {
+            Countly.sharedInstance().crashes().recordHandledException(exception);
+            return;
+        }
+
+        // A fatal crash is written to storage before this call returns, so RN's native echo of it can be dropped safely.
+        Countly.sharedInstance().crashes().recordUnhandledException(exception);
+        jsFatalCrashRecordedAt = System.currentTimeMillis();
+    }
+
+    /**
+     * Tells whether a native crash is the one RN raises for a fatal JS error that the JS error handler has just recorded.
+     *
+     * @param crash crash the Countly SDK is about to record
+     * @return true when the crash is that duplicate and should be dropped
+     */
+    private static boolean isEchoOfRecordedJSFatal(CrashData crash) {
+        long recordedAt = jsFatalCrashRecordedAt;
+        if (recordedAt == 0 || System.currentTimeMillis() - recordedAt > JS_FATAL_ECHO_WINDOW_MS) {
+            return false;
+        }
+        if (!crash.getFatal() || !crash.getStackTrace().contains("com.facebook.react.common.JavascriptException")) {
+            return false;
+        }
+
+        jsFatalCrashRecordedAt = 0;
+        return true;
     }
 
     

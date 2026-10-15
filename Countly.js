@@ -38,6 +38,7 @@ Countly.remoteConfig = new RemoteConfig(CountlyState);
 Countly.views = new Views(CountlyState);
 
 let _isCrashReportingEnabled = false;
+const MAX_THROWN_VALUE_DESCRIPTION_LENGTH = 1000;
 
 Countly.userData = {}; // userData interface
 Countly.userDataBulk = {}; // userDataBulk interface
@@ -85,17 +86,17 @@ function toReportableError(thrown) {
         return thrown;
     }
     if (typeof thrown === "string") {
-        return new Error(thrown);
+        return new Error(thrown.substring(0, MAX_THROWN_VALUE_DESCRIPTION_LENGTH));
     }
     try {
         const description = JSON.stringify(thrown);
         if (description !== undefined) {
-            return new Error(description);
+            return new Error(description.substring(0, MAX_THROWN_VALUE_DESCRIPTION_LENGTH));
         }
     } catch (error) {
         // Values that cannot be serialized fall back to their string form.
     }
-    return new Error(String(thrown));
+    return new Error(String(thrown).substring(0, MAX_THROWN_VALUE_DESCRIPTION_LENGTH));
 }
 
 /**
@@ -106,13 +107,13 @@ function toReportableError(thrown) {
  */
 function describeGlobalJSError(thrown) {
     const error = toReportableError(thrown);
-    const errorName = error.name || "Error";
+    const errorName = typeof error.name === "string" && error.name ? error.name : "Error";
     const jsStackTrace = Utils.getStackTrace(error);
     let errorTitle;
     let stackArr;
     if (jsStackTrace == null || jsStackTrace.length === 0) {
         errorTitle = errorName;
-        stackArr = error.stack;
+        stackArr = typeof error.stack === "string" ? error.stack : "";
     } else {
         let fname = jsStackTrace[0].file || "";
         if (fname.startsWith("http")) {
@@ -146,12 +147,8 @@ function installJsCrashReportingHandler() {
     ErrorUtils.setGlobalHandler((error, isFatal) => {
         try {
             const description = describeGlobalJSError(error);
-            if (isFatal && !__DEV__) {
-                // RN turns this error into a native crash that is reported natively, so its JS details go into that report as a breadcrumb.
-                CountlyNativeModule.addCrashLog([`${description.title}: ${description.message}\n${description.stack}`]);
-            } else {
-                CountlyNativeModule.logJSException(description.title, description.message, description.stack);
-            }
+            // Debug builds show a fatal error instead of crashing, so only release builds record it as a fatal crash.
+            CountlyNativeModule.logJSException(description.title, description.message, description.stack, isFatal === true && !__DEV__);
         } catch (reportError) {
             L.e(`JS error handler, could not report the error: ${reportError}`);
         }

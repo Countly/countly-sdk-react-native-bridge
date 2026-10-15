@@ -19,11 +19,14 @@ function failedUpdate(error) {
 }
 
 function parseRemoteConfigValue(rawValue) {
-    if (rawValue == null || rawValue === REMOTE_CONFIG_KEY_NOT_FOUND) {
+    if (rawValue == null) {
         return null;
     }
 
     if (Platform.OS === "android" && typeof rawValue === "string") {
+        if (rawValue === REMOTE_CONFIG_KEY_NOT_FOUND) {
+            return null;
+        }
         try {
             return JSON.parse(rawValue);
         } catch (error) {
