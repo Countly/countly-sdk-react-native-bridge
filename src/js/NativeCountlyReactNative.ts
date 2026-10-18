@@ -24,13 +24,12 @@ export interface Spec extends TurboModule {
     startSession(): void;
     updateSession(): void;
     endSession(): void;
-    logJSException(err: string, message: string, stack: string): void;
+    logJSException(err: string, message: string, stack: string, isFatal: boolean): void;
     setCustomCrashSegments(args: Array<UnsafeObject>): void;
     recordEvent(args: UnsafeObject): void;
     startEvent(args: Array<string>): void;
     cancelEvent(args: Array<string>): void;
     endEvent(args: UnsafeObject): void;
-    recordView(args: Array<SegmentationArg>): void;
     startAutoStoppedView(args: Array<SegmentationArg>): Promise<string | null>;
     startView(args: Array<SegmentationArg>): Promise<string | null>;
     stopViewWithName(args: Array<SegmentationArg>): void;
@@ -45,6 +44,7 @@ export interface Spec extends TurboModule {
     setUserData(args: Array<UnsafeObject>): Promise<void>;
     sendPushToken(args: Array<string>): void;
     registerForNotification(args: Array<UnsafeObject>): void;
+    registerForNotificationOpened(args: Array<UnsafeObject>): void;
     askForNotificationPermission(args: Array<UnsafeObject>): void;
     userData_setProperty(args: Array<UnsafeObject>): Promise<void>;
     userData_increment(args: Array<string>): Promise<void>;
@@ -76,7 +76,6 @@ export interface Spec extends TurboModule {
     updateRemoteConfigForKeysOnly(args: Array<UnsafeObject>, callback: () => void): void;
     updateRemoteConfigExceptKeys(args: Array<UnsafeObject>, callback: () => void): void;
     getRemoteConfigValueForKey(args: Array<string>, callback: () => void): void;
-    getRemoteConfigValueForKeyP(keyName: string): Promise<UnsafeObject>;
     remoteConfigClearValues(): Promise<void>;
     showStarRating(args: Array<string>, callback: () => void): void;
     presentRatingWidgetWithID(args: Array<string>): void;

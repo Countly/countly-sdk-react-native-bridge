@@ -6,6 +6,8 @@ jest.mock('../Logger.js', () => ({
     v: jest.fn(),
 }));
 
+jest.mock('../CountlyFlavor.js', () => ({ PUSH_NOTIFICATIONS_AVAILABLE: true }));
+
 const Logger = require('../Logger.js');
 const Validators = require('../Validators.js');
 
@@ -35,6 +37,34 @@ test('UserDataValue composes null, type, and parse-int validation', () => {
     expect(Validators.UserDataValue(undefined, 'value', 'incrementBy')).toBe('value should not be null or undefined');
     expect(Validators.UserDataValue({}, 'value', 'incrementBy')).toContain("unsupported data type 'object'");
     expect(Validators.UserDataValue('abc', 'value', 'incrementBy')).toContain("parseable to 'integer'");
+});
+
+test('UserDataInteger accepts whole numbers in the 32-bit range and refuses decimals, overflow and text', () => {
+    [7, -3, 0, '7', '-12', ' 42 ', 2147483647, -2147483648].forEach((value) => {
+        expect(Validators.UserDataInteger(value, 'value', 'incrementBy')).toBeNull();
+    });
+
+    [2.5, '2.5', 0.5, 3e9, '3000000000', -2147483649, NaN, Infinity, '', ' ', '7abc', '0x10', true, {}, null, undefined].forEach((value) => {
+        expect(Validators.UserDataInteger(value, 'value', 'incrementBy')).toEqual(expect.any(String));
+    });
+
+    expect(Validators.UserDataInteger(2.5, 'value', 'incrementBy')).toBe('value should be a whole number between -2147483648 and 2147483647, received [2.5]');
+    expect(Logger.e).toHaveBeenCalledWith('incrementBy, value should be a whole number between -2147483648 and 2147483647, received [2.5]');
+});
+
+test('PushAvailable lets push calls run in the push package and refuses them in the no-push package', () => {
+    const noPushMessage = "push notifications are not part of the no-push package, use 'countly-sdk-react-native-bridge' for push notifications";
+
+    expect(Validators.PushAvailable('sendPushToken')).toBeNull();
+    expect(Logger.w).not.toHaveBeenCalled();
+
+    jest.resetModules();
+    jest.doMock('../CountlyFlavor.js', () => ({ PUSH_NOTIFICATIONS_AVAILABLE: false }));
+    const NoPushLogger = require('../Logger.js');
+    const NoPushValidators = require('../Validators.js');
+
+    expect(NoPushValidators.PushAvailable('sendPushToken')).toBe(noPushMessage);
+    expect(NoPushLogger.w).toHaveBeenCalledWith(`sendPushToken, ${noPushMessage}`);
 });
 
 test('areEventParametersValid rejects malformed event payloads and accepts zero values', () => {

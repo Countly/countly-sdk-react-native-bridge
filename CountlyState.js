@@ -10,10 +10,10 @@ CountlyState.widgetClosedCallbackName = "widgetClosedCallback";
 /*
  * Callback to be executed when feedback widget is displayed
  */
-CountlyState.widgetShownCallback;
+CountlyState.widgetShownCallback = null;
 /*
  * Callback to be executed when feedback widget is closed
  */
-CountlyState.widgetClosedCallback;
+CountlyState.widgetClosedCallback = null;
 
 export default CountlyState;

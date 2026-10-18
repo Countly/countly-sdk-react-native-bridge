@@ -75,3 +75,4 @@ For a ninja issue about path length you might want to download and point to a sp
 ```
 
 For an issue with the recent version of React Native (0.76) about safe area context you can check this [thread](https://github.com/th3rdwave/react-native-safe-area-context/issues/539#issuecomment-2436529368).
+

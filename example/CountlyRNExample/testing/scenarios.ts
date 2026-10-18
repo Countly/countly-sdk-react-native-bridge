@@ -73,6 +73,7 @@ function createStableEventQueueConfig() {
 }
 
 const MANUAL_SESSION_TEST_SERVER_URL = "https://127.0.0.1:1";
+const OFFLINE_QUEUE_SERVER_URL = "https://127.0.0.1:1";
 const MANUAL_SESSION_UPDATE_DELAY_MS = 1200;
 
 function createManualSessionRequestOrderConfig() {
@@ -763,6 +764,404 @@ function createRemoteConfigDirectScenario() {
     } satisfies IntegrationScenario;
 }
 
+/**
+ * Returns the last queued request that has a parameter containing the given text, or null.
+ */
+function findLastRequestContaining(entries: string[], expectedText: string) {
+    const parsedEntries = parseQueueRequests(entries);
+
+    for (let index = parsedEntries.length - 1; index >= 0; index -= 1) {
+        if (Object.values(parsedEntries[index].params).some((value) => value.includes(expectedText))) {
+            return parsedEntries[index];
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Polls the request queue until a request appended after the baseline contains the given text, or the timeout passes.
+ */
+async function waitForRequestContaining(baselineQueue: string[], expectedText: string, timeoutMs: number) {
+    const startedAt = Date.now();
+    let currentQueue = baselineQueue;
+
+    while (Date.now() - startedAt < timeoutMs) {
+        currentQueue = await Countly.test.getRequestQueue();
+        if (findLastRequestContaining(takeAppendedEntries(baselineQueue, currentQueue), expectedText) !== null) {
+            break;
+        }
+        await sleep(500);
+    }
+
+    return currentQueue;
+}
+
+/**
+ * Creates a config whose server cannot be reached, so recorded requests stay in the native request queue for inspection.
+ */
+function createOfflineQueueConfig() {
+    return createCountlyConfig().setServerURL(OFFLINE_QUEUE_SERVER_URL).setRequestTimeoutDuration(1).disableSDKBehaviorSettingsUpdates();
+}
+
+/**
+ * Creates an offline config and sets the event threshold to 1, so each recorded event moves into the request queue at once.
+ */
+function createRequestQueueEventConfig() {
+    Countly.setEventSendThreshold(1);
+    return createOfflineQueueConfig();
+}
+
+/**
+ * Scenario: an empty device ID at init gives an SDK generated ID instead of the text "null".
+ */
+function createEmptyDeviceIdScenario() {
+    return {
+        id: "empty-device-id-generated",
+        title: "Empty Device ID Is Generated",
+        description: "Starts the SDK with an empty device ID and checks that the SDK generates its own ID instead of using the text 'null'.",
+        async run() {
+            await haltBridgeForScenario();
+
+            await Countly.initWithConfig(createCountlyConfig().setDeviceID(""));
+            const deviceId = await Countly.deviceId.getID();
+            const deviceIdType = await Countly.deviceId.getType();
+
+            assertCondition(typeof deviceId === "string" && deviceId.length > 0 && deviceId !== "null", `Expected an SDK generated device ID, received '${deviceId}'.`);
+            assertCondition(deviceIdType === "SDK_GENERATED", `Expected device ID type SDK_GENERATED, received '${deviceIdType}'.`);
+
+            return {
+                summary: "An empty device ID at init gives an SDK generated device ID.",
+                details: [`Device ID: ${deviceId}`, `Device ID type: ${deviceIdType}`],
+            };
+        },
+    } satisfies IntegrationScenario;
+}
+
+/**
+ * Scenario: a push config with only the token type set no longer skips the start-up settings after it.
+ */
+function createPartialPushConfigScenario() {
+    return {
+        id: "partial-push-config-keeps-later-settings",
+        title: "Partial Push Config Keeps Later Settings",
+        description: "Sets only the push token type, then checks that a later start-up setting (global view segmentation) still reaches recorded views.",
+        async run() {
+            await haltBridgeForScenario();
+
+            const config = createRequestQueueEventConfig()
+                .setPushTokenType(Countly.messagingMode.DEVELOPMENT)
+                .setGlobalViewSegmentation({ e2e_partial_push: "kept" });
+            await Countly.initWithConfig(config);
+            const baselineQueue = await getStableRequestQueue();
+
+            await Countly.views.startAutoStoppedView("Partial Push Config View");
+
+            const finalQueue = await waitForRequestGrowth(baselineQueue, 1);
+            const appendedRequests = takeAppendedEntries(baselineQueue, finalQueue);
+            const { eventPayload, request } = findLastEventPayload(appendedRequests, "[CLY]_view");
+            const segmentation = eventPayload?.segmentation || eventPayload?.seg || {};
+
+            assertCondition(request !== null, `Expected a view event request, received: ${appendedRequests.join(" | ")}`);
+            assertCondition(segmentation.e2e_partial_push === "kept", `Expected the global view segmentation set after the push options, received '${JSON.stringify(segmentation)}'.`);
+
+            return {
+                summary: "A partial push config no longer skips the start-up settings after it.",
+                details: [`View request: ${request?.entry || ""}`],
+            };
+        },
+    } satisfies IntegrationScenario;
+}
+
+/**
+ * Scenario: a single consent name at init is applied as a one-entry list.
+ */
+function createSingleConsentScenario() {
+    return {
+        id: "single-consent-name-at-init",
+        title: "Single Consent Name At Init",
+        description: "Requires consent and gives a single consent name instead of a list at init, then checks that the consented event is recorded and the app keeps running.",
+        async run() {
+            await haltBridgeForScenario();
+
+            const config = createRequestQueueEventConfig().setRequiresConsent(true).giveConsent("events");
+            await Countly.initWithConfig(config);
+            const baselineQueue = await getStableRequestQueue();
+
+            Countly.events.recordEvent("e2e_single_consent");
+
+            const finalQueue = await waitForRequestGrowth(baselineQueue, 1);
+            const appendedRequests = takeAppendedEntries(baselineQueue, finalQueue);
+            const request = findLastRequestWithEventName(appendedRequests, "e2e_single_consent");
+
+            assertCondition(request !== null, `Expected the consented event in the request queue, received: ${appendedRequests.join(" | ")}`);
+
+            return {
+                summary: "A single consent name at init is applied as a one-entry list.",
+                details: [`Event request: ${request?.entry || ""}`],
+            };
+        },
+    } satisfies IntegrationScenario;
+}
+
+/**
+ * Scenario: direct and indirect attribution given as objects, at init and at runtime, reach the request queue.
+ */
+function createAttributionShapesScenario() {
+    return {
+        id: "attribution-object-shapes",
+        title: "Attribution With Objects",
+        description: "Records direct attribution with campaign data as an object and indirect attribution as an object, at init and at runtime, and checks both reach the request queue.",
+        async run() {
+            await haltBridgeForScenario();
+
+            const config = createOfflineQueueConfig()
+                .recordDirectAttribution("countly", { cid: "e2e-init-cid", cuid: "e2e-init-cuid" })
+                .recordIndirectAttribution({ adid: "e2e-init-adid" });
+            await Countly.initWithConfig(config);
+            const baselineQueue = await getStableRequestQueue();
+
+            Countly.recordDirectAttribution("countly", { cid: "e2e-runtime-cid", cuid: "e2e-runtime-cuid" });
+            Countly.recordIndirectAttribution({ adid: "e2e-runtime-adid", count: 3 });
+
+            const finalQueue = await waitForRequestGrowth(baselineQueue, 2);
+            const allRequests = finalQueue;
+            const initDirect = findLastRequestContaining(allRequests, "e2e-init-cid");
+            const initIndirect = findLastRequestContaining(allRequests, "e2e-init-adid");
+            const runtimeDirect = findLastRequestContaining(allRequests, "e2e-runtime-cid");
+            const runtimeIndirect = findLastRequestContaining(allRequests, "e2e-runtime-adid");
+
+            assertCondition(initDirect !== null, `Expected the init direct attribution in the queue, received: ${allRequests.join(" | ")}`);
+            assertCondition(initIndirect !== null, `Expected the init indirect attribution in the queue, received: ${allRequests.join(" | ")}`);
+            assertCondition(runtimeDirect !== null, `Expected the runtime direct attribution in the queue, received: ${allRequests.join(" | ")}`);
+            assertCondition(runtimeIndirect !== null, `Expected the runtime indirect attribution in the queue, received: ${allRequests.join(" | ")}`);
+
+            return {
+                summary: "Attribution data given as objects is sent instead of crashing the app.",
+                details: [
+                    `Init direct: ${initDirect?.entry || ""}`,
+                    `Init indirect: ${initIndirect?.entry || ""}`,
+                    `Runtime direct: ${runtimeDirect?.entry || ""}`,
+                    `Runtime indirect: ${runtimeIndirect?.entry || ""}`,
+                ],
+            };
+        },
+    } satisfies IntegrationScenario;
+}
+
+/**
+ * Scenario: calls before init and wrong-type inputs are refused with a message instead of crashing the app.
+ */
+function createCallsBeforeInitScenario() {
+    return {
+        id: "calls-before-init-are-refused",
+        title: "Calls Before Init And Wrong Inputs",
+        description: "Calls recordMetrics before init and passes wrong-type inputs, and checks the calls are refused with a message instead of crashing the app.",
+        async run() {
+            await haltBridgeForScenario();
+
+            const metricsMessage = Countly.recordMetrics({ e2e_metric: "early" });
+            const thresholdMessage = Countly.setEventSendThreshold(10.5);
+
+            await Countly.initWithConfig(createCountlyConfig());
+            const consentMessage = Countly.giveConsent(undefined as unknown as string[]);
+            const incrementMessage = await Countly.userData.incrementBy("e2e_score", 3e9);
+
+            assertCondition(metricsMessage === "'init' must be called before 'recordMetrics'", `Expected recordMetrics to be refused before init, received '${metricsMessage}'.`);
+            assertCondition(typeof thresholdMessage === "string" && thresholdMessage.includes("whole number"), `Expected a decimal event threshold to be refused, received '${thresholdMessage}'.`);
+            assertCondition(typeof consentMessage === "string", `Expected giveConsent without a list to be refused, received '${consentMessage}'.`);
+            assertCondition(typeof incrementMessage === "string" && incrementMessage.includes("whole number"), `Expected an out-of-range increment to be refused, received '${incrementMessage}'.`);
+
+            return {
+                summary: "Early and wrong-type calls are refused with a message and the app keeps running.",
+                details: [`recordMetrics: ${metricsMessage}`, `setEventSendThreshold: ${thresholdMessage}`, `giveConsent: ${consentMessage}`, `incrementBy: ${incrementMessage}`],
+            };
+        },
+    } satisfies IntegrationScenario;
+}
+
+/**
+ * Scenario: profile math refuses decimals, keeps whole numbers, and numeric profile values keep their digits.
+ */
+function createUserProfileNumbersScenario() {
+    return {
+        id: "user-profile-numbers",
+        title: "User Profile Numbers",
+        description: "Refuses a decimal increment, sends a whole-number increment, and checks that a numeric phone number is sent without exponent notation.",
+        async run() {
+            await haltBridgeForScenario();
+
+            await Countly.initWithConfig(createOfflineQueueConfig());
+            const baselineQueue = await getStableRequestQueue();
+
+            const decimalMessage = await Countly.userData.incrementBy("e2e_score", 2.5);
+            await Countly.userDataBulk.incrementBy("e2e_score", 3);
+            await Countly.userDataBulk.setUserProperties({ phone: 5551234567 } as any);
+            await Countly.userDataBulk.save();
+
+            // iOS sends the named fields and the custom changes as two user_details requests, Android as one.
+            await waitForRequestContaining(baselineQueue, "e2e_score", 5000);
+            const finalQueue = await waitForRequestContaining(baselineQueue, "5551234567", 5000);
+            const userDetailsRequests = parseQueueRequests(takeAppendedEntries(baselineQueue, finalQueue)).filter((request) => request.params.user_details);
+            const userDetailsList = userDetailsRequests.map((request) => safeParseJson(request.params.user_details) || {});
+            const increment = userDetailsList.map((details) => details?.custom?.e2e_score?.$inc).find((value) => value !== undefined);
+            const phone = userDetailsList.map((details) => details?.phone).find((value) => value !== undefined);
+
+            assertCondition(typeof decimalMessage === "string" && decimalMessage.includes("whole number"), `Expected the decimal increment to be refused, received '${decimalMessage}'.`);
+            assertCondition(Number(increment) === 3, `Expected $inc 3 for e2e_score, received '${userDetailsRequests.map((request) => request.params.user_details).join(" | ")}'.`);
+            assertCondition(String(phone) === "5551234567", `Expected phone '5551234567', received '${phone}'.`);
+
+            return {
+                summary: "Profile math keeps whole numbers and numeric phone numbers keep their digits.",
+                details: userDetailsRequests.map((request) => `User details request: ${request.entry}`),
+            };
+        },
+    } satisfies IntegrationScenario;
+}
+
+/**
+ * Scenario: logException accepts an Error object and a null segment value.
+ */
+function createExceptionObjectScenario() {
+    return {
+        id: "log-exception-error-object",
+        title: "logException With An Error Object",
+        description: "Logs an Error object with a null segment value and checks that a crash with the error's message reaches the request queue.",
+        async run() {
+            await haltBridgeForScenario();
+
+            await Countly.initWithConfig(createOfflineQueueConfig().enableCrashReporting());
+            const baselineQueue = await getStableRequestQueue();
+
+            const result = Countly.logException(new Error("e2e error object"), true, { e2e_null: null, e2e_text: "kept" });
+
+            const finalQueue = await waitForRequestGrowth(baselineQueue, 1);
+            const appendedRequests = takeAppendedEntries(baselineQueue, finalQueue);
+            const crashRequest = findLastRequestContaining(appendedRequests, "e2e error object");
+
+            assertCondition(result === undefined, `Expected logException to accept an Error object, received '${result}'.`);
+            assertCondition(crashRequest !== null, `Expected a crash request with the error message, received: ${appendedRequests.join(" | ")}`);
+
+            return {
+                summary: "An Error object is reported as a crash.",
+                details: [`Crash request: ${crashRequest?.entry || ""}`],
+            };
+        },
+    } satisfies IntegrationScenario;
+}
+
+/**
+ * Scenario: the JS crash title names the function and file the error came from.
+ */
+function createJsCrashTitleScenario() {
+    return {
+        id: "js-crash-title-names-function",
+        title: "JS Crash Title Names The Function",
+        description: "Passes an error to the JS crash handler and checks that the recorded crash title includes the function and file it came from.",
+        async run() {
+            await haltBridgeForScenario();
+
+            await Countly.initWithConfig(createOfflineQueueConfig().enableCrashReporting());
+            const baselineQueue = await getStableRequestQueue();
+
+            function e2eCrashOrigin() {
+                return new Error("e2e handled js crash");
+            }
+            const globalHandler = (global as any).ErrorUtils?.getGlobalHandler?.();
+            assertCondition(typeof globalHandler === "function", "Expected a global JS error handler.");
+            globalHandler(e2eCrashOrigin(), false);
+
+            const finalQueue = await waitForRequestGrowth(baselineQueue, 1);
+            const appendedRequests = takeAppendedEntries(baselineQueue, finalQueue);
+            const crashRequest = findLastRequestContaining(appendedRequests, "e2e handled js crash");
+            const crashPayload = safeParseJson(crashRequest?.params.crash || "") || {};
+            // Android puts the JS title on the first line of the crash stack, iOS in the crash type.
+            const crashText = `${crashPayload._name || ""} ${crashPayload._type || ""} ${crashPayload._error || ""}`;
+
+            assertCondition(crashRequest !== null, `Expected a crash request for the JS error, received: ${appendedRequests.join(" | ")}`);
+            assertCondition(/e2eCrashOrigin@[\w.-]+\)/.test(crashText), `Expected the crash title to name 'e2eCrashOrigin@<bundle file>', received '${crashText.slice(0, 300)}'.`);
+
+            return {
+                summary: "The JS crash title includes the function and file of the error.",
+                details: [`Crash name: ${crashPayload._name || ""}`, `Crash type: ${crashPayload._type || ""}`, `Crash stack: ${String(crashPayload._error || "").split("\n")[0]}`],
+            };
+        },
+    } satisfies IntegrationScenario;
+}
+
+/**
+ * Scenario: metrics consent given and withdrawn after init is honoured.
+ */
+function createMetricsConsentScenario() {
+    return {
+        id: "metrics-consent-at-runtime",
+        title: "Metrics Consent At Runtime",
+        description: "Requires consent, gives metrics consent after init and checks that a metrics request is recorded, then withdraws it and checks that the next one is not.",
+        async run() {
+            await haltBridgeForScenario();
+
+            await Countly.initWithConfig(createOfflineQueueConfig().setRequiresConsent(true));
+            Countly.giveConsent(["metrics"]);
+            const baselineQueue = await getStableRequestQueue();
+
+            Countly.recordMetrics({ e2e_metric: "consented" });
+            const afterConsentQueue = await waitForRequestGrowth(baselineQueue, 1);
+            const consentedRequest = findLastRequestContaining(takeAppendedEntries(baselineQueue, afterConsentQueue), "consented");
+
+            Countly.removeConsent(["metrics"]);
+            const beforeWithdrawnQueue = await getStableRequestQueue();
+            Countly.recordMetrics({ e2e_metric: "withdrawn" });
+            const afterWithdrawnQueue = await getStableRequestQueue();
+            const withdrawnRequest = findLastRequestContaining(takeAppendedEntries(beforeWithdrawnQueue, afterWithdrawnQueue), "withdrawn");
+
+            assertCondition(consentedRequest !== null, `Expected a metrics request after giving metrics consent, received: ${afterConsentQueue.join(" | ")}`);
+            assertCondition(withdrawnRequest === null, `Expected no metrics request after withdrawing metrics consent, received: ${withdrawnRequest?.entry}`);
+
+            return {
+                summary: "Metrics consent given and withdrawn after init is honoured.",
+                details: [`Consented metrics request: ${consentedRequest?.entry || ""}`],
+            };
+        },
+    } satisfies IntegrationScenario;
+}
+
+/**
+ * Scenario (Android): a handed over push token is queued without calling askForNotificationPermission first.
+ */
+function createPushTokenWithoutPermissionCallScenario() {
+    return {
+        id: "push-token-without-permission-call",
+        title: "Push Token Without Permission Call (Android)",
+        description: "Hands over a push token without calling askForNotificationPermission first and checks that the token request is queued.",
+        async run() {
+            await haltBridgeForScenario();
+
+            await Countly.initWithConfig(createOfflineQueueConfig());
+            if (Platform.OS !== "android") {
+                return {
+                    summary: "Android only: on iOS the SDK sends a handed over token only after the user allows notifications.",
+                    details: [],
+                };
+            }
+            const baselineQueue = await getStableRequestQueue();
+
+            const result = Countly.sendPushToken({ token: "e2e-handed-over-token" });
+
+            // The Android SDK queues token requests 10 seconds after it receives the token.
+            const finalQueue = await waitForRequestContaining(baselineQueue, "e2e-handed-over-token", 15000);
+            const tokenRequest = findLastRequestContaining(takeAppendedEntries(baselineQueue, finalQueue), "e2e-handed-over-token");
+
+            assertCondition(result === undefined, `Expected sendPushToken to accept the token, received '${result}'.`);
+            assertCondition(tokenRequest !== null, `Expected a token request with the handed over token, received: ${finalQueue.join(" | ")}`);
+
+            return {
+                summary: "A handed over push token is queued without calling askForNotificationPermission first.",
+                details: [`Token request: ${tokenRequest?.entry || ""}`],
+            };
+        },
+    } satisfies IntegrationScenario;
+}
+
 const integrationScenarios = [
     createManualSessionScenario(),
     createViewScenario(),
@@ -775,6 +1174,16 @@ const integrationScenarios = [
     createMetricsScenario(),
     createServerConfigDirectScenario(),
     createRemoteConfigDirectScenario(),
+    createEmptyDeviceIdScenario(),
+    createPartialPushConfigScenario(),
+    createSingleConsentScenario(),
+    createAttributionShapesScenario(),
+    createCallsBeforeInitScenario(),
+    createUserProfileNumbersScenario(),
+    createExceptionObjectScenario(),
+    createJsCrashTitleScenario(),
+    createMetricsConsentScenario(),
+    createPushTokenWithoutPermissionCallScenario(),
 ];
 
 export type { IntegrationScenario, IntegrationScenarioResult };

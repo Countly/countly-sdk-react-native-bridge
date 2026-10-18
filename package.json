@@ -6,7 +6,8 @@
         "url": "https://github.com/Countly/countly-sdk-react-native-bridge/issues"
     },
     "scripts": {
-        "test": "jest"
+        "test": "jest",
+        "generate:no-push": "node scripts/generate-no-push.js"
     },
     "deprecated": false,
     "description": "Countly is an innovative, real-time, open source mobile analytics platform.",
@@ -18,6 +19,36 @@
     "license": "MIT",
     "main": "Countly.js",
     "types": "Countly.d.ts",
+    "files": [
+        "Countly.js",
+        "CountlyConfig.js",
+        "CountlyFlavor.js",
+        "CountlyState.js",
+        "DeviceId.js",
+        "Event.js",
+        "Feedback.js",
+        "Logger.js",
+        "RemoteConfig.js",
+        "Sessions.js",
+        "Utils.js",
+        "Validators.js",
+        "Views.js",
+        "Countly.d.ts",
+        "lib/",
+        "src/",
+        "android/build.gradle",
+        "android/src/",
+        "ios/src/*.h",
+        "ios/src/*.m",
+        "ios/src/PrivacyInfo.xcprivacy",
+        "ios/src/LICENSE",
+        "ios/src/countly_dsym_uploader.sh",
+        "CountlyReactNative.podspec",
+        "CHANGELOG.md"
+    ],
+    "peerDependencies": {
+        "react-native": "*"
+    },
     "repository": {
         "type": "git",
         "url": "git+https://github.com/Countly/countly-sdk-react-native-bridge.git"

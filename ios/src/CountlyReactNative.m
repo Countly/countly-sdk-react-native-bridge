@@ -1,4 +1,3 @@
-#define COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
 #import <React/RCTBridge.h>
 #import <React/RCTEventDispatcher.h>
 #import <React/RCTLog.h>
@@ -7,9 +6,12 @@
 #import "Countly.h"
 
 #import "CountlyCommon.h"
+#import "CountlyConsentManager.h"
+#import "CountlyDeviceInfo.h"
 #import "CountlyPersistency.h"
 #import "CountlyPushNotifications.h"
 #import "CountlyReactNative.h"
+#import "CountlyServerConfig.h"
 
 #ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
 #import "CountlyRNPushNotifications.h"
@@ -19,6 +21,12 @@
 @property (nonatomic, strong) NSMutableArray *queuedRequests;
 @property (nonatomic, strong) NSMutableArray *recordedEvents;
 @end
+
+#ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
+@interface CountlyPushNotifications ()
+@property (nonatomic) NSString *token;
+@end
+#endif
 
 static NSString *const kCountlyRNHandledRequestKey = @"CountlyRNHandledRequestKey";
 
@@ -31,6 +39,8 @@ static NSString *const kCountlyRNHandledRequestKey = @"CountlyRNHandledRequestKe
 @property (nonatomic, strong) NSMutableData *responseData;
 @end
 
+void CountlyRNInternalLog(NSString *format, ...) NS_FORMAT_FUNCTION(1, 2);
+
 #if DEBUG
 #define COUNTLY_RN_LOG(fmt, ...) CountlyRNInternalLog(fmt, ##__VA_ARGS__)
 #else
@@ -42,13 +52,15 @@ static NSString *const kCountlyRNHandledRequestKey = @"CountlyRNHandledRequestKe
 @property (nonatomic, readonly) NSString *widgetVersion;
 @end
 
-BOOL BUILDING_WITH_PUSH_DISABLED = true;
-
 NSString *const kCountlyReactNativeSDKVersion = @"26.1.0";
+#ifdef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
+NSString *const kCountlyReactNativeSDKName = @"js-rnbnp-ios";
+#else
 NSString *const kCountlyReactNativeSDKName = @"js-rnb-ios";
-NSString *const kCountlyReactNativeSDKNameNoPush = @"js-rnbnp-ios";
+#endif
 
-CLYPushTestMode const CLYPushTestModeProduction = @"CLYPushTestModeProduction";
+static const NSTimeInterval kJSFatalEchoWindowSeconds = 5;
+static NSTimeInterval jsFatalCrashRecordedAt = 0;
 
 CountlyConfig *config = nil; // alloc here
 NSMutableArray<CLYFeature> *countlyFeatures = nil;
@@ -74,6 +86,7 @@ NSString *const widgetShownCallbackName = @"widgetShownCallback";
 NSString *const widgetClosedCallbackName = @"widgetClosedCallback";
 NSString *const ratingWidgetCallbackName = @"ratingWidgetCallback";
 NSString *const pushNotificationCallbackName = @"pushNotificationCallback";
+NSString *const pushNotificationOpenedCallbackName = @"pushNotificationOpenedCallback";
 NSString *const contentCallbackName = @"globalContentCallback";
 
 static void CountlyRNEnsureCapturedRequests(void) {
@@ -237,7 +250,7 @@ NSString *const kCountlyNotificationPersistencyKey = @"kCountlyNotificationPersi
 }
 
 - (NSArray<NSString *> *)supportedEvents {
-    return @[ pushNotificationCallbackName, ratingWidgetCallbackName, widgetShownCallbackName, widgetClosedCallbackName, contentCallbackName ];
+    return @[ pushNotificationCallbackName, pushNotificationOpenedCallbackName, ratingWidgetCallbackName, widgetShownCallbackName, widgetClosedCallbackName, contentCallbackName ];
 }
 
 - (NSString *)toJSONString:(id)object {
@@ -281,31 +294,86 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
     dispatch_async(dispatch_get_main_queue(), ^{
         COUNTLY_RN_LOG(@"Initializing...");
 
-        NSString *args = [arguments objectAtIndex:0];
-        NSData *data = [args dataUsingEncoding:NSUTF8StringEncoding];
-        id jsonOutput = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
-        
+        NSString *args = arguments.count > 0 ? [arguments objectAtIndex:0] : nil;
+        NSData *data = [args isKindOfClass:[NSString class]] ? [args dataUsingEncoding:NSUTF8StringEncoding] : nil;
+        id jsonOutput = data ? [NSJSONSerialization JSONObjectWithData:data options:0 error:nil] : nil;
+        if (![jsonOutput isKindOfClass:[NSDictionary class]]) {
+            CountlyRNInternalLog(@"init, the config could not be read");
+            reject(@"COUNTLY_INIT_FAILED", @"the config could not be read", nil);
+            return;
+        }
+
         [self populateConfig:jsonOutput];
 
       CountlyCommon.sharedInstance.SDKName = kCountlyReactNativeSDKName;
-      CountlyCommon.sharedInstance.SDKName = BUILDING_WITH_PUSH_DISABLED ? kCountlyReactNativeSDKNameNoPush : kCountlyReactNativeSDKName;
       CountlyCommon.sharedInstance.SDKVersion = kCountlyReactNativeSDKVersion;
+
+      if (config.host.length == 0 || config.appKey.length == 0) {
+          CountlyRNInternalLog(@"init, the server URL and the app key must be non-empty texts");
+          reject(@"COUNTLY_INIT_FAILED", @"the server URL and the app key must be non-empty texts", nil);
+          return;
+      }
 
 #ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
       if (enablePushNotifications) {
           [self addCountlyFeature:CLYPushNotifications];
       }
 #endif
-      if (config.host != nil && [config.host length] > 0) {
-          dispatch_async(dispatch_get_main_queue(), ^{
-            [[Countly sharedInstance] startWithConfig:config];
+      dispatch_async(dispatch_get_main_queue(), ^{
+        [[Countly sharedInstance] startWithConfig:config];
 #ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
-            [CountlyRNPushNotifications.sharedInstance recordPushActions];
+        [CountlyRNPushNotifications.sharedInstance recordPushActions];
 #endif
-            resolve(@"Success");
-          });
-      }
+        resolve(@"Success");
+      });
     });
+}
+
+/**
+ * Returns the value when it is a non-empty text, so that missing, null or wrongly typed config values are treated alike.
+ *
+ * @param value a value from the start-up config
+ * @return the text, or nil
+ */
+- (NSString *)textOrNil:(id)value {
+    return [value isKindOfClass:[NSString class]] && [(NSString *)value length] > 0 ? value : nil;
+}
+
+/**
+ * Converts direct attribution campaign data to the JSON text the iOS SDK expects.
+ *
+ * @param value campaign data as JSON text or as a dictionary
+ * @return the campaign data as JSON text, or nil when it is missing or neither text nor a dictionary
+ */
+- (NSString *)campaignDataText:(id)value {
+    if ([value isKindOfClass:[NSDictionary class]]) {
+        return [self toJSONString:value];
+    }
+    return [self textOrNil:value];
+}
+
+/**
+ * Keeps the entries of a dictionary that have a text key, converting number and boolean values to text and skipping the others.
+ *
+ * @param value a dictionary from JS
+ * @return a dictionary of texts, or nil when the value is not a dictionary
+ */
+- (NSDictionary<NSString *, NSString *> *)textDictionary:(id)value {
+    if (![value isKindOfClass:[NSDictionary class]]) {
+        return nil;
+    }
+    NSMutableDictionary<NSString *, NSString *> *texts = NSMutableDictionary.new;
+    [(NSDictionary *)value enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
+        if (![key isKindOfClass:[NSString class]]) {
+            return;
+        }
+        if ([obj isKindOfClass:[NSString class]]) {
+            texts[key] = obj;
+        } else if ([obj isKindOfClass:[NSNumber class]]) {
+            texts[key] = [obj stringValue];
+        }
+    }];
+    return texts;
 }
 
 - (void) populateConfig:(id) json {
@@ -313,14 +381,14 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
       config = CountlyConfig.new;
     }
 
-    NSString *serverurl = json[@"serverURL"];
-    NSString *appkey = json[@"appKey"];
-    NSString *deviceID = json[@"deviceID"];
+    NSString *serverurl = [self textOrNil:json[@"serverURL"]];
+    NSString *appkey = [self textOrNil:json[@"appKey"]];
+    NSString *deviceID = [self textOrNil:json[@"deviceID"]];
     config.appKey = appkey;
     config.host = serverurl;
     config.enrollABOnRCDownload = true;
 
-    if (deviceID != nil && deviceID != (NSString *)[NSNull null] && ![deviceID isEqual:@""]) {
+    if (deviceID != nil) {
         if ([deviceID isEqual:@"TemporaryDeviceID"]) {
             config.deviceID = CLYTemporaryDeviceID;
         } else {
@@ -328,27 +396,42 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
         }
     }
 
-    if (json[@"loggingEnabled"]) {
-        config.enableDebug = YES;
-        config.internalLogLevel = CLYInternalLogLevelVerbose;
-    } else {
-        config.enableDebug = NO;
+    id loggingEnabled = json[@"loggingEnabled"];
+    if ([loggingEnabled respondsToSelector:@selector(boolValue)]) {
+        config.enableDebug = [loggingEnabled boolValue];
+        if (config.enableDebug) {
+            config.internalLogLevel = CLYInternalLogLevelVerbose;
+        }
     }
 
     if (json[@"shouldRequireConsent"]) {
         config.requiresConsent = YES;
     }
 
-    if (json[@"tamperingProtectionSalt"]) {
-        config.secretSalt = json[@"tamperingProtectionSalt"];
+    NSString *tamperingProtectionSalt = [self textOrNil:json[@"tamperingProtectionSalt"]];
+    if (tamperingProtectionSalt) {
+        config.secretSalt = tamperingProtectionSalt;
     }
 
-    if (json[@"consents"]) {
-        config.consents = json[@"consents"];
+    id consents = json[@"consents"];
+    if ([consents isKindOfClass:[NSString class]]) {
+        consents = @[ consents ];
+    }
+    if ([consents isKindOfClass:[NSArray class]]) {
+        NSMutableArray<CLYConsent> *consentNames = NSMutableArray.new;
+        for (id consent in (NSArray *)consents) {
+            if ([consent isKindOfClass:[NSString class]] && [(NSString *)consent length] > 0) {
+                [consentNames addObject:consent];
+            }
+        }
+        config.consents = consentNames;
+    } else if (consents != nil) {
+        CountlyRNInternalLog(@"init, consents should be a feature name or a list of feature names, skipping them");
     }
 
-    if (json[@"starRatingTextMessage"]) {
-        config.starRatingMessage = json[@"starRatingTextMessage"];
+    NSString *starRatingTextMessage = [self textOrNil:json[@"starRatingTextMessage"]];
+    if (starRatingTextMessage) {
+        config.starRatingMessage = starRatingTextMessage;
     }
     // Limits -----------------------------------------------
     // maxKeyLength
@@ -384,8 +467,8 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
     if(json[@"setGlobalContentCallback"]) {
         [config.content setGlobalContentCallback:^(ContentStatus contentStatus, NSDictionary<NSString *,id> * _Nonnull contentData) {
             NSMutableDictionary *contentDataDict = [[NSMutableDictionary alloc] init];
-            [contentDataDict setObject:[NSNumber numberWithInt:contentStatus] forKey:@"status"];
-            [contentDataDict setObject:contentData forKey:@"data"];
+            [contentDataDict setObject:(contentStatus == COMPLETED ? @"COMPLETED" : @"CLOSED") forKey:@"status"];
+            [contentDataDict setObject:contentData ?: @{} forKey:@"data"];
             NSError *error;
             NSData *contentDataJson = [NSJSONSerialization dataWithJSONObject:contentDataDict options:0 error:&error];
             NSString *contentDataString = [[NSString alloc] initWithData:contentDataJson encoding:NSUTF8StringEncoding];
@@ -418,10 +501,6 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
     if (startTSOverride) {
         [config.apm setAppStartTimestampOverride:[startTSOverride longLongValue]];
     }
-    // Legacy APM
-    if (json[@"enableApm"]) {
-        config.enablePerformanceMonitoring = YES;
-    }
     // APM END --------------------------------------------
     if (json[@"enablePreviousNameRecording"]) {
         config.experimental.enablePreviousNameRecording = YES;
@@ -444,38 +523,31 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
 
     if (json[@"crashReporting"]) {
         [self addCountlyFeature:CLYCrashReporting];
+        config.crashes.crashFilterCallback = ^BOOL(CountlyCrashData *crashData) {
+            return [CountlyReactNative isEchoOfRecordedJSFatal:crashData];
+        };
     }
 
 #ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
     NSDictionary *pushJson = json[@"pushNotification"];
-    if (pushJson) {
-        config.sendPushTokenAlways = YES;
-        config.pushTestMode = CLYPushTestModeProduction;
-        NSString *tokenType = pushJson[@"tokenType"];
+    if ([pushJson isKindOfClass:[NSDictionary class]]) {
+        // The token type codes come from Countly.messagingMode; production means no test mode for the SDK.
+        NSString *tokenType = [self textOrNil:pushJson[@"tokenType"]];
         if ([tokenType isEqualToString:@"1"]) {
             config.pushTestMode = CLYPushTestModeDevelopment;
         } else if ([tokenType isEqualToString:@"2"]) {
             config.pushTestMode = CLYPushTestModeTestFlightOrAdHoc;
+        } else if (tokenType != nil) {
+            config.pushTestMode = nil;
         }
-
-        CountlyPushNotifications.sharedInstance.pushTestMode = config.pushTestMode;
     }
 #endif
 
-    if (json[@"attributionID"]) {
-          NSString *attributionID = json[@"attributionID"];
-          if (CountlyCommon.sharedInstance.hasStarted) {
-              [Countly.sharedInstance recordAttributionID:attributionID];
-          } else {
-              config.attributionID = attributionID;
-          }
-    }
-
-    if (json[@"locationCountryCode"]) {
-        NSString *countryCode = json[@"locationCountryCode"];
-        NSString *city = json[@"locationCity"];
-        NSString *locationString = json[@"locationGpsCoordinates"];
-        NSString *ipAddress = json[@"locationIpAddress"];
+    if (json[@"locationCountryCode"] || json[@"locationCity"] || json[@"locationGpsCoordinates"] || json[@"locationIpAddress"]) {
+        NSString *countryCode = [self textOrNil:json[@"locationCountryCode"]];
+        NSString *city = [self textOrNil:json[@"locationCity"]];
+        NSString *locationString = [self textOrNil:json[@"locationGpsCoordinates"]];
+        NSString *ipAddress = [self textOrNil:json[@"locationIpAddress"]];
 
         if (locationString != nil && ![locationString isEqualToString:@"null"]) {
             CLLocationCoordinate2D locationCoordinate = [self getCoordinate:locationString];
@@ -493,12 +565,23 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
     }
 
     if (json[@"campaignType"]) {
-        config.campaignType = json[@"campaignType"];
-        config.campaignData = json[@"campaignData"];
+        NSString *campaignType = [self textOrNil:json[@"campaignType"]];
+        NSString *campaignData = [self campaignDataText:json[@"campaignData"]];
+        if (campaignType && campaignData) {
+            config.campaignType = campaignType;
+            config.campaignData = campaignData;
+        } else {
+            CountlyRNInternalLog(@"init, direct attribution needs a campaign type and campaign data, skipping it");
+        }
     }
 
     if (json[@"attributionValues"]) {
-        config.indirectAttribution = json[@"attributionValues"];
+        NSDictionary *attributionValues = [self textDictionary:json[@"attributionValues"]];
+        if (attributionValues.count > 0) {
+            config.indirectAttribution = attributionValues;
+        } else {
+            CountlyRNInternalLog(@"init, indirect attribution values must be an object of text values, skipping them");
+        }
     }
 
     if (json[@"requestTimeoutDuration"]) {
@@ -542,7 +625,7 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
     NSURLSessionConfiguration *sessionConfiguration = config.URLSessionConfiguration ?: NSURLSessionConfiguration.defaultSessionConfiguration;
     config.URLSessionConfiguration = CountlyRNRequestCaptureConfiguration(sessionConfiguration);
 
-    NSURLComponents *serverURLComponents = [NSURLComponents componentsWithString:serverurl ?: @""];
+    NSURLComponents *serverURLComponents = serverurl ? [NSURLComponents componentsWithString:serverurl] : nil;
     countlyRNCapturedHost = serverURLComponents.host;
 
     if (json[@"disableSDKBehaviorSettingsUpdates"]) {
@@ -584,25 +667,17 @@ RCT_EXPORT_METHOD(recordEvent : (NSDictionary *)arguments) {
         int countInt = [countNumber intValue];
 
         NSNumber *sumNumber = [arguments objectForKey:@"s"];
-        float sumFloat = [sumNumber floatValue];
+        double sumDouble = [sumNumber doubleValue];
 
         NSMutableDictionary *dict = nil;
         NSArray *segments = [arguments objectForKey:@"g"];
         if (segments != nil) {
             dict = [[NSMutableDictionary alloc] init];
-            for (int i = 0, il = (int)segments.count; i < il; i += 2) {
+            for (int i = 0, il = (int)segments.count; i + 1 < il; i += 2) {
                 dict[[segments objectAtIndex:i]] = [segments objectAtIndex:i + 1];
             }
         }
-        [[Countly sharedInstance] recordEvent:eventName segmentation:dict count:countInt sum:sumFloat];
-    });
-}
-
-RCT_EXPORT_METHOD(recordView : (NSArray *)arguments) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-            NSString *recordView = arguments.count > 0 ? [arguments objectAtIndex:0] : nil;
-            NSDictionary *dict = [self segmentationDictionaryFromArguments:arguments startIndex:1];
-            [[Countly.sharedInstance views] startAutoStoppedView:recordView segmentation:dict];
+        [[Countly sharedInstance] recordEvent:eventName segmentation:dict count:countInt sum:sumDouble];
     });
 }
 
@@ -725,15 +800,21 @@ RCT_EXPORT_METHOD(disablePushNotifications) {
 RCT_EXPORT_METHOD(sendPushToken : (NSArray *)arguments) {
 #ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
     dispatch_async(dispatch_get_main_queue(), ^{
-      NSString *token = [arguments objectAtIndex:0];
-      NSString *messagingMode = @"1";
-      if (config.pushTestMode == nil || [config.pushTestMode isEqual:@""] || [config.pushTestMode isEqualToString:CLYPushTestModeTestFlightOrAdHoc]) {
-          messagingMode = @"0";
+      NSString *token = arguments.count > 0 ? [self textOrNil:[arguments objectAtIndex:0]] : nil;
+      if (!token) {
+          CountlyRNInternalLog(@"sendPushToken, the push token is empty, skipping it");
+          return;
       }
-      NSString *urlString = [@"" stringByAppendingFormat:@"%@?device_id=%@&app_key=%@&token_session=1&test_mode=%@&ios_token=%@", config.host, [Countly.sharedInstance deviceID], config.appKey, messagingMode, token];
-      NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
-      [request setHTTPMethod:@"GET"];
-      [request setURL:[NSURL URLWithString:urlString]];
+      CountlyPushNotifications *pushNotifications = CountlyPushNotifications.sharedInstance;
+      if (!pushNotifications) {
+          CountlyRNInternalLog(@"sendPushToken, 'init' must be called before 'sendPushToken'");
+          return;
+      }
+      // The SDK sends the token itself, so consent, the test mode and the notification permission rules apply to it.
+      pushNotifications.token = token;
+      // Init copies the test mode only when Countly push is on, so it is set here for apps that handle push with another library.
+      pushNotifications.pushTestMode = config.pushTestMode;
+      [pushNotifications sendToken];
     });
 #endif
 }
@@ -749,9 +830,27 @@ RCT_EXPORT_METHOD(registerForNotification : (NSArray *)arguments) {
 #endif
 };
 
+/**
+ * Starts delivering push notification taps to JS.
+ */
+RCT_EXPORT_METHOD(registerForNotificationOpened : (NSArray *)arguments) {
+#ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
+    [CountlyRNPushNotifications.sharedInstance registerForNotificationOpened];
+#endif
+};
+
 #ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
 - (void)notificationCallback:(NSString *_Nullable)notificationJson {
     [self sendEventWithName:pushNotificationCallbackName body:notificationJson];
+}
+
+/**
+ * Sends a push notification tap to the JS listener registered with registerForNotificationOpened.
+ *
+ * @param notificationJson JSON text with the notification's data and the action index
+ */
+- (void)notificationOpenedCallback:(NSString *_Nullable)notificationJson {
+    [self sendEventWithName:pushNotificationOpenedCallbackName body:notificationJson];
 }
 
 + (void)startObservingNotifications {
@@ -764,11 +863,44 @@ RCT_EXPORT_METHOD(registerForNotification : (NSArray *)arguments) {
 + (void)onNotificationResponse:(UNNotificationResponse *_Nullable)response {
     [CountlyRNPushNotifications.sharedInstance onNotificationResponse:response];
 }
+#else
+/**
+ * No-push package: does nothing, because there are no push notifications to deliver.
+ */
+- (void)notificationCallback:(NSString *_Nullable)notificationJson {
+}
+
+/**
+ * No-push package: does nothing, because there are no push notification taps to deliver.
+ */
+- (void)notificationOpenedCallback:(NSString *_Nullable)notificationJson {
+}
+
+/**
+ * No-push package: logs that push notifications are not part of this package.
+ */
++ (void)startObservingNotifications {
+    CountlyRNInternalLog(@"startObservingNotifications, push notifications are not part of the no-push package, ignoring the call");
+}
+
+/**
+ * No-push package: logs that push notifications are not part of this package.
+ */
++ (void)onNotification:(NSDictionary *_Nullable)notification {
+    CountlyRNInternalLog(@"onNotification, push notifications are not part of the no-push package, ignoring the call");
+}
+
+/**
+ * No-push package: logs that push notifications are not part of this package.
+ */
++ (void)onNotificationResponse:(UNNotificationResponse *_Nullable)response {
+    CountlyRNInternalLog(@"onNotificationResponse, push notifications are not part of the no-push package, ignoring the call");
+}
 #endif
 
 + (void)log:(NSString *)theMessage {
     if (config.enableDebug == YES) {
-        COUNTLY_RN_LOG(theMessage);
+        COUNTLY_RN_LOG(@"%@", theMessage);
     }
 }
 
@@ -808,9 +940,9 @@ RCT_EXPORT_METHOD(changeDeviceId : (NSArray *)arguments) {
 
         NSString *onServerString = [arguments objectAtIndex:1];
         if ([onServerString isEqual:@"1"]) {
-            [Countly.sharedInstance setNewDeviceID:newDeviceID onServer:YES];
+            [Countly.sharedInstance changeDeviceIDWithMerge:newDeviceID];
         } else {
-            [Countly.sharedInstance setNewDeviceID:newDeviceID onServer:NO];
+            [Countly.sharedInstance changeDeviceIDWithoutMerge:newDeviceID];
         }
     });
 }
@@ -862,17 +994,17 @@ RCT_EXPORT_METHOD(endEvent : (NSDictionary *)arguments) {
         int countInt = [countNumber intValue];
 
         NSNumber *sumNumber = [arguments objectForKey:@"s"];
-        float sumFloat = [sumNumber floatValue];
+        double sumDouble = [sumNumber doubleValue];
 
         NSMutableDictionary *dict = nil;
         NSArray *segments = [arguments objectForKey:@"g"];
         if (segments != nil) {
             dict = [[NSMutableDictionary alloc] init];
-            for (int i = 0, il = (int)segments.count; i < il; i += 2) {
+            for (int i = 0, il = (int)segments.count; i + 1 < il; i += 2) {
                 dict[[segments objectAtIndex:i]] = [segments objectAtIndex:i + 1];
             }
         }
-        [[Countly sharedInstance] endEvent:eventName segmentation:dict count:countInt sum:sumFloat];
+        [[Countly sharedInstance] endEvent:eventName segmentation:dict count:countInt sum:sumDouble];
     });
 }
 
@@ -945,7 +1077,7 @@ RCT_EXPORT_METHOD(addCrashLog : (NSArray *)arguments) {
 RCT_EXPORT_METHOD(setCustomCrashSegments : (NSArray *)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^{
       NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
-      for (int i = 0, il = (int)arguments.count; i < il; i += 2) {
+      for (int i = 0, il = (int)arguments.count; i + 1 < il; i += 2) {
           dict[[arguments objectAtIndex:i]] = [arguments objectAtIndex:i + 1];
       }
       if (config == nil) {
@@ -958,7 +1090,8 @@ RCT_EXPORT_METHOD(setCustomCrashSegments : (NSArray *)arguments) {
 RCT_EXPORT_METHOD(logException : (NSArray *)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^{
       NSString *execption = [arguments objectAtIndex:0];
-      NSString *nonfatal = [arguments objectAtIndex:1];
+      id nonfatal = [arguments objectAtIndex:1];
+      BOOL isFatal = [nonfatal respondsToSelector:@selector(boolValue)] && ![nonfatal boolValue];
       NSArray *nsException = [execption componentsSeparatedByString:@"\n"];
 
       NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
@@ -970,7 +1103,7 @@ RCT_EXPORT_METHOD(logException : (NSArray *)arguments) {
 
       NSException *myException = [NSException exceptionWithName:@"Exception" reason:execption userInfo:dict];
 
-      [Countly.sharedInstance recordHandledException:myException withStackTrace:nsException];
+      [Countly.sharedInstance recordException:myException isFatal:isFatal stackTrace:nsException segmentation:nil];
     });
 }
 
@@ -1020,12 +1153,42 @@ RCT_EXPORT_METHOD(addCustomNetworkRequestHeaders : (NSArray *)arguments) {
         });
 }
 
-RCT_EXPORT_METHOD(logJSException : (NSString *)errTitle withMessage : (NSString *)message withStack : (NSString *)stackTrace) {
+RCT_EXPORT_METHOD(logJSException : (NSString *)errTitle withMessage : (NSString *)message withStack : (NSString *)stackTrace isFatal : (BOOL)isFatal) {
+    NSException *myException = [NSException exceptionWithName:errTitle reason:message userInfo:@{@"nonfatal" : isFatal ? @"0" : @"1"}];
+    NSArray *stack = [stackTrace componentsSeparatedByString:@"\n"];
+    if (isFatal) {
+        // Recorded and written to disk on this queue, without waiting for the main queue, because RN aborts the app right after.
+        [Countly.sharedInstance recordException:myException isFatal:YES stackTrace:stack segmentation:nil];
+        [CountlyPersistency.sharedInstance saveToFileSync];
+        jsFatalCrashRecordedAt = NSDate.date.timeIntervalSince1970;
+        return;
+    }
+
     dispatch_async(dispatch_get_main_queue(), ^{
-      NSException *myException = [NSException exceptionWithName:errTitle reason:message userInfo:@{@"nonfatal" : @"1"}];
-      NSArray *stack = [stackTrace componentsSeparatedByString:@"\n"];
-      [Countly.sharedInstance recordHandledException:myException withStackTrace:stack];
+      [Countly.sharedInstance recordException:myException isFatal:NO stackTrace:stack segmentation:nil];
     });
+}
+
+/**
+ * Tells whether a native crash is the one RN raises for a fatal JS error that the JS error handler has just recorded.
+ *
+ * @param crashData crash the Countly SDK is about to record
+ * @return YES when the crash is that duplicate and should be dropped
+ */
++ (BOOL)isEchoOfRecordedJSFatal:(CountlyCrashData *)crashData {
+    NSTimeInterval recordedAt = jsFatalCrashRecordedAt;
+    if (recordedAt == 0 || NSDate.date.timeIntervalSince1970 - recordedAt > kJSFatalEchoWindowSeconds) {
+        return NO;
+    }
+
+    BOOL isRCTFatalException = [crashData.name hasPrefix:@"RCTFatalException"];
+    BOOL isAbortSignal = [crashData.name isEqualToString:@"Fatal Signal"] && [crashData.crashDescription containsString:@"SIGABRT"];
+    if (!crashData.fatal || !(isRCTFatalException || isAbortSignal)) {
+        return NO;
+    }
+
+    jsFatalCrashRecordedAt = 0;
+    return YES;
 }
 
 RCT_REMAP_METHOD(userData_setProperty, params : (NSArray *)arguments userDataSetPropertyWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
@@ -1248,8 +1411,12 @@ RCT_REMAP_METHOD(userDataBulk_pullValue, params : (NSArray *)arguments userDataB
 
 RCT_EXPORT_METHOD(recordDirectAttribution : (NSArray *)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^{
-        NSString *campaignType = [arguments objectAtIndex:0];
-        NSString *campaignData = [arguments objectAtIndex:1];
+        NSString *campaignType = arguments.count > 0 ? [self textOrNil:[arguments objectAtIndex:0]] : nil;
+        NSString *campaignData = arguments.count > 1 ? [self campaignDataText:[arguments objectAtIndex:1]] : nil;
+        if (!campaignType || !campaignData) {
+            CountlyRNInternalLog(@"recordDirectAttribution, the campaign type and campaign data must be texts, skipping them");
+            return;
+        }
         if (CountlyCommon.sharedInstance.hasStarted) {
             [Countly.sharedInstance recordDirectAttributionWithCampaignType:campaignType andCampaignData:campaignData];
         } else {
@@ -1261,7 +1428,11 @@ RCT_EXPORT_METHOD(recordDirectAttribution : (NSArray *)arguments) {
 
 RCT_EXPORT_METHOD(recordIndirectAttribution : (NSArray *)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^{
-        NSDictionary *attributionValues = [arguments objectAtIndex:0];
+        NSDictionary *attributionValues = arguments.count > 0 ? [self textDictionary:[arguments objectAtIndex:0]] : nil;
+        if (attributionValues.count == 0) {
+            CountlyRNInternalLog(@"recordIndirectAttribution, the attribution values must be an object of text values, skipping them");
+            return;
+        }
         if (CountlyCommon.sharedInstance.hasStarted) {
             [Countly.sharedInstance recordIndirectAttribution:attributionValues];
         } else {
@@ -1272,20 +1443,27 @@ RCT_EXPORT_METHOD(recordIndirectAttribution : (NSArray *)arguments) {
 
 RCT_EXPORT_METHOD(giveConsent : (NSArray *)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^{
+      if (![arguments isKindOfClass:[NSArray class]]) {
+          CountlyRNInternalLog(@"giveConsent, no feature names were provided");
+          return;
+      }
       [Countly.sharedInstance giveConsentForFeatures:arguments];
     });
 }
 
 RCT_EXPORT_METHOD(removeConsent : (NSArray *)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^{
+      if (![arguments isKindOfClass:[NSArray class]]) {
+          CountlyRNInternalLog(@"removeConsent, no feature names were provided");
+          return;
+      }
       [Countly.sharedInstance cancelConsentForFeatures:arguments];
     });
 }
 
 RCT_EXPORT_METHOD(giveAllConsent) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      [Countly.sharedInstance giveConsentForFeature:CLYConsentLocation];
-      [Countly.sharedInstance giveConsentForAllFeatures];
+      [Countly.sharedInstance giveAllConsents];
     });
 }
 
@@ -1295,72 +1473,84 @@ RCT_EXPORT_METHOD(removeAllConsent) {
     });
 }
 
+/**
+ * Builds a remote config download completion that reports the outcome to a JS callback.
+ *
+ * @param successMessage message reported when the download succeeds
+ * @param callback JS callback that receives the success or error message
+ * @return completion handler for the remote config download calls
+ */
+- (RCDownloadCallback)remoteConfigDownloadCallback:(NSString *)successMessage callback:(RCTResponseSenderBlock)callback {
+    return ^(CLYRequestResult response, NSError *error, BOOL fullValueUpdate, NSDictionary<NSString *, CountlyRCData *> *downloadedValues) {
+      if (!error) {
+          callback(@[ successMessage ]);
+          return;
+      }
+
+      NSString *reason = error.localizedDescription;
+      id serverResult = error.userInfo[@"result"];
+      if ([serverResult isKindOfClass:[NSString class]] && [serverResult length] > 0) {
+          reason = [NSString stringWithFormat:@"%@: %@", reason, serverResult];
+      }
+      callback(@[ [NSString stringWithFormat:@"There was an error while updating Remote Config: %@", reason] ]);
+    };
+}
+
+/**
+ * Answers a remote config download with an error when the iOS SDK would skip it without calling back.
+ *
+ * @param completion completion handler of the download
+ * @return YES when the download was answered here and must not be started
+ */
+- (BOOL)rejectRemoteConfigDownloadIfUnavailable:(RCDownloadCallback)completion {
+    NSString *reason = nil;
+    if (!CountlyConsentManager.sharedInstance.consentForRemoteConfig) {
+        reason = @"remote config consent is not given";
+    } else if (CountlyDeviceInfo.sharedInstance.isDeviceIDTemporary) {
+        reason = @"remote config is not available in temporary device ID mode";
+    } else if (!CountlyServerConfig.sharedInstance.networkingEnabled) {
+        reason = @"SDK networking is disabled by SDK behavior settings";
+    }
+
+    if (!reason) {
+        return NO;
+    }
+    NSError *error = [NSError errorWithDomain:@"CountlyReactNative" code:0 userInfo:@{NSLocalizedDescriptionKey : reason}];
+    completion(CLYResponseError, error, NO, @{});
+    return YES;
+}
+
 RCT_EXPORT_METHOD(remoteConfigUpdate : (NSArray *)arguments callback : (RCTResponseSenderBlock)callback) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      [Countly.sharedInstance updateRemoteConfigWithCompletionHandler:^(NSError *error) {
-        if (!error) {
-            NSArray *result = @[ @"Remote Config is updated and ready to use!" ];
-            callback(@[ result ]);
-        } else {
-            NSString *returnString = [NSString stringWithFormat:@"There was an error while updating Remote Config: %@", error];
-            NSArray *result = @[ returnString ];
-            callback(@[ result ]);
-        }
-      }];
+      RCDownloadCallback completion = [self remoteConfigDownloadCallback:@"Remote Config is updated and ready to use!" callback:callback];
+      if (![self rejectRemoteConfigDownloadIfUnavailable:completion]) {
+          [Countly.sharedInstance.remoteConfig downloadKeys:completion];
+      }
     });
 }
 
 RCT_EXPORT_METHOD(updateRemoteConfigForKeysOnly : (NSArray *)arguments callback : (RCTResponseSenderBlock)callback) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      NSMutableArray *randomSelection = [[NSMutableArray alloc] init];
-      for (int i = 0; i < (int)arguments.count; i++) {
-          [randomSelection addObject:[arguments objectAtIndex:i]];
+      RCDownloadCallback completion = [self remoteConfigDownloadCallback:@"Remote Config is updated only for given keys and ready to use!" callback:callback];
+      if (![self rejectRemoteConfigDownloadIfUnavailable:completion]) {
+          [Countly.sharedInstance.remoteConfig downloadSpecificKeys:arguments completionHandler:completion];
       }
-      NSArray *keyNames = [randomSelection copy];
-      [Countly.sharedInstance updateRemoteConfigOnlyForKeys:keyNames
-                                          completionHandler:^(NSError *error) {
-                                            if (!error) {
-                                                NSArray *result = @[ @"Remote Config is updated only for given keys and ready to use!" ];
-                                                callback(@[ result ]);
-                                            } else {
-                                                NSString *returnString = [NSString stringWithFormat:@"There was an error while updating Remote Config: %@", error];
-                                                NSArray *result = @[ returnString ];
-                                                callback(@[ result ]);
-                                            }
-                                          }];
     });
 }
 
 RCT_EXPORT_METHOD(updateRemoteConfigExceptKeys : (NSArray *)arguments callback : (RCTResponseSenderBlock)callback) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      NSMutableArray *randomSelection = [[NSMutableArray alloc] init];
-      for (int i = 0; i < (int)arguments.count; i++) {
-          [randomSelection addObject:[arguments objectAtIndex:i]];
+      RCDownloadCallback completion = [self remoteConfigDownloadCallback:@"Remote Config is updated except for given keys and ready to use !" callback:callback];
+      if (![self rejectRemoteConfigDownloadIfUnavailable:completion]) {
+          [Countly.sharedInstance.remoteConfig downloadOmittingKeys:arguments completionHandler:completion];
       }
-      NSArray *keyNames = [randomSelection copy];
-      [Countly.sharedInstance updateRemoteConfigExceptForKeys:keyNames
-                                            completionHandler:^(NSError *error) {
-                                              if (!error) {
-                                                  NSArray *result = @[ @"Remote Config is updated except for given keys and ready to use !" ];
-                                                  callback(@[ result ]);
-                                              } else {
-                                                  NSString *returnString = [NSString stringWithFormat:@"There was an error while updating Remote Config: %@", error];
-                                                  NSArray *result = @[ returnString ];
-                                                  callback(@[ result ]);
-                                              }
-                                            }];
     });
 }
 
 RCT_EXPORT_METHOD(getRemoteConfigValueForKey : (NSArray *)arguments callback : (RCTResponseSenderBlock)callback) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      id value = [Countly.sharedInstance remoteConfigValueForKey:[arguments objectAtIndex:0]];
-      if (value) {
-          callback(@[ value ]);
-      } else {
-          NSString *value = @"ConfigKeyNotFound";
-          callback(@[ value ]);
-      }
+      id value = [Countly.sharedInstance.remoteConfig getValue:[arguments objectAtIndex:0]].value;
+      callback(@[ value ?: [NSNull null] ]);
     });
 }
 
@@ -1500,7 +1690,7 @@ RCT_REMAP_METHOD(getFeedbackWidgetData, params : (NSArray *)arguments getFeedbac
         CountlyFeedbackWidget *feedbackWidget = [self getFeedbackWidget:widgetId];
         if (feedbackWidget == nil) {
             NSString *errorMessage = [NSString stringWithFormat:@"No feedbackWidget is found against widget Id : '%@', always call 'getAvailableFeedbackWidgets' to get an updated list of feedback widgets.", widgetId];
-            CountlyRNInternalLog(errorMessage);
+            CountlyRNInternalLog(@"%@", errorMessage);
             reject(@"getFeedbackWidgetData_failure", errorMessage, nil);
         } else {
             [feedbackWidget getWidgetData:^(NSDictionary *_Nullable widgetData, NSError *_Nullable error) {
@@ -1518,13 +1708,15 @@ RCT_REMAP_METHOD(getFeedbackWidgetData, params : (NSArray *)arguments getFeedbac
 RCT_REMAP_METHOD(reportFeedbackWidgetManually, params : (NSArray *)arguments reportFeedbackWidgetManuallyWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
         NSArray *widgetInfo = [arguments objectAtIndex:0];
-        NSDictionary *widgetResult = [arguments objectAtIndex:2];
+        id widgetResultValue = arguments.count > 2 ? [arguments objectAtIndex:2] : nil;
+        // A nil result is how the SDK records that the user closed the widget; JS null arrives as NSNull.
+        NSDictionary *widgetResult = [widgetResultValue isKindOfClass:[NSDictionary class]] ? widgetResultValue : nil;
         NSString *widgetId = [widgetInfo objectAtIndex:0];
 
         CountlyFeedbackWidget *feedbackWidget = [self getFeedbackWidget:widgetId];
         if (feedbackWidget == nil) {
             NSString *errorMessage = [NSString stringWithFormat:@"No feedbackWidget is found against widget Id : '%@', always call 'getAvailableFeedbackWidgets' to get an updated list of feedback widgets.", widgetId];
-            CountlyRNInternalLog(errorMessage);
+            CountlyRNInternalLog(@"%@", errorMessage);
             reject(@"reportFeedbackWidgetManually_failure", errorMessage, nil);
         } else {
             [feedbackWidget recordResult:widgetResult];
