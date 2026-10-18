@@ -8,7 +8,6 @@ import android.util.Log;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
-import ly.count.android.sdk.messaging.CountlyConfigPush;
 import ly.count.android.sdk.messaging.CountlyPush;
 import ly.count.android.sdk.Countly;
 
@@ -21,6 +20,7 @@ public class CountlyMessagingService extends FirebaseMessagingService {
             Log.d(Countly.TAG, "[CountlyMessagingService] got new token: " + token);
         }
         if(Countly.sharedInstance().isInitialized()) {
+            CountlyReactNativeImpl.preparePush(getApplication(), "null", false);
             CountlyPush.onTokenRefresh(token);
         }
     }
@@ -32,15 +32,12 @@ public class CountlyMessagingService extends FirebaseMessagingService {
             Log.d(Countly.TAG, "[CountlyMessagingService] got new message: " + remoteMessage.getData().toString());
         }
 
-        if(!Countly.sharedInstance().isInitialized()) {
-            Application application = getApplication();
-            if(application == null){
-                Log.d(Countly.TAG, "[CountlyMessagingService] getApplication() returns null: application must be non-null to init CountlyPush");
-            }
-            else {
-                CountlyConfigPush configPush = new CountlyConfigPush(application);
-                CountlyPush.init(configPush);
-            }
+        Application application = getApplication();
+        if(application == null){
+            Log.d(Countly.TAG, "[CountlyMessagingService] getApplication() returns null: application must be non-null to init CountlyPush");
+        }
+        else {
+            CountlyReactNativeImpl.preparePush(application, "null", false);
         }
 
 

@@ -15,11 +15,29 @@
         "sourceType": "module",
         "project": ["**/tsconfig.json"]
     },
+    "globals": {
+        "ErrorUtils": "readonly"
+    },
     "overrides": [
       {
         "files": ["__tests__/**/*"],
         "env": {
           "jest": true
+        },
+        "rules": {
+          "quotes": ["error", "single", { "avoidEscape": true }],
+          "global-require": "off",
+          "no-await-in-loop": "off",
+          "no-promise-executor-return": "off"
+        }
+      },
+      {
+        "files": ["scripts/**/*"],
+        "env": {
+          "node": true
+        },
+        "rules": {
+          "no-template-curly-in-string": "off"
         }
       }
     ],
@@ -38,6 +56,8 @@
         "no-var": "off",
         "func-names": "off",
         "consistent-return": "off",
+        "no-continue": "off",
+        "class-methods-use-this": "off",
         "prefer-rest-params": "off",
         "radix": "off",
         "prefer-spread": "off",
@@ -175,7 +195,8 @@
         "no-useless-concat": "off",
         "quotes": [
             "error",
-            "double"
+            "double",
+            { "avoidEscape": true }
         ],
         "no-console": [
             "off"

@@ -17,9 +17,7 @@ import * as L from "./Logger.js";
 import * as Utils from "./Utils.js";
 import * as Validate from "./Validators.js";
 
-const CountlyNativeModule =
-  TurboModuleRegistry.get('CountlyReactNative') ??
-  NativeModules.CountlyReactNative;
+const CountlyNativeModule = TurboModuleRegistry.get("CountlyReactNative") ?? NativeModules.CountlyReactNative;
 
 const eventEmitter = new NativeEventEmitter(CountlyNativeModule);
 
@@ -53,6 +51,7 @@ Countly.test = {}; // test-only interface
 let _ratingWidgetListener;
 const ratingWidgetCallbackName = "ratingWidgetCallback";
 const pushNotificationCallbackName = "pushNotificationCallback";
+const pushNotificationOpenedCallbackName = "pushNotificationOpenedCallback";
 
 function removeSubscription(stateKey) {
     const subscription = _state[stateKey];
@@ -60,6 +59,15 @@ function removeSubscription(stateKey) {
         subscription.remove();
     }
     _state[stateKey] = null;
+}
+
+/**
+ * Creates a subscription that listens to nothing, returned by the push listener calls of the no-push package.
+ *
+ * @return {object} subscription with a 'remove' function that does nothing
+ */
+function createInactiveSubscription() {
+    return { remove() {} };
 }
 
 function resetBridgeStateForTesting() {
@@ -73,6 +81,40 @@ function resetBridgeStateForTesting() {
     _ratingWidgetListener = null;
 
     _state.isInitialized = false;
+}
+
+/**
+ * Tells whether the test-only helpers may run. They change or wipe SDK state, so they only run in debug builds.
+ *
+ * @param {string} functionName - name of the called helper, for the log
+ * @return {boolean} true in debug builds
+ */
+function isTestApiAvailable(functionName) {
+    if (typeof __DEV__ !== "undefined" && __DEV__) {
+        return true;
+    }
+    L.e(`${functionName}, Countly.test helpers are only available in debug builds`);
+    return false;
+}
+
+/**
+ * Converts the value passed to logException into the text that is reported.
+ *
+ * @param {any} exception - exception text or an Error object
+ * @return {string | null} the exception text (an Error's stack, or its name and message), or null when the value is neither text nor an Error
+ */
+function exceptionToText(exception) {
+    if (typeof exception === "string") {
+        return exception;
+    }
+    if (exception && typeof exception === "object" && (typeof exception.stack === "string" || typeof exception.message === "string")) {
+        if (typeof exception.stack === "string" && exception.stack.length > 0) {
+            return exception.stack;
+        }
+        const name = typeof exception.name === "string" && exception.name ? exception.name : "Error";
+        return `${name}: ${exception.message}`;
+    }
+    return null;
 }
 
 /**
@@ -115,11 +157,9 @@ function describeGlobalJSError(thrown) {
         errorTitle = errorName;
         stackArr = typeof error.stack === "string" ? error.stack : "";
     } else {
-        let fname = jsStackTrace[0].file || "";
-        if (fname.startsWith("http")) {
-            const chunks = fname.split("/");
-            fname = chunks[chunks.length - 1].split("?")[0];
-        }
+        // Only the file name is kept: debug URLs carry options after "?" or "//&", and embedded bundles report per-install paths.
+        const chunks = (jsStackTrace[0].file || "").split(/[?&]/)[0].replace(/\/+$/, "").split("/");
+        const fname = chunks[chunks.length - 1];
         errorTitle = `${errorName} (${jsStackTrace[0].methodName}@${fname})`;
         const regExp = "(.*)(@?)http(s?).*/(.*)\\?(.*):(.*):(.*)";
         stackArr = error.stack.split("\n").map((row) => {
@@ -183,16 +223,19 @@ Countly.initWithConfig = async function (countlyConfig) {
         L.d("init, SDK is already initialized");
         return;
     }
-    if (countlyConfig.deviceID == "") {
-        L.e("init, Device ID during init can't be an empty string. Value will be ignored.");
-        countlyConfig.deviceID = null;
-    }
-    if (countlyConfig.serverURL == "") {
-        L.e("init, Server URL during init can't be an empty string");
+    if (!countlyConfig) {
+        L.e("init, config should not be null or undefined");
         return;
     }
-    if (countlyConfig.appKey == "") {
-        L.e("init, App Key during init can't be an empty string");
+    if (countlyConfig.deviceID !== undefined && countlyConfig.deviceID !== null && (typeof countlyConfig.deviceID !== "string" || countlyConfig.deviceID === "")) {
+        L.e("init, Device ID during init must be a non-empty string. Value will be ignored and the SDK will generate one.");
+    }
+    if (typeof countlyConfig.serverURL !== "string" || countlyConfig.serverURL === "") {
+        L.e("init, Server URL during init must be a non-empty string");
+        return;
+    }
+    if (typeof countlyConfig.appKey !== "string" || countlyConfig.appKey === "") {
+        L.e("init, App Key during init must be a non-empty string");
         return;
     }
     L.d("initWithConfig, Initializing Countly");
@@ -204,7 +247,7 @@ Countly.initWithConfig = async function (countlyConfig) {
                 data = JSON.parse(data);
                 countlyConfig.content.contentCallback(data.status, data.data);
             } catch (error) {
-                L.e(`init configuration, Error parsing global content callback data: ${error}`);                
+                L.e(`init configuration, Error parsing global content callback data: ${error}`);
             }
         });
     }
@@ -212,7 +255,13 @@ Countly.initWithConfig = async function (countlyConfig) {
     const argsMap = Utils.configToJson(countlyConfig);
     const argsString = JSON.stringify(argsMap);
     args.push(argsString);
-    await CountlyNativeModule.init(args);
+    try {
+        await CountlyNativeModule.init(args);
+    } catch (error) {
+        L.e(`init, native init failed: ${error && error.message ? error.message : String(error)}`);
+        removeSubscription("globalContentCallbackSubscription");
+        return;
+    }
     if (countlyConfig._crashReporting) {
         installJsCrashReportingHandler();
     }
@@ -251,16 +300,30 @@ Countly.disablePushNotifications = function () {
 /**
  *
  * Send push token
+ * Should be called after Countly init
  * @param {object} options - object containing the push token
  * {token: string}
  *
  * @return {string | void} error message or void
  */
 Countly.sendPushToken = function (options) {
-    L.d(`sendPushToken, Sending push token: [${JSON.stringify(options)}]`);
-    const args = [];
-    args.push(options.token || "");
-    CountlyNativeModule.sendPushToken(args);
+    const pushMessage = Validate.PushAvailable("sendPushToken");
+    if (pushMessage) {
+        return pushMessage;
+    }
+    if (!_state.isInitialized) {
+        const message = "'init' must be called before 'sendPushToken'";
+        L.e(`sendPushToken, ${message}`);
+        return message;
+    }
+    const token = options ? options.token : undefined;
+    const message = Validate.String(token, "token", "sendPushToken");
+    if (message) {
+        L.e(`sendPushToken, ${message}`);
+        return message;
+    }
+    L.d(`sendPushToken, Sending push token: [${token}]`);
+    CountlyNativeModule.sendPushToken([token]);
 };
 
 /**
@@ -273,26 +336,79 @@ Countly.sendPushToken = function (options) {
  * @return {string | void} error message or void
  */
 Countly.askForNotificationPermission = function (customSoundPath = "null") {
+    const pushMessage = Validate.PushAvailable("askForNotificationPermission");
+    if (pushMessage) {
+        return pushMessage;
+    }
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'askForNotificationPermission'";
         L.e(`askForNotificationPermission, ${message}`);
         return message;
     }
-    L.d(`askForNotificationPermission, Asking for notification permission at: [${customSoundPath}]`);
-    CountlyNativeModule.askForNotificationPermission([customSoundPath]);
+    const soundPath = typeof customSoundPath === "string" && customSoundPath.length > 0 ? customSoundPath : "null";
+    L.d(`askForNotificationPermission, Asking for notification permission at: [${soundPath}]`);
+    CountlyNativeModule.askForNotificationPermission([soundPath]);
 };
 
 /**
  *
  * Set callback to receive push notifications
+ * On Android it is called when a push arrives. On iOS it is called when a push arrives while the app is open and when the user taps a push.
+ * To react to taps the same way on both platforms, for example to open a deep link, use 'registerForNotificationOpened'.
+ * Registering again replaces the previous listener.
  * @param {callback listener } theListener
  * @return {NativeEventEmitter} event
  */
 Countly.registerForNotification = function (theListener) {
+    if (Validate.PushAvailable("registerForNotification")) {
+        return createInactiveSubscription();
+    }
     L.d("registerForNotification, Registering for notification");
+    removeSubscription("pushNotificationSubscription");
     const event = eventEmitter.addListener(pushNotificationCallbackName, theListener);
+    _state.pushNotificationSubscription = event;
     CountlyNativeModule.registerForNotification([]);
     return event;
+};
+
+/**
+ *
+ * Set a listener that is called when the user taps a push notification, on Android and iOS.
+ * A tap that opened the app before a listener was registered is delivered once the listener is registered.
+ * Registering again replaces the previous listener.
+ * On Android, when the system has stopped the app in the background, the tap reaches the app before React Native is ready.
+ * Call 'setIntent(intent)' in your MainActivity's 'onNewIntent' so that such a tap is kept and delivered too.
+ * @param {function(object, number): void} theListener - called with the notification payload and the index of the tapped action:
+ * 0 for the notification itself, 1 and up for its buttons
+ * @return {object | void} subscription with a 'remove' function, or void when the listener is not a function
+ */
+Countly.registerForNotificationOpened = function (theListener) {
+    if (Validate.PushAvailable("registerForNotificationOpened")) {
+        return createInactiveSubscription();
+    }
+    if (typeof theListener !== "function") {
+        L.e("registerForNotificationOpened, listener should be a function");
+        return;
+    }
+    L.d("registerForNotificationOpened, Registering for notification taps");
+    removeSubscription("pushNotificationOpenedSubscription");
+    const subscription = eventEmitter.addListener(pushNotificationOpenedCallbackName, (data) => {
+        let opened;
+        try {
+            opened = typeof data === "string" ? JSON.parse(data) : data;
+        } catch (error) {
+            L.e(`registerForNotificationOpened, could not read the tapped notification: ${error}`);
+            return;
+        }
+        if (!opened || typeof opened !== "object") {
+            L.e("registerForNotificationOpened, the tapped notification has no payload");
+            return;
+        }
+        theListener(opened.notification || {}, typeof opened.actionIndex === "number" ? opened.actionIndex : 0);
+    });
+    _state.pushNotificationOpenedSubscription = subscription;
+    CountlyNativeModule.registerForNotificationOpened([]);
+    return subscription;
 };
 
 /**
@@ -379,12 +495,16 @@ Countly.addCrashLog = function (crashLog) {
 
 /**
  * Record a metrics request to be sent to the server
+ * Should be called after Countly init
  *
  * @param {object} [metricsOverride] - optional metrics override map
+ * @return {string | void} error message or void
  */
 Countly.recordMetrics = function (metricsOverride = {}) {
     if (!_state.isInitialized) {
-        L.e(`recordMetrics, 'init' must be called before 'recordMetrics'`);
+        const message = "'init' must be called before 'recordMetrics'";
+        L.e(`recordMetrics, ${message}`);
+        return message;
     }
     L.d(`recordMetrics, Sending metrics request with override: [${JSON.stringify(metricsOverride)}]`);
     if (metricsOverride && typeof metricsOverride !== "object") {
@@ -394,8 +514,13 @@ Countly.recordMetrics = function (metricsOverride = {}) {
 
     const args = [];
     for (const key in metricsOverride) {
+        const value = metricsOverride[key];
+        if (value === null || value === undefined) {
+            L.w(`recordMetrics, skipping metric [${key}], its value is [${value}]`);
+            continue;
+        }
         args.push(key.toString());
-        args.push(metricsOverride[key].toString());
+        args.push(value.toString());
     }
     CountlyNativeModule.recordMetrics(args);
 };
@@ -404,7 +529,7 @@ Countly.recordMetrics = function (metricsOverride = {}) {
  *
  * Log exception for Countly
  *
- * @param {string} exception exception
+ * @param {string | Error} exception exception text, or an Error object whose stack (or name and message) is reported
  * @param {boolean} nonfatal false records the exception as a fatal crash, anything else as non-fatal
  * @param {object} segments segments
  * @return {string | void} error message or void
@@ -415,8 +540,14 @@ Countly.logException = function (exception, nonfatal, segments) {
         L.e(`logException, ${message}`);
         return message;
     }
-    L.d(`logException, Logging exception: [${exception}], with nonfatal: [${nonfatal}], with segments: [${JSON.stringify(segments)}]`);
-    const exceptionArray = exception.split("\n");
+    const exceptionText = exceptionToText(exception);
+    if (exceptionText === null) {
+        const message = "exception should be a text or an Error object";
+        L.e(`logException, ${message}`);
+        return message;
+    }
+    L.d(`logException, Logging exception: [${exceptionText}], with nonfatal: [${nonfatal}], with segments: [${JSON.stringify(segments)}]`);
+    const exceptionArray = exceptionText.split("\n");
     let exceptionString = "";
     for (let i = 0, il = exceptionArray.length; i < il; i++) {
         exceptionString += `${exceptionArray[i]}\n`;
@@ -439,15 +570,28 @@ Countly.logException = function (exception, nonfatal, segments) {
 /**
  *
  * Set custom crash segment for Countly
+ * Should be called before Countly init; the native SDKs read crash segments only at init, so calls after init are refused.
+ * Segments with null or undefined values are skipped.
  *
  * @param {object} segments segments
+ * @return {string | void} error message or void
  */
 Countly.setCustomCrashSegments = function (segments) {
+    if (_state.isInitialized) {
+        const message = "'setCustomCrashSegments' has no effect after init, set crash segments before 'initWithConfig'";
+        L.w(`setCustomCrashSegments, ${message}`);
+        return message;
+    }
     L.d(`setCustomCrashSegments, Setting custom crash segments: [${JSON.stringify(segments)}]`);
     const args = [];
     for (const key in segments) {
+        const value = segments[key];
+        if (value === null || value === undefined) {
+            L.w(`setCustomCrashSegments, skipping segment [${key}], its value is [${value}]`);
+            continue;
+        }
         args.push(key.toString());
-        args.push(segments[key].toString());
+        args.push(value.toString());
     }
     CountlyNativeModule.setCustomCrashSegments(args);
 };
@@ -663,7 +807,7 @@ Countly.userData.increment = async function (keyName) {
  * Increment custom user data by a specified value
  *
  * @param {string} keyName user property key
- * @param {string} keyValue value to increment user property by
+ * @param {number | string} keyValue whole number to increment user property by, decimals are refused
  * @return {string | void} error message or void
  */
 Countly.userData.incrementBy = async function (keyName, keyValue) {
@@ -677,11 +821,11 @@ Countly.userData.incrementBy = async function (keyName, keyValue) {
     if (message) {
         return message;
     }
-    message = Validate.UserDataValue(keyValue, "value", "incrementBy");
+    message = Validate.UserDataInteger(keyValue, "value", "incrementBy");
     if (message) {
         return message;
     }
-    const intValue = parseInt(keyValue, 10).toString();
+    const intValue = Number(typeof keyValue === "string" ? keyValue.trim() : keyValue).toString();
     await CountlyNativeModule.userData_incrementBy([keyName, intValue]);
 };
 
@@ -690,7 +834,7 @@ Countly.userData.incrementBy = async function (keyName, keyValue) {
  * Multiply custom user data by a specified value
  *
  * @param {string} keyName user property key
- * @param {string} keyValue value to multiply user property by
+ * @param {number | string} keyValue whole number to multiply user property by, decimals are refused
  * @return {string | void} error message or void
  */
 Countly.userData.multiply = async function (keyName, keyValue) {
@@ -704,11 +848,11 @@ Countly.userData.multiply = async function (keyName, keyValue) {
     if (message) {
         return message;
     }
-    message = Validate.UserDataValue(keyValue, "value", "multiply");
+    message = Validate.UserDataInteger(keyValue, "value", "multiply");
     if (message) {
         return message;
     }
-    const intValue = parseInt(keyValue, 10).toString();
+    const intValue = Number(typeof keyValue === "string" ? keyValue.trim() : keyValue).toString();
     await CountlyNativeModule.userData_multiply([keyName, intValue]);
 };
 
@@ -731,11 +875,11 @@ Countly.userData.saveMax = async function (keyName, keyValue) {
     if (message) {
         return message;
     }
-    message = Validate.UserDataValue(keyValue, "value", "saveMax");
+    message = Validate.UserDataInteger(keyValue, "value", "saveMax");
     if (message) {
         return message;
     }
-    const intValue = parseInt(keyValue, 10).toString();
+    const intValue = Number(typeof keyValue === "string" ? keyValue.trim() : keyValue).toString();
     await CountlyNativeModule.userData_saveMax([keyName, intValue]);
 };
 
@@ -758,11 +902,11 @@ Countly.userData.saveMin = async function (keyName, keyValue) {
     if (message) {
         return message;
     }
-    message = Validate.UserDataValue(keyValue, "value", "saveMin");
+    message = Validate.UserDataInteger(keyValue, "value", "saveMin");
     if (message) {
         return message;
     }
-    const intValue = parseInt(keyValue, 10).toString();
+    const intValue = Number(typeof keyValue === "string" ? keyValue.trim() : keyValue).toString();
     await CountlyNativeModule.userData_saveMin([keyName, intValue]);
 };
 
@@ -1006,7 +1150,7 @@ Countly.userDataBulk.increment = async function (keyName) {
  * Remember to call Countly.userDataBulk.save() after calling all userDataBulk methods to send the bulk data to server.
  *
  * @param {string} keyName user property key
- * @param {string} keyValue value to increment user property by
+ * @param {number | string} keyValue whole number to increment user property by, decimals are refused
  * @return {string | void} error message or void
  */
 Countly.userDataBulk.incrementBy = async function (keyName, keyValue) {
@@ -1020,11 +1164,11 @@ Countly.userDataBulk.incrementBy = async function (keyName, keyValue) {
     if (message) {
         return message;
     }
-    message = Validate.UserDataValue(keyValue, "value", "incrementBy");
+    message = Validate.UserDataInteger(keyValue, "value", "incrementBy");
     if (message) {
         return message;
     }
-    const intValue = parseInt(keyValue, 10).toString();
+    const intValue = Number(typeof keyValue === "string" ? keyValue.trim() : keyValue).toString();
     await CountlyNativeModule.userDataBulk_incrementBy([keyName, intValue]);
 };
 
@@ -1034,7 +1178,7 @@ Countly.userDataBulk.incrementBy = async function (keyName, keyValue) {
  * Remember to call Countly.userDataBulk.save() after calling all userDataBulk methods to send the bulk data to server.
  *
  * @param {string} keyName user property key
- * @param {string} keyValue value to multiply user property by
+ * @param {number | string} keyValue whole number to multiply user property by, decimals are refused
  * @return {string | void} error message or void
  */
 Countly.userDataBulk.multiply = async function (keyName, keyValue) {
@@ -1048,11 +1192,11 @@ Countly.userDataBulk.multiply = async function (keyName, keyValue) {
     if (message) {
         return message;
     }
-    message = Validate.UserDataValue(keyValue, "value", "multiply");
+    message = Validate.UserDataInteger(keyValue, "value", "multiply");
     if (message) {
         return message;
     }
-    const intValue = parseInt(keyValue, 10).toString();
+    const intValue = Number(typeof keyValue === "string" ? keyValue.trim() : keyValue).toString();
     await CountlyNativeModule.userDataBulk_multiply([keyName, intValue]);
 };
 
@@ -1076,11 +1220,11 @@ Countly.userDataBulk.saveMax = async function (keyName, keyValue) {
     if (message) {
         return message;
     }
-    message = Validate.UserDataValue(keyValue, "value", "saveMax");
+    message = Validate.UserDataInteger(keyValue, "value", "saveMax");
     if (message) {
         return message;
     }
-    const intValue = parseInt(keyValue, 10).toString();
+    const intValue = Number(typeof keyValue === "string" ? keyValue.trim() : keyValue).toString();
     await CountlyNativeModule.userDataBulk_saveMax([keyName, intValue]);
 };
 
@@ -1104,11 +1248,11 @@ Countly.userDataBulk.saveMin = async function (keyName, keyValue) {
     if (message) {
         return message;
     }
-    message = Validate.UserDataValue(keyValue, "value", "saveMin");
+    message = Validate.UserDataInteger(keyValue, "value", "saveMin");
     if (message) {
         return message;
     }
-    const intValue = parseInt(keyValue, 10).toString();
+    const intValue = Number(typeof keyValue === "string" ? keyValue.trim() : keyValue).toString();
     await CountlyNativeModule.userDataBulk_saveMin([keyName, intValue]);
 };
 
@@ -1247,11 +1391,11 @@ Countly.giveConsent = function (args) {
         return message;
     }
     L.d(`giveConsent, Giving consent for features: [${args}]`);
-    let features = [];
-    if (typeof args === "string") {
-        features.push(args);
-    } else {
-        features = args;
+    const features = Validate.normalizeFeatureNames(args);
+    if (features === null) {
+        const message = "features should be a feature name or a list of feature names";
+        L.e(`giveConsent, ${message}`);
+        return message;
     }
     CountlyNativeModule.giveConsent(features);
 };
@@ -1271,11 +1415,11 @@ Countly.removeConsent = function (args) {
         return message;
     }
     L.d(`removeConsent, Removing consent for features: [${args}]`);
-    let features = [];
-    if (typeof args === "string") {
-        features.push(args);
-    } else {
-        features = args;
+    const features = Validate.normalizeFeatureNames(args);
+    if (features === null) {
+        const message = "features should be a feature name or a list of feature names";
+        L.e(`removeConsent, ${message}`);
+        return message;
     }
     CountlyNativeModule.removeConsent(features);
 };
@@ -1375,10 +1519,18 @@ Countly.presentRatingWidgetWithID = function (widgetId, closeButtonText, ratingW
  *
  * Events get grouped together and are sent either every minute or after the unsent event count reaches a threshold. By default it is 10
  * Should be called before Countly init
- * @param {number} size - event count
+ * @param {number} size - event count, a whole number of at least 1
+ * @return {string | void} error message or void
  */
 Countly.setEventSendThreshold = function (size) {
-    CountlyNativeModule.setEventSendThreshold([size.toString() || ""]);
+    const sizeValue = typeof size === "string" && /^\s*\d+\s*$/.test(size) ? Number(size) : size;
+    if (typeof sizeValue !== "number" || !Number.isInteger(sizeValue) || sizeValue < 1 || sizeValue > Validate.INT32_MAX) {
+        const message = `size should be a whole number between 1 and ${Validate.INT32_MAX}, received [${size}]`;
+        L.e(`setEventSendThreshold, ${message}`);
+        return message;
+    }
+    L.d(`setEventSendThreshold, Setting event send threshold to: [${sizeValue}]`);
+    CountlyNativeModule.setEventSendThreshold([sizeValue.toString()]);
 };
 
 /**
@@ -1513,8 +1665,8 @@ Countly.replaceAllAppKeysInQueueWithCurrentAppKey = function () {
 
 /**
  * set direct attribution Id for campaign attribution reporting.
- * @param {string} campaignType type
- * @param {string} campaignData data
+ * @param {string} campaignType type, for example 'countly'
+ * @param {string | object} campaignData data as JSON text or as an object, for example { cid: 'campaign_id', cuid: 'campaign_user_id' }. Objects are sent as JSON text.
  * @return {string | void} error message or void
  */
 Countly.recordDirectAttribution = function (campaignType, campaignData) {
@@ -1523,16 +1675,19 @@ Countly.recordDirectAttribution = function (campaignType, campaignData) {
         L.e(`recordDirectAttribution, ${message}`);
         return message;
     }
-    L.d(`recordDirectAttribution, Recording direct attribution: [${campaignType}, ${campaignData}]`);
-    const args = [];
-    args.push(campaignType);
-    args.push(campaignData);
-    CountlyNativeModule.recordDirectAttribution(args);
+    const campaignDataText = Utils.toCampaignDataText(campaignData);
+    if (typeof campaignType !== "string" || campaignType.length === 0 || !campaignDataText) {
+        const message = "direct attribution needs a campaign type and campaign data";
+        L.e(`recordDirectAttribution, ${message}`);
+        return message;
+    }
+    L.d(`recordDirectAttribution, Recording direct attribution: [${campaignType}, ${campaignDataText}]`);
+    CountlyNativeModule.recordDirectAttribution([campaignType, campaignDataText]);
 };
 
 /**
  * set indirect attribution Id for campaign attribution reporting.
- * @param {string} attributionValues attribution values
+ * @param {object} attributionValues attribution values as key/value pairs, for example { adid: 'advertising_id' }. Values are sent as text and null values are skipped.
  * @return {string | void} error message or void
  */
 Countly.recordIndirectAttribution = function (attributionValues) {
@@ -1541,10 +1696,14 @@ Countly.recordIndirectAttribution = function (attributionValues) {
         L.e(`recordIndirectAttribution, ${message}`);
         return message;
     }
-    L.d(`recordIndirectAttribution, Recording indirect attribution: [${attributionValues}]`);
-    const args = [];
-    args.push(attributionValues);
-    CountlyNativeModule.recordIndirectAttribution(args);
+    const values = Utils.toAttributionValues(attributionValues);
+    if (!values) {
+        const message = "indirect attribution values must be an object of text values";
+        L.e(`recordIndirectAttribution, ${message}`);
+        return message;
+    }
+    L.d(`recordIndirectAttribution, Recording indirect attribution: [${JSON.stringify(values)}]`);
+    CountlyNativeModule.recordIndirectAttribution([values]);
 };
 
 /**
@@ -1616,7 +1775,7 @@ Countly.setCustomMetrics = async function (customMetric) {
  * Opt in user for the content fetching and updates
  * 
  */
-Countly.content.enterContentZone = function() {
+Countly.content.enterContentZone = function () {
     L.i("enterContentZone, opting for content fetching.");
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'enterContentZone'";
@@ -1629,7 +1788,7 @@ Countly.content.enterContentZone = function() {
 /**
  * Refreshes the content zone.
  */
-Countly.content.refreshContentZone = function() {
+Countly.content.refreshContentZone = function () {
     L.i("refreshContentZone, refreshing content zone.");
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'refreshContentZone'";
@@ -1644,7 +1803,7 @@ Countly.content.refreshContentZone = function() {
  *
  * @param {string} contentId content identifier to preview
  */
-Countly.content.previewContent = function(contentId) {
+Countly.content.previewContent = function (contentId) {
     const message = Validate.String(contentId, "contentId", "previewContent");
     if (message) {
         return message;
@@ -1662,7 +1821,7 @@ Countly.content.previewContent = function(contentId) {
  * Opt out user from the content fetching and updates
  * 
  */
-Countly.content.exitContentZone = function() {
+Countly.content.exitContentZone = function () {
     L.i("exitContentZone, opting out from content fetching.");
     if (!_state.isInitialized) {
         const message = "'init' must be called before 'exitContentZone'";
@@ -1674,27 +1833,43 @@ Countly.content.exitContentZone = function() {
 
 /**
  * Test-only helper methods for RN integration tests.
+ * They change or wipe SDK state, so they only run in debug builds and do nothing in release builds.
  */
 Countly.test.enableRequestCapture = async function () {
+    if (!isTestApiAvailable("enableRequestCapture")) {
+        return;
+    }
     await CountlyNativeModule.enableRequestCapture();
 };
 
 Countly.test.getCapturedRequests = async function () {
+    if (!isTestApiAvailable("getCapturedRequests")) {
+        return [];
+    }
     const requests = await CountlyNativeModule.getCapturedRequests();
     return requests || [];
 };
 
 Countly.test.getRequestQueue = async function () {
+    if (!isTestApiAvailable("getRequestQueue")) {
+        return [];
+    }
     const queue = await CountlyNativeModule.getRequestQueue();
     return queue || [];
 };
 
 Countly.test.getEventQueue = async function () {
+    if (!isTestApiAvailable("getEventQueue")) {
+        return [];
+    }
     const queue = await CountlyNativeModule.getEventQueue();
     return queue || [];
 };
 
 Countly.test.halt = async function () {
+    if (!isTestApiAvailable("halt")) {
+        return;
+    }
     await CountlyNativeModule.halt();
     resetBridgeStateForTesting();
 };

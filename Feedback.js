@@ -143,23 +143,21 @@ class Feedback {
                 return;
             }
             if (!retrievedWidgets || retrievedWidgets.length === 0) {
-                L.d(`showInternalFeedback, no feedback widgets found`);
+                L.d("showInternalFeedback, no feedback widgets found");
                 return;
             }
             L.d(`showInternalFeedback, Found [${retrievedWidgets.length}] feedback widgets`);
             let widget = retrievedWidgets.find(w => w.type === widgetType);
             try {
                 if (nameIDorTag) {
-                    const matchedWidget = retrievedWidgets.find(w =>
-                        w.type === widgetType && (w.name === nameIDorTag || w.id === nameIDorTag || (Array.isArray(w.tags) && w.tags.includes(nameIDorTag)))
-                    );
+                    const matchedWidget = retrievedWidgets.find(w => w.type === widgetType && (w.name === nameIDorTag || w.id === nameIDorTag || (Array.isArray(w.tags) && w.tags.includes(nameIDorTag))));
                     if (matchedWidget) {
                         widget = matchedWidget;
                         L.v(`showInternalFeedback, Found ${widgetType} widget by name, id, or tag: [${JSON.stringify(matchedWidget)}]`);
                     }
                 }
-            } catch (error) {
-                L.e(`showInternalFeedback, Error while finding widget: ${error}`);   
+            } catch (findError) {
+                L.e(`showInternalFeedback, Error while finding widget: ${findError}`);
             }
 
             if (!widget) {

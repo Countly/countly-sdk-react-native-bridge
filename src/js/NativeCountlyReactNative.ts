@@ -44,6 +44,7 @@ export interface Spec extends TurboModule {
     setUserData(args: Array<UnsafeObject>): Promise<void>;
     sendPushToken(args: Array<string>): void;
     registerForNotification(args: Array<UnsafeObject>): void;
+    registerForNotificationOpened(args: Array<UnsafeObject>): void;
     askForNotificationPermission(args: Array<UnsafeObject>): void;
     userData_setProperty(args: Array<UnsafeObject>): Promise<void>;
     userData_increment(args: Array<string>): Promise<void>;

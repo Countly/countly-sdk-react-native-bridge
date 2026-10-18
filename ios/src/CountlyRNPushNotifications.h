@@ -16,6 +16,7 @@
 - (void)recordPushActions;
 - (void)askForNotificationPermission;
 - (void)registerForNotification;
+- (void)registerForNotificationOpened;
 - (void)setCountlyReactNative:(CountlyReactNative *_Nullable)countlyReactNative;
 - (void)onNotification:(NSDictionary *_Nullable)notification;
 - (void)onNotificationResponse:(UNNotificationResponse *_Nullable)response;

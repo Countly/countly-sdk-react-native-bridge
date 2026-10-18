@@ -32,6 +32,7 @@ setUserData(ReadableArray args, Promise promise)
 sendPushToken(ReadableArray args)
 onNotification(Map<String, String> notification)
 registerForNotification(ReadableArray args)
+registerForNotificationOpened(ReadableArray args)
 askForNotificationPermission(ReadableArray args)
 userData_setProperty(ReadableArray args, Promise promise)
 userData_increment(ReadableArray args, Promise promise)
@@ -290,6 +291,16 @@ public class CountlyReactNative extends NativeCountlyReactNativeSpec {
     @Override
     public void registerForNotification(ReadableArray args) {
         this.impl.registerForNotification(args);
+    }
+
+    /**
+     * Starts delivering push notification taps to JS.
+     *
+     * @param args unused
+     */
+    @Override
+    public void registerForNotificationOpened(ReadableArray args) {
+        this.impl.registerForNotificationOpened(args);
     }
 
     @Override

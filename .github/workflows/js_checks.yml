@@ -1,0 +1,36 @@
+name: JS checks
+on:
+  pull_request:
+  push:
+    branches: [master, staging, master-np, staging-np]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [22, 24]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Lint
+        run: npx eslint .
+      - name: Type check Countly.d.ts
+        run: npx tsc -p tsconfig.types.json
+      - name: Unit tests
+        run: npx jest
+      - name: Generate and test the no-push package
+        if: hashFiles('scripts/generate-no-push.js') != ''
+        run: |
+          node scripts/generate-no-push.js "$RUNNER_TEMP/no-push"
+          cd "$RUNNER_TEMP/no-push"
+          npm ci --ignore-scripts
+          npx tsc -p tsconfig.types.json
+          npx jest

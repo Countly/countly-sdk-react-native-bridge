@@ -39,6 +39,7 @@ typedef void (^Result)(id _Nullable result);
 - (void)sendPushToken:(NSArray *_Nullable)arguments;
 - (void)askForNotificationPermission:(NSArray *_Nullable)arguments;
 - (void)registerForNotification:(NSArray *_Nullable)arguments;
+- (void)registerForNotificationOpened:(NSArray *_Nullable)arguments;
 - (void)remoteConfigClearValues:(RCTPromiseResolveBlock _Nullable)resolve rejecter:(RCTPromiseRejectBlock _Nullable)reject;
 
 - (void)startTrace:(NSArray *_Nullable)arguments;
@@ -63,10 +64,9 @@ typedef void (^Result)(id _Nullable result);
 
 - (void)setID:(NSString *_Nonnull)newDeviceID;
 
-#ifndef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
 - (void)notificationCallback:(NSString *_Nullable)notificationJson;
+- (void)notificationOpenedCallback:(NSString *_Nullable)notificationJson;
 + (void)startObservingNotifications;
 + (void)onNotification:(NSDictionary *_Nullable)notification;
 + (void)onNotificationResponse:(UNNotificationResponse *_Nullable)response;
-#endif
 @end

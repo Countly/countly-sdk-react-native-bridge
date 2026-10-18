@@ -1,4 +1,5 @@
-import { initialize } from "./Logger.js";
+import * as L from "./Logger.js";
+import * as Validate from "./Validators.js";
 import CountlyConfigApm from "./lib/configuration_interfaces/countly_config_apm.js";
 import CountlyConfigSDKInternalLimits from "./lib/configuration_interfaces/countly_config_limits.js";
 import CountlyConfigExp from "./lib/configuration_interfaces/countly_config_experimental.js";
@@ -259,7 +260,7 @@ class CountlyConfig {
      */
     setLoggingEnabled(loggingEnabled) {
         this.loggingEnabled = loggingEnabled;
-        initialize(loggingEnabled); // initialize React Native SDK logger
+        L.initialize(loggingEnabled); // initialize React Native SDK logger
         return this;
     }
 
@@ -286,13 +287,20 @@ class CountlyConfig {
 
     /**
      * Method to give consent for specific features before init
+     * A single feature name is accepted as well, and entries that are not feature names are dropped.
      *
-     * @param {String[]} consents consents e.g ['location', 'sessions',
-     * 'attribution', 'push', 'events', 'views', 'crashes', 'users', 'push',
-     * 'star-rating', 'apm', 'feedback', 'remote-config']
+     * @param {String[] | String} consents consents e.g ['location', 'sessions',
+     * 'attribution', 'push', 'events', 'views', 'crashes', 'users',
+     * 'star-rating', 'apm', 'feedback', 'remote-config', 'content', 'metrics']
      */
     giveConsent(consents) {
-        this.consents = consents;
+        const features = Validate.normalizeFeatureNames(consents);
+        if (features === null) {
+            L.e("giveConsent, consents should be a feature name or a list of feature names");
+            this.consents = [];
+            return this;
+        }
+        this.consents = features;
         return this;
     }
 
@@ -329,6 +337,9 @@ class CountlyConfig {
      * This method should be used to disable them.
      */
     disableAdditionalIntentRedirectionChecks() {
+        if (Validate.PushAvailable("disableAdditionalIntentRedirectionChecks")) {
+            return this;
+        }
         this.#disableIntentRedirectionCheck = true;
         return this;
     }
@@ -362,10 +373,13 @@ class CountlyConfig {
      * Method to set the push token type
      * NB: ONLY FOR iOS
      *
-     * @param {Countly.messagingMode} tokenType token type
-     * Possible values include 'DEVELOPMENT', 'PRODUCTION', 'ADHOC'.
+     * @param {Countly.messagingMode | String} tokenType token type, a Countly.messagingMode value
+     * or one of the names 'DEVELOPMENT', 'PRODUCTION', 'ADHOC'. Other values are ignored with an error log.
      */
     setPushTokenType(tokenType) {
+        if (Validate.PushAvailable("setPushTokenType")) {
+            return this;
+        }
         this.tokenType = tokenType;
         return this;
     }
@@ -378,6 +392,9 @@ class CountlyConfig {
      * @param {String} description channel description
      */
     setPushNotificationChannelInformation(name, description) {
+        if (Validate.PushAvailable("setPushNotificationChannelInformation")) {
+            return this;
+        }
         this.channelName = name;
         this.channelDescription = description;
         return this;
@@ -391,6 +408,9 @@ class CountlyConfig {
      * example '#000000'
      */
     setPushNotificationAccentColor(accentColor) {
+        if (Validate.PushAvailable("setPushNotificationAccentColor")) {
+            return this;
+        }
         this.accentColor = accentColor;
         return this;
     }
@@ -402,6 +422,9 @@ class CountlyConfig {
      * @param {String[]} allowedIntentPackageNames allowed intent package name
      */
     configureIntentRedirectionCheck(allowedIntentClassNames, allowedIntentPackageNames) {
+        if (Validate.PushAvailable("configureIntentRedirectionCheck")) {
+            return this;
+        }
         this.allowedIntentClassNames = allowedIntentClassNames;
         this.allowedIntentPackageNames = allowedIntentPackageNames;
         return this;
@@ -409,10 +432,11 @@ class CountlyConfig {
 
     /**
      * Method to set star rating dialog text
+     * The title and dismiss texts are used on Android only; iOS shows the message with its own title and close button.
      *
-     * @param {String} starRatingTextTitle title
+     * @param {String} starRatingTextTitle title (Android only)
      * @param {String} starRatingTextMessage message
-     * @param {String} starRatingTextDismiss dismiss
+     * @param {String} starRatingTextDismiss dismiss (Android only)
      */
     setStarRatingDialogTexts(starRatingTextTitle, starRatingTextMessage, starRatingTextDismiss) {
         this.starRatingTextTitle = starRatingTextTitle;
@@ -424,8 +448,9 @@ class CountlyConfig {
     /**
      * Report direct user attribution
      *
-     * @param {String} campaignType campaign type
-     * @param {Object} campaignData campaign data
+     * @param {String} campaignType campaign type, for example 'countly'
+     * @param {String | Object} campaignData campaign data as JSON text or as an object, for example { cid: 'campaign_id', cuid: 'campaign_user_id' }.
+     * Objects are sent as JSON text.
      */
     recordDirectAttribution(campaignType, campaignData) {
         this.campaignType = campaignType;
@@ -436,7 +461,8 @@ class CountlyConfig {
     /**
      * Report indirect user attribution
      *
-     * @param {Object} attributionValues attribution values
+     * @param {Object} attributionValues attribution values as key/value pairs, for example { adid: 'advertising_id' }.
+     * Values are sent as text and null values are skipped.
      */
     recordIndirectAttribution(attributionValues) {
         this.attributionValues = attributionValues;
