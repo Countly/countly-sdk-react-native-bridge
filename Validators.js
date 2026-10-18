@@ -1,8 +1,8 @@
 import * as L from "./Logger.js";
 import { PUSH_NOTIFICATIONS_AVAILABLE } from "./CountlyFlavor.js";
 
-const INT32_MIN = -2147483648;
-const INT32_MAX = 2147483647;
+const INT32_MIN = -(2 ** 31);
+const INT32_MAX = 2 ** 31 - 1;
 
 /**
  * Checks that push notification calls are part of this package. The no-push package ignores them with a warning.

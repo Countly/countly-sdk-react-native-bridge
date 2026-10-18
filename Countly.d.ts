@@ -503,7 +503,7 @@ declare module "countly-sdk-react-native-bridge-np" {
      * To react to taps the same way on both platforms, for example to open a deep link, use 'registerForNotificationOpened'.
      * Registering again replaces the previous listener.
      * @param {callback listener } theListener
-     * @return {EventSubscription} subscription
+     * @return {EventSubscription} subscription, which does nothing when the listener is not a function
      */
     export function registerForNotification(theListener: (theNotification: string) => void): EventSubscription;
 
@@ -517,9 +517,9 @@ declare module "countly-sdk-react-native-bridge-np" {
      * Call 'setIntent(intent)' in your MainActivity's 'onNewIntent' so that such a tap is kept and delivered too.
      * @param {NotificationOpenedListener} theListener - called with the notification payload and the index of the tapped action:
      * 0 for the notification itself, 1 and up for its buttons
-     * @return {EventSubscription | void} subscription, or void when the listener is not a function
+     * @return {EventSubscription} subscription, which does nothing when the listener is not a function
      */
-    export function registerForNotificationOpened(theListener: NotificationOpenedListener): EventSubscription | void;
+    export function registerForNotificationOpened(theListener: NotificationOpenedListener): EventSubscription;
 
     /**
      * Set to true if you want to enable countly internal debugging logs

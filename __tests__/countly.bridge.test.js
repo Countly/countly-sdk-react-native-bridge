@@ -119,6 +119,9 @@ function loadCountlyBridge({ platform = 'ios', nativeOverrides = {}, pushAvailab
         }
 
         addListener(eventName, handler) {
+            if (typeof handler !== 'function') {
+                throw new TypeError('EventEmitter.addListener(...): 2nd argument must be a function.');
+            }
             const listener = { eventName, handler, removed: false };
             const subscription = {
                 remove: jest.fn(() => {
@@ -945,6 +948,28 @@ test('registerForNotification keeps one subscription so each push reaches JS onc
     expect(listeners.filter((listener) => listener.eventName === 'pushNotificationCallback' && !listener.removed)).toHaveLength(1);
 });
 
+test('a push listener that is not a function is refused, keeps the current listener and gets a subscription that does nothing', () => {
+    const receivedListener = jest.fn();
+    const openedListener = jest.fn();
+    const { Countly, nativeModule, emit } = loadCountlyBridge({ platform: 'android' });
+
+    const receivedSubscription = Countly.registerForNotification(receivedListener);
+    const openedSubscription = Countly.registerForNotificationOpened(openedListener);
+    const refusedReceived = Countly.registerForNotification('not a function');
+    const refusedOpened = Countly.registerForNotificationOpened('not a function');
+    emit('pushNotificationCallback', '{"c.i":"push-1"}');
+    emit('pushNotificationOpenedCallback', JSON.stringify({ notification: { 'c.i': 'push-1' }, actionIndex: 0 }));
+
+    expect(() => refusedReceived.remove()).not.toThrow();
+    expect(() => refusedOpened.remove()).not.toThrow();
+    expect(receivedSubscription.remove).not.toHaveBeenCalled();
+    expect(openedSubscription.remove).not.toHaveBeenCalled();
+    expect(receivedListener).toHaveBeenCalledWith('{"c.i":"push-1"}');
+    expect(openedListener).toHaveBeenCalledWith({ 'c.i': 'push-1' }, 0);
+    expect(nativeModule.registerForNotification).toHaveBeenCalledTimes(1);
+    expect(nativeModule.registerForNotificationOpened).toHaveBeenCalledTimes(1);
+});
+
 test('push calls and push options reach the native module only in the push package', async () => {
     const noPushMessage = "push notifications are not part of the no-push package, use 'countly-sdk-react-native-bridge' for push notifications";
 
@@ -1010,7 +1035,6 @@ test('registerForNotificationOpened passes the tapped notification and button in
     expect(firstListener).not.toHaveBeenCalled();
     expect(openedListener).toHaveBeenCalledTimes(1);
     expect(openedListener).toHaveBeenCalledWith({ 'c.i': 'push-1', title: 'Sale' }, 2);
-    expect(Countly.registerForNotificationOpened('not a function')).toBeUndefined();
 });
 
 test('recordMetrics returns before init without calling native code', () => {
