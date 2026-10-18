@@ -22,9 +22,10 @@ const countlyConfig = createCountlyConfig();
 // .addCustomNetworkRequestHeaders({ "X-Example": "CountlyRNExample" })
 // .enableCrashReporting() // Enable crash reporting to report unhandled crashes to Countly
 // .setRequiresConsent(true) // Set that consent should be required for features to work.
-// .giveConsent(['location', 'sessions', 'attribution', 'push', 'events', 'views', 'crashes', 'users', 'star-rating', 'apm', 'feedback', 'remote-config']) // give consent for specific features before init.
+// .giveConsent(['location', 'sessions', 'attribution', 'push', 'events', 'views', 'crashes', 'users', 'push', 'star-rating', 'apm', 'feedback', 'remote-config']) // give consent for specific features before init.
 // .setLocation('TR', 'Istanbul', '41.0082,28.9784', '10.2.33.12') // Set user initial location.
 // .enableParameterTamperingProtection('salt') // Set the optional salt to be used for calculating the checksum of requested data which will be sent with each request
+// .disableAdditionalIntentRedirectionChecks() // Disable additional intent redirection checks
 // .disableSDKBehaviorSettingsUpdates() // Skip SDK behavior settings refresh requests
 // .disableBackoffMechanism() // Disable request backoff logic
 // .disableGradualRequestCleaner() // Android only
@@ -33,6 +34,12 @@ const countlyConfig = createCountlyConfig();
 // .setAutomaticViewTrackingExclusionList(['com.countly.demo.HiddenActivity']) // Android expects fully qualified activity names
 // .setGlobalViewSegmentation({ app: 'CountlyRNExample', environment: 'demo' }) // Applied to all subsequent views
 // .setSDKBehaviorSettings({}) // Provide SDK behavior settings from Countly server
+
+// Push notification configuration ============================
+// .setPushTokenType(Countly.messagingMode.DEVELOPMENT) // iOS only
+// .setPushNotificationChannelInformation('ChannelName', 'ChannelDescription') // Android only
+// .setPushNotificationAccentColor('#2DA657') // Android only
+// .configureIntentRedirectionCheck(['MainActivity'], ['com.countly.demo'])
 
 // Feedback + attribution ====================================
 // .setStarRatingDialogTexts('Title', 'Message', 'Dismiss')

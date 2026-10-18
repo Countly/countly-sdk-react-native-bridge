@@ -1,0 +1,9 @@
+{
+    "compilerOptions": {
+        "strict": true,
+        "noEmit": true,
+        "types": [],
+        "lib": ["es2020"]
+    },
+    "files": ["Countly.d.ts"]
+}

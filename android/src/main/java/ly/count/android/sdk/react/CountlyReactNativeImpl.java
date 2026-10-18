@@ -1,12 +1,18 @@
 package ly.count.android.sdk.react;
 
 import android.app.Activity;
+import android.app.Application;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.media.AudioAttributes;
 import android.net.Uri;
+import android.os.Bundle;
 import android.util.Log;
 
 import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.BaseActivityEventListener;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.LifecycleEventListener;
 import com.facebook.react.bridge.Promise;
@@ -22,13 +28,13 @@ import android.content.Context;
 import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.ReadableType;
 import ly.count.android.sdk.Countly;
+import ly.count.android.sdk.CrashData;
 import ly.count.android.sdk.CountlyConfig;
 import ly.count.android.sdk.CountlyStore;
 import ly.count.android.sdk.DeviceIdType;
 import ly.count.android.sdk.ModuleLog;
 import ly.count.android.sdk.RCData;
 import ly.count.android.sdk.RCDownloadCallback;
-import ly.count.android.sdk.RemoteConfigCallback;
 import ly.count.android.sdk.FeedbackRatingCallback;
 import ly.count.android.sdk.ContentCallback;
 import ly.count.android.sdk.ContentStatus;
@@ -98,7 +104,7 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     public static final String NAME = "CountlyReactNative";
     public static final String TAG = "CountlyRNPlugin";
     private String COUNTLY_RN_SDK_VERSION_STRING = "26.1.0";
-    private String COUNTLY_RN_SDK_NAME = "js-rnb-android-np";
+    private String COUNTLY_RN_SDK_NAME = "js-rnbnp-android";
 
     private static CountlyConfig config = new CountlyConfig();
     private static String channelName = "General Notifications";
@@ -106,6 +112,8 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     private static CCallback notificationListener = null;
     private static String lastStoredNotification = null;
     protected static boolean loggingEnabled = false;
+    private static final long JS_FATAL_ECHO_WINDOW_MS = 5000;
+    private static volatile long jsFatalCrashRecordedAt = 0;
 
     private List<String> allowedIntentClassNames = new ArrayList<>();
     private List<String> allowedIntentPackageNames = new ArrayList<>();
@@ -117,6 +125,19 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     private static String widgetClosedCallbackName = "widgetClosedCallback";
     private static String ratingWidgetCallbackName = "ratingWidgetCallback";
     private static String pushNotificationCallbackName = "pushNotificationCallback";
+    private static String pushNotificationOpenedCallbackName = "pushNotificationOpenedCallback";
+    private static final String POST_NOTIFICATIONS_PERMISSION = "android.permission.POST_NOTIFICATIONS";
+    private static final int POST_NOTIFICATIONS_API_LEVEL = 33;
+    private static final int POST_NOTIFICATIONS_REQUEST_CODE = 1853;
+    private static final String PUSH_SETTINGS_PREFERENCES = "ly.count.android.sdk.react.push";
+    private static final String PUSH_SETTINGS_REDIRECTION_CHECKS = "useAdditionalIntentRedirectionChecks";
+    private static final String PUSH_SETTINGS_ALLOWED_CLASS_NAMES = "allowedIntentClassNames";
+    private static final String PUSH_SETTINGS_ALLOWED_PACKAGE_NAMES = "allowedIntentPackageNames";
+    private static final int MAX_PENDING_OPENED_NOTIFICATIONS = 10;
+    private static boolean pushReady = false;
+    private boolean notificationOpenedListenerRegistered = false;
+    private final List<String> pendingOpenedNotifications = new ArrayList<>();
+    private String providedDeviceId = null;
     private static boolean requestCaptureEnabled = false;
     private static boolean requestCaptureGeneratorInstalled = false;
     private static boolean applicationCallbacksConfigured = false;
@@ -136,13 +157,20 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         Countly.CountlyFeatureNames.apm,
         Countly.CountlyFeatureNames.feedback,
         Countly.CountlyFeatureNames.remoteConfig,
-        Countly.CountlyFeatureNames.content
+        Countly.CountlyFeatureNames.content,
+        Countly.CountlyFeatureNames.metrics
     ));
 
     public CountlyReactNativeImpl(ReactApplicationContext reactContext) {
         super(reactContext);
         _reactContext = reactContext;
         reactContext.addLifecycleEventListener(this);
+        reactContext.addActivityEventListener(new BaseActivityEventListener() {
+            @Override
+            public void onNewIntent(Intent intent) {
+                handleNotificationOpenedIntent(intent);
+            }
+        });
     }
 
     private void resetTestingState() {
@@ -151,9 +179,10 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         channelDescription = "Receive notifications about important updates and events.";
         notificationListener = null;
         loggingEnabled = false;
-        allowedIntentClassNames.clear();
-        allowedIntentPackageNames.clear();
+        allowedIntentClassNames = new ArrayList<>();
+        allowedIntentPackageNames = new ArrayList<>();
         useAdditionalIntentRedirectionChecks = true;
+        providedDeviceId = null;
         retrievedWidgetList = null;
         requestCaptureEnabled = false;
         requestCaptureGeneratorInstalled = false;
@@ -346,7 +375,11 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
             JSONObject argsObject = new JSONObject(argsMap);
             populateConfig(argsObject);
         } catch (Exception e) {
-            log("Failed to parse Config Object. [" + e.toString() + "]", LogLevel.DEBUG);
+            log("Failed to parse Config Object. [" + e.toString() + "]", LogLevel.ERROR);
+        }
+        storePushSettings(_reactContext, useAdditionalIntentRedirectionChecks, allowedIntentClassNames, allowedIntentPackageNames);
+        if (!Countly.sharedInstance().isInitialized()) {
+            resetStoredNullDeviceId();
         }
 
         Countly.sharedInstance().COUNTLY_SDK_NAME = COUNTLY_RN_SDK_NAME;
@@ -378,53 +411,261 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         }
     }
 
-    private void populateConfig(JSONObject _config) {
+    /**
+     * Gives an install a new device ID when an earlier start-up stored the text "null" as a developer supplied device ID.
+     * Earlier versions turned an empty or null device ID from JS into the text "null", which merged every such install into one user.
+     * The stored ID always wins at init, so it is cleared before init, unless the app passes "null" itself.
+     * The SDK then uses the device ID the app passes, or generates one.
+     */
+    private void resetStoredNullDeviceId() {
+        if ("null".equals(providedDeviceId)) {
+            return;
+        }
+        CountlyStore countlyStore = new CountlyStore(_reactContext, new ModuleLog());
+        if ("null".equals(countlyStore.getDeviceID()) && DeviceIdType.DEVELOPER_SUPPLIED.toString().equals(countlyStore.getDeviceIDType())) {
+            log("init, the stored device ID is the text 'null' from an earlier empty device ID, starting with a new device ID", LogLevel.WARNING);
+            countlyStore.setDeviceID(null);
+            countlyStore.setDeviceIDType(null);
+        }
+    }
+
+    /**
+     * Stores the push link safety settings so that the messaging service can apply them when a push arrives while the app is not running.
+     *
+     * @param context any context of the app
+     * @param useRedirectionChecks whether additional intent redirection checks are on
+     * @param classNames allowed intent class names
+     * @param packageNames allowed intent package names
+     */
+    static void storePushSettings(Context context, boolean useRedirectionChecks, List<String> classNames, List<String> packageNames) {
+        if (context == null) {
+            return;
+        }
+        context.getSharedPreferences(PUSH_SETTINGS_PREFERENCES, Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean(PUSH_SETTINGS_REDIRECTION_CHECKS, useRedirectionChecks)
+            .putString(PUSH_SETTINGS_ALLOWED_CLASS_NAMES, new JSONArray(classNames).toString())
+            .putString(PUSH_SETTINGS_ALLOWED_PACKAGE_NAMES, new JSONArray(packageNames).toString())
+            .apply();
+    }
+
+    /**
+     * Reads a list of texts stored by storePushSettings.
+     *
+     * @param preferences push settings preferences
+     * @param key stored list name
+     * @return the stored texts, empty when nothing is stored
+     */
+    private static List<String> readStoredList(SharedPreferences preferences, String key) {
+        List<String> values = new ArrayList<>();
         try {
-            if (_config.has("serverURL")) {
-                config.setServerURL(_config.getString("serverURL"));
-            }
-            if (_config.has("appKey")) {
-                config.setAppKey(_config.getString("appKey"));
-            }
-            if (_config.has("deviceID")) {
-                String deviceID = _config.getString("deviceID");
-                if (deviceID.equals("TemporaryDeviceID")) {
-                    config.enableTemporaryDeviceIdMode();
-                } else {
-                    config.setDeviceId(deviceID);
+            JSONArray array = new JSONArray(preferences.getString(key, "[]"));
+            for (int i = 0; i < array.length(); i++) {
+                String value = array.optString(i, "");
+                if (!value.isEmpty()) {
+                    values.add(value);
                 }
             }
-            config.enrollABOnRCDownload();
+        } catch (JSONException e) {
+            log("readStoredList, could not read the stored push settings: " + e, LogLevel.WARNING);
+        }
+        return values;
+    }
+
+    /**
+     * Initializes CountlyPush with the push link safety settings and creates the notification channel, once per process.
+     * Called when the app asks for notification permission, when it hands over a push token and when a push arrives while the app is not running.
+     *
+     * @param application the app
+     * @param soundPath custom notification sound, or "null" for the default sound
+     * @param force true to initialize again even when it was done already in this process
+     */
+    static synchronized void preparePush(Application application, String soundPath, boolean force) {
+        if (application == null || (pushReady && !force)) {
+            return;
+        }
+        createNotificationChannel(application, soundPath);
+        SharedPreferences preferences = application.getSharedPreferences(PUSH_SETTINGS_PREFERENCES, Context.MODE_PRIVATE);
+        CountlyPush.useAdditionalIntentRedirectionChecks = preferences.getBoolean(PUSH_SETTINGS_REDIRECTION_CHECKS, true);
+        CountlyConfigPush configPush = new CountlyConfigPush(application);
+        List<String> classNames = readStoredList(preferences, PUSH_SETTINGS_ALLOWED_CLASS_NAMES);
+        List<String> packageNames = readStoredList(preferences, PUSH_SETTINGS_ALLOWED_PACKAGE_NAMES);
+        if (!classNames.isEmpty()) {
+            configPush.setAllowedIntentClassNames(classNames);
+        }
+        if (!packageNames.isEmpty()) {
+            configPush.setAllowedIntentPackageNames(packageNames);
+        }
+        CountlyPush.init(configPush);
+        pushReady = true;
+    }
+
+    /**
+     * Creates the notification channel Countly pushes are shown on (Android 8 and newer).
+     *
+     * @param context any context of the app
+     * @param soundPath custom notification sound, or "null" for the default sound
+     */
+    private static void createNotificationChannel(Context context, String soundPath) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            return;
+        }
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (notificationManager == null) {
+            return;
+        }
+        NotificationChannel channel = new NotificationChannel(CountlyPush.CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_DEFAULT);
+        channel.setDescription(channelDescription);
+        if (soundPath != null && !"null".equals(soundPath) && !soundPath.isEmpty()) {
+            log("createNotificationChannel, Custom Sound provided for push notifications : " + soundPath, LogLevel.INFO);
+            AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                .build();
+            try {
+                channel.setSound(Uri.parse(soundPath), audioAttributes);
+            } catch (Exception exception) {
+                log("createNotificationChannel, Uri.parse failed with exception : ", exception, LogLevel.WARNING);
+            }
+        }
+        notificationManager.createNotificationChannel(channel);
+    }
+
+    private interface ConfigStep {
+        void apply() throws Exception;
+    }
+
+    /**
+     * Applies one group of start-up options. A failing group is logged as an error and skipped, so it does not stop the groups after it.
+     *
+     * @param optionName name of the option group, for the log
+     * @param step code that applies the options
+     */
+    private void applyConfigStep(String optionName, ConfigStep step) {
+        try {
+            step.apply();
+        } catch (Exception exception) {
+            log("init, could not apply the '" + optionName + "' option, skipping it: " + exception, LogLevel.ERROR);
+        }
+    }
+
+    /**
+     * Reads a text option from the start-up config.
+     *
+     * @param object config object
+     * @param key option name
+     * @return the text, or null when the option is missing, null, empty or not text
+     */
+    private static String optionalString(JSONObject object, String key) {
+        if (object == null || !object.has(key) || object.isNull(key)) {
+            return null;
+        }
+        Object value = object.opt(key);
+        if (!(value instanceof String) || ((String) value).isEmpty()) {
+            return null;
+        }
+        return (String) value;
+    }
+
+    /**
+     * Reads a list of texts from the start-up config. A single text is read as a one-entry list, and entries that are not text are skipped.
+     *
+     * @param object config object
+     * @param key option name
+     * @return the texts, empty when the option is missing or holds no text
+     */
+    private static List<String> optionalStringList(JSONObject object, String key) {
+        List<String> values = new ArrayList<>();
+        if (object == null || !object.has(key) || object.isNull(key)) {
+            return values;
+        }
+        Object value = object.opt(key);
+        if (value instanceof String) {
+            if (!((String) value).isEmpty()) {
+                values.add((String) value);
+            }
+            return values;
+        }
+        if (value instanceof JSONArray) {
+            JSONArray array = (JSONArray) value;
+            for (int i = 0; i < array.length(); i++) {
+                Object entry = array.opt(i);
+                if (entry instanceof String && !((String) entry).isEmpty()) {
+                    values.add((String) entry);
+                }
+            }
+        }
+        return values;
+    }
+
+    private void populateConfig(JSONObject _config) {
+        providedDeviceId = null;
+        applyConfigStep("serverURL", () -> {
+            String serverURL = optionalString(_config, "serverURL");
+            if (serverURL != null) {
+                config.setServerURL(serverURL);
+            }
+        });
+        applyConfigStep("appKey", () -> {
+            String appKey = optionalString(_config, "appKey");
+            if (appKey != null) {
+                config.setAppKey(appKey);
+            }
+        });
+        applyConfigStep("deviceID", () -> {
+            providedDeviceId = optionalString(_config, "deviceID");
+            if (providedDeviceId == null) {
+                if (_config.has("deviceID")) {
+                    log("init, the device ID is empty or not text, the SDK will generate one", LogLevel.WARNING);
+                }
+                return;
+            }
+            if (providedDeviceId.equals("TemporaryDeviceID")) {
+                config.enableTemporaryDeviceIdMode();
+            } else {
+                config.setDeviceId(providedDeviceId);
+            }
+        });
+        config.enrollABOnRCDownload();
+        applyConfigStep("loggingEnabled", () -> {
             if (_config.has("loggingEnabled")) {
                 boolean isEnabled = _config.getBoolean("loggingEnabled");
                 loggingEnabled = isEnabled;
                 config.setLoggingEnabled(isEnabled);
             }
+        });
+        applyConfigStep("shouldRequireConsent", () -> {
             if (_config.has("shouldRequireConsent")) {
                 config.setRequiresConsent(_config.getBoolean("shouldRequireConsent"));
             }
-            if (_config.has("tamperingProtectionSalt")) {
-                config.setParameterTamperingProtectionSalt(_config.getString("tamperingProtectionSalt"));
+        });
+        applyConfigStep("tamperingProtectionSalt", () -> {
+            String salt = optionalString(_config, "tamperingProtectionSalt");
+            if (salt != null) {
+                config.setParameterTamperingProtectionSalt(salt);
             }
-
+        });
+        applyConfigStep("consents", () -> {
             if (_config.has("consents")) {
-                JSONArray consentsArr = _config.getJSONArray("consents");
-                String[] newArray = new String[consentsArr.length()];
-                for (int i = 0; i < consentsArr.length(); i++) {
-                    newArray[i] = consentsArr.getString(i);
-                }
-                config.setConsentEnabled(newArray);
+                List<String> consents = optionalStringList(_config, "consents");
+                config.setConsentEnabled(consents.toArray(new String[0]));
             }
-            if (_config.has("starRatingTextTitle")) {
-                config.setStarRatingTextTitle(_config.getString("starRatingTextTitle"));
+        });
+        applyConfigStep("starRatingTexts", () -> {
+            String title = optionalString(_config, "starRatingTextTitle");
+            String message = optionalString(_config, "starRatingTextMessage");
+            String dismiss = optionalString(_config, "starRatingTextDismiss");
+            if (title != null) {
+                config.setStarRatingTextTitle(title);
             }
-            if (_config.has("starRatingTextMessage")) {
-                config.setStarRatingTextMessage(_config.getString("starRatingTextMessage"));
+            if (message != null) {
+                config.setStarRatingTextMessage(message);
             }
-            if (_config.has("starRatingTextDismiss")) {
-                config.setStarRatingTextDismiss(_config.getString("starRatingTextDismiss"));
+            if (dismiss != null) {
+                config.setStarRatingTextDismiss(dismiss);
             }
-            // APM ------------------------------------------------
+        });
+        applyConfigStep("apm", () -> {
             if (_config.has("enableForegroundBackground")) {
                 config.apm.enableForegroundBackgroundTracking();
             }
@@ -437,26 +678,23 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
             if (_config.has("trackAppStartTime")) {
                 config.apm.enableAppStartTimeTracking();
             }
-            // Legacy APM
-            if (_config.has("enableApm")) {
-                if (_config.getBoolean("enableApm")) {
-                    config.apm.enableAppStartTimeTracking();
-                }
-            }
-            // APM END --------------------------------------------
+        });
+        applyConfigStep("experimental", () -> {
             if (_config.has("enablePreviousNameRecording")) {
                 config.experimental.enablePreviousNameRecording();
             }
             if (_config.has("enableVisibilityTracking")) {
                 config.experimental.enableVisibilityTracking();
             }
+        });
+        applyConfigStep("content", () -> {
             if (_config.has("setZoneTimerInterval")) {
                 config.content.setZoneTimerInterval(_config.getInt("setZoneTimerInterval"));
             }
             if (_config.has("setGlobalContentCallback")) {
                 config.content.setGlobalContentCallback(new ContentCallback() {
                     @Override
-                    public void onContentCallback(ContentStatus contentStatus,Map<String, Object> contentData) {
+                    public void onContentCallback(ContentStatus contentStatus, Map<String, Object> contentData) {
                         JSONObject contentMap = new JSONObject();
                         try {
                             contentMap.put("status", contentStatus.toString());
@@ -464,111 +702,111 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
                         } catch (JSONException e) {
                             log("onContentCallback, JSON exception: ", e, LogLevel.ERROR);
                         }
-                        
+
                         ((ReactApplicationContext) _reactContext)
                             .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                             .emit("globalContentCallback", contentMap.toString());
                     }
                 });
             }
-            if (_config.has("webViewDisplayOption")) {
-                String displayOption = _config.getString("webViewDisplayOption");
+            String displayOption = optionalString(_config, "webViewDisplayOption");
+            if (displayOption != null) {
                 if ("SAFE_AREA".equals(displayOption)) {
                     config.setWebviewDisplayOption(WebViewDisplayOption.SAFE_AREA);
                 } else {
                     config.setWebviewDisplayOption(WebViewDisplayOption.IMMERSIVE);
                 }
             }
-            // Limits -----------------------------------------------
-            if(_config.has("maxKeyLength")) {
+        });
+        applyConfigStep("sdkInternalLimits", () -> {
+            if (_config.has("maxKeyLength")) {
                 config.sdkInternalLimits.setMaxKeyLength(_config.getInt("maxKeyLength"));
             }
-            if(_config.has("maxValueSize")) {
+            if (_config.has("maxValueSize")) {
                 config.sdkInternalLimits.setMaxValueSize(_config.getInt("maxValueSize"));
             }
-            if(_config.has("maxSegmentationValues")) {
+            if (_config.has("maxSegmentationValues")) {
                 config.sdkInternalLimits.setMaxSegmentationValues(_config.getInt("maxSegmentationValues"));
             }
-            if(_config.has("maxBreadcrumbCount")) {
+            if (_config.has("maxBreadcrumbCount")) {
                 config.sdkInternalLimits.setMaxBreadcrumbCount(_config.getInt("maxBreadcrumbCount"));
             }
-            if(_config.has("maxStackTraceLinesPerThread")) {
+            if (_config.has("maxStackTraceLinesPerThread")) {
                 config.sdkInternalLimits.setMaxStackTraceLinesPerThread(_config.getInt("maxStackTraceLinesPerThread"));
             }
-            if(_config.has("maxStackTraceLineLength")) {
+            if (_config.has("maxStackTraceLineLength")) {
                 config.sdkInternalLimits.setMaxStackTraceLineLength(_config.getInt("maxStackTraceLineLength"));
             }
-            // Limits End -------------------------------------------
+        });
+        applyConfigStep("crashReporting", () -> {
             if (_config.has("crashReporting")) {
                 config.crashes.enableCrashReporting();
+                config.crashes.setGlobalCrashFilterCallback(CountlyReactNativeImpl::isEchoOfRecordedJSFatal);
             }
-            if (_config.has("pushNotification")) {
-                JSONObject pushObject = _config.getJSONObject("pushNotification");
-                if (!pushObject.toString().equals("{}")) {
-                    channelName = pushObject.getString("channelName");
-                    channelDescription = pushObject.getString("channelDescription");
-                    if (pushObject.has("accentColor")) {
-                        setHexNotificationAccentColor(pushObject.getString("accentColor"));
-                    }
-                }
+        });
+        applyConfigStep("pushNotification", () -> {
+            if (!_config.has("pushNotification") || _config.isNull("pushNotification")) {
+                return;
             }
-            if (_config.has("attributionID")) {
-                log("recordAttributionID: Not implemented for Android", LogLevel.DEBUG);
+            JSONObject pushObject = _config.getJSONObject("pushNotification");
+            String pushChannelName = optionalString(pushObject, "channelName");
+            String pushChannelDescription = optionalString(pushObject, "channelDescription");
+            if (pushChannelName != null) {
+                channelName = pushChannelName;
             }
+            if (pushChannelDescription != null) {
+                channelDescription = pushChannelDescription;
+            }
+            String accentColor = optionalString(pushObject, "accentColor");
+            if (accentColor != null) {
+                setHexNotificationAccentColor(accentColor);
+            }
+        });
+        applyConfigStep("intentRedirection", () -> {
             if (_config.has("disableAdditionalIntentRedirectionChecks")) {
                 useAdditionalIntentRedirectionChecks = false;
             }
             if (_config.has("allowedIntentClassNames")) {
-                JSONArray intentArr = _config.getJSONArray("allowedIntentClassNames");
-                String[] newArray = new String[intentArr.length()];
-                for (int i = 0; i < intentArr.length(); i++) {
-                    newArray[i] = intentArr.getString(i);
-                }
-                allowedIntentClassNames = Arrays.asList(newArray);
+                allowedIntentClassNames = optionalStringList(_config, "allowedIntentClassNames");
             }
             if (_config.has("allowedIntentPackageNames")) {
-                JSONArray packageArr = _config.getJSONArray("allowedIntentPackageNames");
-                String[] newArray = new String[packageArr.length()];
-                for (int i = 0; i < packageArr.length(); i++) {
-                    newArray[i] = packageArr.getString(i);
-                }
-                allowedIntentPackageNames = Arrays.asList(newArray);
+                allowedIntentPackageNames = optionalStringList(_config, "allowedIntentPackageNames");
             }
-            String countryCode = null;
-            String city = null;
-            String gpsCoordinates = null;
-            String ipAddress = null;
-
-            if (_config.has("locationCountryCode")) {
-                countryCode = _config.getString("locationCountryCode");
-            }
-            if (_config.has("locationCity")) {
-                city = _config.getString("locationCity");
-            }
-            if (_config.has("locationGpsCoordinates")) {
-                gpsCoordinates = _config.getString("locationGpsCoordinates");
-            }
-            if (_config.has("locationIpAddress")) {
-                ipAddress = _config.getString("locationIpAddress");
-            }
+        });
+        applyConfigStep("location", () -> {
+            String countryCode = optionalString(_config, "locationCountryCode");
+            String city = optionalString(_config, "locationCity");
+            String gpsCoordinates = optionalString(_config, "locationGpsCoordinates");
+            String ipAddress = optionalString(_config, "locationIpAddress");
             if (city != null || countryCode != null || gpsCoordinates != null || ipAddress != null) {
                 config.setLocation(countryCode, city, gpsCoordinates, ipAddress);
             }
-
-            if (_config.has("campaignType")) {
-                String campaignType = _config.getString("campaignType");
-                String campaignData = _config.getString("campaignData");
-                config.setDirectAttribution(campaignType, campaignData);
+        });
+        applyConfigStep("directAttribution", () -> {
+            if (!_config.has("campaignType")) {
+                return;
             }
-            if (_config.has("attributionValues")) {
-                JSONObject attributionValues = _config.getJSONObject("attributionValues");
-                if (attributionValues != null && attributionValues.length() > 0) {
-                    Map<String, String> attributionMap = toMapString(attributionValues);
-                    config.setIndirectAttribution(attributionMap);
-                } else {
-                    log("RecordIndirectAttribution: failure, no attribution values provided", LogLevel.DEBUG);
-                }
+            String campaignType = optionalString(_config, "campaignType");
+            Object campaignDataValue = _config.opt("campaignData");
+            String campaignData = campaignDataValue instanceof JSONObject ? campaignDataValue.toString() : optionalString(_config, "campaignData");
+            if (campaignType == null || campaignData == null) {
+                log("init, direct attribution needs a campaign type and campaign data, skipping it", LogLevel.ERROR);
+                return;
             }
+            config.setDirectAttribution(campaignType, campaignData);
+        });
+        applyConfigStep("indirectAttribution", () -> {
+            if (!_config.has("attributionValues")) {
+                return;
+            }
+            Object attributionValues = _config.opt("attributionValues");
+            if (attributionValues instanceof JSONObject && ((JSONObject) attributionValues).length() > 0) {
+                config.setIndirectAttribution(toMapString((JSONObject) attributionValues));
+            } else {
+                log("init, indirect attribution values must be an object of text values, skipping them", LogLevel.ERROR);
+            }
+        });
+        applyConfigStep("requestTimeoutDuration", () -> {
             if (_config.has("requestTimeoutDuration")) {
                 int timeout = _config.getInt("requestTimeoutDuration");
                 if (timeout > 0) {
@@ -577,14 +815,14 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
                     log("setRequestTimeoutDuration: failure, timeout value must be greater than 0", LogLevel.DEBUG);
                 }
             }
+        });
+        applyConfigStep("views", () -> {
             if (_config.has("enableAutomaticViewTracking") && _config.getBoolean("enableAutomaticViewTracking")) {
                 config.enableAutomaticViewTracking();
             }
             if (_config.has("automaticViewTrackingExclusionList")) {
-                JSONArray exclusionList = _config.getJSONArray("automaticViewTrackingExclusionList");
                 List<Class<?>> resolvedExclusions = new ArrayList<>();
-                for (int i = 0; i < exclusionList.length(); i++) {
-                    String className = exclusionList.optString(i, null);
+                for (String className : optionalStringList(_config, "automaticViewTrackingExclusionList")) {
                     Class<?> resolvedClass = resolveTrackedActivityClass(className);
                     if (resolvedClass != null) {
                         resolvedExclusions.add(resolvedClass);
@@ -596,6 +834,8 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
                 JSONObject globalViewSegmentation = _config.getJSONObject("globalViewSegmentation");
                 config.setGlobalViewSegmentation(toMapObject(globalViewSegmentation));
             }
+        });
+        applyConfigStep("sessions", () -> {
             if (_config.has("manualSessionHandling") && _config.getBoolean("manualSessionHandling")) {
                 config.enableManualSessionControl();
             }
@@ -603,23 +843,21 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
                 config.enableManualSessionControl();
                 config.enableManualSessionControlHybridMode();
             }
+        });
+        applyConfigStep("customNetworkRequestHeaders", () -> {
             if (_config.has("customNetworkRequestHeaders")) {
                 JSONObject customHeaderValues = _config.getJSONObject("customNetworkRequestHeaders");
                 if (customHeaderValues != null && customHeaderValues.length() > 0) {
                     config.addCustomNetworkRequestHeaders(toMapString(customHeaderValues));
                 }
             }
-            if (_config.has("disableSDKBehaviorSettingsUpdates")) {
-                boolean disableUpdates = _config.getBoolean("disableSDKBehaviorSettingsUpdates");
-                if (disableUpdates) {
-                    config.disableSDKBehaviorSettingsUpdates();
-                }
+        });
+        applyConfigStep("sdkBehaviorSettings", () -> {
+            if (_config.has("disableSDKBehaviorSettingsUpdates") && _config.getBoolean("disableSDKBehaviorSettingsUpdates")) {
+                config.disableSDKBehaviorSettingsUpdates();
             }
-            if (_config.has("disableBackoffMechanism")) {
-                boolean disableBackoff = _config.getBoolean("disableBackoffMechanism");
-                if (disableBackoff) {
-                    config.disableBackoffMechanism();
-                }
+            if (_config.has("disableBackoffMechanism") && _config.getBoolean("disableBackoffMechanism")) {
+                config.disableBackoffMechanism();
             }
             if (_config.has("disableGradualRequestCleaner") && _config.getBoolean("disableGradualRequestCleaner")) {
                 config.disableGradualRequestCleaner();
@@ -629,12 +867,9 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
             }
             if (_config.has("sdkBehaviorSettings")) {
                 JSONObject sdkBehaviorSettings = _config.getJSONObject("sdkBehaviorSettings");
-                String sdkBehaviorSettingsString = sdkBehaviorSettings.toString();
-                config.setSDKBehaviorSettings(sdkBehaviorSettingsString);
+                config.setSDKBehaviorSettings(sdkBehaviorSettings.toString());
             }
-        } catch (Exception e) {
-            log(e.toString(), LogLevel.DEBUG);
-        }
+        });
     }
 
     private void setHexNotificationAccentColor(final String hex) {
@@ -818,7 +1053,9 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
             while (iterator.hasNext()) {
                 String key = iterator.next();
                 Object value = jsonObject.get(key);
-                if (value instanceof JSONObject) {
+                if (value == null || value == JSONObject.NULL) {
+                    map.putNull(key);
+                } else if (value instanceof JSONObject) {
                     map.putMap(key, toWritableMap((JSONObject) value));
                 } else if (value instanceof JSONArray) {
                     map.putArray(key, toWritableArray((JSONArray) value));
@@ -826,8 +1063,8 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
                     map.putBoolean(key, (Boolean) value);
                 } else if (value instanceof Integer) {
                     map.putInt(key, (Integer) value);
-                } else if (value instanceof Double) {
-                    map.putDouble(key, (Double) value);
+                } else if (value instanceof Number) {
+                    map.putDouble(key, ((Number) value).doubleValue());
                 } else if (value instanceof String) {
                     map.putString(key, (String) value);
                 } else {
@@ -845,7 +1082,9 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         try {
             for (int i = 0; i < jsonArray.length(); i++) {
                 Object value = jsonArray.get(i);
-                if (value instanceof JSONObject) {
+                if (value == null || value == JSONObject.NULL) {
+                    array.pushNull();
+                } else if (value instanceof JSONObject) {
                     array.pushMap(toWritableMap((JSONObject) value));
                 } else if (value instanceof JSONArray) {
                     array.pushArray(toWritableArray((JSONArray) value));
@@ -853,8 +1092,8 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
                     array.pushBoolean((Boolean) value);
                 } else if (value instanceof Integer) {
                     array.pushInt((Integer) value);
-                } else if (value instanceof Double) {
-                    array.pushDouble((Double) value);
+                } else if (value instanceof Number) {
+                    array.pushDouble(((Number) value).doubleValue());
                 } else if (value instanceof String) {
                     array.pushString((String) value);
                 } else {
@@ -881,7 +1120,7 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
                         object.put(key, readableMap.getBoolean(key));
                         break;
                     case Number:
-                        object.put(key, readableMap.getInt(key));
+                        object.put(key, wholeNumberAsInteger(readableMap.getDouble(key)));
                         break;
                     case String:
                         object.put(key, readableMap.getString(key));
@@ -906,12 +1145,13 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
             for (int i = 0; i < readableArray.size(); i++) {
                 switch (readableArray.getType(i)) {
                     case Null:
+                        array.put(JSONObject.NULL);
                         break;
                     case Boolean:
                         array.put(readableArray.getBoolean(i));
                         break;
                     case Number:
-                        array.put(readableArray.getDouble(i));
+                        array.put(wholeNumberAsInteger(readableArray.getDouble(i)));
                         break;
                     case String:
                         array.put(readableArray.getString(i));
@@ -924,7 +1164,7 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
                         break;
                 }
             }
-        } catch (JSONException e) {
+        } catch (Exception e) {
             log("Exception occurred at 'toJSONArray' method: ", e, LogLevel.ERROR);
         }
         return array;
@@ -1071,8 +1311,12 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     }
 
     public void recordMetrics(ReadableArray args) {
+        if (!Countly.sharedInstance().isInitialized()) {
+            log("recordMetrics, 'init' must be called before 'recordMetrics'", LogLevel.ERROR);
+            return;
+        }
         Map<String, String> metricsMap = new HashMap<>();
-        for (int i = 0; i < args.size(); i += 2) {
+        for (int i = 0; i + 1 < args.size(); i += 2) {
             String key = args.getString(i);
             String value = args.getString(i + 1);
             metricsMap.put(key, value);
@@ -1096,13 +1340,12 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     public void logException(ReadableArray args) {
         String exceptionString = args.getString(0);
         Exception exception = new Exception(exceptionString);
+        boolean nonfatal = args.size() < 2 || args.getType(1) != ReadableType.Boolean || args.getBoolean(1);
 
-        if (args.size() == 2 ) {
-            Countly.sharedInstance().crashes().recordHandledException(exception);
-            return;
+        Map<String, Object> segmentationMap = null;
+        if (args.size() > 2) {
+            segmentationMap = new HashMap<>();
         }
-        
-        Map<String, Object> segmentationMap = new HashMap<>();
 
         // TODO: refactor this tandem to iOS in the future
         // starting from index 2 because we are skipping the exceptionString and the fatality
@@ -1116,13 +1359,44 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
             }
         }
 
-        Countly.sharedInstance().crashes().recordHandledException(exception, segmentationMap);
+        if (nonfatal) {
+            Countly.sharedInstance().crashes().recordHandledException(exception, segmentationMap);
+        } else {
+            Countly.sharedInstance().crashes().recordUnhandledException(exception, segmentationMap);
+        }
     }
 
-    
-    public void logJSException(String err, String message, String stack) {
+
+    public void logJSException(String err, String message, String stack, boolean isFatal) {
         Countly.sharedInstance().crashes().addCrashBreadcrumb(stack);
-        Countly.sharedInstance().crashes().recordHandledException(new CountlyReactException(err, message, stack));
+        CountlyReactException exception = new CountlyReactException(err, message, stack);
+        if (!isFatal) {
+            Countly.sharedInstance().crashes().recordHandledException(exception);
+            return;
+        }
+
+        // A fatal crash is written to storage before this call returns, so RN's native echo of it can be dropped safely.
+        Countly.sharedInstance().crashes().recordUnhandledException(exception);
+        jsFatalCrashRecordedAt = System.currentTimeMillis();
+    }
+
+    /**
+     * Tells whether a native crash is the one RN raises for a fatal JS error that the JS error handler has just recorded.
+     *
+     * @param crash crash the Countly SDK is about to record
+     * @return true when the crash is that duplicate and should be dropped
+     */
+    private static boolean isEchoOfRecordedJSFatal(CrashData crash) {
+        long recordedAt = jsFatalCrashRecordedAt;
+        if (recordedAt == 0 || System.currentTimeMillis() - recordedAt > JS_FATAL_ECHO_WINDOW_MS) {
+            return false;
+        }
+        if (!crash.getFatal() || !crash.getStackTrace().contains("com.facebook.react.common.JavascriptException")) {
+            return false;
+        }
+
+        jsFatalCrashRecordedAt = 0;
+        return true;
     }
 
     
@@ -1175,13 +1449,6 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         }     
 
         Countly.sharedInstance().events().endEvent(eventName, segmentation, eventCount, eventSum);
-    }
-
-    
-    public void recordView(ReadableArray args) {
-        String viewName = args.getString(0);
-        Map<String, Object> segmentation = convertReadableArrayToSegmentation(args, 1);
-        Countly.sharedInstance().views().startAutoStoppedView(viewName, segmentation);
     }
 
     public void startAutoStoppedView(ReadableArray args, Promise promise) {
@@ -1247,13 +1514,70 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     public void setUserData(ReadableArray args, Promise promise) {
         Countly.sharedInstance();
         ReadableMap userData = args.getMap(0);
-        Countly.sharedInstance().userProfile().setProperties(userData.toHashMap());
+        Countly.sharedInstance().userProfile().setProperties(withWholeNumbersAsIntegers(userData.toHashMap()));
         promise.resolve("Success");
+    }
+
+    /**
+     * Converts whole numbers in user properties from double to integer, nested values included.
+     * JS numbers arrive as doubles, and the SDK writes named properties such as phone as text, so 5551234567 would become "5.551234567E9".
+     *
+     * @param properties user properties from JS
+     * @return the same properties with whole numbers as Integer or Long
+     */
+    static Map<String, Object> withWholeNumbersAsIntegers(Map<String, Object> properties) {
+        Map<String, Object> converted = new HashMap<>();
+        for (Map.Entry<String, Object> entry : properties.entrySet()) {
+            converted.put(entry.getKey(), wholeNumberAsInteger(entry.getValue()));
+        }
+        return converted;
+    }
+
+    /**
+     * Converts one user property value for withWholeNumbersAsIntegers.
+     *
+     * @param value a value from JS: a number, text, map or list
+     * @return the value with whole numbers as Integer or Long, maps and lists converted item by item
+     */
+    @SuppressWarnings("unchecked")
+    private static Object wholeNumberAsInteger(Object value) {
+        if (value instanceof Double) {
+            double number = (Double) value;
+            if (number % 1 == 0 && !Double.isInfinite(number)) {
+                if (number >= Integer.MIN_VALUE && number <= Integer.MAX_VALUE) {
+                    return (int) number;
+                }
+                if (number >= Long.MIN_VALUE && number <= Long.MAX_VALUE) {
+                    return (long) number;
+                }
+            }
+            return value;
+        }
+        if (value instanceof Map) {
+            return withWholeNumbersAsIntegers((Map<String, Object>) value);
+        }
+        if (value instanceof List) {
+            List<Object> converted = new ArrayList<>();
+            for (Object item : (List<Object>) value) {
+                converted.add(wholeNumberAsInteger(item));
+            }
+            return converted;
+        }
+        return value;
     }
 
     
     public void sendPushToken(ReadableArray args) {
-        String pushToken = args.getString(0);
+        String pushToken = args.size() > 0 && !args.isNull(0) ? args.getString(0) : null;
+        if (pushToken == null || pushToken.isEmpty()) {
+            log("sendPushToken, the push token is empty, skipping it", LogLevel.ERROR);
+            return;
+        }
+        if (!Countly.sharedInstance().isInitialized()) {
+            log("sendPushToken, 'init' must be called before 'sendPushToken'", LogLevel.ERROR);
+            return;
+        }
+        preparePush((Application) _reactContext.getApplicationContext(), "null", false);
         CountlyPush.onTokenRefresh(pushToken);
     }
 
@@ -1296,52 +1620,125 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         }
     }
 
-    
+    /**
+     * Starts delivering push notification taps to JS, including the tap that opened the app and taps that came in before JS registered.
+     *
+     * @param args unused
+     */
+    public void registerForNotificationOpened(ReadableArray args) {
+        notificationOpenedListenerRegistered = true;
+        Activity activity = getActivity();
+        if (activity != null) {
+            handleNotificationOpenedIntent(activity.getIntent());
+        }
+        List<String> pending;
+        synchronized (pendingOpenedNotifications) {
+            pending = new ArrayList<>(pendingOpenedNotifications);
+            pendingOpenedNotifications.clear();
+        }
+        for (String openedNotification : pending) {
+            emitNotificationOpened(openedNotification);
+        }
+    }
+
+    /**
+     * Reads a Countly push tap from an intent the SDK's push activity started the app with, and delivers it to JS once.
+     * The tap is removed from the intent, so a JS reload or a later resume does not deliver it again.
+     *
+     * @param intent intent the app was opened with
+     */
+    private void handleNotificationOpenedIntent(Intent intent) {
+        if (intent == null || !intent.hasExtra(CountlyPush.EXTRA_MESSAGE)) {
+            return;
+        }
+        try {
+            intent.setExtrasClassLoader(CountlyPush.class.getClassLoader());
+            Bundle bundle = intent.getBundleExtra(CountlyPush.EXTRA_MESSAGE);
+            int actionIndex = intent.getIntExtra(CountlyPush.EXTRA_ACTION_INDEX, 0);
+            intent.removeExtra(CountlyPush.EXTRA_MESSAGE);
+            if (bundle == null) {
+                return;
+            }
+            bundle.setClassLoader(CountlyPush.class.getClassLoader());
+            CountlyPush.Message message = bundle.getParcelable(CountlyPush.EXTRA_MESSAGE);
+            if (message == null) {
+                return;
+            }
+            JSONObject notification = new JSONObject();
+            for (String key : message.dataKeys()) {
+                notification.put(key, message.data(key));
+            }
+            JSONObject opened = new JSONObject();
+            opened.put("notification", notification);
+            opened.put("actionIndex", actionIndex);
+            String openedString = opened.toString();
+            if (notificationOpenedListenerRegistered) {
+                emitNotificationOpened(openedString);
+            } else {
+                synchronized (pendingOpenedNotifications) {
+                    if (pendingOpenedNotifications.size() >= MAX_PENDING_OPENED_NOTIFICATIONS) {
+                        pendingOpenedNotifications.remove(0);
+                    }
+                    pendingOpenedNotifications.add(openedString);
+                }
+            }
+        } catch (Exception exception) {
+            log("handleNotificationOpenedIntent, could not read the tapped notification", exception, LogLevel.ERROR);
+        }
+    }
+
+    /**
+     * Sends a push notification tap to the listener JS registered with registerForNotificationOpened.
+     *
+     * @param openedNotification JSON text with the notification's data and the action index
+     */
+    private void emitNotificationOpened(String openedNotification) {
+        log("emitNotificationOpened [" + openedNotification + "]", LogLevel.INFO);
+        ((ReactApplicationContext) _reactContext)
+            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+            .emit(pushNotificationOpenedCallbackName, openedNotification);
+    }
+
+
     public void askForNotificationPermission(ReadableArray args) {
         Activity activity = this.getActivity();
         if (activity == null) {
             log("askForNotificationPermission failed, Activity is null", LogLevel.ERROR);
             return;
         }
-        String soundPath = args.getString(0);
+        String soundPath = args.size() > 0 && !args.isNull(0) ? args.getString(0) : "null";
         Context context = this._reactContext;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-            if (notificationManager != null) {
-                NotificationChannel channel = new NotificationChannel(CountlyPush.CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_DEFAULT);
-                channel.setDescription(channelDescription);
-                // It will set the custom sound for push notifications
-                if (!"null".equals(soundPath) && !soundPath.isEmpty()) {
-                    log("askForNotificationPermission, Custom Sound provided for push notifications : " + soundPath, LogLevel.INFO);
-                    AudioAttributes audioAttributes = new AudioAttributes.Builder()
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                        .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-                        .build();
-
-                    try {
-                        Uri soundUri = Uri.parse(soundPath);
-                        channel.setSound(soundUri, audioAttributes);
-                    } catch (Exception exception) {
-                        log("askForNotificationPermission, Uri.parse failed with exception : ", exception, LogLevel.WARNING);
-                    }
-                }
-
-                notificationManager.createNotificationChannel(channel);
-            }
+        if (Build.VERSION.SDK_INT >= POST_NOTIFICATIONS_API_LEVEL && activity.checkSelfPermission(POST_NOTIFICATIONS_PERMISSION) != PackageManager.PERMISSION_GRANTED) {
+            log("askForNotificationPermission, requesting the notification permission", LogLevel.INFO);
+            activity.requestPermissions(new String[] { POST_NOTIFICATIONS_PERMISSION }, POST_NOTIFICATIONS_REQUEST_CODE);
         }
-        CountlyPush.useAdditionalIntentRedirectionChecks = useAdditionalIntentRedirectionChecks;
-        CountlyConfigPush configPush = new CountlyConfigPush(activity.getApplication());
-        if (allowedIntentClassNames.size() > 0) {
-            configPush.setAllowedIntentClassNames(allowedIntentClassNames);
-        }
-        if (allowedIntentPackageNames.size() > 0) {
-            configPush.setAllowedIntentPackageNames(allowedIntentPackageNames);
-        }
-        CountlyPush.init(configPush);
-        log("askForNotificationPermission, firebaseMessagingInstance is null", LogLevel.WARNING);
+        storePushSettings(context, useAdditionalIntentRedirectionChecks, allowedIntentClassNames, allowedIntentPackageNames);
+        preparePush(activity.getApplication(), soundPath, true);
+        CountlyPushTokenFetcher.fetchToken(context);
     }
 
     
+    /**
+     * Reads a whole number argument sent as text, rejecting the promise when it is not a whole number in the 32-bit range.
+     *
+     * @param args call arguments
+     * @param index argument position
+     * @param functionName name of the called function, for the log and the rejection
+     * @param promise promise of the call, rejected on failure
+     * @return the number, or null when the promise was rejected
+     */
+    private Integer parseIntegerArgument(ReadableArray args, int index, String functionName, Promise promise) {
+        try {
+            return Integer.parseInt(args.getString(index).trim());
+        } catch (Exception exception) {
+            String message = functionName + ", the value should be a whole number between " + Integer.MIN_VALUE + " and " + Integer.MAX_VALUE;
+            log(message, exception, LogLevel.ERROR);
+            promise.reject(functionName + "_failure", message);
+            return null;
+        }
+    }
+
+
     public void userData_setProperty(ReadableArray args, Promise promise) {
         Countly.sharedInstance();
         String keyName = args.getString(0);
@@ -1362,7 +1759,10 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     public void userData_incrementBy(ReadableArray args, Promise promise) {
         Countly.sharedInstance();
         String keyName = args.getString(0);
-        int keyIncrement = Integer.parseInt(args.getString(1));
+        Integer keyIncrement = parseIntegerArgument(args, 1, "incrementBy", promise);
+        if (keyIncrement == null) {
+            return;
+        }
         Countly.sharedInstance().userProfile().incrementBy(keyName, keyIncrement);
         promise.resolve("Success");
     }
@@ -1371,7 +1771,10 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     public void userData_multiply(ReadableArray args, Promise promise) {
         Countly.sharedInstance();
         String keyName = args.getString(0);
-        int multiplyValue = Integer.parseInt(args.getString(1));
+        Integer multiplyValue = parseIntegerArgument(args, 1, "multiply", promise);
+        if (multiplyValue == null) {
+            return;
+        }
         Countly.sharedInstance().userProfile().multiply(keyName, multiplyValue);
         promise.resolve("Success");
     }
@@ -1380,7 +1783,10 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     public void userData_saveMax(ReadableArray args, Promise promise) {
         Countly.sharedInstance();
         String keyName = args.getString(0);
-        int maxScore = Integer.parseInt(args.getString(1));
+        Integer maxScore = parseIntegerArgument(args, 1, "saveMax", promise);
+        if (maxScore == null) {
+            return;
+        }
         Countly.sharedInstance().userProfile().saveMax(keyName, maxScore);
         promise.resolve("Success");
     }
@@ -1389,7 +1795,10 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     public void userData_saveMin(ReadableArray args, Promise promise) {
         Countly.sharedInstance();
         String keyName = args.getString(0);
-        int minScore = Integer.parseInt(args.getString(1));
+        Integer minScore = parseIntegerArgument(args, 1, "saveMin", promise);
+        if (minScore == null) {
+            return;
+        }
         Countly.sharedInstance().userProfile().saveMin(keyName, minScore);
         promise.resolve("Success");
     }
@@ -1433,7 +1842,7 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     
     public void userDataBulk_setUserProperties(ReadableMap userData, Promise promise) {
         Countly.sharedInstance();
-        Countly.sharedInstance().userProfile().setProperties(userData.toHashMap());
+        Countly.sharedInstance().userProfile().setProperties(withWholeNumbersAsIntegers(userData.toHashMap()));
         promise.resolve("Success");
     }
 
@@ -1465,7 +1874,10 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     public void userDataBulk_incrementBy(ReadableArray args, Promise promise) {
         Countly.sharedInstance();
         String keyName = args.getString(0);
-        int keyIncrement = Integer.parseInt(args.getString(1));
+        Integer keyIncrement = parseIntegerArgument(args, 1, "incrementBy", promise);
+        if (keyIncrement == null) {
+            return;
+        }
         Countly.sharedInstance().userProfile().incrementBy(keyName, keyIncrement);
         promise.resolve("Success");
     }
@@ -1474,7 +1886,10 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     public void userDataBulk_multiply(ReadableArray args, Promise promise) {
         Countly.sharedInstance();
         String keyName = args.getString(0);
-        int multiplyValue = Integer.parseInt(args.getString(1));
+        Integer multiplyValue = parseIntegerArgument(args, 1, "multiply", promise);
+        if (multiplyValue == null) {
+            return;
+        }
         Countly.sharedInstance().userProfile().multiply(keyName, multiplyValue);
         promise.resolve("Success");
     }
@@ -1483,7 +1898,10 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     public void userDataBulk_saveMax(ReadableArray args, Promise promise) {
         Countly.sharedInstance();
         String keyName = args.getString(0);
-        int maxScore = Integer.parseInt(args.getString(1));
+        Integer maxScore = parseIntegerArgument(args, 1, "saveMax", promise);
+        if (maxScore == null) {
+            return;
+        }
         Countly.sharedInstance().userProfile().saveMax(keyName, maxScore);
         promise.resolve("Success");
     }
@@ -1492,7 +1910,10 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     public void userDataBulk_saveMin(ReadableArray args, Promise promise) {
         Countly.sharedInstance();
         String keyName = args.getString(0);
-        int minScore = Integer.parseInt(args.getString(1));
+        Integer minScore = parseIntegerArgument(args, 1, "saveMin", promise);
+        if (minScore == null) {
+            return;
+        }
         Countly.sharedInstance().userProfile().saveMin(keyName, minScore);
         promise.resolve("Success");
     }
@@ -1537,8 +1958,15 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
 
     
     public void giveConsent(ReadableArray featureNames) {
+        if (featureNames == null) {
+            log("giveConsent, no feature names were provided", LogLevel.ERROR);
+            return;
+        }
         List<String> features = new ArrayList<>();
         for (int i = 0; i < featureNames.size(); i++) {
+            if (featureNames.getType(i) != ReadableType.String) {
+                continue;
+            }
             String featureName = featureNames.getString(i);
             if (validConsentFeatureNames.contains(featureName)) {
                 features.add(featureName);
@@ -1551,8 +1979,15 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
 
     
     public void removeConsent(ReadableArray featureNames) {
+        if (featureNames == null) {
+            log("removeConsent, no feature names were provided", LogLevel.ERROR);
+            return;
+        }
         List<String> features = new ArrayList<>();
         for (int i = 0; i < featureNames.size(); i++) {
+            if (featureNames.getType(i) != ReadableType.String) {
+                continue;
+            }
             String featureName = featureNames.getString(i);
             if (validConsentFeatureNames.contains(featureName)) {
                 features.add(featureName);
@@ -1573,60 +2008,54 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         Countly.sharedInstance().consent().removeConsentAll();
     }
 
-    
-    public void remoteConfigUpdate(ReadableArray args, final Callback myCallback) {
-        Countly.sharedInstance().remoteConfig().downloadAllKeys(new RCDownloadCallback() {
+    /**
+     * Builds a remote config download callback that reports the outcome to a JS callback.
+     *
+     * @param successMessage message reported when the download succeeds
+     * @param callback JS callback that receives the success or error message
+     * @return callback for the remote config download calls
+     */
+    private RCDownloadCallback remoteConfigDownloadCallback(final String successMessage, final Callback callback) {
+        return new RCDownloadCallback() {
             @Override public void callback(RequestResult downloadResult, String error, boolean fullValueUpdate, Map<String, RCData> downloadedValues) {
-                String resultString = "";
-                if (error == null) {
-                    resultString = "Remote Config is updated and ready to use!";
-                } else {
-                    resultString = "There was an error while updating Remote Config: " + error;
+                if (downloadResult == RequestResult.Success) {
+                    callback.invoke(successMessage);
+                    return;
                 }
-                myCallback.invoke(resultString);
+
+                String reason = error;
+                if (reason == null) {
+                    boolean hasConsent = Countly.sharedInstance().consent().getConsent(Countly.CountlyFeatureNames.remoteConfig);
+                    reason = hasConsent ? "the download did not succeed" : "remote config consent is not given";
+                }
+                callback.invoke("There was an error while updating Remote Config: " + reason);
             }
-        });
+        };
     }
 
-    
+    public void remoteConfigUpdate(ReadableArray args, final Callback myCallback) {
+        Countly.sharedInstance().remoteConfig().downloadAllKeys(remoteConfigDownloadCallback("Remote Config is updated and ready to use!", myCallback));
+    }
+
+
     public void updateRemoteConfigForKeysOnly(ReadableArray args, final Callback myCallback) {
         String[] newArray = new String[args.size()];
         for (int cnt = 0; cnt < args.size(); cnt++) {
             newArray[cnt] = args.getString(cnt);
         }
-        Countly.sharedInstance().remoteConfig().downloadSpecificKeys(newArray, new RCDownloadCallback() {
-            @Override public void callback(RequestResult downloadResult, String error, boolean fullValueUpdate, Map<String, RCData> downloadedValues) {
-                String resultString = "";
-                if (error == null) {
-                    resultString = "Remote Config is updated only for given keys and ready to use!";
-                } else {
-                    resultString = "There was an error while updating Remote Config: " + error;
-                }
-                myCallback.invoke(resultString);
-            }
-        });
+        Countly.sharedInstance().remoteConfig().downloadSpecificKeys(newArray, remoteConfigDownloadCallback("Remote Config is updated only for given keys and ready to use!", myCallback));
     }
 
-    
+
     public void updateRemoteConfigExceptKeys(ReadableArray args, final Callback myCallback) {
         String[] newArray = new String[args.size()];
         for (int cnt = 0; cnt < args.size(); cnt++) {
             newArray[cnt] = args.getString(cnt);
         }
-        Countly.sharedInstance().remoteConfig().downloadOmittingKeys(newArray, new RCDownloadCallback() {
-            @Override public void callback(RequestResult downloadResult, String error, boolean fullValueUpdate, Map<String, RCData> downloadedValues) {
-                String resultString = "";
-                if (error == null) {
-                    resultString = "Remote Config is updated except for given keys and ready to use !";
-                } else {
-                    resultString = "There was an error while updating Remote Config: " + error;
-                }
-                myCallback.invoke(resultString);
-            }
-        });
+        Countly.sharedInstance().remoteConfig().downloadOmittingKeys(newArray, remoteConfigDownloadCallback("Remote Config is updated except for given keys and ready to use !", myCallback));
     }
 
-    
+
     public void getRemoteConfigValueForKey(ReadableArray args, final Callback myCallback) {
         String keyName = args.getString(0);
         RCData keyValue = Countly.sharedInstance().remoteConfig().getValue(keyName);
@@ -1634,22 +2063,10 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
             log("getRemoteConfigValueForKey, [" + keyName + "]: ConfigKeyNotFound", LogLevel.DEBUG);
             myCallback.invoke("ConfigKeyNotFound");
         } else {
-            String resultString = (keyValue.value).toString();
+            // Sent as JSON text so the JS side restores the value with the server's type.
+            String resultString = keyValue.value instanceof String ? JSONObject.quote((String) keyValue.value) : keyValue.value.toString();
             log("getRemoteConfigValueForKey, [" + keyName + "]: " + resultString, LogLevel.DEBUG);
             myCallback.invoke(resultString);
-        }
-    }
-
-    
-    public void getRemoteConfigValueForKeyP(String keyName, Promise promise) {
-        RCData keyValue = Countly.sharedInstance().remoteConfig().getValue(keyName);
-        if (keyValue.value == null) {
-            log("getRemoteConfigValueForKeyP, [" + keyName + "]: ConfigKeyNotFound", LogLevel.DEBUG);
-            promise.resolve("ConfigKeyNotFound");
-        } else {
-            String resultString = (keyValue.value).toString();
-            log("getRemoteConfigValueForKeyP, [" + keyName + "]: " + resultString, LogLevel.DEBUG);
-            promise.resolve(resultString);
         }
     }
 
@@ -1837,11 +2254,12 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     public void reportFeedbackWidgetManually(ReadableArray args, final Promise promise) {
         try {
             ReadableArray widgetInfo = args.getArray(0);
-            ReadableMap widgetData = args.getMap(1);
-            ReadableMap widgetResult = args.getMap(2);
-            Map<String, Object> widgetResultMap = widgetResult.toHashMap();
+            ReadableMap widgetData = args.size() > 1 && !args.isNull(1) ? args.getMap(1) : null;
+            ReadableMap widgetResult = args.size() > 2 && !args.isNull(2) ? args.getMap(2) : null;
+            // A null result is how the SDK reports that the user closed the widget without answering.
+            Map<String, Object> widgetResultMap = widgetResult == null ? null : widgetResult.toHashMap();
 
-            if (widgetResultMap.containsKey("rating") && widgetResultMap.get("rating") instanceof Double) {
+            if (widgetResultMap != null && widgetResultMap.containsKey("rating") && widgetResultMap.get("rating") instanceof Double) {
                 widgetResultMap.put("rating", ((Number) widgetResultMap.get("rating")).intValue());
             }
             String widgetId = widgetInfo.getString(0);
@@ -1850,11 +2268,12 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
                 String errorMessage = "No feedbackWidget is found against widget id : '" + widgetId + "' , always call 'getFeedbackWidgets' to get updated list of feedback widgets.";
                 promise.reject("reportFeedbackWidgetManually_failure", errorMessage);
             } else {
-                Countly.sharedInstance().feedback().reportFeedbackWidgetManually(feedbackWidget, toJSONObject(widgetData), widgetResultMap);
+                Countly.sharedInstance().feedback().reportFeedbackWidgetManually(feedbackWidget, widgetData == null ? null : toJSONObject(widgetData), widgetResultMap);
                 promise.resolve("reportFeedbackWidgetManually success");
             }
         } catch (Exception e) {
-            log("Failed to parse Config Object. [" + e.toString() + "]", LogLevel.DEBUG);
+            log("reportFeedbackWidgetManually, failed to report the widget result", e, LogLevel.ERROR);
+            promise.reject("reportFeedbackWidgetManually_failure", e.toString());
         }
     }
 
@@ -1887,13 +2306,20 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         String widgetId = args.getString(0);
         String type = args.getString(1);
         String name = args.getString(2);
+        String closeButtonText = getOptionalStringArg(args, 3);
         String widgetVersion = args.size() > 4 && !args.isNull(4) ? args.getString(4) : null;
 
         CountlyFeedbackWidget presentableFeedback = getFeedbackWidget(widgetId);
         if (presentableFeedback == null) {
             presentableFeedback = new CountlyFeedbackWidget();
             presentableFeedback.widgetId = widgetId;
-            presentableFeedback.type = FeedbackWidgetType.valueOf(type);
+            try {
+                presentableFeedback.type = FeedbackWidgetType.valueOf(type);
+            } catch (Exception exception) {
+                log("presentFeedbackWidget failed : unknown widget type [" + type + "]", LogLevel.ERROR);
+                promise.reject("presentFeedbackWidget Failed", "unknown widget type [" + type + "]");
+                return;
+            }
             presentableFeedback.name = name;
             presentableFeedback.widgetVersion = widgetVersion;
         } else {
@@ -1905,7 +2331,8 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
             }
         }
         CountlyFeedbackWidget feedbackWidgetToPresent = presentableFeedback;
-        activity.runOnUiThread(() -> Countly.sharedInstance().feedback().presentFeedbackWidget(feedbackWidgetToPresent, activity, new FeedbackCallback() {
+        String closeButtonTextToUse = closeButtonText.isEmpty() ? null : closeButtonText;
+        activity.runOnUiThread(() -> Countly.sharedInstance().feedback().presentFeedbackWidget(feedbackWidgetToPresent, activity, closeButtonTextToUse, new FeedbackCallback() {
             @Override
             public void onFinished(String error) {
                 if (error != null) {
@@ -1936,9 +2363,12 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
 
     
     public void setEventSendThreshold(ReadableArray args) {
-        int size = Integer.parseInt(args.getString(0));
-        config.setEventQueueSizeToSend(size);
-        // Countly.sharedInstance().setEventQueueSizeToSend(size);
+        try {
+            int size = Integer.parseInt(args.getString(0).trim());
+            config.setEventQueueSizeToSend(size);
+        } catch (Exception exception) {
+            log("setEventSendThreshold, the size should be a whole number, skipping it", exception, LogLevel.ERROR);
+        }
     }
 
     public void addCustomNetworkRequestHeaders(ReadableArray args) {
@@ -1999,24 +2429,27 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
 
     
     public void recordIndirectAttribution(ReadableArray args) {
-        ReadableMap values = args.getMap(0);
-        Map<String, Object> objectMap = values.toHashMap();
-        if (values != null) {
-            Map<String, String> map = new HashMap<String, String>();
-            for (Map.Entry<String, Object> entry : objectMap.entrySet()) {
-                if (entry.getValue() instanceof String) {
-                    map.put(entry.getKey(), (String) entry.getValue());
-                }
-            }
-
-            Countly.sharedInstance().attribution().recordIndirectAttribution(map);
-        } else {
-            log("RecordIndirectAttribution: failure, no attribution values provided", LogLevel.DEBUG);
+        if (args.size() < 1 || args.getType(0) != ReadableType.Map) {
+            log("recordIndirectAttribution, the attribution values must be an object, skipping them", LogLevel.ERROR);
+            return;
         }
+        Map<String, Object> objectMap = args.getMap(0).toHashMap();
+        Map<String, String> map = new HashMap<String, String>();
+        for (Map.Entry<String, Object> entry : objectMap.entrySet()) {
+            if (entry.getValue() instanceof String) {
+                map.put(entry.getKey(), (String) entry.getValue());
+            }
+        }
+
+        Countly.sharedInstance().attribution().recordIndirectAttribution(map);
     }
 
-    
+
     public void recordDirectAttribution(ReadableArray args) {
+        if (args.size() < 2 || args.getType(0) != ReadableType.String || args.getType(1) != ReadableType.String) {
+            log("recordDirectAttribution, the campaign type and campaign data must be text, skipping them", LogLevel.ERROR);
+            return;
+        }
         String campaignType = args.getString(0);
         String campaignData = args.getString(1);
 

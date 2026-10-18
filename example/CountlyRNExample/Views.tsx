@@ -112,14 +112,6 @@ function ViewsScreen() {
         setStatus("Updated global view segmentation.");
     };
 
-    const handleLegacyRecordView = () => {
-        Countly.recordView("LegacyRecordView", {
-            source: "CountlyRNExample",
-            mode: "legacy-root-alias",
-        });
-        setStatus("Requested legacy Countly.recordView(...). Prefer Countly.views.startAutoStoppedView(...).");
-    };
-
     return (
         <SafeAreaView>
             <ScrollView>
@@ -192,17 +184,6 @@ function ViewsScreen() {
                 <CountlyButton
                     onPress={handleStopAllViews}
                     title="stopAllViews()"
-                    color="#e0e0e0"
-                />
-                <Text style={{ marginHorizontal: 20, marginTop: 20, marginBottom: 8, fontSize: 14, textAlign: "center", fontWeight: "bold" }}>
-                    Legacy Root Alias
-                </Text>
-                <Text style={{ marginHorizontal: 20, marginBottom: 8, fontSize: 12, textAlign: "center" }}>
-                    Keep this only for backward-compatibility testing. Prefer Countly.views.startAutoStoppedView(...).
-                </Text>
-                <CountlyButton
-                    onPress={handleLegacyRecordView}
-                    title="Legacy Countly.recordView()"
                     color="#e0e0e0"
                 />
             </ScrollView>

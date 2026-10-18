@@ -1,5 +1,17 @@
+import { Platform } from "react-native";
+
 import * as L from "./Logger.js";
+import * as Validate from "./Validators.js";
 import parseErrorStackLib from "react-native/Libraries/Core/Devtools/parseErrorStack.js";
+
+const PUSH_TOKEN_TYPE_CODES = {
+    DEVELOPMENT: "1",
+    PRODUCTION: "0",
+    ADHOC: "2",
+    1: "1",
+    0: "0",
+    2: "2",
+};
 
 const DeviceIdType = {
     DEVELOPER_SUPPLIED: "DEVELOPER_SUPPLIED",
@@ -36,6 +48,47 @@ function intToDeviceIDType(deviceIdType) {
 }
 
 /**
+ * Converts direct attribution campaign data to the JSON text the native SDKs expect.
+ *
+ * @param {String | Object} campaignData campaign data as JSON text or as an object
+ * @return {String | null} the campaign data as JSON text, or null when it is missing or not text or an object
+ */
+function toCampaignDataText(campaignData) {
+    if (typeof campaignData === "string") {
+        return campaignData.length > 0 ? campaignData : null;
+    }
+    if (campaignData && typeof campaignData === "object" && !Array.isArray(campaignData)) {
+        try {
+            return JSON.stringify(campaignData);
+        } catch (error) {
+            L.e(`toCampaignDataText, campaign data could not be converted to JSON: ${error}`);
+        }
+    }
+    return null;
+}
+
+/**
+ * Converts indirect attribution values to the text values the native SDKs expect, skipping null and undefined values.
+ *
+ * @param {Object} attributionValues attribution values as key/value pairs
+ * @return {Object | null} the attribution values with text values, or null when the input is not an object
+ */
+function toAttributionValues(attributionValues) {
+    if (!attributionValues || typeof attributionValues !== "object" || Array.isArray(attributionValues)) {
+        return null;
+    }
+    const textValues = {};
+    for (const key in attributionValues) {
+        const value = attributionValues[key];
+        if (value === null || value === undefined) {
+            continue;
+        }
+        textValues[key] = typeof value === "object" ? JSON.stringify(value) : String(value);
+    }
+    return textValues;
+}
+
+/**
  *
  * Converts countly config object to JSON
  *
@@ -48,11 +101,15 @@ function configToJson(config) {
     try {
         json.serverURL = config.serverURL;
         json.appKey = config.appKey;
-        json.deviceID = config.deviceID;
+        if (typeof config.deviceID === "string" && config.deviceID.length > 0) {
+            json.deviceID = config.deviceID;
+        }
 
-        if (config.loggingEnabled) {
-            json.loggingEnabled = config.loggingEnabled;
-            L.i(`init configuration, Enabled logging in ${__DEV__ ? "development" : "production"} mode`);
+        if (config.loggingEnabled !== undefined && config.loggingEnabled !== null) {
+            json.loggingEnabled = Boolean(config.loggingEnabled);
+            if (json.loggingEnabled) {
+                L.i(`init configuration, Enabled logging in ${__DEV__ ? "development" : "production"} mode`);
+            }
         }
         if (config._crashReporting) {
             json.crashReporting = true;
@@ -62,9 +119,14 @@ function configToJson(config) {
             json.shouldRequireConsent = config.shouldRequireConsent;
             L.i("init configuration, Require consent");
         }
-        if (config.consents) {
-            json.consents = config.consents;
-            L.i(`init configuration, Consents: ${JSON.stringify(config.consents)}`);
+        if (config.consents !== undefined && config.consents !== null) {
+            const consents = Validate.normalizeFeatureNames(config.consents);
+            if (consents === null) {
+                L.e("init configuration, consents should be a feature name or a list of feature names, skipping them");
+            } else {
+                json.consents = consents;
+                L.i(`init configuration, Consents: ${JSON.stringify(consents)}`);
+            }
         }
         if (config.locationCountryCode) {
             json.locationCountryCode = config.locationCountryCode;
@@ -129,9 +191,14 @@ function configToJson(config) {
             L.i("init configuration, Disabled additional intent redirection checks");
         }
         const pushNotification = {};
-        if (config.tokenType) {
-            pushNotification.tokenType = config.tokenType;
-            L.i(`init configuration, Token type: ${config.tokenType}`);
+        if (config.tokenType !== undefined && config.tokenType !== null && config.tokenType !== "") {
+            const tokenTypeKey = typeof config.tokenType === "string" ? config.tokenType.trim().toUpperCase() : null;
+            if (tokenTypeKey !== null && Object.prototype.hasOwnProperty.call(PUSH_TOKEN_TYPE_CODES, tokenTypeKey)) {
+                pushNotification.tokenType = PUSH_TOKEN_TYPE_CODES[tokenTypeKey];
+                L.i(`init configuration, Token type: ${config.tokenType}`);
+            } else {
+                L.e(`init configuration, push token type [${config.tokenType}] is not supported, use a Countly.messagingMode value`);
+            }
         }
         if (config.channelName) {
             pushNotification.channelName = config.channelName;
@@ -145,7 +212,9 @@ function configToJson(config) {
             pushNotification.accentColor = config.accentColor;
             L.i(`init configuration, Accent color: ${config.accentColor}`);
         }
-        json.pushNotification = pushNotification;
+        if (Object.keys(pushNotification).length > 0) {
+            json.pushNotification = pushNotification;
+        }
         if (config.allowedIntentClassNames) {
             json.allowedIntentClassNames = config.allowedIntentClassNames;
             L.i(`init configuration, Allowed intent class names: ${config.allowedIntentClassNames}`);
@@ -166,10 +235,15 @@ function configToJson(config) {
             json.starRatingTextDismiss = config.starRatingTextDismiss;
             L.i(`init configuration, Star rating text dismiss: ${config.starRatingTextDismiss}`);
         }
-        if (config.campaignType) {
-            json.campaignType = config.campaignType;
-            json.campaignData = config.campaignData;
-            L.i(`init configuration, Campaign type: ${config.campaignType}, Campaign data: ${config.campaignData}`);
+        if (config.campaignType !== undefined || config.campaignData !== undefined) {
+            const campaignData = toCampaignDataText(config.campaignData);
+            if (typeof config.campaignType === "string" && config.campaignType.length > 0 && campaignData) {
+                json.campaignType = config.campaignType;
+                json.campaignData = campaignData;
+                L.i(`init configuration, Campaign type: ${config.campaignType}, Campaign data: ${campaignData}`);
+            } else {
+                L.e("init configuration, direct attribution needs a campaign type and campaign data, skipping it");
+            }
         }
         if (config._requestTimeoutDuration) {
             json.requestTimeoutDuration = config._requestTimeoutDuration;
@@ -199,9 +273,14 @@ function configToJson(config) {
             json.customNetworkRequestHeaders = config._customNetworkRequestHeaders;
             L.i(`init configuration, Custom network request headers: ${JSON.stringify(config._customNetworkRequestHeaders)}`);
         }
-        if (config.attributionValues) {
-            json.attributionValues = config.attributionValues;
-            L.i(`init configuration, Attribution values: ${config.attributionValues}`);
+        if (config.attributionValues !== undefined && config.attributionValues !== null) {
+            const attributionValues = toAttributionValues(config.attributionValues);
+            if (attributionValues) {
+                json.attributionValues = attributionValues;
+                L.i(`init configuration, Attribution values: ${JSON.stringify(attributionValues)}`);
+            } else {
+                L.e("init configuration, indirect attribution values must be an object of text values, skipping them");
+            }
         }
         // Limits -----------------------------------------------
         if (config.sdkInternalLimits.maxKeyLength) {
@@ -289,7 +368,7 @@ function configToJson(config) {
 function getStackTrace(e) {
     let jsStackTrace = null;
     try {
-        if (Platform.hasOwnProperty("constants")) {
+        if (Object.prototype.hasOwnProperty.call(Platform, "constants")) {
             // RN version >= 0.63
             if (Platform.constants.reactNativeVersion.minor >= 64) {
                 // RN version >= 0.64
@@ -308,4 +387,4 @@ function getStackTrace(e) {
     return jsStackTrace;
 }
 
-export { configToJson, intToDeviceIDType, DeviceIdType, getStackTrace };
+export { configToJson, intToDeviceIDType, DeviceIdType, getStackTrace, toCampaignDataText, toAttributionValues };
