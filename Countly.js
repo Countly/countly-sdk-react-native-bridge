@@ -357,10 +357,14 @@ Countly.askForNotificationPermission = function (customSoundPath = "null") {
  * To react to taps the same way on both platforms, for example to open a deep link, use 'registerForNotificationOpened'.
  * Registering again replaces the previous listener.
  * @param {callback listener } theListener
- * @return {NativeEventEmitter} event
+ * @return {object} subscription with a 'remove' function, which does nothing when the listener is not a function
  */
 Countly.registerForNotification = function (theListener) {
     if (Validate.PushAvailable("registerForNotification")) {
+        return createInactiveSubscription();
+    }
+    if (typeof theListener !== "function") {
+        L.e("registerForNotification, listener should be a function");
         return createInactiveSubscription();
     }
     L.d("registerForNotification, Registering for notification");
@@ -380,7 +384,7 @@ Countly.registerForNotification = function (theListener) {
  * Call 'setIntent(intent)' in your MainActivity's 'onNewIntent' so that such a tap is kept and delivered too.
  * @param {function(object, number): void} theListener - called with the notification payload and the index of the tapped action:
  * 0 for the notification itself, 1 and up for its buttons
- * @return {object | void} subscription with a 'remove' function, or void when the listener is not a function
+ * @return {object} subscription with a 'remove' function, which does nothing when the listener is not a function
  */
 Countly.registerForNotificationOpened = function (theListener) {
     if (Validate.PushAvailable("registerForNotificationOpened")) {
@@ -388,7 +392,7 @@ Countly.registerForNotificationOpened = function (theListener) {
     }
     if (typeof theListener !== "function") {
         L.e("registerForNotificationOpened, listener should be a function");
-        return;
+        return createInactiveSubscription();
     }
     L.d("registerForNotificationOpened, Registering for notification taps");
     removeSubscription("pushNotificationOpenedSubscription");

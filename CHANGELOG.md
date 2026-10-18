@@ -3,13 +3,18 @@
 * ! Minor breaking change ! `Countly.remoteConfig.getValue` now returns string values as strings in Android. Before, "2.10" came back as 2.1.
 * ! Minor breaking change ! `Countly.logException(exception, false)` now records a fatal crash.
 * ! Minor breaking change ! An uncaught JS error that crashes a release build is now recorded once, as a fatal crash with its JS stack, instead of twice.
-* ! Minor breaking change ! The Firebase BoM is updated from 28.4.2 to 32.8.1 (firebase-messaging 23.4.1) in Android. Apps that use an older Firebase BoM get the versions of 32.8.1 for their Firebase libraries, and the Kotlin standard library 1.7.10 joins the build. The minimum Android version stays API 21.
+* ! Minor breaking change ! Android now uses Firebase BoM 32.8.1 (firebase-messaging 23.4.1) instead of 28.4.2. Apps on an older Firebase BoM get its versions for their Firebase libraries, and the Kotlin standard library 1.7.10 joins the build. The minimum Android version stays API 21.
 * ! Minor breaking change ! `Countly.test` helpers now work only in debug builds.
 * ! Minor breaking change ! The package now ships only the files the SDK needs at runtime; the example app, the tests and the Xcode project for manual linking are no longer part of it. It declares `react-native` as a peer dependency and needs React Native 0.62 or newer.
-* ! Minor breaking change ! The pod now makes only the bridge header and the iOS SDK's public headers public; other headers can no longer be imported from it. The `NotificationService` subspec no longer depends on React, and `pod 'CountlyReactNative'` installs only the `Core` subspec. With React Native 0.71 and newer, the pod's iOS deployment target now follows React Native's minimum iOS version.
+* ! Minor breaking change ! The pod now makes only the bridge header and the iOS SDK's public headers public; other headers can no longer be imported from it.
+* ! Minor breaking change ! The `NotificationService` subspec no longer depends on React, and `pod 'CountlyReactNative'` installs only the `Core` subspec.
+* ! Minor breaking change ! With React Native 0.71 and newer, the pod's iOS deployment target now follows React Native's minimum iOS version.
 
 * Added a `{ success, error }` result to `Countly.remoteConfig.update`, `updateForKeysOnly` and `updateExceptKeys`.
-* Added `Countly.registerForNotificationOpened(listener)`. It is called when the user taps a push, in Android and iOS, with the push data and the tapped action index: 0 for the notification, 1 and up for its buttons. A tap that started the app is delivered once a listener is registered. In Android, call `setIntent(intent)` in your MainActivity's `onNewIntent` so a tap that brings back a stopped app is delivered too.
+* Added `Countly.registerForNotificationOpened(listener)`, called when the user taps a push in Android and iOS:
+  * The listener gets the push data and the tapped action index: 0 for the notification, 1 and up for its buttons.
+  * A tap that started the app is delivered once a listener is registered.
+  * In Android, call `setIntent(intent)` in your MainActivity's `onNewIntent` so a tap that brings back a stopped app is delivered too.
 * Added support for objects as campaign data in `recordDirectAttribution` and as values in `recordIndirectAttribution`, in `Countly` and in `CountlyConfig`.
 * Added the names "DEVELOPMENT", "PRODUCTION" and "ADHOC" as accepted values of `CountlyConfig.setPushTokenType`.
 
@@ -36,6 +41,7 @@
   * A push tap that starts the app now gets the intent redirection check in Android, as warm taps already did.
   * The push token is no longer sent before the user allows notifications in iOS.
   * Registering `Countly.registerForNotification` again now replaces the earlier listener, so each push reaches JS once.
+  * `Countly.registerForNotification` no longer throws, or removes the current listener, when it is given something that is not a function.
   * `Countly.sendPushToken` now returns an error message when it is called before init.
 * Mitigated data issues:
   * Event sums keep their full precision in iOS.
