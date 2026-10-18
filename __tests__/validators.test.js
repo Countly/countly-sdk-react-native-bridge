@@ -40,11 +40,11 @@ test('UserDataValue composes null, type, and parse-int validation', () => {
 });
 
 test('UserDataInteger accepts whole numbers in the 32-bit range and refuses decimals, overflow and text', () => {
-    [7, -3, 0, '7', '-12', ' 42 ', 2147483647, -2147483648].forEach((value) => {
+    [7, -3, 0, '7', '-12', ' 42 ', 2 ** 31 - 1, -(2 ** 31)].forEach((value) => {
         expect(Validators.UserDataInteger(value, 'value', 'incrementBy')).toBeNull();
     });
 
-    [2.5, '2.5', 0.5, 3e9, '3000000000', -2147483649, NaN, Infinity, '', ' ', '7abc', '0x10', true, {}, null, undefined].forEach((value) => {
+    [2.5, '2.5', 0.5, 3e9, '3000000000', -(2 ** 31) - 1, NaN, Infinity, '', ' ', '7abc', '0x10', true, {}, null, undefined].forEach((value) => {
         expect(Validators.UserDataInteger(value, 'value', 'incrementBy')).toEqual(expect.any(String));
     });
 
