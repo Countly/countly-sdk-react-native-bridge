@@ -1,4 +1,23 @@
 import * as L from "./Logger.js";
+import { PUSH_NOTIFICATIONS_AVAILABLE } from "./CountlyFlavor.js";
+
+const INT32_MIN = -2147483648;
+const INT32_MAX = 2147483647;
+
+/**
+ * Checks that push notification calls are part of this package. The no-push package ignores them with a warning.
+ *
+ * @param {String} functionName : name of the called function, for the log
+ * @returns {String | null} the reason the call is ignored, or null when push notifications are available
+ */
+function validatePushAvailable(functionName) {
+    if (PUSH_NOTIFICATIONS_AVAILABLE) {
+        return null;
+    }
+    const message = "push notifications are not part of the no-push package, use 'countly-sdk-react-native-bridge' for push notifications";
+    L.w(`${functionName}, ${message}`);
+    return message;
+}
 
 /**
  * Validate user data value, it should be 'number' or 'string' that is parseable to 'number'
@@ -113,6 +132,51 @@ function validateUserDataValue(stringValue, stringName, functionName) {
 }
 
 /**
+ * Validate a value for a user profile number operation (increment, multiply, max, min).
+ * It should be a whole number, or a text holding one, in the 32-bit integer range, because the native SDKs apply these operations as 32-bit integers.
+ * Decimals are refused instead of being cut, so 2.5 is never sent as 2 and 0.5 never as 0.
+ * It will return message if any issue found related to data validation else return null.
+ * @param {number | String} value : value of data to validate
+ * @param {String} valueName : name of that value
+ * @param {String} functionName : name of function from where value is validating.
+ * @returns {String | null} error message or null
+ */
+function validateUserDataInteger(value, valueName, functionName) {
+    let message = validateValidUserData(value, valueName, functionName);
+    if (message) {
+        return message;
+    }
+
+    message = validateUserDataType(value, valueName, functionName);
+    if (message) {
+        return message;
+    }
+
+    const numberValue = typeof value === "string" && /^\s*-?\d+\s*$/.test(value) ? Number(value) : value;
+    if (typeof numberValue !== "number" || !Number.isInteger(numberValue) || numberValue < INT32_MIN || numberValue > INT32_MAX) {
+        message = `${valueName} should be a whole number between ${INT32_MIN} and ${INT32_MAX}, received [${value}]`;
+        L.e(`${functionName}, ${message}`);
+        return message;
+    }
+    return null;
+}
+
+/**
+ * Normalize consent feature names: a single name becomes a list, and entries that are not non-empty texts are dropped.
+ * @param {String | String[]} features : a feature name or a list of feature names
+ * @returns {String[] | null} the list of feature names, or null when the input is neither a name nor a list
+ */
+function normalizeFeatureNames(features) {
+    if (typeof features === "string") {
+        features = [features];
+    }
+    if (!Array.isArray(features)) {
+        return null;
+    }
+    return features.filter((feature) => typeof feature === "string" && feature.length > 0);
+}
+
+/**
  * Validates event parameters.
  * It will log a message if any issue is found and return false.
  * If the parameters are valid, it will return true.
@@ -147,4 +211,4 @@ function areEventParametersValid(functionName, eventName, segmentation, eventCou
     return true;
 }
 
-export { validateUserDataValue as UserDataValue, validateString as String, validateParseInt as ParseInt, validateValidUserData as ValidUserData, validateUserDataType as UserDataType, areEventParametersValid };
+export { validateUserDataValue as UserDataValue, validateUserDataInteger as UserDataInteger, validateString as String, validateParseInt as ParseInt, validateValidUserData as ValidUserData, validateUserDataType as UserDataType, validatePushAvailable as PushAvailable, areEventParametersValid, normalizeFeatureNames, INT32_MAX };

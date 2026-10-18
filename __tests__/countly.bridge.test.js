@@ -10,6 +10,7 @@ function createNativeModuleMock(overrides = {}) {
         sendPushToken: jest.fn(),
         askForNotificationPermission: jest.fn(),
         registerForNotification: jest.fn(),
+        registerForNotificationOpened: jest.fn(),
         setLoggingEnabled: jest.fn(),
         setLocation: jest.fn(),
         disableLocation: jest.fn(),
@@ -108,7 +109,7 @@ function createNativeModuleMock(overrides = {}) {
     };
 }
 
-function loadCountlyBridge({ platform = 'ios', nativeOverrides = {} } = {}) {
+function loadCountlyBridge({ platform = 'ios', nativeOverrides = {}, pushAvailable = true, parseErrorStack = jest.fn(() => []) } = {}) {
     const listeners = [];
     const nativeModule = createNativeModuleMock(nativeOverrides);
 
@@ -133,7 +134,7 @@ function loadCountlyBridge({ platform = 'ios', nativeOverrides = {} } = {}) {
     jest.resetModules();
     global.__DEV__ = false;
 
-    jest.doMock('react-native/Libraries/Core/Devtools/parseErrorStack.js', () => jest.fn(() => []), { virtual: true });
+    jest.doMock('react-native/Libraries/Core/Devtools/parseErrorStack.js', () => parseErrorStack, { virtual: true });
     jest.doMock('react-native', () => ({
         Platform: {
             OS: platform,
@@ -143,6 +144,7 @@ function loadCountlyBridge({ platform = 'ios', nativeOverrides = {} } = {}) {
         TurboModuleRegistry: { get: jest.fn(() => nativeModule) },
         NativeEventEmitter: MockNativeEventEmitter,
     }), { virtual: true });
+    jest.doMock('../CountlyFlavor.js', () => ({ PUSH_NOTIFICATIONS_AVAILABLE: pushAvailable }));
 
     let Countly;
     let CountlyConfig;
@@ -222,13 +224,40 @@ test('initWithConfig serializes 26.1.0 init options and wires the global content
     expect(contentCallback).toHaveBeenCalledWith('shown', { id: 'content-1' });
 });
 
-test('initWithConfig clears empty device IDs before serializing config', async () => {
+test('initWithConfig leaves out empty, null and non-text device IDs so the SDK generates one', async () => {
+    for (const deviceID of ['', null, undefined, 42]) {
+        const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge();
+        await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key').setDeviceID(deviceID));
+        expect(getNativeInitPayload(nativeModule)).not.toHaveProperty('deviceID');
+    }
+
     const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge();
-    const config = new CountlyConfig('https://server.count.ly', 'app-key').setDeviceID('');
+    await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key').setDeviceID('device-1'));
+    expect(getNativeInitPayload(nativeModule).deviceID).toBe('device-1');
+});
 
-    await Countly.initWithConfig(config);
+test('the JS crash title names the function and only the bundle file name, for debug URLs and embedded bundle paths', async () => {
+    global.ErrorUtils = { getGlobalHandler: jest.fn(() => jest.fn()), setGlobalHandler: jest.fn() };
+    const parseErrorStack = jest.fn(() => []);
+    const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge({ parseErrorStack });
+    const files = [
+        ['http://localhost:8081/index.bundle//&platform=ios&dev=true&minify=false&app=com.example', 'index.bundle'],
+        ['http://10.0.2.2:8081/index.bundle?platform=android&dev=true&minify=false', 'index.bundle'],
+        ['index.android.bundle', 'index.android.bundle'],
+        ['/private/var/containers/Bundle/Application/1A2B3C4D-0000-4000-8000-123456789ABC/AwesomeProject.app/main.jsbundle', 'main.jsbundle'],
+        ['/Users/builder/project/DerivedData/Build/Products/Debug-iphoneos/main.jsbundle', 'main.jsbundle'],
+        ['assets://index.android.bundle', 'index.android.bundle'],
+    ];
+    await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key').enableCrashReporting());
+    const handler = global.ErrorUtils.setGlobalHandler.mock.calls[0][0];
 
-    expect(getNativeInitPayload(nativeModule).deviceID).toBeNull();
+    files.forEach(([file]) => {
+        parseErrorStack.mockReturnValueOnce([{ methodName: 'pay', file, lineNumber: 10, column: 5 }]);
+        handler({ name: 'TypeError', message: 'payment failed', stack: `TypeError: payment failed\n    at pay (${file}:10:5)` }, false);
+    });
+
+    expect(nativeModule.logJSException.mock.calls.map((call) => call[0])).toEqual(files.map(([, fileName]) => `TypeError (pay@${fileName})`));
+    delete global.ErrorUtils;
 });
 
 test('initWithConfig installs the JS crash handler when crash reporting is enabled', async () => {
@@ -455,7 +484,6 @@ test('notification, location, trace, and attribution helpers forward expected pa
     const { Countly, CountlyConfig, nativeModule, emit } = loadCountlyBridge({ platform: 'ios' });
 
     Countly.disablePushNotifications();
-    Countly.sendPushToken({ token: 'push-token' });
     const notificationSubscription = Countly.registerForNotification(pushListener);
     Countly.setLoggingEnabled(false);
     Countly.setHttpPostForced(false);
@@ -463,6 +491,7 @@ test('notification, location, trace, and attribution helpers forward expected pa
 
     await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
 
+    Countly.sendPushToken({ token: 'push-token' });
     Countly.askForNotificationPermission('ding.wav');
     Countly.setLocation('US', 'Boston', '1.2,3.4', '8.8.8.8');
     Countly.disableLocation();
@@ -475,7 +504,7 @@ test('notification, location, trace, and attribution helpers forward expected pa
     Countly.recordNetworkTrace('GET /users', 200, 10, 20, 1000, 2000);
     Countly.replaceAllAppKeysInQueueWithCurrentAppKey();
     Countly.recordDirectAttribution('click', 'ad-1');
-    Countly.recordIndirectAttribution('campaign-2');
+    Countly.recordIndirectAttribution({ campaign: 'campaign-2' });
     Countly.removeDifferentAppKeysFromQueue();
     await Countly.appLoadingFinished();
 
@@ -500,7 +529,7 @@ test('notification, location, trace, and attribution helpers forward expected pa
     expect(nativeModule.recordNetworkTrace).toHaveBeenCalledWith(['GET /users', '200', '10', '20', '1000', '2000']);
     expect(nativeModule.replaceAllAppKeysInQueueWithCurrentAppKey).toHaveBeenCalledTimes(1);
     expect(nativeModule.recordDirectAttribution).toHaveBeenCalledWith(['click', 'ad-1']);
-    expect(nativeModule.recordIndirectAttribution).toHaveBeenCalledWith(['campaign-2']);
+    expect(nativeModule.recordIndirectAttribution).toHaveBeenCalledWith([{ campaign: 'campaign-2' }]);
     expect(nativeModule.removeDifferentAppKeysFromQueue).toHaveBeenCalledTimes(1);
     expect(nativeModule.appLoadingFinished).toHaveBeenCalledTimes(1);
     expect(pushListener).toHaveBeenCalledWith({ aps: { alert: 'hi' } });
@@ -511,11 +540,11 @@ test('notification, location, trace, and attribution helpers forward expected pa
 test('metrics, crash, and custom metric helpers normalize payloads', async () => {
     const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge();
 
+    Countly.setCustomCrashSegments({ region: 'eu', retries: 2 });
     await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
 
     Countly.recordMetrics({ os: 'ios', build: 17 });
     Countly.logException('boom\nline2', true, { region: 'eu', retries: 2 });
-    Countly.setCustomCrashSegments({ region: 'eu', retries: 2 });
     Countly.pinnedCertificates('cert.pem');
     await Countly.setCustomMetrics({ platform: 'ios', build: 1, release: '26.1.0' });
 
@@ -779,6 +808,7 @@ test('test helpers expose native queues and halt resets JS bridge state for rein
             halt: jest.fn().mockResolvedValue(undefined),
         },
     });
+    global.__DEV__ = true;
 
     const firstConfig = new CountlyConfig('https://server.count.ly', 'app-key');
     firstConfig.content.setGlobalContentCallback(firstContentCallback);
@@ -800,6 +830,7 @@ test('test helpers expose native queues and halt resets JS bridge state for rein
 
     expect(firstContentCallback).not.toHaveBeenCalled();
     expect(secondContentCallback).toHaveBeenCalledWith('updated', { id: 'content-2' });
+    global.__DEV__ = false;
 });
 
 test('content helpers guard before init and test helpers normalize null native results', async () => {
@@ -822,9 +853,292 @@ test('content helpers guard before init and test helpers normalize null native r
 
     await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
 
+    global.__DEV__ = true;
     await expect(Countly.test.enableRequestCapture()).resolves.toBeUndefined();
     await expect(Countly.test.getCapturedRequests()).resolves.toEqual([]);
 
     expect(nativeModule.enableRequestCapture).toHaveBeenCalledTimes(1);
     expect(nativeModule.getCapturedRequests).toHaveBeenCalledTimes(1);
+    global.__DEV__ = false;
+});
+
+test('initWithConfig refuses a missing or invalid server URL or app key without calling native init', async () => {
+    const invalidConfigs = [
+        [undefined, 'app-key'],
+        [null, 'app-key'],
+        [42, 'app-key'],
+        ['', 'app-key'],
+        ['https://server.count.ly', undefined],
+        ['https://server.count.ly', null],
+        ['https://server.count.ly', ''],
+        ['https://server.count.ly', 7],
+    ];
+
+    for (const [serverURL, appKey] of invalidConfigs) {
+        const { Countly, CountlyConfig, CountlyState, nativeModule } = loadCountlyBridge();
+        await expect(Countly.initWithConfig(new CountlyConfig(serverURL, appKey))).resolves.toBeUndefined();
+        expect(nativeModule.init).not.toHaveBeenCalled();
+        expect(CountlyState.isInitialized).toBe(false);
+    }
+
+    const { Countly, CountlyConfig, CountlyState, nativeModule } = loadCountlyBridge();
+    await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
+    expect(nativeModule.init).toHaveBeenCalledTimes(1);
+    expect(CountlyState.isInitialized).toBe(true);
+});
+
+test('initWithConfig settles without marking the SDK initialized when native init fails', async () => {
+    const { Countly, CountlyConfig, CountlyState, nativeModule } = loadCountlyBridge({
+        nativeOverrides: { init: jest.fn().mockRejectedValue(new Error('server URL host is missing')) },
+    });
+
+    await expect(Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'))).resolves.toBeUndefined();
+
+    expect(nativeModule.init).toHaveBeenCalledTimes(1);
+    expect(CountlyState.isInitialized).toBe(false);
+});
+
+test('sendPushToken needs init and a token text', async () => {
+    const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge();
+
+    expect(Countly.sendPushToken({ token: 'push-token' })).toBe("'init' must be called before 'sendPushToken'");
+    expect(nativeModule.sendPushToken).not.toHaveBeenCalled();
+
+    await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
+
+    expect(Countly.sendPushToken({ token: '' })).toBe('token should not be null, undefined or empty');
+    expect(Countly.sendPushToken({})).toBe('token should not be null, undefined or empty');
+    expect(Countly.sendPushToken(null)).toBe('token should not be null, undefined or empty');
+    expect(nativeModule.sendPushToken).not.toHaveBeenCalled();
+
+    expect(Countly.sendPushToken({ token: 'push-token' })).toBeUndefined();
+    expect(nativeModule.sendPushToken).toHaveBeenCalledWith(['push-token']);
+});
+
+test('askForNotificationPermission sends a text sound path even when null is passed', async () => {
+    const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge({ platform: 'android' });
+
+    await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
+    Countly.askForNotificationPermission(null);
+    Countly.askForNotificationPermission();
+    Countly.askForNotificationPermission('ding');
+
+    expect(nativeModule.askForNotificationPermission).toHaveBeenNthCalledWith(1, ['null']);
+    expect(nativeModule.askForNotificationPermission).toHaveBeenNthCalledWith(2, ['null']);
+    expect(nativeModule.askForNotificationPermission).toHaveBeenNthCalledWith(3, ['ding']);
+});
+
+test('registerForNotification keeps one subscription so each push reaches JS once', () => {
+    const firstListener = jest.fn();
+    const secondListener = jest.fn();
+    const { Countly, listeners, emit } = loadCountlyBridge({ platform: 'android' });
+
+    const firstSubscription = Countly.registerForNotification(firstListener);
+    const secondSubscription = Countly.registerForNotification(secondListener);
+    emit('pushNotificationCallback', '{"c.i":"push-1"}');
+
+    expect(firstSubscription.remove).toHaveBeenCalledTimes(1);
+    expect(secondSubscription.remove).not.toHaveBeenCalled();
+    expect(firstListener).not.toHaveBeenCalled();
+    expect(secondListener).toHaveBeenCalledTimes(1);
+    expect(secondListener).toHaveBeenCalledWith('{"c.i":"push-1"}');
+    expect(listeners.filter((listener) => listener.eventName === 'pushNotificationCallback' && !listener.removed)).toHaveLength(1);
+});
+
+test('push calls and push options reach the native module only in the push package', async () => {
+    const noPushMessage = "push notifications are not part of the no-push package, use 'countly-sdk-react-native-bridge' for push notifications";
+
+    for (const pushAvailable of [true, false]) {
+        const { Countly, CountlyConfig, nativeModule, listeners } = loadCountlyBridge({ pushAvailable });
+        const config = new CountlyConfig('https://server.count.ly', 'app-key')
+            .setPushTokenType('DEVELOPMENT')
+            .setPushNotificationChannelInformation('Alerts', 'Countly alerts')
+            .setPushNotificationAccentColor('#ffffff')
+            .configureIntentRedirectionCheck(['MainActivity'], ['com.example.app'])
+            .disableAdditionalIntentRedirectionChecks();
+        await Countly.initWithConfig(config);
+
+        const receivedSubscription = Countly.registerForNotification(jest.fn());
+        const openedSubscription = Countly.registerForNotificationOpened(jest.fn());
+        const tokenResult = Countly.sendPushToken({ token: 'push-token' });
+        const permissionResult = Countly.askForNotificationPermission('ding');
+        const payload = getNativeInitPayload(nativeModule);
+        const pushListeners = listeners.filter((listener) => listener.eventName.startsWith('pushNotification'));
+
+        expect(() => receivedSubscription.remove()).not.toThrow();
+        expect(() => openedSubscription.remove()).not.toThrow();
+        if (pushAvailable) {
+            expect(tokenResult).toBeUndefined();
+            expect(permissionResult).toBeUndefined();
+            expect(nativeModule.sendPushToken).toHaveBeenCalledWith(['push-token']);
+            expect(nativeModule.askForNotificationPermission).toHaveBeenCalledWith(['ding']);
+            expect(nativeModule.registerForNotification).toHaveBeenCalledWith([]);
+            expect(nativeModule.registerForNotificationOpened).toHaveBeenCalledWith([]);
+            expect(pushListeners.map((listener) => listener.eventName)).toEqual(['pushNotificationCallback', 'pushNotificationOpenedCallback']);
+            expect(payload.pushNotification).toEqual({ tokenType: '1', channelName: 'Alerts', channelDescription: 'Countly alerts', accentColor: '#ffffff' });
+            expect(payload.allowedIntentClassNames).toEqual(['MainActivity']);
+            expect(payload.allowedIntentPackageNames).toEqual(['com.example.app']);
+            expect(payload.disableAdditionalIntentRedirectionChecks).toBe(true);
+        } else {
+            expect(tokenResult).toBe(noPushMessage);
+            expect(permissionResult).toBe(noPushMessage);
+            expect(nativeModule.sendPushToken).not.toHaveBeenCalled();
+            expect(nativeModule.askForNotificationPermission).not.toHaveBeenCalled();
+            expect(nativeModule.registerForNotification).not.toHaveBeenCalled();
+            expect(nativeModule.registerForNotificationOpened).not.toHaveBeenCalled();
+            expect(pushListeners).toEqual([]);
+            expect(payload.pushNotification).toBeUndefined();
+            expect(payload.allowedIntentClassNames).toBeUndefined();
+            expect(payload.allowedIntentPackageNames).toBeUndefined();
+            expect(payload.disableAdditionalIntentRedirectionChecks).toBeUndefined();
+        }
+    }
+});
+
+test('registerForNotificationOpened passes the tapped notification and button index and keeps one subscription', () => {
+    const firstListener = jest.fn();
+    const openedListener = jest.fn();
+    const { Countly, nativeModule, emit } = loadCountlyBridge({ platform: 'android' });
+
+    const firstSubscription = Countly.registerForNotificationOpened(firstListener);
+    Countly.registerForNotificationOpened(openedListener);
+    emit('pushNotificationOpenedCallback', JSON.stringify({ notification: { 'c.i': 'push-1', title: 'Sale' }, actionIndex: 2 }));
+    emit('pushNotificationOpenedCallback', 'not json');
+
+    expect(nativeModule.registerForNotificationOpened).toHaveBeenCalledWith([]);
+    expect(firstSubscription.remove).toHaveBeenCalledTimes(1);
+    expect(firstListener).not.toHaveBeenCalled();
+    expect(openedListener).toHaveBeenCalledTimes(1);
+    expect(openedListener).toHaveBeenCalledWith({ 'c.i': 'push-1', title: 'Sale' }, 2);
+    expect(Countly.registerForNotificationOpened('not a function')).toBeUndefined();
+});
+
+test('recordMetrics returns before init without calling native code', () => {
+    const { Countly, nativeModule } = loadCountlyBridge({ platform: 'android' });
+
+    expect(Countly.recordMetrics({ os: 'android' })).toBe("'init' must be called before 'recordMetrics'");
+    expect(nativeModule.recordMetrics).not.toHaveBeenCalled();
+});
+
+test('logException reports Error objects and refuses values that are neither text nor errors', async () => {
+    const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge();
+    await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
+
+    const error = new Error('payment failed');
+    error.stack = 'Error: payment failed\n    at pay (index.bundle:10:5)';
+    expect(Countly.logException(error, true, { step: 'pay' })).toBeUndefined();
+    expect(nativeModule.logException).toHaveBeenNthCalledWith(1, ['Error: payment failed\n    at pay (index.bundle:10:5)\n', true, 'step', 'pay']);
+
+    const stacklessError = { name: 'TypeError', message: 'x is undefined' };
+    expect(Countly.logException(stacklessError)).toBeUndefined();
+    expect(nativeModule.logException).toHaveBeenNthCalledWith(2, ['TypeError: x is undefined\n', true]);
+
+    expect(Countly.logException(42)).toBe('exception should be a text or an Error object');
+    expect(Countly.logException(null)).toBe('exception should be a text or an Error object');
+    expect(nativeModule.logException).toHaveBeenCalledTimes(2);
+});
+
+test('setCustomCrashSegments skips null values and refuses calls after init', async () => {
+    const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge();
+
+    expect(Countly.setCustomCrashSegments({ missing: null, unset: undefined, region: 'eu', retries: 2 })).toBeUndefined();
+    expect(nativeModule.setCustomCrashSegments).toHaveBeenCalledWith(['region', 'eu', 'retries', '2']);
+
+    await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
+
+    expect(Countly.setCustomCrashSegments({ region: 'us' })).toBe("'setCustomCrashSegments' has no effect after init, set crash segments before 'initWithConfig'");
+    expect(nativeModule.setCustomCrashSegments).toHaveBeenCalledTimes(1);
+});
+
+test('user profile number operations accept whole numbers only', async () => {
+    const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge({ platform: 'android' });
+    await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
+
+    const operations = [
+        ['incrementBy', 'userData_incrementBy', Countly.userData],
+        ['multiply', 'userData_multiply', Countly.userData],
+        ['saveMax', 'userData_saveMax', Countly.userData],
+        ['saveMin', 'userData_saveMin', Countly.userData],
+        ['incrementBy', 'userDataBulk_incrementBy', Countly.userDataBulk],
+        ['multiply', 'userDataBulk_multiply', Countly.userDataBulk],
+        ['saveMax', 'userDataBulk_saveMax', Countly.userDataBulk],
+        ['saveMin', 'userDataBulk_saveMin', Countly.userDataBulk],
+    ];
+
+    for (const [method, nativeMethod, api] of operations) {
+        await expect(api[method]('score', 2.5)).resolves.toBe('value should be a whole number between -2147483648 and 2147483647, received [2.5]');
+        await expect(api[method]('score', '0.5')).resolves.toBe('value should be a whole number between -2147483648 and 2147483647, received [0.5]');
+        await expect(api[method]('score', 3e9)).resolves.toBe('value should be a whole number between -2147483648 and 2147483647, received [3000000000]');
+        expect(nativeModule[nativeMethod]).not.toHaveBeenCalled();
+
+        await api[method]('score', 0);
+        await api[method]('score', ' -7 ');
+        expect(nativeModule[nativeMethod]).toHaveBeenNthCalledWith(1, ['score', '0']);
+        expect(nativeModule[nativeMethod]).toHaveBeenNthCalledWith(2, ['score', '-7']);
+    }
+});
+
+test('setEventSendThreshold accepts positive whole numbers only', () => {
+    const { Countly, nativeModule } = loadCountlyBridge({ platform: 'android' });
+
+    expect(Countly.setEventSendThreshold(10.5)).toBe('size should be a whole number between 1 and 2147483647, received [10.5]');
+    expect(Countly.setEventSendThreshold(0)).toBe('size should be a whole number between 1 and 2147483647, received [0]');
+    expect(Countly.setEventSendThreshold('many')).toBe('size should be a whole number between 1 and 2147483647, received [many]');
+    expect(Countly.setEventSendThreshold(undefined)).toBe('size should be a whole number between 1 and 2147483647, received [undefined]');
+    expect(nativeModule.setEventSendThreshold).not.toHaveBeenCalled();
+
+    expect(Countly.setEventSendThreshold(25)).toBeUndefined();
+    expect(nativeModule.setEventSendThreshold).toHaveBeenCalledWith(['25']);
+});
+
+test('giveConsent and removeConsent refuse a missing list and drop entries that are not names', async () => {
+    const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge({ platform: 'android' });
+    await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
+
+    expect(Countly.giveConsent()).toBe('features should be a feature name or a list of feature names');
+    expect(Countly.removeConsent({ events: true })).toBe('features should be a feature name or a list of feature names');
+    expect(nativeModule.giveConsent).not.toHaveBeenCalled();
+    expect(nativeModule.removeConsent).not.toHaveBeenCalled();
+
+    Countly.giveConsent(['events', 5, null, 'metrics']);
+    Countly.removeConsent('views');
+
+    expect(nativeModule.giveConsent).toHaveBeenCalledWith(['events', 'metrics']);
+    expect(nativeModule.removeConsent).toHaveBeenCalledWith(['views']);
+});
+
+test('runtime attribution sends campaign data as JSON text and refuses indirect attribution that is not an object', async () => {
+    const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge();
+    await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
+
+    Countly.recordDirectAttribution('countly', { cid: 'campaign-1', cuid: 'user-1' });
+    expect(nativeModule.recordDirectAttribution).toHaveBeenCalledWith(['countly', '{"cid":"campaign-1","cuid":"user-1"}']);
+
+    expect(Countly.recordDirectAttribution('countly', null)).toBe('direct attribution needs a campaign type and campaign data');
+    expect(nativeModule.recordDirectAttribution).toHaveBeenCalledTimes(1);
+
+    Countly.recordIndirectAttribution({ adid: 'ad-1', count: 5, skipNull: null });
+    expect(nativeModule.recordIndirectAttribution).toHaveBeenCalledWith([{ adid: 'ad-1', count: '5' }]);
+
+    expect(Countly.recordIndirectAttribution('campaign-2')).toBe('indirect attribution values must be an object of text values');
+    expect(Countly.recordIndirectAttribution(null)).toBe('indirect attribution values must be an object of text values');
+    expect(nativeModule.recordIndirectAttribution).toHaveBeenCalledTimes(1);
+});
+
+test('test helpers do nothing in release builds', async () => {
+    const { Countly, CountlyConfig, CountlyState, nativeModule } = loadCountlyBridge();
+    await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key'));
+
+    await expect(Countly.test.enableRequestCapture()).resolves.toBeUndefined();
+    await expect(Countly.test.getCapturedRequests()).resolves.toEqual([]);
+    await expect(Countly.test.getRequestQueue()).resolves.toEqual([]);
+    await expect(Countly.test.getEventQueue()).resolves.toEqual([]);
+    await expect(Countly.test.halt()).resolves.toBeUndefined();
+
+    expect(nativeModule.enableRequestCapture).not.toHaveBeenCalled();
+    expect(nativeModule.getCapturedRequests).not.toHaveBeenCalled();
+    expect(nativeModule.getRequestQueue).not.toHaveBeenCalled();
+    expect(nativeModule.getEventQueue).not.toHaveBeenCalled();
+    expect(nativeModule.halt).not.toHaveBeenCalled();
+    expect(CountlyState.isInitialized).toBe(true);
 });

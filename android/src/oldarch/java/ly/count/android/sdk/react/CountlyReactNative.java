@@ -211,6 +211,16 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         this.impl.registerForNotification(args);
     }
 
+    /**
+     * Starts delivering push notification taps to JS.
+     *
+     * @param args unused
+     */
+    @ReactMethod
+    public void registerForNotificationOpened(ReadableArray args) {
+        this.impl.registerForNotificationOpened(args);
+    }
+
     @ReactMethod
     public void askForNotificationPermission(ReadableArray args) {
         this.impl.askForNotificationPermission(args);

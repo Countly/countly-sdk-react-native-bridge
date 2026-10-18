@@ -7,6 +7,8 @@ jest.mock('../Logger.js', () => ({
     v: jest.fn(),
 }));
 
+jest.mock('../CountlyFlavor.js', () => ({ PUSH_NOTIFICATIONS_AVAILABLE: true }));
+
 const Logger = require('../Logger.js');
 const CountlyConfigModule = require('../CountlyConfig.js');
 
@@ -124,6 +126,14 @@ test('CountlyConfig setters and nested interfaces persist fluent configuration',
     expect(config.sdkInternalLimits.maxBreadcrumbCount).toBe(9);
     expect(config.sdkInternalLimits.maxStackTraceLinesPerThread).toBe(15);
     expect(config.sdkInternalLimits.maxStackTraceLineLength).toBe(220);
+});
+
+test('giveConsent wraps a single feature name into a list and drops values that are not names', () => {
+    expect(new CountlyConfig('https://server.count.ly', 'app-key').giveConsent('sessions').consents).toEqual(['sessions']);
+    expect(new CountlyConfig('https://server.count.ly', 'app-key').giveConsent(['events', 3, null, '', 'views']).consents).toEqual(['events', 'views']);
+    expect(new CountlyConfig('https://server.count.ly', 'app-key').giveConsent(undefined).consents).toEqual([]);
+    expect(new CountlyConfig('https://server.count.ly', 'app-key').giveConsent({ sessions: true }).consents).toEqual([]);
+    expect(Logger.e).toHaveBeenCalledWith(expect.stringContaining('giveConsent, consents should be a feature name or a list of feature names'));
 });
 
 test('APM start timestamp override ignores non-positive values', () => {

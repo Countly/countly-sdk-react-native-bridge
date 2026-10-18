@@ -1,11 +1,14 @@
 buildscript {
-    repositories {
-        mavenCentral()
-        google()
-    }
+    // Only a standalone build of this library needs its own Android Gradle Plugin; inside an app the app's plugin is used.
+    if (project == rootProject) {
+        repositories {
+            mavenCentral()
+            google()
+        }
 
-    dependencies {
-        classpath 'com.android.tools.build:gradle:7.0.1'
+        dependencies {
+            classpath 'com.android.tools.build:gradle:7.0.1'
+        }
     }
 }
 
@@ -29,15 +32,16 @@ android {
         namespace = "ly.count.android.sdk.react"
     }
 
+    if (project.android.hasProperty("buildFeatures")) {
+        buildFeatures {
+            buildConfig true
+        }
+    }
+
     defaultConfig {
         minSdkVersion safeExtGet('minSdkVersion', 21)
         targetSdkVersion safeExtGet('targetSdkVersion', 35)
 
-        versionCode 2
-        versionName "1.1"
-        ndk {
-            abiFilters "x86", "armeabi-v7a", "x86_64", "arm64-v8a"
-        }
         buildConfigField "boolean", "IS_NEW_ARCHITECTURE_ENABLED", isNewArchitectureEnabled().toString()
     }
     lintOptions {
@@ -67,8 +71,7 @@ dependencies {
     implementation "com.facebook.react:react-native:${safeExtGet('reactNativeVersion', '+')}"
     implementation 'ly.count.android:sdk:26.1.2'
 
-    // Import the BoM for the Firebase platform
-    // The BoM version of 28.4.2 is the newest release that will target firebase-messaging version 22
-    implementation platform('com.google.firebase:firebase-bom:28.4.2')
+    // BoM 32.8.1 brings firebase-messaging 23.4.1: it declares POST_NOTIFICATIONS, needs minSdk 19 and Kotlin stdlib 1.7.10 only.
+    implementation platform('com.google.firebase:firebase-bom:32.8.1')
     implementation "com.google.firebase:firebase-messaging"
 }

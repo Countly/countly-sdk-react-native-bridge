@@ -15,27 +15,34 @@ async function initialize() {
         await Countly.appLoadingFinished();
     }
 
-    return Countly.registerForNotification((theNotification: string) => {
+    const receivedSubscription = Countly.registerForNotification((theNotification: string) => {
         const jsonString = JSON.stringify(JSON.parse(theNotification));
         console.log(`Just received this notification data: ${jsonString}`);
         Alert.alert(`theNotification: ${jsonString}`);
     });
+    const openedSubscription = Countly.registerForNotificationOpened((notification: Record<string, any>, actionIndex: number) => {
+        const jsonString = JSON.stringify(notification);
+        console.log(`The user opened this notification with action [${actionIndex}]: ${jsonString}`);
+        Alert.alert(`Opened notification, action ${actionIndex}: ${jsonString}`);
+    });
+
+    return [receivedSubscription, openedSubscription];
 }
 
 function HomeScreen({ navigation }) {
     React.useEffect(() => {
-        let notificationSubscription: { remove?: () => void } | null = null;
+        let notificationSubscriptions: Array<{ remove?: () => void } | void> = [];
 
         void initialize()
-            .then((subscription) => {
-                notificationSubscription = subscription;
+            .then((subscriptions) => {
+                notificationSubscriptions = subscriptions;
             })
             .catch((error) => {
                 console.error("Failed to initialize Countly example app", error);
             });
 
         return () => {
-            notificationSubscription?.remove?.();
+            notificationSubscriptions.forEach((subscription) => subscription?.remove?.());
         };
     }, []);
 
