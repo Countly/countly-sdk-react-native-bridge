@@ -784,7 +784,7 @@ RCT_EXPORT_METHOD(setLoggingEnabled : (NSArray *)arguments) {
 RCT_REMAP_METHOD(setUserData, params : (NSArray *)arguments setUserDataWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
       NSDictionary *userData = [arguments objectAtIndex:0];
-      [self setUserDataIntenral:userData];
+      [self setUserDataInternal:userData];
       resolve(@"Success");
     });
 }
@@ -1196,7 +1196,7 @@ RCT_REMAP_METHOD(userData_setProperty, params : (NSArray *)arguments userDataSet
       NSString *keyName = [arguments objectAtIndex:0];
             id keyValue = [arguments objectAtIndex:1];
 
-            [self setCustomUserProperty:keyName value:keyValue];
+            [self setUserProperty:keyName value:keyValue];
       resolve(@"Success");
     });
 }
@@ -1205,7 +1205,7 @@ RCT_REMAP_METHOD(userData_increment, params : (NSArray *)arguments userDataIncre
     dispatch_async(dispatch_get_main_queue(), ^{
       NSString *keyName = [arguments objectAtIndex:0];
 
-      [Countly.user increment:keyName];
+      [Countly.sharedInstance.userProfile increment:keyName];
       resolve(@"Success");
     });
 }
@@ -1216,7 +1216,7 @@ RCT_REMAP_METHOD(userData_incrementBy, params : (NSArray *)arguments userDataInc
       NSString *keyValue = [arguments objectAtIndex:1];
       int keyValueInteger = [keyValue intValue];
 
-      [Countly.user incrementBy:keyName value:[NSNumber numberWithInt:keyValueInteger]];
+      [Countly.sharedInstance.userProfile incrementBy:keyName value:[NSNumber numberWithInt:keyValueInteger]];
       resolve(@"Success");
     });
 }
@@ -1227,7 +1227,7 @@ RCT_REMAP_METHOD(userData_multiply, params : (NSArray *)arguments userDataMultip
       NSString *keyValue = [arguments objectAtIndex:1];
       int keyValueInteger = [keyValue intValue];
 
-      [Countly.user multiply:keyName value:[NSNumber numberWithInt:keyValueInteger]];
+      [Countly.sharedInstance.userProfile multiply:keyName value:[NSNumber numberWithInt:keyValueInteger]];
       resolve(@"Success");
     });
 }
@@ -1238,7 +1238,7 @@ RCT_REMAP_METHOD(userData_saveMax, params : (NSArray *)arguments userDataSaveMax
       NSString *keyValue = [arguments objectAtIndex:1];
       int keyValueInteger = [keyValue intValue];
 
-      [Countly.user max:keyName value:[NSNumber numberWithInt:keyValueInteger]];
+      [Countly.sharedInstance.userProfile max:keyName value:[NSNumber numberWithInt:keyValueInteger]];
       resolve(@"Success");
     });
 }
@@ -1249,7 +1249,7 @@ RCT_REMAP_METHOD(userData_saveMin, params : (NSArray *)arguments userDataSaveMin
       NSString *keyValue = [arguments objectAtIndex:1];
       int keyValueInteger = [keyValue intValue];
 
-      [Countly.user min:keyName value:[NSNumber numberWithInt:keyValueInteger]];
+      [Countly.sharedInstance.userProfile min:keyName value:[NSNumber numberWithInt:keyValueInteger]];
       resolve(@"Success");
     });
 }
@@ -1259,7 +1259,7 @@ RCT_REMAP_METHOD(userData_setOnce, params : (NSArray *)arguments userDataSetOnce
       NSString *keyName = [arguments objectAtIndex:0];
       NSString *keyValue = [arguments objectAtIndex:1];
 
-      [Countly.user setOnce:keyName value:keyValue];
+      [Countly.sharedInstance.userProfile setOnce:keyName value:keyValue];
       resolve(@"Success");
     });
 }
@@ -1269,7 +1269,7 @@ RCT_REMAP_METHOD(userData_pushUniqueValue, params : (NSArray *)arguments userDat
       NSString *keyName = [arguments objectAtIndex:0];
       NSString *keyValue = [arguments objectAtIndex:1];
 
-      [Countly.user pushUnique:keyName value:keyValue];
+      [Countly.sharedInstance.userProfile pushUnique:keyName value:keyValue];
       resolve(@"Success");
     });
 }
@@ -1279,7 +1279,7 @@ RCT_REMAP_METHOD(userData_pushValue, params : (NSArray *)arguments userDataPushV
       NSString *keyName = [arguments objectAtIndex:0];
       NSString *keyValue = [arguments objectAtIndex:1];
 
-      [Countly.user push:keyName value:keyValue];
+      [Countly.sharedInstance.userProfile push:keyName value:keyValue];
       resolve(@"Success");
     });
 }
@@ -1289,21 +1289,21 @@ RCT_REMAP_METHOD(userData_pullValue, params : (NSArray *)arguments userDataPullV
       NSString *keyName = [arguments objectAtIndex:0];
       NSString *keyValue = [arguments objectAtIndex:1];
 
-      [Countly.user pull:keyName value:keyValue];
+      [Countly.sharedInstance.userProfile pull:keyName value:keyValue];
       resolve(@"Success");
     });
 }
 
 RCT_REMAP_METHOD(userDataBulk_setUserProperties, params : (NSDictionary *)userProperties userDataBulkSetUserPropertiesWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      [self setUserDataIntenral:userProperties];
+      [self setUserDataInternal:userProperties];
       resolve(@"Success");
     });
 }
 
 RCT_REMAP_METHOD(userDataBulk_save, params : (NSArray *)arguments userDataBulkSaveWithResolver : (RCTPromiseResolveBlock)resolve rejecter : (RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      [Countly.user save];
+      [Countly.sharedInstance.userProfile save];
       resolve(@"Success");
     });
 }
@@ -1313,7 +1313,7 @@ RCT_REMAP_METHOD(userDataBulk_setProperty, params : (NSArray *)arguments userDat
       NSString *keyName = [arguments objectAtIndex:0];
             id keyValue = [arguments objectAtIndex:1];
 
-            [self setCustomUserProperty:keyName value:keyValue];
+            [self setUserProperty:keyName value:keyValue];
       resolve(@"Success");
     });
 }
@@ -1322,7 +1322,7 @@ RCT_REMAP_METHOD(userDataBulk_increment, params : (NSArray *)arguments userDataB
     dispatch_async(dispatch_get_main_queue(), ^{
       NSString *keyName = [arguments objectAtIndex:0];
 
-      [Countly.user increment:keyName];
+      [Countly.sharedInstance.userProfile increment:keyName];
       resolve(@"Success");
     });
 }
@@ -1333,7 +1333,7 @@ RCT_REMAP_METHOD(userDataBulk_incrementBy, params : (NSArray *)arguments userDat
       NSString *keyValue = [arguments objectAtIndex:1];
       int keyValueInteger = [keyValue intValue];
 
-      [Countly.user incrementBy:keyName value:[NSNumber numberWithInt:keyValueInteger]];
+      [Countly.sharedInstance.userProfile incrementBy:keyName value:[NSNumber numberWithInt:keyValueInteger]];
       resolve(@"Success");
     });
 }
@@ -1344,7 +1344,7 @@ RCT_REMAP_METHOD(userDataBulk_multiply, params : (NSArray *)arguments userDataBu
       NSString *keyValue = [arguments objectAtIndex:1];
       int keyValueInteger = [keyValue intValue];
 
-      [Countly.user multiply:keyName value:[NSNumber numberWithInt:keyValueInteger]];
+      [Countly.sharedInstance.userProfile multiply:keyName value:[NSNumber numberWithInt:keyValueInteger]];
       resolve(@"Success");
     });
 }
@@ -1355,7 +1355,7 @@ RCT_REMAP_METHOD(userDataBulk_saveMax, params : (NSArray *)arguments userDataBul
       NSString *keyValue = [arguments objectAtIndex:1];
       int keyValueInteger = [keyValue intValue];
 
-      [Countly.user max:keyName value:[NSNumber numberWithInt:keyValueInteger]];
+      [Countly.sharedInstance.userProfile max:keyName value:[NSNumber numberWithInt:keyValueInteger]];
       resolve(@"Success");
     });
 }
@@ -1366,7 +1366,7 @@ RCT_REMAP_METHOD(userDataBulk_saveMin, params : (NSArray *)arguments userDataBul
       NSString *keyValue = [arguments objectAtIndex:1];
       int keyValueInteger = [keyValue intValue];
 
-      [Countly.user min:keyName value:[NSNumber numberWithInt:keyValueInteger]];
+      [Countly.sharedInstance.userProfile min:keyName value:[NSNumber numberWithInt:keyValueInteger]];
       resolve(@"Success");
     });
 }
@@ -1376,7 +1376,7 @@ RCT_REMAP_METHOD(userDataBulk_setOnce, params : (NSArray *)arguments userDataBul
       NSString *keyName = [arguments objectAtIndex:0];
       NSString *keyValue = [arguments objectAtIndex:1];
 
-      [Countly.user setOnce:keyName value:keyValue];
+      [Countly.sharedInstance.userProfile setOnce:keyName value:keyValue];
       resolve(@"Success");
     });
 }
@@ -1385,7 +1385,7 @@ RCT_REMAP_METHOD(userDataBulk_pushUniqueValue, params : (NSArray *)arguments use
       NSString *keyName = [arguments objectAtIndex:0];
       NSString *keyValue = [arguments objectAtIndex:1];
 
-      [Countly.user pushUnique:keyName value:keyValue];
+      [Countly.sharedInstance.userProfile pushUnique:keyName value:keyValue];
       resolve(@"Success");
     });
 }
@@ -1394,7 +1394,7 @@ RCT_REMAP_METHOD(userDataBulk_pushValue, params : (NSArray *)arguments userDataB
       NSString *keyName = [arguments objectAtIndex:0];
       NSString *keyValue = [arguments objectAtIndex:1];
 
-      [Countly.user push:keyName value:keyValue];
+      [Countly.sharedInstance.userProfile push:keyName value:keyValue];
       resolve(@"Success");
     });
 }
@@ -1404,7 +1404,7 @@ RCT_REMAP_METHOD(userDataBulk_pullValue, params : (NSArray *)arguments userDataB
       NSString *keyName = [arguments objectAtIndex:0];
       NSString *keyValue = [arguments objectAtIndex:1];
 
-      [Countly.user pull:keyName value:keyValue];
+      [Countly.sharedInstance.userProfile pull:keyName value:keyValue];
       resolve(@"Success");
     });
 }
@@ -1979,129 +1979,48 @@ void CountlyRNInternalLog(NSString *format, ...) {
     va_end(args);
 }
 
-- (NSDictionary *)removePredefinedUserProperties:(NSDictionary *__nullable)userData {
-    NSMutableDictionary *userProperties = [userData mutableCopy];
-    NSArray *nameFields = [[NSArray alloc] initWithObjects:NAME_KEY, USERNAME_KEY, EMAIL_KEY, ORG_KEY, PHONE_KEY, PICTURE_KEY, PICTURE_PATH_KEY, GENDER_KEY, BYEAR_KEY, nil];
-
-    for (NSString *nameField in nameFields) {
-        [userProperties removeObjectForKey:nameField];
-    }
-    return userProperties;
-}
-
-- (BOOL)isBooleanNumber:(NSNumber *)numberValue {
-    return CFGetTypeID((__bridge CFTypeRef)numberValue) == CFBooleanGetTypeID();
-}
-
-- (NSMutableDictionary *)currentCustomUserProperties {
-    if ([Countly.user.custom isKindOfClass:[NSDictionary class]]) {
-        return [(NSDictionary *)Countly.user.custom mutableCopy];
-    }
-
-    return [NSMutableDictionary dictionary];
-}
-
-- (void)setCustomUserPropertyDictionaryValue:(id)value forKey:(NSString *)keyName {
-    if (keyName == nil || keyName.length == 0) {
-        return;
-    }
-
-    if (value == nil || [value isKindOfClass:[NSNull class]]) {
-        [Countly.user unSet:keyName];
-        return;
-    }
-
-    NSMutableDictionary *customUserProperties = [self currentCustomUserProperties];
-    customUserProperties[keyName] = value;
-    Countly.user.custom = [customUserProperties copy];
-}
-
-- (void)setCustomUserProperty:(NSString *)keyName value:(id)value {
-    if ([value isKindOfClass:[NSString class]]) {
-        [Countly.user set:keyName value:(NSString *)value];
-        return;
-    }
-
-    if ([value isKindOfClass:[NSNumber class]]) {
-        NSNumber *numberValue = (NSNumber *)value;
-        if ([self isBooleanNumber:numberValue]) {
-            [Countly.user set:keyName boolValue:numberValue.boolValue];
-        } else {
-            [Countly.user set:keyName numberValue:numberValue];
-        }
-        return;
-    }
-
-    [self setCustomUserPropertyDictionaryValue:value forKey:keyName];
-}
-
-- (NSDictionary *)customUserPropertiesFromUserData:(NSDictionary *__nullable)userData {
-    if (userData == nil) {
+// Flattens the JS user data for the iOS SDK's user property API. The legacy nested "custom" dictionary is merged in,
+// and the SDK then routes the predefined keys (name, username, email, organization, phone, gender, picture,
+// picturePath, byear) to the top-level fields and keeps every other key as a custom property. Null values and
+// unsupported types are skipped by the SDK with a log line, as the Android bridge does.
+- (NSDictionary *)userPropertiesFromUserData:(NSDictionary *__nullable)userData {
+    if (![userData isKindOfClass:[NSDictionary class]]) {
         return nil;
     }
 
-    NSMutableDictionary *customUserProperties = [[self removePredefinedUserProperties:userData] mutableCopy];
-    id explicitCustomProperties = customUserProperties[CUSTOM_KEY];
-    [customUserProperties removeObjectForKey:CUSTOM_KEY];
+    NSMutableDictionary *userProperties = [userData mutableCopy];
+    id explicitCustomProperties = userProperties[CUSTOM_KEY];
+    [userProperties removeObjectForKey:CUSTOM_KEY];
 
     if ([explicitCustomProperties isKindOfClass:[NSDictionary class]]) {
-        [customUserProperties addEntriesFromDictionary:(NSDictionary *)explicitCustomProperties];
+        [userProperties addEntriesFromDictionary:(NSDictionary *)explicitCustomProperties];
     }
 
-    if (customUserProperties.count == 0) {
+    if (userProperties.count == 0) {
         return nil;
     }
 
-    return [customUserProperties copy];
+    return [userProperties copy];
 }
 
-- (void)setUserDataIntenral:(NSDictionary *__nullable)userData {
-    id name = userData[NAME_KEY];
-    id username = userData[USERNAME_KEY];
-    id email = userData[EMAIL_KEY];
-    id organization = userData[ORG_KEY];
-    id phone = userData[PHONE_KEY];
-    id picture = userData[PICTURE_KEY];
-    id picturePath = userData[PICTURE_PATH_KEY];
-    id gender = userData[GENDER_KEY];
-    id byear = userData[BYEAR_KEY];
-
-    if (name) {
-        Countly.user.name = name;
-    }
-    if (username) {
-        Countly.user.username = username;
-    }
-    if (email) {
-        Countly.user.email = email;
-    }
-    if (organization) {
-        Countly.user.organization = organization;
-    }
-    if (phone) {
-        Countly.user.phone = phone;
-    }
-    if (picture) {
-        Countly.user.pictureURL = picture;
-    }
-    if (picturePath) {
-        Countly.user.pictureLocalPath = picturePath;
-    }
-    if (gender) {
-        Countly.user.gender = gender;
-    }
-    if (byear) {
-        if ([byear isKindOfClass:[NSNull class]]) {
-            Countly.user.birthYear = byear;
-        } else {
-            Countly.user.birthYear = @([byear integerValue]);
-        }
+- (void)setUserProperty:(NSString *)keyName value:(id)value {
+    if (![keyName isKindOfClass:[NSString class]] || keyName.length == 0) {
+        CountlyRNInternalLog(@"setUserProperty, the key is empty, skipping it");
+        return;
     }
 
-    NSDictionary *customUserProperties = [self customUserPropertiesFromUserData:userData];
-    if (customUserProperties != nil) {
-        Countly.user.custom = customUserProperties;
+    // The SDK validates the value (a string, a number, a bool or an array of those), truncates it and routes the key.
+    [Countly.sharedInstance.userProfile setProperty:keyName value:value];
+}
+
+- (void)setUserDataInternal:(NSDictionary *__nullable)userData {
+    NSDictionary *userProperties = [self userPropertiesFromUserData:userData];
+    if (userProperties == nil) {
+        CountlyRNInternalLog(@"setUserData, no user properties were given, skipping it");
+        return;
     }
+
+    [Countly.sharedInstance.userProfile setProperties:userProperties];
 }
 
 @end

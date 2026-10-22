@@ -158,7 +158,7 @@ STEP 3: Updating NotificationService file
 
 Note: Please make sure you configure App Transport Security setting in extension's Info.plist file also, just like the main application. Otherwise media attachments from non-https sources can not be loaded.
 
-Note: Please make sure you check Deployment Target version of extension target is 10, not 10.3 (or whatever minor version Xcode set automatically). Otherwise users running iOS versions lower than Deployment Target value can not get rich push notifications.
+Note: Please make sure you check Deployment Target version of extension target is 15.0 (the minimum of the Countly pod), not a higher version Xcode set automatically. Otherwise users running iOS versions lower than Deployment Target value can not get rich push notifications.
 
 Note: To send push messages to applications that are Debug build use Countly.messagingMode.DEVELOPMENT, for App Store built ones use Countly.messagingMode.PRODUCTION, and for TestFlight/Ad Hoc builds use Countly.messagingMode.ADHOC.
         
