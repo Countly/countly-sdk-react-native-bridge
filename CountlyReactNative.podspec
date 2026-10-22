@@ -8,11 +8,14 @@ Pod::Spec.new do |s|
   s.author = {'Countly' => 'hello@count.ly'}
   s.source = { :git => 'https://github.com/Countly/countly-sdk-react-native-bridge.git', :tag => s.version.to_s }
   s.requires_arc = true
-  # The privacy bundle target inherits this; React Native 0.71+ defines its own minimum, which current Xcode accepts, unlike 10.0.
-  s.ios.deployment_target = defined?(min_ios_version_supported) ? min_ios_version_supported : '10.0'
-  s.osx.deployment_target = '10.14'
-  s.watchos.deployment_target = '4.0'
-  s.tvos.deployment_target = '10.0'
+  # The bundled iOS SDK needs iOS 15, tvOS 15, macOS 12 and watchOS 9. React Native 0.71+ defines its own iOS minimum,
+  # which is used when it is higher; the privacy bundle target inherits this.
+  countly_min_ios = '15.0'
+  rn_min_ios = defined?(min_ios_version_supported) ? min_ios_version_supported.to_s : countly_min_ios
+  s.ios.deployment_target = Gem::Version.new(rn_min_ios) > Gem::Version.new(countly_min_ios) ? rn_min_ios : countly_min_ios
+  s.osx.deployment_target = '12.0'
+  s.watchos.deployment_target = '9.0'
+  s.tvos.deployment_target = '15.0'
   s.static_framework = true
   s.default_subspecs = 'Core'
 
