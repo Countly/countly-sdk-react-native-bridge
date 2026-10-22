@@ -1,3 +1,4 @@
+import Countly
 //
 //  TestUtils.swift
 //  Countly
@@ -6,36 +7,61 @@
 //  Copyright © 2025 Countly. All rights reserved.
 //
 import XCTest
-import Countly
 
 class TestUtils {
-    
+
     static let commonDeviceId: String = "deviceId"
     static let commonAppKey: String = "appkey"
-    static let host: String = "https://testing.count.ly/"
-    static let SDK_VERSION = "25.1.1"
+    static let host: String = "https://YOUR_SERVER"
+    static let SDK_VERSION = "26.8.0"
     static let SDK_NAME = "objc-native-ios"
-    
-    static func cleanup() -> Void {
+
+    static func cleanup() {
         let config = createBaseConfig()
-        config.requiresConsent = false;
-        config.manualSessionHandling = true;
-        Countly.sharedInstance().start(with: config);
-        sleep(1){
+        config.requiresConsent = false
+        config.manualSessionHandling = true
+        Countly.sharedInstance().start(with: config)
+        sleep(1) {
+            // All cleanup logic now handled inside Countly.halt(true)
             Countly.sharedInstance().halt(true)
-            sleep(1){}
+            sleep(1) {}
         }
     }
-    
+
     static func getCurrentRQ() -> [String]? {
-        return CountlyPersistency.sharedInstance().value(forKey: "queuedRequests") as? [String];
+        return CountlyPersistency.sharedInstance().value(forKey: "queuedRequests") as? [String]
     }
-    
+
     static func getCurrentEQ() -> [CountlyEvent]? {
-        return CountlyPersistency.sharedInstance().value(forKey: "recordedEvents") as? [CountlyEvent];
+        return CountlyPersistency.sharedInstance().value(forKey: "recordedEvents") as? [CountlyEvent]
     }
-    
-    static func sleep(_ seconds: TimeInterval, _ job: () -> Void){
+
+    /// Generous ceiling for waits on asynchronous work. XCTestExpectation waits return as soon
+    /// as they are fulfilled, so a large timeout costs nothing when things work and stops the
+    /// CI runners, which are slower and resolve DNS differently, from tripping over a value
+    /// tuned on a developer machine.
+    static let asyncTimeout: TimeInterval = 20.0
+
+    /// Polls `condition` until it holds or `timeout` elapses, pumping the run loop meanwhile,
+    /// and reports whether it held. Returns as soon as it holds, so a satisfied wait costs no
+    /// wall clock and a slower or loaded machine gets the time it actually needs. Prefer this
+    /// over `sleep` whenever the thing being waited for is observable: a fixed sleep either
+    /// wastes time or, on CI, expires before the work has landed.
+    @discardableResult
+    static func waitUntil(
+        _ description: String, timeout: TimeInterval = 10.0, _ condition: () -> Bool
+    ) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        while !condition() && Date() < deadline {
+            RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.02))
+        }
+        // Deliberately does not assert: this is a best-effort wait, and callers that need the
+        // condition to hold assert on it themselves. Failing here instead would abort flows
+        // mid-way and leave SDK state behind for the next test.
+        return condition()
+    }
+
+    static func sleep(_ seconds: TimeInterval, _ job: () -> Void) {
         let exp = XCTestExpectation(description: "Run after \(seconds) seconds")
         let result = XCTWaiter.wait(for: [exp], timeout: seconds)
         if result == XCTWaiter.Result.timedOut {
@@ -44,45 +70,82 @@ class TestUtils {
             XCTFail("Delay interrupted")
         }
     }
-    
-    static func validateRequest(_ params: [String: Any], _ idx: Int){
-        validateRequest(params, idx, { request in })
+
+    static func validateRequest(_ params: [String: Any], _ idx: Int, from source: [String]? = nil) {
+        validateRequest(params, idx, { request in }, from: source)
     }
-    
-    static func validateRequest(_ params: [String: Any], _ idx: Int, _ customValidator: ([String: Any]) -> Void){
-        let requestStr = getCurrentRQ()![idx]
+
+    /// Returns the request at `idx` in `source`, or in the persisted request queue when no
+    /// source is given. Records a failure and returns nil when the queue is missing or holds
+    /// fewer requests than that, so a test whose SDK queued fewer requests than expected fails
+    /// on its assertions instead of trapping on the subscript and killing the whole test runner.
+    static func requestAt(_ idx: Int, from source: [String]? = nil) -> String? {
+        guard let rq = source ?? getCurrentRQ() else {
+            XCTFail("Request queue is nil.")
+            return nil
+        }
+        guard rq.indices.contains(idx) else {
+            XCTFail("Request index \(idx) out of bounds. RQ count: \(rq.count).")
+            return nil
+        }
+        return rq[idx]
+    }
+
+    static func validateRequest(_ params: [String: Any], _ idx: Int, _ customValidator: ([String: Any]) -> Void, from source: [String]? = nil) {
+        guard let requestStr = requestAt(idx, from: source) else {
+            return
+        }
+
         let request = parseQueryString(requestStr)
         validateRequiredParams(request)
-        
+
         for (key, value) in params {
             let reqValue = request[key]
-            
+            guard let reqValue else {
+                XCTFail("Missing key '\(key)' in request. Expected value: \(value), Request:\(requestStr)")
+                continue
+            }
+
             if let nestedMap = value as? [String: Any] {
-                let nestedReqValue = reqValue as! [String: Any]
+                guard let nestedReqValue = reqValue as? [String: Any] else {
+                    XCTFail("Key '\(key)' expected to be nested dictionary but got: \(reqValue)")
+                    continue
+                }
+
                 for (nestedKey, nestedValue) in nestedMap {
                     XCTAssertEqual("\(String(describing: nestedReqValue[nestedKey]))", "\(nestedValue)")
                 }
                 XCTAssertEqual(nestedMap.count, nestedReqValue.count)
             } else {
-                XCTAssertEqual("\(String(describing: reqValue!))", "\(value)")
+                XCTAssertEqual("\(String(describing: reqValue))", "\(value)")
             }
         }
-        
+
         customValidator(request)
     }
-    
-    static func validateEventInRQ(_ eventName: String, _ segmentation: [String: Any], _ idx: Int, _ rqCount: Int, _ eventIdx: Int, _ eventCount: Int) throws {
-        let requestStr = getCurrentRQ()![idx]
+
+    static func validateEventInRQ(
+        _ eventName: String, _ segmentation: [String: Any], _ idx: Int, _ rqCount: Int, _ eventIdx: Int,
+        _ eventCount: Int, from source: [String]? = nil
+    ) throws {
+        guard let requestStr = requestAt(idx, from: source) else {
+            return
+        }
+
         let request = parseQueryString(requestStr)
         validateRequiredParams(request)
-        
+
         if let eventsStr = request["events"] as? String,
-           let data = eventsStr.data(using: .utf8) {
+            let data = eventsStr.data(using: .utf8) {
             do {
                 let json = try JSONSerialization.jsonObject(with: data, options: [])
                 // Optionally cast it
                 if let eventArray = json as? [[String: Any]] {
                     XCTAssertEqual(eventCount, eventArray.count)
+                    guard eventArray.indices.contains(eventIdx) else {
+                        XCTFail("Event index \(eventIdx) out of bounds. Event count: \(eventArray.count).")
+                        return
+                    }
                     let event = eventArray[eventIdx]
                     XCTAssertEqual(event["key"] as? String, eventName)
                     XCTAssertEqual(event["count"] as? Int, 1)
@@ -92,13 +155,22 @@ class TestUtils {
 
                     let duration = (event["dur"] as? Double) ?? 0.0
                     XCTAssertEqual(duration, 0, accuracy: 0.0001)
-                    
-                    if(!segmentation.isEmpty){
+
+                    if !segmentation.isEmpty {
                         if let eventSegmentation = event["segmentation"] as? [String: Any] {
-                            XCTAssertEqual(eventSegmentation.count, segmentation.count, "Expected segmentation: \(segmentation), got: \(eventSegmentation)")
+                            XCTAssertEqual(
+                                eventSegmentation.count, segmentation.count,
+                                "Expected segmentation: \(segmentation), got: \(eventSegmentation)")
                             for (key, value) in segmentation {
-                                let segValue = eventSegmentation[key]
-                                XCTAssertEqual("\(String(describing: segValue!))", "\(value)")
+                                guard let segValue = eventSegmentation[key] else {
+                                    let msg =
+                                        "Missing segmentation key '\(key)' in event."
+                                        + " Expected: \(segmentation),"
+                                        + " got: \(eventSegmentation)"
+                                    XCTFail(msg)
+                                    continue
+                                }
+                                XCTAssertEqual("\(String(describing: segValue))", "\(value)")
                             }
                         } else {
                             XCTFail("Missing or invalid 'segmentation' in event")
@@ -136,23 +208,23 @@ class TestUtils {
         }
         //XCTFail((request["events"] as? String)!)
         //ModuleEventsTests.validateEventInRQ(
-          //  TestUtils.commonDeviceId,
-           // eventName,
-           // segmentation,
-            //1,
-            //0.0,
-            //0.0,
-            //"_CLY_",
-            //"_CLY_",
-            //"_CLY_",
-            //"_CLY_",
-            //idx,
-            //rqCount,
-            //eventIdx,
-            //eventCount
-       // )
+        //  TestUtils.commonDeviceId,
+        // eventName,
+        // segmentation,
+        //1,
+        //0.0,
+        //0.0,
+        //"_CLY_",
+        //"_CLY_",
+        //"_CLY_",
+        //"_CLY_",
+        //idx,
+        //rqCount,
+        //eventIdx,
+        //eventCount
+        // )
     }
-    
+
     static func validateId(_ id: String?, _ toValidate: String?, _ name: String) {
         if let id = id, id == "_CLY_" {
             if let val = toValidate, !val.isEmpty {
@@ -172,7 +244,8 @@ class TestUtils {
         let timestampStr = String(val.suffix(13))
         let base64Str = String(val.prefix(val.count - 13))
 
-        let matches = base64Pattern.numberOfMatches(in: base64Str, range: NSRange(location: 0, length: base64Str.utf16.count))
+        let matches = base64Pattern.numberOfMatches(
+            in: base64Str, range: NSRange(location: 0, length: base64Str.utf16.count))
         if matches > 0, let timestamp = Int64(timestampStr) {
             let date = Date(timeIntervalSince1970: TimeInterval(timestamp) / 1000)
             let calendar = Calendar(identifier: .gregorian)
@@ -188,97 +261,119 @@ class TestUtils {
         }
     }
 
-    
     static func validateSdkIdentityParams(_ params: [String: Any]) {
-          XCTAssertEqual(SDK_VERSION, params["sdk_version"] as? String)
-          XCTAssertEqual(SDK_NAME, params["sdk_name"] as? String)
+        XCTAssertEqual(SDK_VERSION, params["sdk_version"] as? String)
+        XCTAssertEqual(SDK_NAME, params["sdk_name"] as? String)
     }
-      
-      static func validateRequiredParams(_ params: [String: Any]) {
-          guard let hour = Int((params["hour"] as? String)!),
-                let dow = Int((params["dow"] as? String)!),
-                let tz = Int((params["tz"] as? String)!),
-                let timestamp = Int((params["timestamp"] as? String)!) else {
-              XCTFail("Invalid parameter types")
-              return
-          }
-          
-          validateSdkIdentityParams(params)
-          XCTAssertEqual(commonDeviceId, params["device_id"] as? String)
-          XCTAssertEqual(commonAppKey, params["app_key"] as? String)
-          XCTAssertEqual(CountlyDeviceInfo.appVersion(), params["av"] as? String)
-          XCTAssertEqual("0", params["t"] as? String)
-          XCTAssertTrue(timestamp > 0)
-          XCTAssertTrue(hour >= 0 && hour < 24)
-          XCTAssertTrue(dow >= 0 && dow < 7)
-          XCTAssertTrue(tz >= -720 && tz <= 840)
-      }
-    
+
+    static func validateRequiredParams(_ params: [String: Any]) {
+        guard let hour = (params["hour"] as? String).flatMap({ Int($0) }),
+            let dow = (params["dow"] as? String).flatMap({ Int($0) }),
+            let timeZone = (params["tz"] as? String).flatMap({ Int($0) }),
+            let timestamp = (params["timestamp"] as? String).flatMap({ Int($0) })
+        else {
+            XCTFail("Missing or non-integer hour, dow, tz or timestamp in request: \(params)")
+            return
+        }
+
+        validateSdkIdentityParams(params)
+        XCTAssertEqual(commonDeviceId, params["device_id"] as? String)
+        XCTAssertEqual(commonAppKey, params["app_key"] as? String)
+        XCTAssertEqual(CountlyDeviceInfo.appVersion(), params["av"] as? String)
+        XCTAssertEqual("0", params["t"] as? String)
+        XCTAssertTrue(timestamp > 0)
+        XCTAssertTrue(hour >= 0 && hour < 24)
+        XCTAssertTrue(dow >= 0 && dow < 7)
+        XCTAssertTrue(timeZone >= -720 && timeZone <= 840)
+    }
+
     static func parseQueryString(_ queryString: String) -> [String: Any] {
         var result: [String: Any] = [:]
-        
-        // Split the query string by '&' to get individual key-value pairs
+
+        // Split query string into pairs
         let pairs = queryString.split(separator: "&")
-        
+
         for pair in pairs {
-            // Split each pair by '=' to separate the key and value
-            let components = pair.split(separator: "=", maxSplits: 1)
-            
-            if components.count == 2 {
-                let key = String(components[0])
-                let value = String(components[1])
-                
-                // If the value is a JSON string (starts and ends with '%7B' and '%7D' respectively after URL decoding), decode it
-                if let decodedValue = value.removingPercentEncoding, decodedValue.hasPrefix("{"), decodedValue.hasSuffix("}") {
-                    if let jsonData = decodedValue.data(using: .utf8) {
-                        do {
-                            let jsonObject = try JSONSerialization.jsonObject(with: jsonData, options: [])
-                            result[key] = jsonObject
-                            continue
-                        } catch {
-                            print("Error decoding JSON for key \(key): \(error)")
-                        }
-                    }
-                }
-                
-                // Otherwise, simply assign the value to the key in the result dictionary
-                result[key] = value.removingPercentEncoding ?? value
+            // Always split into 2 parts; missing value becomes empty string
+            let components = pair.split(separator: "=", maxSplits: 1, omittingEmptySubsequences: false)
+
+            guard components.count == 2 else {
+                continue
             }
+
+            let key = String(components[0])
+            let value = String(components[1])  // <-- empty string stays empty string
+
+            let decodedKey = key.removingPercentEncoding ?? key
+            let decodedValue = value.removingPercentEncoding ?? value
+
+            // JSON detection (only if non-empty)
+            if !decodedValue.isEmpty,
+                decodedValue.hasPrefix("{"),
+                decodedValue.hasSuffix("}"),
+                let jsonData = decodedValue.data(using: .utf8)
+            {
+                do {
+                    let jsonObject = try JSONSerialization.jsonObject(with: jsonData, options: [])
+                    result[decodedKey] = jsonObject
+                    continue
+                } catch {
+                }
+            }
+
+            // Assign empty string value properly
+            result[decodedKey] = decodedValue
         }
-        
+
         return result
     }
-    
-    static func compareDictionaries(_ dict1: [String: Any],_ dict2: [String: Any]) -> Bool {
+
+    /// Best-effort array coercion that handles both Swift `[T]` and bridged NSArray.
+    static func asArray(_ value: Any) -> [Any]? {
+        if let arr = value as? [Any] { return arr }
+        if let nsArr = value as? NSArray { return nsArr as? [Any] }
+        return nil
+    }
+
+    static func compareDictionaries(_ dict1: [String: Any], _ dict2: [String: Any]) -> Bool {
         guard dict1.count == dict2.count else {
             return false
         }
-        
+
         for (key, value) in dict1 {
             guard let otherValue = dict2[key] else {
                 return false
             }
-            
+
             if let nestedDict1 = value as? [String: Any], let nestedDict2 = otherValue as? [String: Any] {
                 if !compareDictionaries(nestedDict1, nestedDict2) {
                     return false
+                }
+            } else if let arr1 = TestUtils.asArray(value), let arr2 = TestUtils.asArray(otherValue) {
+                // Element-by-element string comparison so Swift `[String]` matches
+                // NSArray bridged from JSON-parsed request payloads.
+                if arr1.count != arr2.count { return false }
+                for (a, b) in zip(arr1, arr2) {
+                    if "\(a)" != "\(b)" { return false }
                 }
             } else if "\(value)" != "\(otherValue)" {
                 return false
             }
         }
-        
+
         return true
     }
-    
+
     static func createBaseConfig() -> CountlyConfig {
         let config: CountlyConfig = CountlyConfig()
         config.appKey = commonAppKey
         config.deviceID = commonDeviceId
         config.host = host
         config.enableDebug = true
-        config.features = [CLYFeature.crashReporting];
+        config.features = [CLYFeature.crashReporting]
+        // Hostless simulator runs can never report an orientation; off keeps hosted runs (device farm) identical.
+        config.enableOrientationTracking = false
         return config
     }
-    
+
 }

@@ -25,3 +25,4 @@ example/AwesomeProject/*
 example/ExpoProject/*
 hs_err_pid*.log
 replay_pid*.log
+ios/src/.build/
