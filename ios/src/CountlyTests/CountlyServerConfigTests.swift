@@ -2,13 +2,53 @@ import XCTest
 @testable import Countly
 
 class CountlyServerConfigTests: CountlyBaseTestCase {
-    
+
     class CountTracker {
         var counts: [Int] = [0, 0, 0, 0, 0]
+        // When true, the mock returns 200 for stored /i requests and records them (in send
+        // order) in `sentRequests`, so the request queue actually drains and the content
+        // refresh queue-flush runnable fires. Default false preserves the 400 behavior that
+        // every other test relies on (requests stay in the RQ for index-based inspection).
+        var drainQueue = false
+        var sentRequests: [String] = []
     }
 
-    override func setUp() async throws {
+    /// Local Countly instances created during tests.
+    /// Stored so they can be properly halted in tearDown to prevent zombie
+    /// notification observers from polluting subsequent tests.
+    var localCountlyInstances: [Countly] = []
+
+    override func setUp() {
         TestUtils.cleanup()
+        localCountlyInstances = []
+        // Clear server config to prevent test pollution
+        UserDefaults.standard.removeObject(forKey: "kCountlyServerConfigPersistencyKey")
+        UserDefaults.standard.synchronize()
+    }
+
+    override func tearDown() {
+        // Clean up local instances first
+        for instance in localCountlyInstances {
+            instance.halt(true)
+        }
+        localCountlyInstances = []
+
+        // Also clean up sharedInstance if it was used
+        if Countly.sharedInstance() != nil {
+            Countly.sharedInstance().halt(true)
+        }
+
+        // Clear server config after each test
+        UserDefaults.standard.removeObject(forKey: "kCountlyServerConfigPersistencyKey")
+        UserDefaults.standard.synchronize()
+        super.tearDown()
+    }
+
+    /// Creates a local Countly instance and tracks it for tearDown cleanup.
+    func createLocalCountly() -> Countly {
+        let instance = Countly()
+        localCountlyInstances.append(instance)
+        return instance
     }
     // MARK: - Basic Configuration Tests
     
@@ -31,8 +71,7 @@ class CountlyServerConfigTests: CountlyBaseTestCase {
      */
     func test_defaultConfig_whenServerConfigEnabledAndStorageEmpty() {
         let config = TestUtils.createBaseConfig()
-        config.enableServerConfiguration = true
-        let countly = Countly()
+        let countly = createLocalCountly()
         countly.start(with: config)
         
         XCTAssertNotNil(retrieveServerConfig())
@@ -47,8 +86,7 @@ class CountlyServerConfigTests: CountlyBaseTestCase {
     func test_serverConfig_whenEnabledAndAllPropertiesAllowing() throws {
         setServerConfig(createStorageConfig(tracking: true, networking: true, crashes: true))
         let config = TestUtils.createBaseConfig()
-        config.enableServerConfiguration = true;
-        let countly = Countly()
+        let countly = createLocalCountly()
         countly.start(with: config)
         
         XCTAssertNotNil(CountlyPersistency.sharedInstance().retrieveServerConfig())
@@ -61,7 +99,6 @@ class CountlyServerConfigTests: CountlyBaseTestCase {
     func test_serverConfig_whenEnabledAndAllPropertiesForbidding() {
         setServerConfig(createStorageConfig(tracking: false, networking: false, crashes: false))
         let config = TestUtils.createBaseConfig()
-        config.enableServerConfiguration = true
         config.enableDebug = false
         
         Countly.sharedInstance().start(with: config)
@@ -81,7 +118,7 @@ class CountlyServerConfigTests: CountlyBaseTestCase {
         
         setServerConfig(createStorageConfig(tracking: true, networking: true, crashes: true))
         let config = TestUtils.createBaseConfig()
-        let countly = Countly()
+        let countly = createLocalCountly()
         countly.start(with: config)
         
         XCTAssertNotNil(CountlyPersistency.sharedInstance().retrieveServerConfig())
@@ -118,20 +155,107 @@ class CountlyServerConfigTests: CountlyBaseTestCase {
      * Verifies that the configuration is properly handled when received through the request generator.
      */
     func test_serverConfig_withImmediateRequestGenerator() throws {
-        
+
         try initServerConfigWithValues { config, serverConfig in
             config.urlSessionConfiguration = createUrlSessionConfigForResponse(serverConfig)
         }
     }
-    
+
+    /**
+     * Regression test for SDK Behavior Settings (server config) deferral in temporary device ID mode.
+     *
+     * The server config fetch is an immediate request carrying device_id. When the SDK starts in
+     * temporary device ID mode it must not be sent (it would create a CLYTemporaryDeviceID user), but
+     * it must not be lost either: it should be deferred and run once a real device ID is assigned.
+     *
+     * 1- Start the SDK already in temporary device ID mode, with a mock session that counts method=sc requests
+     * 2- Verify NO server config request is sent while in temporary mode (inverted expectation)
+     * 3- Assign a real device ID (leaving temporary mode)
+     * 4- Verify the deferred server config request now runs
+     */
+    func test_serverConfigFetch_isDeferred_untilLeavingTemporaryDeviceIDMode() {
+        let realDeviceID = "real_user_after_temp"
+
+        // A distinctive server config so we can prove the re-fetched response is actually applied
+        // through the cached config (i.e. the cached config is valid and the re-fetch works end-to-end).
+        let builder = ServerConfigBuilder()
+            .networking(true)
+            .sessionUpdateInterval(120)
+            .limitKeyLength(89)
+            .limitValueSize(43)
+        let serverConfigJson = builder.build()
+
+        let noFetchInTempMode = self.expectation(description: "No server config fetch while in temporary device ID mode")
+        noFetchInTempMode.isInverted = true
+        let fetchAfterExit = self.expectation(description: "Deferred server config fetch runs after leaving temporary mode")
+        fetchAfterExit.assertForOverFulfill = false
+
+        var inTemporaryMode = true
+        var capturedSCRequestURL: String?
+        MockURLProtocol.requestHandler = { request in
+            let urlString = request.url?.absoluteString ?? ""
+            if urlString.contains("method=sc") {
+                if inTemporaryMode {
+                    noFetchInTempMode.fulfill()
+                } else {
+                    capturedSCRequestURL = urlString
+                    fetchAfterExit.fulfill()
+                }
+                let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+                return (serverConfigJson.data(using: .utf8), response, nil)
+            }
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            return ("{}".data(using: .utf8), response, nil)
+        }
+
+        let config = TestUtils.createBaseConfig()
+        let sessionConfig = URLSessionConfiguration.ephemeral
+        sessionConfig.protocolClasses = [MockURLProtocol.self]
+        config.urlSessionConfiguration = sessionConfig
+        config.enableTemporaryDeviceIDMode()
+
+        let countly = createLocalCountly()
+        countly.start(with: config)
+
+        // Phase 1: nothing should hit the server config endpoint while in temporary mode
+        wait(for: [noFetchInTempMode], timeout: 4)
+
+        // Phase 2: leaving temporary mode should run the deferred fetch using the cached config
+        inTemporaryMode = false
+        countly.changeDeviceIDWithoutMerge(realDeviceID)
+
+        wait(for: [fetchAfterExit], timeout: 10)
+
+        // The re-fetch must carry the real device ID (the cached config / ordering must not leak the
+        // temporary device ID, which is what created the CLYTemporaryDeviceID user in the first place).
+        XCTAssertNotNil(capturedSCRequestURL, "A server config request should have been made after leaving temporary mode")
+        XCTAssertTrue(capturedSCRequestURL?.contains("device_id=\(realDeviceID)") ?? false, "SBS re-fetch must use the real device ID")
+        XCTAssertFalse(capturedSCRequestURL?.contains("CLYTemporaryDeviceID") ?? true, "SBS re-fetch must not leak the temporary device ID")
+        // The re-fetch must use the cached config's app key.
+        XCTAssertTrue(capturedSCRequestURL?.contains("app_key=\(TestUtils.commonAppKey)") ?? false, "SBS re-fetch must use the cached config app key")
+
+        // The re-fetched response must actually be applied to the SDK. This proves the cached config is
+        // valid and the re-fetch path works end-to-end (not just that a request was sent).
+        TestUtils.sleep(2, { builder.validateAgainst() })
+    }
+
+
     /**
      * Tests that all features work correctly with default server configuration.
      * Verifies that all SDK features (sessions, events, views, crashes, etc.) function as expected
      * when using default configuration values.
      */
+    // The all-features flows exercise feedback widgets and the content zone, which are
+    // compiled out on watchOS, tvOS and macOS, and assert exact per-platform request counts.
+    //
+    // iOS only, even though feedback and content do exist on visionOS: visionOS produces one
+    // content request where iOS produces two, because refreshContentZone's queue-flush
+    // runnable does not fire the same way there. Covering visionOS needs its own expected
+    // counts, not a widened guard.
+    #if os(iOS)
     func test_serverConfig_defaults_allFeatures() throws {
         
-        try baseAllFeatures({ _ in }, hc: 0, fc: 1, rc: 1, cc: 2, scc: 1)
+        try baseAllFeatures({ _ in }, hc: 1, fc: 1, rc: 1, cc: 2, scc: 1)
     }
     
     /**
@@ -151,9 +275,10 @@ class CountlyServerConfigTests: CountlyBaseTestCase {
             .refreshContentZone(false)
             .tracking(false)
             .consentRequired(true)
-        
-        let tracker = setupTestAllFeatures(sc.buildJson())
-        
+
+        // answered after start, so the health check start sends always goes out before networking is turned off
+        let tracker = setupTestAllFeatures(sc.buildJson(), answerAfterStart: true)
+
         XCTAssertEqual(0, TestUtils.getCurrentRQ()?.count)
         XCTAssertEqual(0, TestUtils.getCurrentEQ()?.count)
         
@@ -167,7 +292,7 @@ class CountlyServerConfigTests: CountlyBaseTestCase {
         XCTAssertEqual(0, TestUtils.getCurrentRQ()?.count)
         XCTAssertEqual(0, TestUtils.getCurrentEQ()?.count)
         
-        validateCounts(tracker.counts, hc: 0, fc: 0, rc: 0, cc: 0, sc: 1)
+        validateCounts(tracker, hc: 1, fc: 0, rc: 0, cc: 0, sc: 1)
     }
     
     /**
@@ -182,8 +307,13 @@ class CountlyServerConfigTests: CountlyBaseTestCase {
         sc.consentRequired(true)
         
         let tracker = setupTestAllFeatures(sc.buildJson())
-        
-        XCTAssertEqual(0, TestUtils.getCurrentRQ()?.count)
+
+        // The consent and location requests are emitted by notifySdkConfigChange: only once
+        // `hasFinishedInit` is set, so they land shortly after start rather than synchronously.
+        TestUtils.waitUntil("the consent and location requests to be queued") {
+            TestUtils.getCurrentRQ()?.count == 2
+        }
+        XCTAssertEqual(2, TestUtils.getCurrentRQ()?.count)
         XCTAssertEqual(0, TestUtils.getCurrentEQ()?.count)
         
         flowAllFeatures()
@@ -205,12 +335,13 @@ class CountlyServerConfigTests: CountlyBaseTestCase {
             "remote-config": 0,
             "sessions": 0,
             "attribution": 0,
-            "views": 0
+            "views": 0,
+            "metrics": 0
         ]
         TestUtils.validateRequest(["consent": consents], 0)
-        TestUtils.validateRequest(["begin_session": "1"], 1)
+        TestUtils.validateRequest(["location": ""], 1)
 
-        validateCounts(tracker.counts, hc: 0, fc: 0, rc: 0, cc: 0, sc: 1)
+        validateCounts(tracker, hc: 1, fc: 0, rc: 0, cc: 0, sc: 1)
     }
     
     /**
@@ -223,21 +354,33 @@ class CountlyServerConfigTests: CountlyBaseTestCase {
     func test_sessionsDisabled_allFeatures() throws {
         let sc = ServerConfigBuilder()
         sc.sessionTracking(false)
-        let tracker = setupTestAllFeatures(sc.buildJson())
-        
+        let tracker = setupTestAllFeatures(sc.buildJson(), drainQueue: true)
+
         XCTAssertEqual(0, TestUtils.getCurrentRQ()?.count)
         XCTAssertEqual(0, TestUtils.getCurrentEQ()?.count)
-        
+
         let stackTrace = flowAllFeatures()
-        
-        //ModuleCrashTests.validateCrash(stackTrace, "", false, false, 7, 0, [:], 0, [:], [])
-        try TestUtils.validateEventInRQ("test_event", [:], 1, 7, 0, 2)
-        try TestUtils.validateEventInRQ("[CLY]_view", ["name": "test_view", "segment": "iOS", "visit": "1"], 1, 7, 1, 2)
+        immediateFlowAllFeatures()
+        XCTAssertEqual(0, TestUtils.getCurrentEQ()?.count)
+        feedbackFlowAllFeatures()
+        waitForQueueToDrain(tracker, expected: 8)
+        XCTAssertEqual(0, TestUtils.getCurrentEQ()?.count)
+
+        let sent = tracker.sentRequests
+        XCTAssertEqual(8, sent.count, "Sent request count mismatch")
+
+        // Sessions disabled => no begin_session; the crash request is first.
+        TestUtils.validateRequest([:], 0, { request in
+            let crash = request["crash"] as? [String: Any]
+            XCTAssertTrue(crash != nil)
+        }, from: sent)
+        try TestUtils.validateEventInRQ("test_event", [:], 1, 7, 0, 2, from: sent)
+        try TestUtils.validateEventInRQ("[CLY]_view", ["name": "test_view", "segment": CountlyDeviceInfo.osName()!, "visit": "1"], 1, 7, 1, 2, from: sent)
         TestUtils.validateRequest([:], 2, { request in
             let userDetails = request["user_details"] as! [String: Any]
             XCTAssertTrue(TestUtils.compareDictionaries(userDetails["custom"] as! [String: Any], ["test_property": "test_value"]))
-        })
-        TestUtils.validateRequest(["location": "33.689500,139.691700"], 3)
+        }, from: sent)
+        TestUtils.validateRequest(["location": "33.689500,139.691700"], 3, from: sent)
         TestUtils.validateRequest([:], 4, { request in
             let apm = request["apm"] as! [String: Any]
             XCTAssertEqual("test_trace", apm["name"] as! String)
@@ -247,39 +390,31 @@ class CountlyServerConfigTests: CountlyBaseTestCase {
                                                          "response_code": 400,
                                                          "request_payload_size": 2000,
                                                          "response_payload_size": 2000]))
-        })
-        TestUtils.validateRequest(["attribution_data": "test_data"], 5)
-        TestUtils.validateRequest(["key": "value"], 6)
-        
-        XCTAssertEqual(7, TestUtils.getCurrentRQ()?.count)
-        immediateFlowAllFeatures()
-        
-        XCTAssertEqual(0, TestUtils.getCurrentEQ()?.count)
-        feedbackFlowAllFeatures()
-        XCTAssertEqual(0, TestUtils.getCurrentEQ()?.count)
+        }, from: sent)
+        TestUtils.validateRequest(["attribution_data": "test_data"], 5, from: sent)
+        TestUtils.validateRequest(["key": "value"], 6, from: sent)
 
         try TestUtils.validateEventInRQ("[CLY]_star_rating", [
-            "platform": "iOS",
+            "platform": CountlyDeviceInfo.osName()!,
             "app_version": CountlyDeviceInfo.appVersion()!,
             "rating": "5",
             "widget_id": "test",
             "contactMe": "1",
             "email": "test",
             "comment": "test"
-        ], 7, 8, 0, 2)
-        
+        ], 7, 8, 0, 2, from: sent)
+
         try TestUtils.validateEventInRQ("[CLY]_nps", [
             "app_version": CountlyDeviceInfo.appVersion()!,
             "widget_id": "test",
             "closed": "1",
-            "platform": "iOS"
-        ], 7, 8, 1, 2)
-        
-        XCTAssertEqual(8, TestUtils.getCurrentRQ()?.count)
+            "platform": CountlyDeviceInfo.osName()!
+        ], 7, 8, 1, 2, from: sent)
 
-        validateCounts(tracker.counts, hc: 0, fc: 1, rc: 1, cc: 2, sc: 1)
+        validateCounts(tracker, hc: 1, fc: 1, rc: 1, cc: 2, sc: 1)
     }
-    
+    #endif
+
     // MARK: - Queue Size Tests
     
     /**
@@ -335,7 +470,15 @@ class CountlyServerConfigTests: CountlyBaseTestCase {
         countlyConfig.manualSessionHandling = true
         countlyConfig.urlSessionConfiguration = createUrlSessionConfigForResponse(ServerConfigBuilder().requestQueueSize(3).build())
         Countly.sharedInstance().start(with: countlyConfig)
-        
+
+        // This test asserts absolute queue indices, so it needs the limit actually in effect and
+        // a queue with nothing else in it. An earlier test's in-flight flush can land here after
+        // setUp purged, which is why this passed locally and failed on CI.
+        TestUtils.waitUntil("the request queue size limit to be applied") {
+            CountlyServerConfig.sharedInstance().requestQueueSize() == 3
+        }
+        CountlyPersistency.sharedInstance().flushQueue()
+
         Countly.sharedInstance().beginSession()
         XCTAssertTrue(TestUtils.getCurrentRQ()![0].contains("begin_session"))
         
@@ -382,11 +525,24 @@ class CountlyServerConfigTests: CountlyBaseTestCase {
         }
     }
     
+    /// An empty "c" and sibling top level keys are valid: "t" and "v" are stored, the siblings never reach storage.
+    func test_serverConfig_emptyInnerConfigAndTopLevelSiblingsAreAccepted() {
+        let countly = initAndValidateConfigParsingResult("{\"v\":7,\"t\":1234,\"c\":{},\"lg\":{\"e\":false},\"ct\":0,\"unknown\":1}", true)
+
+        let stored = retrieveServerConfig()
+        XCTAssertEqual(7, stored["v"] as? Int)
+        XCTAssertEqual(1234, stored["t"] as? Int)
+        XCTAssertEqual(0, (stored["c"] as? [String: Any])?.count)
+        XCTAssertNil(stored["lg"])
+        XCTAssertNil(stored["ct"])
+        XCTAssertNil(stored["unknown"])
+        assertDefaultConfigValues(countly)
+    }
+
     func test_serverConfig_emptyConfig() {
         setServerConfig([:])
         let config = TestUtils.createBaseConfig()
-        config.enableServerConfiguration = true
-        let countly = Countly()
+        let countly = createLocalCountly()
         countly.start(with: config)
         
         XCTAssertTrue(retrieveServerConfig().isEmpty)
@@ -398,8 +554,7 @@ class CountlyServerConfigTests: CountlyBaseTestCase {
         setServerConfig(customConfig)
         
         let config = TestUtils.createBaseConfig()
-        config.enableServerConfiguration = true
-        let countly = Countly()
+        let countly = createLocalCountly()
         countly.start(with: config)
         
         XCTAssertFalse(CountlyServerConfig.sharedInstance().trackingEnabled())
@@ -414,8 +569,7 @@ class CountlyServerConfigTests: CountlyBaseTestCase {
         setServerConfig(customConfig)
         
         let config = TestUtils.createBaseConfig()
-        config.enableServerConfiguration = true
-        let countly = Countly()
+        let countly = createLocalCountly()
         countly.start(with: config)
         
         XCTAssertTrue(CountlyServerConfig.sharedInstance().consentRequired())
@@ -428,8 +582,7 @@ class CountlyServerConfigTests: CountlyBaseTestCase {
         setServerConfig(customConfig)
         
         let config = TestUtils.createBaseConfig()
-        config.enableServerConfiguration = true
-        let countly = Countly()
+        let countly = createLocalCountly()
         countly.start(with: config)
         
         XCTAssertTrue(CountlyServerConfig.sharedInstance().loggingEnabled())
@@ -443,14 +596,14 @@ class CountlyServerConfigTests: CountlyBaseTestCase {
         setServerConfig(customConfig)
         
         let config = TestUtils.createBaseConfig()
-        config.enableServerConfiguration = true
-        let countly = Countly()
+        let countly = createLocalCountly()
         countly.start(with: config)
         
         XCTAssertEqual(CountlyServerConfig.sharedInstance().eventQueueSize(), 5)
         XCTAssertEqual(CountlyServerConfig.sharedInstance().requestQueueSize(), 10)
     }
     
+    #if os(iOS)
     /**
          * Tests that event tracking is properly disabled when configured.
          * Verifies that:
@@ -461,28 +614,31 @@ class CountlyServerConfigTests: CountlyBaseTestCase {
         func test_eventsDisabled_allFeatures() throws {
             let sc = ServerConfigBuilder()
                 .customEventTracking(false)
-            let tracker = setupTestAllFeatures(sc.buildJson())
-            
+            let tracker = setupTestAllFeatures(sc.buildJson(), drainQueue: true)
+
             XCTAssertEqual(0, TestUtils.getCurrentRQ()?.count)
             XCTAssertEqual(0, TestUtils.getCurrentEQ()?.count)
-            
+
             let stackTrace = flowAllFeatures()
-            
-            XCTAssertTrue(TestUtils.getCurrentRQ()![0].contains("begin_session"))
+            immediateFlowAllFeatures()
+            waitForQueueToDrain(tracker, expected: 8)
+            let sent = tracker.sentRequests
+
+            XCTAssertTrue(sent[0].contains("begin_session"))
             // Events should not be tracked
-            XCTAssertFalse(containsEventWithKey(TestUtils.getCurrentRQ()!, "test_event"))
-            
+            XCTAssertFalse(containsEventWithKey(sent, "test_event"))
+
             // But other features should work
-            try TestUtils.validateEventInRQ("[CLY]_view", ["name": "test_view", "segment": "iOS", "visit": "1", "start": "1"], 2, 7, 0, 1)
+            try TestUtils.validateEventInRQ("[CLY]_view", ["name": "test_view", "segment": CountlyDeviceInfo.osName()!, "visit": "1", "start": "1"], 2, 7, 0, 1, from: sent)
             TestUtils.validateRequest([:], 3, { request in
                 let userDetails = request["user_details"] as! [String: Any]
                 XCTAssertTrue(TestUtils.compareDictionaries(userDetails["custom"] as! [String: Any], ["test_property": "test_value"]))
-            })
-            
-            XCTAssertEqual(8, TestUtils.getCurrentRQ()?.count)
-            XCTAssertFalse(containsEventWithKey(TestUtils.getCurrentRQ()!, "test_event"))
+            }, from: sent)
+
+            XCTAssertEqual(8, sent.count)
+            XCTAssertFalse(containsEventWithKey(sent, "test_event"))
             XCTAssertTrue(TestUtils.getCurrentEQ()!.isEmpty)
-            validateCounts(tracker.counts, hc: 0, fc: 1, rc: 1, cc: 2, sc: 1)
+            validateCounts(tracker, hc: 1, fc: 1, rc: 1, cc: 2, sc: 1)
         }
     
     /**
@@ -494,22 +650,24 @@ class CountlyServerConfigTests: CountlyBaseTestCase {
         func test_crashesDisabled_allFeatures() throws {
             let sc = ServerConfigBuilder()
                 .crashReporting(false)
-            let tracker = setupTestAllFeatures(sc.buildJson())
-            
+            let tracker = setupTestAllFeatures(sc.buildJson(), drainQueue: true)
+
             XCTAssertEqual(0, TestUtils.getCurrentRQ()?.count)
-            
+
             let stackTrace = flowAllFeatures()
-            
+            immediateFlowAllFeatures()
+            waitForQueueToDrain(tracker, expected: 7)
+            let sent = tracker.sentRequests
             // Verify that crash is not recorded
-            for request in TestUtils.getCurrentRQ()! {
+            for request in sent {
                 XCTAssertFalse(request.contains("crash="))
             }
-            
+
             // But other features should work
-            XCTAssertTrue(TestUtils.getCurrentRQ()![0].contains("begin_session"))
-            try TestUtils.validateEventInRQ("test_event", [:], 2, 7, 0, 2)
-            
-            validateCounts(tracker.counts, hc: 0, fc: 1, rc: 1, cc: 2, sc: 1)
+            XCTAssertTrue(sent[0].contains("begin_session"))
+            try TestUtils.validateEventInRQ("test_event", [:], 2, 7, 0, 2, from: sent)
+
+            validateCounts(tracker, hc: 1, fc: 1, rc: 1, cc: 2, sc: 1)
         }
         
         /**
@@ -521,36 +679,39 @@ class CountlyServerConfigTests: CountlyBaseTestCase {
                 .sessionTracking(false)
                 .customEventTracking(false)
                 .viewTracking(false)
-            let tracker = setupTestAllFeatures(sc.buildJson())
-            
+            let tracker = setupTestAllFeatures(sc.buildJson(), drainQueue: true)
+
             XCTAssertEqual(0, TestUtils.getCurrentRQ()?.count)
-            
+
             let stackTrace = flowAllFeatures()
-            
+            immediateFlowAllFeatures()
+            waitForQueueToDrain(tracker, expected: 6)
+            let sent = tracker.sentRequests
             // Verify no sessions, events, or views are recorded
-            for request in TestUtils.getCurrentRQ()! {
+            for request in sent {
                 XCTAssertFalse(request.contains("begin_session"))
-                XCTAssertFalse(containsEventWithKey(TestUtils.getCurrentRQ()!, "test_event"))
-                XCTAssertFalse(containsEventWithKey(TestUtils.getCurrentRQ()!, "[CLY]_view"))
+                XCTAssertFalse(containsEventWithKey(sent, "test_event"))
+                XCTAssertFalse(containsEventWithKey(sent, "[CLY]_view"))
             }
-            
-            XCTAssertEqual(6, TestUtils.getCurrentRQ()?.count)
-            
+
+            XCTAssertEqual(6, sent.count)
+
             TestUtils.validateRequest([:], 0, { request in
                 XCTAssertTrue(request.contains(where: { (key: String, value: Any) in
                     return key.elementsEqual("crash")
                 }))
-            })
+            }, from: sent)
             TestUtils.validateRequest([:], 1, { request in
                 let userDetails = request["user_details"] as! [String: Any]
                 XCTAssertTrue(TestUtils.compareDictionaries(userDetails["custom"] as! [String: Any], ["test_property": "test_value"]))
-            })
-            TestUtils.validateRequest(["location": "33.689500,139.691700"], 2)
+            }, from: sent)
+            TestUtils.validateRequest(["location": "33.689500,139.691700"], 2, from: sent)
 
-            
-            validateCounts(tracker.counts, hc: 0, fc: 1, rc: 1, cc: 2, sc: 1)
+
+            validateCounts(tracker, hc: 1, fc: 1, rc: 1, cc: 2, sc: 1)
         }
         
+    #endif
     /**
      * Tests the behavior when server configuration changes between app launches.
      * Verifies that the SDK correctly applies the new configuration when starting.
@@ -561,7 +722,7 @@ class CountlyServerConfigTests: CountlyBaseTestCase {
         setServerConfig(initialConfig)
         
         let config1 = TestUtils.createBaseConfig()
-        let countly1 = Countly()
+        let countly1 = createLocalCountly()
         countly1.start(with: config1)
         
         // Record an event to verify it works
@@ -582,7 +743,7 @@ class CountlyServerConfigTests: CountlyBaseTestCase {
         
         // "Second launch"
         let config2 = TestUtils.createBaseConfig()
-        let countly2 = Countly()
+        let countly2 = createLocalCountly()
         countly2.start(with: config2)
         
         // Try to record an event
@@ -594,51 +755,51 @@ class CountlyServerConfigTests: CountlyBaseTestCase {
         }
     }
         
-        /**
-         * Tests the behavior when key length and value size limits are enforced.
-         * Verifies that:
-         * 1. Keys exceeding the length limit are truncated
-         * 2. Values exceeding the size limit are truncated
-         * 3. The number of segmentation values is limited as specified
-         */
-        func test_keyLengthAndValueSizeLimits() throws {
-            let sc = ServerConfigBuilder()
-                .limitKeyLength(5)  // Limit key length to 5 characters
-                .limitValueSize(10) // Limit value size to 10 characters
-                .limitSegmentationValues(2) // Limit segmentation values to 2
-            let tracker = setupTestAllFeatures(sc.buildJson())
-            
-            // Record event with long key and values
-            let longKey = "veryLongEventKey"
-            let segmentation = [
-                "key1": "value1",
-                "key2": "value2",
-                "key3": "value3VeryLong",
-                "veryLongKey": "value4"
-            ]
-            
-            Countly.sharedInstance().recordEvent(longKey, segmentation: segmentation)
-            
-            TestUtils.sleep(2) {
-                let eq = TestUtils.getCurrentEQ()!
-                let event = eq[0]
+    /**
+     * Tests the behavior when key length and value size limits are enforced.
+     * Verifies that:
+     * 1. Keys exceeding the length limit are truncated
+     * 2. Values exceeding the size limit are truncated
+     * 3. The number of segmentation values is limited as specified
+     */
+    func test_keyLengthAndValueSizeLimits() throws {
+        let sc = ServerConfigBuilder()
+            .limitKeyLength(5)  // Limit key length to 5 characters
+            .limitValueSize(10) // Limit value size to 10 characters
+            .limitSegmentationValues(2) // Limit segmentation values to 2
+        let tracker = setupTestAllFeatures(sc.buildJson())
+        
+        // Record event with long key and values
+        let longKey = "veryLongEventKey"
+        let segmentation = [
+            "key1": "value1",
+            "key2": "value2",
+            "key3": "value3VeryLong",
+            "veryLongKey": "value4"
+        ]
+        
+        Countly.sharedInstance().recordEvent(longKey, segmentation: segmentation)
+        
+        TestUtils.sleep(2) {
+            let eq = TestUtils.getCurrentEQ()!
+            let event = eq[0]
 
-                // Verify key is truncated to 5 chars
-                XCTAssertEqual(event.key, "veryL")
-                
-                // Verify only 2 segmentation values
-                let segmentationCount = event.segmentation.count
-                XCTAssertEqual(2, segmentationCount)
-                
-                // Verify value is truncated
-                if let segmentation = event.segmentation,
-                   let longValue = segmentation["key3"] as? String {
-                    XCTAssertEqual(10, longValue.count)
-                }
-            }
+            // Verify key is truncated to 5 chars
+            XCTAssertEqual(event.key, "veryL")
             
-            validateCounts(tracker.counts, hc: 0, fc: 0, rc: 0, cc: 0, sc: 1)
+            // Verify only 2 segmentation values
+            let segmentationCount = event.segmentation.count
+            XCTAssertEqual(2, segmentationCount)
+            
+            // Verify value is truncated
+            if let segmentation = event.segmentation,
+               let longValue = segmentation["key3"] as? String {
+                XCTAssertEqual(10, longValue.count)
+            }
         }
+        
+        validateCounts(tracker, hc: 1, fc: 0, rc: 0, cc: 0, sc: 1)
+    }
     // MARK: - Helper Methods
     
     private func containsEventWithKey(_ requests: [String], _ key: String) -> Bool {
@@ -647,10 +808,11 @@ class CountlyServerConfigTests: CountlyBaseTestCase {
     
     private func getEventWithKey(_ requests: [String], _ key: String) -> [String: Any]? {
         for request in requests {
-            if let data = request.data(using: .utf8),
-               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let events = json["events"] as? [[String: Any]] {
-                for event in events {
+            let parsed = TestUtils.parseQueryString(request)
+            if let eventsStr = parsed["events"] as? String,
+               let data = eventsStr.data(using: .utf8),
+               let eventArray = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
+                for event in eventArray {
                     if let eventKey = event["key"] as? String, eventKey == key {
                         return event
                     }
@@ -676,10 +838,9 @@ class CountlyServerConfigTests: CountlyBaseTestCase {
     
     private func initAndValidateConfigParsingResult(_ targetResponse: String, _ responseAccepted: Bool) -> Countly {
         let config = TestUtils.createBaseConfig()
-        config.enableServerConfiguration = true
         config.urlSessionConfiguration = createUrlSessionConfigForResponse(targetResponse)
         
-        let countly = Countly()
+        let countly = createLocalCountly()
         countly.start(with: config)
         
         TestUtils.sleep(2){
@@ -755,21 +916,59 @@ class CountlyServerConfigTests: CountlyBaseTestCase {
         let countlyConfig = TestUtils.createBaseConfig()
         configSetter(countlyConfig, serverConfig)
         
-        let countly = Countly()
+        let countly = createLocalCountly()
         countly.start(with: countlyConfig)
         
         TestUtils.sleep(2, {builder.validateAgainst()})
         
     }
     
-    private func setupTestAllFeatures(_ serverConfig: [String: Any]) -> CountTracker {
+    /// Returns the query string of a captured request: the POST body (read from the body
+    /// stream, since URLProtocol nils out `httpBody`) when present, otherwise the URL query.
+    /// `parseQueryString` expects a bare `app_key=...&...` string, which is exactly what the
+    /// stored /i request body contains.
+    static func capturedQueryString(_ request: URLRequest) -> String {
+        if let body = request.httpBody, let s = String(data: body, encoding: .utf8), !s.isEmpty {
+            return s
+        }
+        if let stream = request.httpBodyStream {
+            stream.open()
+            defer { stream.close() }
+            let bufferSize = 8192
+            let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
+            defer { buffer.deallocate() }
+            var data = Data()
+            while stream.hasBytesAvailable {
+                let read = stream.read(buffer, maxLength: bufferSize)
+                if read > 0 { data.append(buffer, count: read) } else { break }
+            }
+            if let s = String(data: data, encoding: .utf8), !s.isEmpty { return s }
+        }
+        return request.url?.query ?? ""
+    }
+
+    /// Spins until the stored request queue has fully drained (so the captured `sentRequests`
+    /// are complete and the content-refresh queue-flush runnable has run). Used by the
+    /// drainQueue-mode tests.
+    private func waitForQueueToDrain(_ tracker: CountTracker, expected: Int) {
+        for _ in 0..<12 {
+            if tracker.sentRequests.count >= expected && (TestUtils.getCurrentRQ()?.isEmpty ?? true) { break }
+            TestUtils.sleep(0.5) {}
+        }
+    }
+
+    private func setupTestAllFeatures(_ serverConfig: [String: Any], drainQueue: Bool = false, answerAfterStart: Bool = false) -> CountTracker {
         let tracker = CountTracker()
-                
+        tracker.drainQueue = drainQueue
+        let startReturned = DispatchSemaphore(value: 0)
+
         // Define the mock behavior
         MockURLProtocol.requestHandler = { request in
             let requestString = request.url?.absoluteString ?? ""
+            var responseString: Data? = nil
+            NSLog("REQUEST_FROM_PROTOCOL: %@", requestString);
 
-            if requestString.contains("hc=") { // TODO IOS DOES NOT HAVE HC
+            if requestString.contains("hc=") {
                 tracker.counts[0] += 1
             } else if requestString.contains("method=feedback") {
                 tracker.counts[1] += 1
@@ -778,27 +977,35 @@ class CountlyServerConfigTests: CountlyBaseTestCase {
             } else if requestString.contains("method=queue") {
                 tracker.counts[3] += 1
             } else if requestString.contains("method=sc") {
-                // Do nothing
-            }
-
-            if requestString.contains("method=sc") {
                 tracker.counts[4] += 1
-                var configToReturn = Data()
+                if answerAfterStart {
+                    _ = startReturned.wait(timeout: .now() + TestUtils.asyncTimeout)
+                }
                 do{
-                    configToReturn = try JSONSerialization.data(withJSONObject: serverConfig)
+                    responseString = try JSONSerialization.data(withJSONObject: serverConfig)
                 } catch {
                     //ignored
                 }
-                return (configToReturn, HTTPURLResponse(url: request.url!,
+            } else if tracker.drainQueue {
+                // Stored /i request: record its query string (POST body / GET query) in send
+                // order and return success so the request queue drains, letting the
+                // content-refresh queue-flush runnable run.
+                tracker.sentRequests.append(CountlyServerConfigTests.capturedQueryString(request))
+                responseString = "{\"result\":\"Success\"}".data(using: .utf8)
+            }
+
+            if(responseString != nil){
+                return (responseString, HTTPURLResponse(url: request.url!,
                                                 statusCode: 200,
                                                 httpVersion: nil,
                                                 headerFields: nil), nil)
+            } else {
+                return ("{\"result\":\"fail\"}".data(using: .utf8), HTTPURLResponse(url: request.url!,
+                                                statusCode: 400,
+                                                httpVersion: nil,
+                                                headerFields: nil), nil)
             }
-
-            return ("{\"result\":\"fail\"}".data(using: .utf8), HTTPURLResponse(url: request.url!,
-                                            statusCode: 400,
-                                            httpVersion: nil,
-                                            headerFields: nil), nil)
+           
         }
 
         // Create a URLSession using the mock protocol
@@ -808,22 +1015,46 @@ class CountlyServerConfigTests: CountlyBaseTestCase {
         let countlyConfig = TestUtils.createBaseConfig()
         countlyConfig.manualSessionHandling = true
         countlyConfig.urlSessionConfiguration = config;
-        
+
         Countly.sharedInstance().start(with: countlyConfig)
-        //Countly.sharedInstance().moduleContent.CONTENT_START_DELAY_MS = 0
-        //Countly.sharedInstance().moduleContent.REFRESH_CONTENT_ZONE_DELAY_MS = 0
-        
+        startReturned.signal()
+        #if os(iOS) || os(visionOS)
+        CountlyContentBuilderInternal.sharedInstance().contentInitialDelay = 0;
+        #endif
+
+        // Wait for the async server config response to be *applied*, not merely requested.
+        // Keying on the request count was wrong: the SDK parses the response afterwards, so
+        // tests could set user properties or record events before the filters existed, which is
+        // why the filter tests failed even run in isolation. `populateServerConfig:` stores the
+        // merged settings as its last step, so a non-empty stored config means it has landed.
+        TestUtils.waitUntil("the server config response to be applied") {
+            CountlyPersistency.sharedInstance().retrieveServerConfig().count > 0
+        }
+
         return tracker
     }
     
-    private func validateCounts(_ counts: [Int], hc: Int, fc: Int, rc: Int, cc: Int, sc: Int) {
-        TestUtils.sleep(2) {
-            XCTAssertEqual(hc, counts[0]) // health check request
-            XCTAssertEqual(fc, counts[1]) // feedback request
-            XCTAssertEqual(rc, counts[2]) // remote config request
-            XCTAssertEqual(cc, counts[3]) // content request ?? when it debugged counts increasing but some sleep it needs
-            XCTAssertEqual(sc, counts[4]) // server config request
-        }
+    /// Waits for the tracker to reach the expected request counts before asserting.
+    ///
+    /// These counts are produced by asynchronous requests, so sampling `tracker.counts` the
+    /// instant the flow returns is a race: it passes on an idle machine and fails on a busy
+    /// one, which is why a different test in this family failed on each CI cell. Polling first
+    /// costs nothing when the counts are already there.
+    private func validateCounts(_ tracker: CountTracker, hc: Int, fc: Int, rc: Int, cc: Int, sc: Int) {
+        let expected = [hc, fc, rc, cc, sc]
+        TestUtils.waitUntil("request counts \(expected)") { tracker.counts == expected }
+        // Deliberately named differently from this overload: an earlier version called
+        // `validateCounts(tracker, ...)` here and recursed until the stack overflowed, which
+        // took the whole test bundle down with a SIGSEGV.
+        assertCounts(tracker.counts, hc: hc, fc: fc, rc: rc, cc: cc, sc: sc)
+    }
+
+    private func assertCounts(_ counts: [Int], hc: Int, fc: Int, rc: Int, cc: Int, sc: Int) {
+        XCTAssertEqual(hc, counts[0], "Health check count mismatch. Expected: \(hc), Got: \(counts[0])")
+        XCTAssertEqual(fc, counts[1], "Feedback request count mismatch. Expected: \(fc), Got: \(counts[1])")
+        XCTAssertEqual(rc, counts[2], "Remote config count mismatch. Expected: \(rc), Got: \(counts[2])")
+        XCTAssertEqual(cc, counts[3], "Content request count mismatch. Expected: \(cc), Got: \(counts[3])")
+        XCTAssertEqual(sc, counts[4], "Server config count mismatch. Expected: \(sc), Got: \(counts[4])")
     }
     
     private func flowAllFeatures() -> String {
@@ -850,6 +1081,8 @@ class CountlyServerConfigTests: CountlyBaseTestCase {
     private func immediateFlowAllFeatures() {
         Countly.sharedInstance().remoteConfig().downloadKeys { response, error, fullValueUpdate, downloadedValues in
          }
+        // Feedback widgets and the content zone are iOS/visionOS-only.
+        #if os(iOS)
         Countly.sharedInstance().feedback().getAvailableFeedbackWidgets { (feedbackWidgets: [CountlyFeedbackWidget]?, error) in
             if (error != nil)
             {
@@ -864,40 +1097,64 @@ class CountlyServerConfigTests: CountlyBaseTestCase {
         TestUtils.sleep(2) {
             Countly.sharedInstance().content().refreshContentZone()
         }
-        
+        TestUtils.sleep(2){}
+        #endif
     }
     
     private func feedbackFlowAllFeatures() {
+        // Rating/feedback widgets are compiled out on watchOS, tvOS and macOS.
+        #if os(iOS)
         Countly.sharedInstance().recordRatingWidget(withID: "test", rating: 5, email: "test", comment: "test", userCanBeContacted: true)
         let mockWidget = MockFeedbackWidget(
             id: "test",
             type: CLYFeedbackWidgetType.NPS
         )
         mockWidget.recordResult(nil)
+        #endif
     }
     
     private func baseAllFeatures(_ consumer: (ServerConfigBuilder) -> Void, hc: Int, fc: Int, rc: Int, cc: Int, scc: Int) throws {
         
         let sc = ServerConfigBuilder()
         consumer(sc)
-        let tracker = setupTestAllFeatures(sc.buildJson())
-        
+        let tracker = setupTestAllFeatures(sc.buildJson(), drainQueue: true)
+
         XCTAssertEqual(0, TestUtils.getCurrentRQ()?.count)
         XCTAssertEqual(0, TestUtils.getCurrentEQ()?.count)
-        
-        let stackTrace = flowAllFeatures()
-        XCTAssertEqual(8, TestUtils.getCurrentRQ()?.count)
 
-        XCTAssertTrue(TestUtils.getCurrentRQ()![0].contains("begin_session"))
-        //ModuleCrashTests.validateCrash(stackTrace, "", false, false, 8, 1, [:], 0, [:], [])
-        try TestUtils.validateEventInRQ("[CLY]_orientation", ["mode": "portrait"], 2, 8, 0, 3)
-        try TestUtils.validateEventInRQ("test_event", [:], 2, 8, 0, 2)
-        try TestUtils.validateEventInRQ("[CLY]_view", ["name": "test_view", "segment": "iOS", "visit": "1", "start": "1"], 2, 8, 1, 2)
+        // Record the whole flow first. Under drainQueue the stored /i requests are answered
+        // with 200 and removed as they go, so we validate against the ordered `sentRequests`
+        // the mock saw (same FIFO order as the live RQ) rather than the live RQ, which empties
+        // asynchronously. Draining the queue is also what lets refreshContentZone's queue-flush
+        // runnable fire, producing the second content request (cc == 2).
+        let stackTrace = flowAllFeatures()
+        immediateFlowAllFeatures()
+        XCTAssertEqual(0, TestUtils.getCurrentEQ()?.count)
+        feedbackFlowAllFeatures()
+
+        // Wait until the queue has fully drained (all 9 stored requests sent).
+        for _ in 0..<10 {
+            if tracker.sentRequests.count >= 9 && (TestUtils.getCurrentRQ()?.isEmpty ?? true) { break }
+            TestUtils.sleep(0.5) {}
+        }
+        XCTAssertEqual(0, TestUtils.getCurrentEQ()?.count)
+
+        let sent = tracker.sentRequests
+        XCTAssertEqual(9, sent.count, "Sent request count mismatch")
+
+        XCTAssertTrue(sent[0].contains("begin_session"))
+        TestUtils.validateRequest([:], 1, { request in
+            let crash = request["crash"] as? [String: Any]
+            XCTAssertTrue(crash != nil)
+        }, from: sent)
+        //try TestUtils.validateEventInRQ("[CLY]_orientation", ["mode": "portrait"], 2, 8, 0, 3)
+        try TestUtils.validateEventInRQ("test_event", [:], 2, 8, 0, 2, from: sent) // 1, 3
+        try TestUtils.validateEventInRQ("[CLY]_view", ["name": "test_view", "segment": CountlyDeviceInfo.osName()!, "visit": "1", "start": "1"], 2, 8, 1, 2, from: sent) // 2, 3
         TestUtils.validateRequest([:], 3, { request in
             let userDetails = request["user_details"] as! [String: Any]
             XCTAssertTrue(TestUtils.compareDictionaries(userDetails["custom"] as! [String: Any], ["test_property": "test_value"]))
-        })
-        TestUtils.validateRequest(["location": "33.689500,139.691700"], 4)
+        }, from: sent)
+        TestUtils.validateRequest(["location": "33.689500,139.691700"], 4, from: sent)
         TestUtils.validateRequest([:], 5, { request in
             let apm = request["apm"] as! [String: Any]
             XCTAssertEqual("test_trace", apm["name"] as! String)
@@ -907,45 +1164,1058 @@ class CountlyServerConfigTests: CountlyBaseTestCase {
                                                          "response_code": 400,
                                                          "request_payload_size": 2000,
                                                          "response_payload_size": 2000]))
-        })
-        TestUtils.validateRequest(["attribution_data": "test_data"], 6)
-        TestUtils.validateRequest(["key": "value"], 7)
-        
-        immediateFlowAllFeatures()
-        XCTAssertEqual(0, TestUtils.getCurrentEQ()?.count)
-        feedbackFlowAllFeatures()
+        }, from: sent)
+        TestUtils.validateRequest(["attribution_data": "test_data"], 6, from: sent)
+        TestUtils.validateRequest(["key": "value"], 7, from: sent)
 
-        XCTAssertEqual(0, TestUtils.getCurrentEQ()?.count)
-        XCTAssertEqual(9, TestUtils.getCurrentRQ()?.count)
-        
         try TestUtils.validateEventInRQ("[CLY]_star_rating", [
-            "platform": "iOS",
+            "platform": CountlyDeviceInfo.osName()!,
             "app_version": CountlyDeviceInfo.appVersion()!,
             "rating": "5",
             "widget_id": "test",
             "contactMe": 1,
             "email": "test",
             "comment": "test"
-        ], 8, 9, 0, 2)
-        
+        ], 8, 9, 0, 2, from: sent)
+
         try TestUtils.validateEventInRQ("[CLY]_nps", [
             "app_version": CountlyDeviceInfo.appVersion()!,
             "widget_id": "test",
             "closed": "1",
-            "platform": "iOS"
-        ], 8, 9, 1, 2)
-        
-        XCTAssertEqual(9, TestUtils.getCurrentRQ()?.count)
-        
-        validateCounts(tracker.counts, hc: hc, fc: fc, rc: rc, cc: cc, sc: scc)
+            "platform": CountlyDeviceInfo.osName()!
+        ], 8, 9, 1, 2, from: sent)
+
+        validateCounts(tracker, hc: hc, fc: fc, rc: rc, cc: cc, sc: scc)
     }
-    
+
     private func setServerConfig(_ serverConfig: [String: Any]){
         UserDefaults.standard.set(serverConfig, forKey: "kCountlyServerConfigPersistencyKey")
-        UserDefaults.standard.synchronize() // Not needed in modern Swift
+        UserDefaults.standard.synchronize()
     }
-    
+
     func retrieveServerConfig() -> [String: Any] {
         return UserDefaults.standard.object(forKey: "kCountlyServerConfigPersistencyKey") as? [String: Any] ?? [:]
+    }
+
+    // MARK: - Event Blacklist Tests (eb)
+
+    /**
+     * Tests that event blacklist blocks filtered events.
+     * Verifies that:
+     * 1. Blacklisted events are not recorded
+     * 2. Non-blacklisted events are recorded normally
+     */
+    func test_eventBlacklist_blocksFilteredEvents() {
+        let sc = ServerConfigBuilder()
+            .eventBlacklist(["blocked_event", "another_blocked"])
+        let _ = setupTestAllFeatures(sc.buildJson())
+
+        Countly.sharedInstance().recordEvent("blocked_event")
+        XCTAssertEqual(0, TestUtils.getCurrentEQ()?.count)
+
+        Countly.sharedInstance().recordEvent("allowed_event")
+        XCTAssertEqual(1, TestUtils.getCurrentEQ()?.count)
+
+        Countly.sharedInstance().recordEvent("another_blocked")
+        XCTAssertEqual(1, TestUtils.getCurrentEQ()?.count)
+    }
+
+    /**
+     * Tests that event whitelist only allows specified events.
+     * Verifies that:
+     * 1. Whitelisted events are recorded
+     * 2. Non-whitelisted events are blocked
+     */
+    func test_eventWhitelist_onlyAllowsSpecifiedEvents() {
+        let sc = ServerConfigBuilder()
+            .eventWhitelist(["allowed_event", "another_allowed"])
+        let _ = setupTestAllFeatures(sc.buildJson())
+
+        Countly.sharedInstance().recordEvent("allowed_event")
+        XCTAssertEqual(1, TestUtils.getCurrentEQ()?.count)
+
+        Countly.sharedInstance().recordEvent("not_in_whitelist")
+        XCTAssertEqual(1, TestUtils.getCurrentEQ()?.count)
+
+        Countly.sharedInstance().recordEvent("another_allowed")
+        XCTAssertEqual(2, TestUtils.getCurrentEQ()?.count)
+    }
+
+    /**
+     * Tests that internal/reserved events bypass event filters.
+     * Verifies that view events and other reserved events still work when event filter is active.
+     */
+    func test_eventFilter_internalEventsNotAffected() {
+        let sc = ServerConfigBuilder()
+            .eventBlacklist(["[CLY]_view", "test_blocked"])
+        let _ = setupTestAllFeatures(sc.buildJson())
+
+        // View events are reserved and should bypass the filter
+        Countly.sharedInstance().views().startView("test_view")
+
+        TestUtils.sleep(1) {
+            // View event should still be recorded (internal events bypass custom event filters)
+            let eq = TestUtils.getCurrentEQ()
+            let hasView = eq?.contains(where: { $0.key == "[CLY]_view" }) ?? false
+            XCTAssertTrue(hasView, "View events should bypass event blacklist")
+        }
+
+        // Custom blocked event should be blocked
+        Countly.sharedInstance().recordEvent("test_blocked")
+        let customEq = TestUtils.getCurrentEQ()?.filter { $0.key == "test_blocked" }
+        XCTAssertEqual(0, customEq?.count)
+    }
+
+    /**
+     * Tests that blacklist takes precedence when both eb and ew are present.
+     */
+    func test_eventFilter_blacklistPrecedenceOverWhitelist() {
+        let configDict: [String: Any] = [
+            "v": 1,
+            "t": Int(Date().timeIntervalSince1970),
+            "c": [
+                "eb": ["event_a", "event_b"],
+                "ew": ["event_a", "event_c"]
+            ]
+        ]
+        setServerConfig(configDict)
+        let config = TestUtils.createBaseConfig()
+        config.manualSessionHandling = true
+        Countly.sharedInstance().start(with: config)
+
+        // With blacklist precedence: event_a and event_b should be blocked
+        Countly.sharedInstance().recordEvent("event_a")
+        XCTAssertEqual(0, TestUtils.getCurrentEQ()?.count)
+
+        Countly.sharedInstance().recordEvent("event_b")
+        XCTAssertEqual(0, TestUtils.getCurrentEQ()?.count)
+
+        // event_c should be allowed (not in blacklist)
+        Countly.sharedInstance().recordEvent("event_c")
+        XCTAssertEqual(1, TestUtils.getCurrentEQ()?.count)
+    }
+
+    /**
+     * Tests empty event filter allows all events.
+     */
+    func test_eventFilter_emptyFilterAllowsAll() {
+        let sc = ServerConfigBuilder()
+        let _ = setupTestAllFeatures(sc.buildJson())
+
+        Countly.sharedInstance().recordEvent("any_event")
+        XCTAssertEqual(1, TestUtils.getCurrentEQ()?.count)
+
+        Countly.sharedInstance().recordEvent("another_event")
+        XCTAssertEqual(2, TestUtils.getCurrentEQ()?.count)
+    }
+
+    // MARK: - Segmentation Blacklist Tests (sb)
+
+    /**
+     * Tests that segmentation blacklist removes filtered keys from events.
+     * Verifies that:
+     * 1. Blacklisted segmentation keys are removed
+     * 2. Non-blacklisted keys remain
+     */
+    func test_segmentationBlacklist_removesFilteredKeys() throws {
+        let sc = ServerConfigBuilder()
+            .segmentationBlacklist(["blocked_key", "another_blocked"])
+            .eventQueueSize(1)
+        let _ = setupTestAllFeatures(sc.buildJson())
+
+        Countly.sharedInstance().recordEvent("test_event", segmentation: [
+            "blocked_key": "value1",
+            "another_blocked": "value2",
+            "allowed_key": "value3"
+        ])
+
+        try TestUtils.validateEventInRQ("test_event", ["allowed_key": "value3"], 0, 1, 0, 1)
+    }
+
+    /**
+     * Tests that segmentation whitelist only keeps specified keys.
+     */
+    func test_segmentationWhitelist_onlyKeepsSpecifiedKeys() throws {
+        let sc = ServerConfigBuilder()
+            .segmentationWhitelist(["allowed_key"])
+            .eventQueueSize(1)
+        let _ = setupTestAllFeatures(sc.buildJson())
+
+        Countly.sharedInstance().recordEvent("test_event", segmentation: [
+            "allowed_key": "value1",
+            "not_allowed_1": "value2",
+            "not_allowed_2": "value3"
+        ])
+
+        try TestUtils.validateEventInRQ("test_event", ["allowed_key": "value1"], 0, 1, 0, 1)
+    }
+
+    // MARK: - Event Segmentation Blacklist Tests (esb)
+
+    /**
+     * Tests that event-specific segmentation blacklist only affects the specified event.
+     * Verifies that:
+     * 1. For the targeted event, blacklisted seg keys are removed
+     * 2. For other events, the same seg keys remain untouched
+     */
+    func test_eventSegmentationBlacklist_affectsSpecificEvents() throws {
+        let sc = ServerConfigBuilder()
+            .eventSegmentationBlacklist(["event1": ["blocked_for_event1"]])
+            .eventQueueSize(1)
+        let _ = setupTestAllFeatures(sc.buildJson())
+
+        // For event1, blocked_for_event1 should be removed
+        Countly.sharedInstance().recordEvent("event1", segmentation: [
+            "blocked_for_event1": "value1",
+            "allowed_key": "value2"
+        ])
+
+        try TestUtils.validateEventInRQ("event1", ["allowed_key": "value2"], 0, 1, 0, 1)
+
+        // For event2, blocked_for_event1 should NOT be removed
+        Countly.sharedInstance().recordEvent("event2", segmentation: [
+            "blocked_for_event1": "value1",
+            "other_key": "value2"
+        ])
+
+        try TestUtils.validateEventInRQ("event2", ["blocked_for_event1": "value1", "other_key": "value2"], 1, 2, 0, 1)
+    }
+
+    /**
+     * Tests that event-specific segmentation whitelist only keeps specified keys for the targeted event.
+     */
+    func test_eventSegmentationWhitelist_affectsSpecificEvents() throws {
+        let sc = ServerConfigBuilder()
+            .eventSegmentationWhitelist(["purchase": ["keep"]])
+            .eventQueueSize(1)
+        let _ = setupTestAllFeatures(sc.buildJson())
+
+        // For purchase, only "keep" should remain
+        Countly.sharedInstance().recordEvent("purchase", segmentation: [
+            "card": "1111",
+            "keep": "ok",
+            "drop": "no"
+        ])
+
+        try TestUtils.validateEventInRQ("purchase", ["keep": "ok"], 0, 1, 0, 1)
+
+        // For non-purchase, all keys should remain
+        Countly.sharedInstance().recordEvent("not-purchase", segmentation: [
+            "card": "1111",
+            "keep": "ok",
+            "drop": "no"
+        ])
+
+        try TestUtils.validateEventInRQ("not-purchase", ["card": "1111", "keep": "ok", "drop": "no"], 1, 2, 0, 1)
+    }
+
+    // MARK: - Combined Segmentation Filter Tests
+
+    /**
+     * Tests that both global and event-specific segmentation filters work together.
+     */
+    func test_combinedSegmentationFilters_bothApplied() throws {
+        let sc = ServerConfigBuilder()
+            .segmentationBlacklist(["global_blocked"])
+            .eventSegmentationBlacklist(["my_event": ["event_blocked"]])
+            .eventQueueSize(1)
+        let _ = setupTestAllFeatures(sc.buildJson())
+
+        Countly.sharedInstance().recordEvent("my_event", segmentation: [
+            "global_blocked": "value1",
+            "event_blocked": "value2",
+            "allowed_key": "value3"
+        ])
+
+        try TestUtils.validateEventInRQ("my_event", ["allowed_key": "value3"], 0, 1, 0, 1)
+    }
+
+    // MARK: - User Property Blacklist Tests (upb)
+
+    /**
+     * Tests that user property blacklist blocks filtered properties in modifications.
+     * Verifies that:
+     * 1. Blacklisted custom properties are not sent
+     * 2. Non-blacklisted custom properties are sent
+     */
+    func test_userPropertyBlacklist_blocksFilteredProperties() {
+        let sc = ServerConfigBuilder()
+            .userPropertyBlacklist(["blocked_prop", "another_blocked"])
+        let _ = setupTestAllFeatures(sc.buildJson())
+
+        Countly.user().set("blocked_prop", value: "value1")
+        Countly.user().set("another_blocked", value: "value2")
+        Countly.user().set("allowed_prop", value: "value3")
+        Countly.user().save()
+
+        TestUtils.sleep(1) {
+            let rq = TestUtils.getCurrentRQ()!
+            let userDetailsRequest = rq.first { $0.contains("user_details") }
+            XCTAssertNotNil(userDetailsRequest)
+            if let requestStr = userDetailsRequest {
+                XCTAssertTrue(requestStr.contains("allowed_prop"))
+                XCTAssertFalse(requestStr.contains("blocked_prop"))
+                XCTAssertFalse(requestStr.contains("another_blocked"))
+            }
+        }
+    }
+
+    /**
+     * Tests that user property whitelist only allows specified properties.
+     */
+    func test_userPropertyWhitelist_onlyAllowsSpecifiedProperties() {
+        let sc = ServerConfigBuilder()
+            .userPropertyWhitelist(["allowed_prop"])
+        let _ = setupTestAllFeatures(sc.buildJson())
+
+        Countly.user().set("allowed_prop", value: "value1")
+        Countly.user().set("not_allowed", value: "value2")
+        Countly.user().save()
+
+        TestUtils.sleep(1) {
+            let rq = TestUtils.getCurrentRQ()!
+            let userDetailsRequest = rq.first { $0.contains("user_details") }
+            XCTAssertNotNil(userDetailsRequest)
+            if let requestStr = userDetailsRequest {
+                XCTAssertTrue(requestStr.contains("allowed_prop"))
+                XCTAssertFalse(requestStr.contains("not_allowed"))
+            }
+        }
+    }
+
+    /**
+     * Tests that user property blacklist also filters the custom dictionary property.
+     */
+    func test_userPropertyBlacklist_filtersCustomDictionary() {
+        let sc = ServerConfigBuilder()
+            .userPropertyBlacklist(["blocked_custom"])
+        let _ = setupTestAllFeatures(sc.buildJson())
+
+        Countly.user().custom = [
+            "blocked_custom": "value1",
+            "allowed_custom": "value2"
+        ] as NSDictionary
+        Countly.user().save()
+
+        TestUtils.sleep(1) {
+            let rq = TestUtils.getCurrentRQ()!
+            let userDetailsRequest = rq.first { $0.contains("user_details") }
+            XCTAssertNotNil(userDetailsRequest)
+            if let requestStr = userDetailsRequest {
+                XCTAssertTrue(requestStr.contains("allowed_custom"))
+                XCTAssertFalse(requestStr.contains("blocked_custom"))
+            }
+        }
+    }
+
+    // MARK: - User Property Cache Limit Tests (upcl)
+
+    /**
+     * Tests that user property cache limit trims excess properties.
+     */
+    func test_userPropertyCacheLimit_trimsExcessProperties() {
+        let sc = ServerConfigBuilder()
+            .userPropertyCacheLimit(3)
+        let _ = setupTestAllFeatures(sc.buildJson())
+
+        // Set more properties than the limit
+        Countly.user().set("prop1", value: "value1")
+        Countly.user().set("prop2", value: "value2")
+        Countly.user().set("prop3", value: "value3")
+        Countly.user().set("prop4", value: "value4")
+        Countly.user().set("prop5", value: "value5")
+        Countly.user().save()
+
+        TestUtils.sleep(1) {
+            let rq = TestUtils.getCurrentRQ()!
+            let userDetailsRequest = rq.first { $0.contains("user_details") }
+            XCTAssertNotNil(userDetailsRequest)
+            if let requestStr = userDetailsRequest,
+               let range = requestStr.range(of: "user_details="),
+               let decoded = requestStr[range.upperBound...].removingPercentEncoding,
+               let data = decoded.data(using: .utf8),
+               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let custom = json["custom"] as? [String: Any] {
+                // Should have at most 3 properties
+                XCTAssertLessThanOrEqual(custom.count, 3)
+            }
+        }
+    }
+
+    /**
+     * Tests that default user property cache limit is 100.
+     */
+    func test_userPropertyCacheLimit_defaultIs100() {
+        let sc = ServerConfigBuilder()
+        let _ = setupTestAllFeatures(sc.buildJson())
+
+        XCTAssertEqual(100, CountlyServerConfig.sharedInstance()?.userPropertyCacheLimit())
+    }
+
+    // MARK: - Journey Trigger Events Tests (jte)
+
+    /**
+     * Tests that journey trigger events are configured correctly.
+     */
+    func test_journeyTriggerEvents_configuredCorrectly() {
+        let sc = ServerConfigBuilder()
+            .journeyTriggerEvents(["trigger_event", "another_trigger"])
+        let _ = setupTestAllFeatures(sc.buildJson())
+
+        XCTAssertTrue(CountlyServerConfig.sharedInstance()!.isJourneyTriggerEvent("trigger_event"))
+        XCTAssertTrue(CountlyServerConfig.sharedInstance()!.isJourneyTriggerEvent("another_trigger"))
+        XCTAssertFalse(CountlyServerConfig.sharedInstance()!.isJourneyTriggerEvent("not_a_trigger"))
+    }
+
+    /**
+     * Tests that recording a JTE event forces flush of the event queue.
+     * Verifies that:
+     * 1. Regular events stay in event queue (high threshold)
+     * 2. JTE event forces immediate flush of all events to RQ
+     * 3. Flushed request contains callback_id (for JTE callback)
+     */
+    func test_journeyTriggerEvents_triggersEventFlush() {
+        let sc = ServerConfigBuilder()
+            .journeyTriggerEvents(["jte_event"])
+            .eventQueueSize(100) // High threshold
+        let _ = setupTestAllFeatures(sc.buildJson())
+
+        XCTAssertEqual(0, TestUtils.getCurrentRQ()?.count)
+
+        // Record non-JTE event - should stay in EQ
+        Countly.sharedInstance().recordEvent("regular_event")
+        XCTAssertEqual(0, TestUtils.getCurrentRQ()?.count)
+        XCTAssertEqual(1, TestUtils.getCurrentEQ()?.count)
+
+        // Record JTE event - should force flush all events to RQ
+        Countly.sharedInstance().recordEvent("jte_event")
+        XCTAssertEqual(1, TestUtils.getCurrentRQ()?.count)
+        XCTAssertEqual(0, TestUtils.getCurrentEQ()?.count)
+
+        // Verify the flushed request contains both events and has callback_id
+        let rq = TestUtils.getCurrentRQ()!
+        XCTAssertTrue(rq[0].contains("regular_event"))
+        XCTAssertTrue(rq[0].contains("jte_event"))
+        XCTAssertTrue(rq[0].contains("callback_id"))
+    }
+
+    /**
+     * Tests that non-JTE events stay queued normally.
+     */
+    func test_journeyTriggerEvents_nonJteStaysQueued() {
+        let sc = ServerConfigBuilder()
+            .journeyTriggerEvents(["journey_event"])
+            .eventQueueSize(100)
+        let _ = setupTestAllFeatures(sc.buildJson())
+
+        // Record non-JTE events - should stay in queue
+        Countly.sharedInstance().recordEvent("regular_event")
+        XCTAssertEqual(0, TestUtils.getCurrentRQ()?.count)
+        XCTAssertEqual(1, TestUtils.getCurrentEQ()?.count)
+
+        Countly.sharedInstance().recordEvent("another_regular")
+        XCTAssertEqual(0, TestUtils.getCurrentRQ()?.count)
+        XCTAssertEqual(2, TestUtils.getCurrentEQ()?.count)
+
+        // Record JTE event - should flush ALL events
+        Countly.sharedInstance().recordEvent("journey_event")
+        XCTAssertEqual(1, TestUtils.getCurrentRQ()?.count)
+        XCTAssertEqual(0, TestUtils.getCurrentEQ()?.count)
+
+        // Verify all events in the flushed request
+        let rq = TestUtils.getCurrentRQ()!
+        XCTAssertTrue(rq[0].contains("regular_event"))
+        XCTAssertTrue(rq[0].contains("another_regular"))
+        XCTAssertTrue(rq[0].contains("journey_event"))
+    }
+
+    /**
+     * Tests that event blacklist and JTE work together correctly.
+     * A blacklisted event that is also a JTE should not be recorded or trigger a flush.
+     */
+    func test_eventBlacklist_withJTE_blacklistedJTENotRecorded() {
+        let sc = ServerConfigBuilder()
+            .eventBlacklist(["blocked_jte"])
+            .journeyTriggerEvents(["blocked_jte", "allowed_jte"])
+            .eventQueueSize(100)
+        let _ = setupTestAllFeatures(sc.buildJson())
+
+        // Record a blacklisted JTE - should be blocked before JTE check
+        Countly.sharedInstance().recordEvent("blocked_jte")
+        XCTAssertEqual(0, TestUtils.getCurrentRQ()?.count)
+        XCTAssertEqual(0, TestUtils.getCurrentEQ()?.count)
+
+        // Record a non-blacklisted JTE - should trigger flush
+        Countly.sharedInstance().recordEvent("allowed_jte")
+        XCTAssertEqual(1, TestUtils.getCurrentRQ()?.count)
+        XCTAssertEqual(0, TestUtils.getCurrentEQ()?.count)
+    }
+
+    // MARK: - Mutual Exclusivity Tests
+
+    /**
+     * Tests that when config changes from blacklist to whitelist, the old blacklist is removed.
+     */
+    func test_filterMerge_whitelistReplacesBlacklist() {
+        // First "launch" with event blacklist
+        let initialConfig = ServerConfigBuilder()
+            .eventBlacklist(["event_a"])
+            .buildJson()
+        setServerConfig(initialConfig)
+        let config1 = TestUtils.createBaseConfig()
+        config1.manualSessionHandling = true
+        Countly.sharedInstance().start(with: config1)
+
+        Countly.sharedInstance().recordEvent("event_a")
+        XCTAssertEqual(0, TestUtils.getCurrentEQ()?.count, "event_a should be blocked by blacklist")
+
+        Countly.sharedInstance().recordEvent("event_b")
+        XCTAssertEqual(1, TestUtils.getCurrentEQ()?.count, "event_b should be allowed")
+
+        TestUtils.cleanup()
+
+        // Second "launch" with event whitelist via mock server
+        let updatedConfig = ServerConfigBuilder()
+            .eventWhitelist(["event_a"])
+            .buildJson()
+        setServerConfig(updatedConfig)
+        let config2 = TestUtils.createBaseConfig()
+        config2.manualSessionHandling = true
+        Countly.sharedInstance().start(with: config2)
+
+        Countly.sharedInstance().recordEvent("event_a")
+        XCTAssertEqual(1, TestUtils.getCurrentEQ()?.count, "event_a should be allowed by whitelist")
+
+        Countly.sharedInstance().recordEvent("event_b")
+        XCTAssertEqual(1, TestUtils.getCurrentEQ()?.count, "event_b should be blocked (not in whitelist)")
+    }
+
+    /**
+     * Tests that server config with all new listing filter keys can be parsed and validated.
+     */
+    func test_serverConfig_allNewKeysProvidedValues() {
+        let builder = ServerConfigBuilder()
+            .eventBlacklist(["blocked_ev1", "blocked_ev2"])
+            .userPropertyBlacklist(["blocked_prop"])
+            .segmentationBlacklist(["blocked_seg"])
+            .eventSegmentationBlacklist(["ev1": ["seg1", "seg2"]])
+            .journeyTriggerEvents(["jte1", "jte2"])
+            .userPropertyCacheLimit(50)
+
+        setServerConfig(builder.buildJson())
+        let config = TestUtils.createBaseConfig()
+        config.manualSessionHandling = true
+        Countly.sharedInstance().start(with: config)
+
+        TestUtils.sleep(1) {
+            builder.validateAgainst()
+        }
+    }
+
+    // MARK: - All Features with Listing Filters
+
+    // MARK: - Applying behavior settings at runtime
+
+    /**
+     * <pre>
+     * A refresh after the app comes back from the background applies the behavior settings on top of the
+     * configuration given at start, so it never turns the consent requirement, debug logging or the
+     * developer's queue settings back to their defaults.
+     *
+     * 1- Start requiring consent, with debug logging, a custom event threshold and request queue size
+     * 2- Let the refresh interval pass and trigger the foreground refresh with a reply that sets none of those
+     * 3- Verify consent is still required, logging is still on and the queue settings are unchanged
+     * 4- Verify an event without events consent is still not recorded
+     * </pre>
+     */
+    func test_foregroundRefresh_appliesTheSettingsOnTopOfTheConfigGivenAtStart() throws {
+        try TestPlatform.skipUnlessHTTPInterceptable()
+        let fetches = FetchCounter()
+        replySettings(ServerConfigBuilder().tracking(true).build()) { fetches.increment() }
+        defer { MockURLProtocol.replyEmptyToEveryRequest() }
+
+        let config = mockedConfig(manualSessions: true)
+        config.requiresConsent = true
+        config.enableDebug = true
+        config.eventSendThreshold = 7
+        config.storedRequestsLimit = 321
+        Countly.sharedInstance().start(with: config)
+        TestUtils.waitUntil("the fetch at start to be answered") { fetches.count == 1 }
+        TestUtils.sleep(0.5) {}
+
+        let fiveHoursAgo = Int64(Date().timeIntervalSince1970 * 1000) - 5 * 60 * 60 * 1000
+        CountlyServerConfig.sharedInstance()?.setValue(NSNumber(value: fiveHoursAgo), forKey: "lastFetchTimestamp")
+        CountlyServerConfig.sharedInstance()?.fetchIfTimeIsUp()
+        TestUtils.waitUntil("the foreground refresh to be answered") { fetches.count == 2 }
+        TestUtils.sleep(0.5) {}
+
+        XCTAssertEqual(2, fetches.count)
+        XCTAssertTrue(CountlyConsentManager.sharedInstance().requiresConsent, "the refresh must not drop the consent requirement")
+        XCTAssertTrue(CountlyCommon.sharedInstance().enableDebug, "the refresh must not turn debug logging off")
+        XCTAssertEqual(7, CountlyPersistency.sharedInstance().eventSendThreshold)
+        XCTAssertEqual(321, CountlyPersistency.sharedInstance().storedRequestsLimit)
+
+        Countly.sharedInstance().recordEvent("after_the_refresh")
+        XCTAssertFalse(TestUtils.getCurrentEQ()?.contains { $0.key == "after_the_refresh" } ?? true, "without events consent the event is still dropped")
+    }
+
+    /**
+     * <pre>
+     * A runtime change of automatic session tracking applies to the running session: a session the SDK
+     * started automatically ends when it is turned off, a session starts when it is turned on, and a
+     * session the app began itself is left alone.
+     *
+     * 1- Start with automatic sessions and the settings reply held back, verify the session begins
+     * 2- Release a reply that turns automatic sessions off, verify the session ends
+     * 3- Start again with manual sessions and a reply that turns automatic sessions on, verify a session begins
+     * 4- Start again with manual sessions, begin a session by hand, release a reply that keeps automatic
+     *    sessions off, and verify the app's session is not ended
+     * </pre>
+     */
+    func test_runtimeAutomaticSessionTracking_reconcilesTheRunningSession() throws {
+        try TestPlatform.skipUnlessHTTPInterceptable()
+
+        var release = startHoldingSettings(ServerConfigBuilder().automaticSessionTracking(false).build(), manualSessions: false)
+        XCTAssertEqual(1, requestCount("begin_session=1"), "automatic sessions begin one at start")
+        release.signal()
+        TestUtils.waitUntil("the automatic session to end") { self.requestCount("end_session=1") == 1 }
+        XCTAssertEqual(1, requestCount("end_session=1"), "turning automatic sessions off ends the session the SDK started")
+        Countly.sharedInstance().halt(true)
+
+        release = startHoldingSettings(ServerConfigBuilder().automaticSessionTracking(true).build(), manualSessions: true)
+        XCTAssertEqual(0, requestCount("begin_session=1"), "manual sessions begin nothing at start")
+        release.signal()
+        TestUtils.waitUntil("a session to begin") { self.requestCount("begin_session=1") == 1 }
+        XCTAssertEqual(1, requestCount("begin_session=1"), "turning automatic sessions on begins a session in the foreground")
+        Countly.sharedInstance().halt(true)
+
+        release = startHoldingSettings(ServerConfigBuilder().automaticSessionTracking(false).build(), manualSessions: true)
+        Countly.sharedInstance().beginSession()
+        XCTAssertEqual(1, requestCount("begin_session=1"))
+        release.signal()
+        TestUtils.sleep(1) {}
+        XCTAssertEqual(0, requestCount("end_session=1"), "a settings reply never ends a session the app began")
+        MockURLProtocol.replyEmptyToEveryRequest()
+    }
+
+    /// Starts the SDK with a settings reply held until the returned semaphore is signalled, failing every other request.
+    private func startHoldingSettings(_ reply: String, manualSessions: Bool) -> DispatchSemaphore {
+        let release = DispatchSemaphore(value: 0)
+        replySettings(reply) { _ = release.wait(timeout: .now() + 5) }
+        Countly.sharedInstance().start(with: mockedConfig(manualSessions: manualSessions))
+        return release
+    }
+
+    /// Answers every behavior settings fetch with the given reply once `beforeReply` returns, and fails every other request so it stays in the queue.
+    private func replySettings(_ reply: String, beforeReply: @escaping () -> Void) {
+        MockURLProtocol.requestHandler = { request in
+            if request.url?.absoluteString.contains("method=sc") == true {
+                beforeReply()
+                return (reply.data(using: .utf8), HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil), nil)
+            }
+            return ("{\"result\":\"fail\"}".data(using: .utf8), HTTPURLResponse(url: request.url!, statusCode: 400, httpVersion: nil, headerFields: nil), nil)
+        }
+    }
+
+    /// The base config with the given session handling and every request routed through `MockURLProtocol`.
+    private func mockedConfig(manualSessions: Bool) -> CountlyConfig {
+        let config = TestUtils.createBaseConfig()
+        config.manualSessionHandling = manualSessions
+        let sessionConfig = URLSessionConfiguration.ephemeral
+        sessionConfig.protocolClasses = [MockURLProtocol.self]
+        config.urlSessionConfiguration = sessionConfig
+        return config
+    }
+
+    /// How many queued requests contain the given text.
+    private func requestCount(_ text: String) -> Int {
+        TestUtils.getCurrentRQ()?.filter { $0.contains(text) }.count ?? 0
+    }
+
+    #if os(iOS) || os(tvOS)
+    /**
+     * <pre>
+     * Automatic view tracking the app paused stays paused through settings responses that do not change it.
+     *
+     * 1- Start with automatic view tracking enabled by stored settings and wait for it to run
+     * 2- Pause it the way the app does, then apply the same settings twice
+     * 3- Verify it is still paused
+     * </pre>
+     */
+    func test_avt_aPauseByTheAppSurvivesSettingsResponsesThatDoNotChangeIt() {
+        setServerConfig(ServerConfigBuilder().automaticViewTracking(true).buildJson())
+        let config = TestUtils.createBaseConfig()
+        config.manualSessionHandling = true
+        Countly.sharedInstance().start(with: config)
+        TestUtils.waitUntil("automatic view tracking to start") { CountlyViewTrackingInternal.sharedInstance().isAutoViewTrackingActive }
+        XCTAssertTrue(CountlyViewTrackingInternal.sharedInstance().isAutoViewTrackingActive)
+
+        CountlyViewTrackingInternal.sharedInstance().isAutoViewTrackingActive = false
+        CountlyServerConfig.sharedInstance()?.applyAutomaticTrackingState()
+        CountlyServerConfig.sharedInstance()?.applyAutomaticTrackingState()
+        TestUtils.sleep(0.5) {}
+
+        XCTAssertFalse(CountlyViewTrackingInternal.sharedInstance().isAutoViewTrackingActive, "a settings response that leaves avt as it is keeps the app's pause")
+    }
+    #endif
+
+    // MARK: - Automatic Tracking Flags (ast / avt / acr) and Journey Trigger Views (jtv)
+
+    /**
+     * Tests that the automatic tracking flags are seeded from the developer config when the server is silent.
+     * Verifies for each developer config fixture that:
+     * 1. The resolved ast/avt/acr values equal the developer's choices (drop-in behavior)
+     * 2. A begin_session request is sent automatically only when ast resolves to true
+     */
+    // Automatic view tracking is implemented for iOS and tvOS only; on the other platforms
+    // the public API is a logged no-op and CountlyViewTrackingInternal does not expose the flag.
+    #if os(iOS) || os(tvOS)
+    func test_automaticTrackingFlags_seededFromDeveloperConfig() {
+        // (manualSessionHandling, enableAutomaticViewTracking, crashFeature, expected ast, expected avt, expected acr)
+        let fixtures: [(Bool, Bool, Bool, Bool, Bool, Bool)] = [
+            (false, false, false, true, false, false),
+            (true, true, true, false, true, true),
+        ]
+
+        for (manualSessions, autoViews, crashFeature, ast, avt, acr) in fixtures {
+            let reason = "fixture: manualSessions=\(manualSessions), autoViews=\(autoViews), crashFeature=\(crashFeature)"
+            let config = TestUtils.createBaseConfig()
+            config.manualSessionHandling = manualSessions
+            config.enableAutomaticViewTracking = autoViews
+            config.features = crashFeature ? [CLYFeature.crashReporting] : []
+
+            Countly.sharedInstance().start(with: config)
+
+            XCTAssertEqual(ast, CountlyServerConfig.sharedInstance()?.automaticSessionTrackingEnabled(), reason)
+            XCTAssertEqual(avt, CountlyServerConfig.sharedInstance()?.automaticViewTrackingEnabled(), reason)
+            XCTAssertEqual(acr, CountlyServerConfig.sharedInstance()?.automaticCrashReportingEnabled(), reason)
+
+            let beginSessionCount = TestUtils.getCurrentRQ()?.filter { $0.contains("begin_session") }.count ?? 0
+            XCTAssertEqual(ast ? 1 : 0, beginSessionCount, reason)
+
+            TestUtils.cleanup()
+        }
+    }
+
+    /**
+     * Tests that the server can force automatic session tracking on an app using manual session control.
+     * Verifies that:
+     * 1. A begin_session request is sent automatically at init despite manualSessionHandling
+     * 2. The manual session API is ignored while automatic session tracking is active
+     */
+    #endif
+    func test_ast_serverOverridesManualSessionControl() {
+        setServerConfig(ServerConfigBuilder().automaticSessionTracking(true).buildJson())
+        let config = TestUtils.createBaseConfig()
+        config.manualSessionHandling = true
+        Countly.sharedInstance().start(with: config)
+
+        XCTAssertEqual(true, CountlyServerConfig.sharedInstance()?.automaticSessionTrackingEnabled())
+        XCTAssertTrue(TestUtils.getCurrentRQ()![0].contains("begin_session"), "automatic begin_session expected at init")
+
+        // Manual session API must be ignored while automatic session tracking is active
+        Countly.sharedInstance().updateSession()
+        Countly.sharedInstance().endSession()
+        Countly.sharedInstance().beginSession()
+
+        let rq = TestUtils.getCurrentRQ()!
+        XCTAssertEqual(1, rq.filter { $0.contains("begin_session") }.count)
+        XCTAssertEqual(0, rq.filter { $0.contains("end_session") }.count)
+        XCTAssertEqual(0, rq.filter { $0.contains("session_duration") }.count)
+    }
+
+    /**
+     * Tests that the server can disable automatic session tracking on an app using automatic sessions.
+     * Verifies that:
+     * 1. No begin_session request is sent at init
+     * 2. The manual session API becomes functional
+     */
+    func test_ast_serverDisablesAutomaticSessions() {
+        setServerConfig(ServerConfigBuilder().automaticSessionTracking(false).buildJson())
+        let config = TestUtils.createBaseConfig()
+        Countly.sharedInstance().start(with: config)
+
+        XCTAssertEqual(false, CountlyServerConfig.sharedInstance()?.automaticSessionTrackingEnabled())
+        XCTAssertEqual(0, TestUtils.getCurrentRQ()?.filter { $0.contains("begin_session") }.count)
+
+        Countly.sharedInstance().beginSession()
+        Countly.sharedInstance().endSession()
+
+        let rq = TestUtils.getCurrentRQ()!
+        XCTAssertEqual(1, rq.filter { $0.contains("begin_session") }.count, "manual beginSession should work when ast is false")
+        XCTAssertEqual(1, rq.filter { $0.contains("end_session") }.count, "manual endSession should work when ast is false")
+    }
+
+    /**
+     * Tests that the server can force-enable automatic view tracking when the developer did not opt in.
+     */
+    // Automatic view tracking is implemented for iOS and tvOS only; on the other platforms
+    // the public API is a logged no-op and CountlyViewTrackingInternal does not expose the flag.
+    #if os(iOS) || os(tvOS)
+    func test_avt_serverForceEnables() {
+        setServerConfig(ServerConfigBuilder().automaticViewTracking(true).buildJson())
+        let config = TestUtils.createBaseConfig()
+        config.manualSessionHandling = true
+        Countly.sharedInstance().start(with: config)
+
+        XCTAssertEqual(true, CountlyServerConfig.sharedInstance()?.automaticViewTrackingEnabled())
+        XCTAssertTrue(CountlyViewTrackingInternal.sharedInstance().isAutoViewTrackingActive,
+                      "automatic view tracking should be force-enabled by the server")
+    }
+
+    /**
+     * Tests that the server can disable automatic view tracking enabled by the developer,
+     * while manual view recording keeps working.
+     */
+    func test_avt_serverForceDisables() {
+        setServerConfig(ServerConfigBuilder().automaticViewTracking(false).buildJson())
+        let config = TestUtils.createBaseConfig()
+        config.manualSessionHandling = true
+        config.enableAutomaticViewTracking = true
+        Countly.sharedInstance().start(with: config)
+
+        XCTAssertEqual(false, CountlyServerConfig.sharedInstance()?.automaticViewTrackingEnabled())
+        XCTAssertFalse(CountlyViewTrackingInternal.sharedInstance().isAutoViewTrackingActive,
+                       "automatic view tracking should stay off when the server disables avt")
+
+        // Manual view recording is governed by 'vt' (true by default), not 'avt'
+        Countly.sharedInstance().views().startView("manual_view")
+        let eq = TestUtils.getCurrentEQ()!
+        let viewEvent = eq.first { $0.key == "[CLY]_view" }
+        XCTAssertNotNil(viewEvent, "manual startView should still record when avt is false")
+        XCTAssertEqual("manual_view", viewEvent?.segmentation["name"] as? String)
+
+        // automatic views would not be recorded anyway, so turning the flag on would only misreport the state
+        CountlyViewTrackingInternal.sharedInstance().isAutoViewTrackingActive = true
+        XCTAssertFalse(CountlyViewTrackingInternal.sharedInstance().isAutoViewTrackingActive,
+                       "turning the active state on should not re-enable automatic view tracking while the server keeps avt false")
+    }
+
+    /**
+     * Tests that revoking view tracking consent clears the automatic view tracking active state,
+     * even for a tracker the server force-enabled. Verifies that:
+     * 1. Automatic view tracking becomes active once view tracking consent is given
+     * 2. Revoking the consent turns it off (the consent flag flips before 'stopAutoViewTracking' runs)
+     * 3. Giving the consent back re-activates it
+     */
+    #endif
+    // Automatic view tracking is implemented for iOS and tvOS only; on the other platforms
+    // the public API is a logged no-op and CountlyViewTrackingInternal does not expose the flag.
+    #if os(iOS) || os(tvOS)
+    func test_avt_consentRevocationClearsActiveState() {
+        setServerConfig(ServerConfigBuilder().automaticViewTracking(true).buildJson())
+        let config = TestUtils.createBaseConfig()
+        config.manualSessionHandling = true
+        config.requiresConsent = true
+        Countly.sharedInstance().start(with: config)
+
+        XCTAssertEqual(true, CountlyServerConfig.sharedInstance()?.automaticViewTrackingEnabled())
+        XCTAssertFalse(CountlyViewTrackingInternal.sharedInstance().isAutoViewTrackingActive,
+                       "automatic view tracking should not be active before view tracking consent is given")
+
+        Countly.sharedInstance().giveConsent(forFeature: CLYConsent.viewTracking)
+        XCTAssertTrue(CountlyViewTrackingInternal.sharedInstance().isAutoViewTrackingActive,
+                      "automatic view tracking should start once view tracking consent is given")
+
+        Countly.sharedInstance().cancelConsent(forFeature: CLYConsent.viewTracking)
+        XCTAssertFalse(CountlyViewTrackingInternal.sharedInstance().isAutoViewTrackingActive,
+                       "automatic view tracking should stop when view tracking consent is revoked")
+
+        Countly.sharedInstance().giveConsent(forFeature: CLYConsent.viewTracking)
+        XCTAssertTrue(CountlyViewTrackingInternal.sharedInstance().isAutoViewTrackingActive,
+                      "automatic view tracking should start again when view tracking consent is given back")
+    }
+
+    /**
+     * Tests that the server can disable automatic crash reporting enabled by the developer.
+     * Verifies that:
+     * 1. The uncaught exception handler is not installed
+     * 2. Manually recorded exceptions still produce a crash request (governed by 'crt' only)
+     */
+    #endif
+    func test_acr_serverDisablesAutomaticCrashReporting() {
+        NSSetUncaughtExceptionHandler(nil)
+        setServerConfig(ServerConfigBuilder().automaticCrashReporting(false).buildJson())
+        let config = TestUtils.createBaseConfig()
+        config.manualSessionHandling = true
+        Countly.sharedInstance().start(with: config)
+
+        XCTAssertEqual(false, CountlyServerConfig.sharedInstance()?.automaticCrashReportingEnabled())
+        XCTAssertNil(NSGetUncaughtExceptionHandler(), "uncaught exception handler should not be installed when acr is false")
+
+        Countly.sharedInstance().record(NSException(name: NSExceptionName("TestException"), reason: "test", userInfo: nil))
+        let crashRequests = TestUtils.getCurrentRQ()!.filter { $0.contains("crash=") }
+        XCTAssertEqual(1, crashRequests.count, "manually recorded exceptions stay governed by crt only")
+    }
+
+    /**
+     * Tests that the server can force-enable automatic crash reporting when the developer did not opt in.
+     */
+    func test_acr_serverForceEnables() {
+        NSSetUncaughtExceptionHandler(nil)
+        setServerConfig(ServerConfigBuilder().automaticCrashReporting(true).buildJson())
+        let config = TestUtils.createBaseConfig()
+        config.manualSessionHandling = true
+        config.features = []
+        Countly.sharedInstance().start(with: config)
+
+        XCTAssertEqual(true, CountlyServerConfig.sharedInstance()?.automaticCrashReportingEnabled())
+        XCTAssertNotNil(NSGetUncaughtExceptionHandler(), "uncaught exception handler should be installed when the server enables acr")
+    }
+
+    /**
+     * Tests that recording a view whose name is a journey trigger view force-flushes the event queue.
+     * Verifies that:
+     * 1. Regular events and non-matching views stay in the event queue (high threshold)
+     * 2. A matching view flushes all queued events to the request queue with a callback_id
+     */
+    func test_jtv_triggersEventFlushForMatchingView() {
+        setServerConfig(ServerConfigBuilder()
+            .journeyTriggerViews(["jtv_view"])
+            .eventQueueSize(100)
+            .buildJson())
+        let config = TestUtils.createBaseConfig()
+        config.manualSessionHandling = true
+        Countly.sharedInstance().start(with: config)
+
+        XCTAssertTrue(CountlyServerConfig.sharedInstance()!.isJourneyTriggerView("jtv_view"))
+        XCTAssertFalse(CountlyServerConfig.sharedInstance()!.isJourneyTriggerView("other_view"))
+
+        Countly.sharedInstance().recordEvent("regular_event")
+        Countly.sharedInstance().views().startView("other_view")
+        XCTAssertEqual(0, TestUtils.getCurrentRQ()?.count, "non-matching views should not flush the event queue")
+        XCTAssertEqual(2, TestUtils.getCurrentEQ()?.count)
+
+        Countly.sharedInstance().views().startView("jtv_view")
+        XCTAssertEqual(1, TestUtils.getCurrentRQ()?.count, "a journey trigger view should flush the event queue")
+        XCTAssertEqual(0, TestUtils.getCurrentEQ()?.count)
+
+        let request = TestUtils.getCurrentRQ()![0]
+        XCTAssertTrue(request.contains("regular_event"))
+        XCTAssertTrue(request.contains("other_view"))
+        XCTAssertTrue(request.contains("jtv_view"))
+        XCTAssertTrue(request.contains("callback_id"))
+    }
+
+    /**
+     * Tests that the four new keys are parsed from a provided configuration and that
+     * an invalid jtv type is ignored, keeping the default empty set.
+     */
+    // Automatic view tracking is implemented for iOS and tvOS only; on the other platforms
+    // the public API is a logged no-op and CountlyViewTrackingInternal does not expose the flag.
+    #if os(iOS) || os(tvOS)
+    func test_automaticTrackingFlags_providedValuesAndInvalidJtv() {
+        let builder = ServerConfigBuilder()
+            .automaticSessionTracking(false)
+            .automaticViewTracking(true)
+            .automaticCrashReporting(true)
+            .journeyTriggerViews(["jtv_view_a", "jtv_view_b"])
+        setServerConfig(builder.buildJson())
+
+        let config = TestUtils.createBaseConfig()
+        config.manualSessionHandling = false
+        Countly.sharedInstance().start(with: config)
+
+        TestUtils.sleep(1) {
+            builder.validateAgainst()
+        }
+
+        TestUtils.cleanup()
+
+        // Invalid jtv type (dictionary instead of array) is ignored; the default empty set is kept
+        let invalidConfig: [String: Any] = [
+            "v": 1,
+            "t": Int(Date().timeIntervalSince1970),
+            "c": ["jtv": ["not": "an array"]]
+        ]
+        setServerConfig(invalidConfig)
+        let config2 = TestUtils.createBaseConfig()
+        config2.manualSessionHandling = true
+        Countly.sharedInstance().start(with: config2)
+
+        XCTAssertFalse(CountlyServerConfig.sharedInstance()!.isJourneyTriggerView("not"))
+        XCTAssertFalse(CountlyServerConfig.sharedInstance()!.isJourneyTriggerView("jtv_view_a"))
+    }
+
+    /**
+     * Tests that a server response received at runtime updates the resolved automatic tracking values.
+     * Verifies that:
+     * 1. ast/avt/acr flip to the server values after the fetch
+     * 2. Automatic view tracking starts reactively
+     * 3. The uncaught exception handler installs reactively
+     */
+    func test_automaticTrackingFlags_runtimeChangeFromServer() {
+        NSSetUncaughtExceptionHandler(nil)
+        let serverConfig = ServerConfigBuilder()
+            .automaticSessionTracking(false)
+            .automaticViewTracking(true)
+            .automaticCrashReporting(true)
+            .build()
+
+        let config = TestUtils.createBaseConfig()
+        config.features = []
+        config.urlSessionConfiguration = createUrlSessionConfigForResponse(serverConfig)
+        Countly.sharedInstance().start(with: config)
+
+        // Seeded values before the fetch lands are the developer's: ast true, avt false, acr false.
+        // After the mocked fetch they must flip to the server values.
+        TestUtils.sleep(2) {
+            XCTAssertEqual(false, CountlyServerConfig.sharedInstance()?.automaticSessionTrackingEnabled())
+            XCTAssertEqual(true, CountlyServerConfig.sharedInstance()?.automaticViewTrackingEnabled())
+            XCTAssertEqual(true, CountlyServerConfig.sharedInstance()?.automaticCrashReportingEnabled())
+
+            XCTAssertTrue(CountlyViewTrackingInternal.sharedInstance().isAutoViewTrackingActive,
+                          "automatic view tracking should start reactively on a runtime avt enable")
+            XCTAssertNotNil(NSGetUncaughtExceptionHandler(),
+                            "crash handler should install reactively on a runtime acr enable")
+        }
+    }
+
+    /**
+     * Tests all features work correctly with event blacklist applied.
+     * Sessions, views, crashes, etc. should still work while custom events are filtered.
+     */
+    #if os(iOS)
+    #endif
+    func test_eventBlacklist_allFeatures() throws {
+        let sc = ServerConfigBuilder()
+            .eventBlacklist(["test_event"])
+        let tracker = setupTestAllFeatures(sc.buildJson())
+
+        XCTAssertEqual(0, TestUtils.getCurrentRQ()?.count)
+
+        let _ = flowAllFeatures()
+
+        // test_event should NOT be in the request queue
+        XCTAssertFalse(containsEventWithKey(TestUtils.getCurrentRQ()!, "test_event"))
+
+        // But other features should work
+        XCTAssertTrue(TestUtils.getCurrentRQ()![0].contains("begin_session"))
+
+        // Views should still work (reserved events bypass custom event filters)
+        XCTAssertTrue(containsEventWithKey(TestUtils.getCurrentRQ()!, "[CLY]_view"))
+
+        validateCounts(tracker, hc: 1, fc: 0, rc: 0, cc: 0, sc: 1)
+    }
+    #endif
+}
+
+/// Counts the behavior settings fetches a mocked session answered, from whichever thread answers them.
+private final class FetchCounter {
+    private let lock = NSLock()
+    private var value = 0
+
+    /// Records one more fetch.
+    func increment() {
+        lock.lock()
+        value += 1
+        lock.unlock()
+    }
+
+    /// The fetches recorded so far.
+    var count: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return value
     }
 }

@@ -8,7 +8,7 @@
 * ! Minor breaking change ! The package now ships only the files the SDK needs at runtime; the example app, the tests and the Xcode project for manual linking are no longer part of it. It declares `react-native` as a peer dependency and needs React Native 0.62 or newer.
 * ! Minor breaking change ! The pod now makes only the bridge header and the iOS SDK's public headers public; other headers can no longer be imported from it.
 * ! Minor breaking change ! The `NotificationService` subspec no longer depends on React, and `pod 'CountlyReactNative'` installs only the `Core` subspec.
-* ! Minor breaking change ! With React Native 0.71 and newer, the pod's iOS deployment target now follows React Native's minimum iOS version.
+* ! Minor breaking change ! The pod now needs iOS 15 (tvOS 15, macOS 12, watchOS 9), the minimum of the bundled iOS SDK 26.8.0, instead of iOS 10. With React Native 0.71 and newer it uses React Native's minimum iOS version when that is higher. An app whose Podfile platform is below iOS 15, for example with React Native 0.75 or older, has to raise it; an app that has to support older iOS versions can stay on 26.1.0.
 
 * Added a `{ success, error }` result to `Countly.remoteConfig.update`, `updateForKeysOnly` and `updateExceptKeys`.
 * Added `Countly.registerForNotificationOpened(listener)`, called when the user taps a push in Android and iOS:
@@ -73,6 +73,15 @@
   * `Countly.updateRemoteConfigExceptKeys`, use `Countly.remoteConfig.updateExceptKeys`
   * `Countly.getRemoteConfigValueForKey` and `Countly.getRemoteConfigValueForKeyP`, use `Countly.remoteConfig.getValue`
   * `Countly.remoteConfigClearValues`, use `Countly.remoteConfig.clearValues`
+
+* iOS specific changes:
+  * ! Minor breaking change ! A SIGPIPE the app neither ignores nor handles itself now ends the app after the crash is reported, as it would without the SDK. Before, the SDK reported it, kept the app running and turned automatic crash reporting off. An app that has to survive a broken pipe should ignore or handle SIGPIPE before `Countly.initWithConfig`.
+  * Added support for server requested SDK log gathering and connection tests, and for SDK behavior settings that control automatic session tracking, automatic view tracking, automatic crash reporting and Journey Trigger Views, also for the running session.
+  * Mitigated an issue where `Countly.userData.setProperty` and `Countly.userDataBulk.setProperty` with a predefined key (name, username, email, organization, phone, gender, picture, picturePath, byear) recorded a custom property of that name; they now set that field, as on Android.
+  * `Countly.setUserData`, `Countly.userDataBulk.setUserProperties`, `Countly.userData.setProperty` and `Countly.userDataBulk.setProperty` now use the iOS SDK's user property API: pending events are sent before the user details, and `null` values and nested objects are skipped with a log line instead of being sent, as on Android.
+  * The iOS SDK's default log level is now debug instead of verbose.
+
+* Updated the underlying iOS SDK version to 26.8.0
 
 ## 26.1.0-np
 * Added a new `Countly.sessions` interface for manual session control:
