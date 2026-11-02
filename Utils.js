@@ -275,7 +275,7 @@ function configToJson(config) {
                 json.sessionUpdateTimerDelay = sessionUpdateTimerDelay;
                 L.i(`init configuration, Session update timer delay: ${sessionUpdateTimerDelay}`);
             } else {
-                L.e(`init configuration, the session update timer delay should be a whole number of seconds from 1 to ${Validate.INT32_MAX}, received [${sessionUpdateTimerDelay}], skipping it`);
+                L.e(`init configuration, the session update timer delay should be a whole number of seconds from 1 to ${Validate.INT32_MAX}, received [${sessionUpdateTimerDelay}] of type '${typeof sessionUpdateTimerDelay}', skipping it`);
             }
         }
         if (config._customNetworkRequestHeaders) {

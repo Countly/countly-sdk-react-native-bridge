@@ -323,6 +323,6 @@ test('configToJson skips a session update timer delay that is not a whole number
         expect(json).not.toHaveProperty('sessionUpdateTimerDelay');
         expect(json.disableBackoffMechanism).toBe(true);
         expect(Logger.e).toHaveBeenCalledTimes(1);
-        expect(Logger.e).toHaveBeenCalledWith(`init configuration, the session update timer delay should be a whole number of seconds from 1 to 2147483647, received [${delay}], skipping it`);
+        expect(Logger.e).toHaveBeenCalledWith(`init configuration, the session update timer delay should be a whole number of seconds from 1 to 2147483647, received [${delay}] of type '${typeof delay}', skipping it`);
     });
 });
