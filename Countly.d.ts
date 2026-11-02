@@ -1393,6 +1393,15 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
     setRequestTimeoutDuration(requestTimeoutDuration: number): CountlyConfig;
 
     /**
+     * Sets how often the SDK sends automatic session updates and the queued events. The default is 60 seconds.
+     * Values that are not a whole number from 1 to 2147483647 are ignored with an error log at init.
+     *
+     * @param {number} delay - interval in seconds
+     * @return {CountlyConfig}
+     */
+    setUpdateSessionTimerDelay(delay: number): CountlyConfig;
+
+    /**
      * Enables manual session handling.
      */
     enableManualSessionControl(): CountlyConfig;
