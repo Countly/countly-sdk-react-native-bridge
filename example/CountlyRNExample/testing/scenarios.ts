@@ -1,7 +1,8 @@
 import Countly from "countly-sdk-react-native-bridge";
+import CountlyConfig from "countly-sdk-react-native-bridge/CountlyConfig";
 import { Platform } from "react-native";
 
-import { createCountlyConfig } from "../Configuration";
+import { COUNTLY_APP_KEY, COUNTLY_SERVER_URL, createCountlyConfig } from "../Configuration";
 import {
     assertCondition,
     enableRequestCapture,
@@ -114,6 +115,13 @@ function isManualSessionRequest(params: Record<string, string>) {
         return true;
     }
 
+    return isSessionUpdateRequest(params);
+}
+
+/**
+ * Tells whether the request parameters are a session update: a session duration in a request that neither begins nor ends a session.
+ */
+function isSessionUpdateRequest(params: Record<string, string>) {
     return params.session_duration !== undefined && !params.begin_session && !params.end_session;
 }
 
@@ -207,10 +215,7 @@ function createManualSessionScenario() {
                 `Expected 3 queued session requests, received ${sessionRequests.length}. Session entries: ${sessionRequestEntries.join(" | ")}. Appended queue entries: ${appendedRequests.join(" | ")}. Full queue: ${finalRequestQueue.join(" | ")}`
             );
             assertCondition(sessionRequests[0].params.begin_session === "1", "First queued session request is not a begin_session request.");
-            assertCondition(
-                sessionRequests[1].params.session_duration !== undefined && !sessionRequests[1].params.begin_session && !sessionRequests[1].params.end_session,
-                "Second queued session request should be a session update request."
-            );
+            assertCondition(isSessionUpdateRequest(sessionRequests[1].params), "Second queued session request should be a session update request.");
             assertCondition(sessionRequests[2].params.end_session === "1", "Third queued session request is not an end_session request.");
 
             return {
@@ -780,15 +785,15 @@ function findLastRequestContaining(entries: string[], expectedText: string) {
 }
 
 /**
- * Polls the request queue until a request appended after the baseline contains the given text, or the timeout passes.
+ * Polls the request queue until the requests appended after the baseline satisfy the given check, or the timeout passes.
  */
-async function waitForRequestContaining(baselineQueue: string[], expectedText: string, timeoutMs: number) {
+async function waitForAppendedRequests(baselineQueue: string[], isComplete: (appendedRequests: string[]) => boolean, timeoutMs: number) {
     const startedAt = Date.now();
     let currentQueue = baselineQueue;
 
     while (Date.now() - startedAt < timeoutMs) {
         currentQueue = await Countly.test.getRequestQueue();
-        if (findLastRequestContaining(takeAppendedEntries(baselineQueue, currentQueue), expectedText) !== null) {
+        if (isComplete(takeAppendedEntries(baselineQueue, currentQueue))) {
             break;
         }
         await sleep(500);
@@ -798,10 +803,18 @@ async function waitForRequestContaining(baselineQueue: string[], expectedText: s
 }
 
 /**
- * Creates a config whose server cannot be reached, so recorded requests stay in the native request queue for inspection.
+ * Polls the request queue until a request appended after the baseline contains the given text, or the timeout passes.
  */
-function createOfflineQueueConfig() {
-    return createCountlyConfig().setServerURL(OFFLINE_QUEUE_SERVER_URL).setRequestTimeoutDuration(1).disableSDKBehaviorSettingsUpdates();
+async function waitForRequestContaining(baselineQueue: string[], expectedText: string, timeoutMs: number) {
+    return waitForAppendedRequests(baselineQueue, (appendedRequests) => findLastRequestContaining(appendedRequests, expectedText) !== null, timeoutMs);
+}
+
+/**
+ * Creates a config whose server cannot be reached, so recorded requests stay in the native request queue for inspection.
+ * It starts from the example config, which uses manual sessions, unless another base config is given.
+ */
+function createOfflineQueueConfig(baseConfig: CountlyConfig = createCountlyConfig()) {
+    return baseConfig.setServerURL(OFFLINE_QUEUE_SERVER_URL).setRequestTimeoutDuration(1).disableSDKBehaviorSettingsUpdates();
 }
 
 /**
@@ -1162,6 +1175,78 @@ function createPushTokenWithoutPermissionCallScenario() {
     } satisfies IntegrationScenario;
 }
 
+/**
+ * Creates an offline config with automatic sessions, so the session timer queues its session updates for inspection.
+ */
+function createAutomaticSessionOfflineConfig() {
+    return createOfflineQueueConfig(new CountlyConfig(COUNTLY_SERVER_URL, COUNTLY_APP_KEY).setLoggingEnabled(true));
+}
+
+/**
+ * Returns the session update requests among the given queue entries.
+ */
+function findSessionUpdateRequests(entries: string[]) {
+    return parseQueueRequests(entries).filter((request) => isSessionUpdateRequest(request.params));
+}
+
+/**
+ * Scenario: a session update timer delay of 2 seconds queues automatic session updates every 2 seconds instead of every 60.
+ */
+function createSessionUpdateTimerDelayScenario() {
+    return {
+        id: "session-update-timer-delay",
+        title: "Session Update Timer Delay",
+        description: "Starts automatic sessions with a session update timer delay of 2 seconds and checks that session updates of about 2 seconds are queued within 10 seconds.",
+        async run() {
+            await haltBridgeForScenario();
+
+            await Countly.initWithConfig(createAutomaticSessionOfflineConfig().setUpdateSessionTimerDelay(2));
+            const baselineQueue = await Countly.test.getRequestQueue();
+
+            const finalQueue = await waitForAppendedRequests(baselineQueue, (appendedRequests) => findSessionUpdateRequests(appendedRequests).length >= 2, 10000);
+            const sessionUpdates = findSessionUpdateRequests(takeAppendedEntries(baselineQueue, finalQueue));
+            const durations = sessionUpdates.map((request) => Number(request.params.session_duration));
+
+            assertCondition(sessionUpdates.length >= 2, `Expected at least 2 session updates within 10 seconds, received ${sessionUpdates.length}. Queue: ${finalQueue.join(" | ")}`);
+            assertCondition(durations.every((duration) => duration >= 1 && duration <= 4), `Expected session durations of about 2 seconds, received [${durations.join(", ")}].`);
+
+            return {
+                summary: "Session updates are queued every 2 seconds with a session update timer delay of 2 seconds.",
+                details: [`Session durations: ${durations.join(", ")}`, `Session updates: ${sessionUpdates.map((request) => request.entry).join(" | ")}`],
+            };
+        },
+    } satisfies IntegrationScenario;
+}
+
+/**
+ * Scenario: a session update timer delay below 1 second is ignored, so session updates are not queued continuously.
+ */
+function createSessionUpdateTimerDelayBelowOneSecondScenario() {
+    return {
+        id: "session-update-timer-delay-below-one-second",
+        title: "Session Update Timer Delay Below 1 Second",
+        description: "Starts automatic sessions with a session update timer delay of 0 and checks that no session update is queued within 3 seconds.",
+        async run() {
+            await haltBridgeForScenario();
+
+            await Countly.initWithConfig(createAutomaticSessionOfflineConfig().setUpdateSessionTimerDelay(0));
+            const baselineQueue = await Countly.test.getRequestQueue();
+
+            // Proving that nothing is queued takes the whole window; a delay that reached the timer would tick within 1 second.
+            await sleep(3000);
+            const finalQueue = await Countly.test.getRequestQueue();
+            const sessionUpdates = findSessionUpdateRequests(takeAppendedEntries(baselineQueue, finalQueue));
+
+            assertCondition(sessionUpdates.length === 0, `Expected no session update within 3 seconds, received ${sessionUpdates.length}: ${sessionUpdates.map((request) => request.entry).join(" | ")}`);
+
+            return {
+                summary: "A session update timer delay of 0 is ignored: no session update was queued within 3 seconds.",
+                details: [`Request queue size: ${finalQueue.length}`],
+            };
+        },
+    } satisfies IntegrationScenario;
+}
+
 const integrationScenarios = [
     createManualSessionScenario(),
     createViewScenario(),
@@ -1184,6 +1269,8 @@ const integrationScenarios = [
     createJsCrashTitleScenario(),
     createMetricsConsentScenario(),
     createPushTokenWithoutPermissionCallScenario(),
+    createSessionUpdateTimerDelayScenario(),
+    createSessionUpdateTimerDelayBelowOneSecondScenario(),
 ];
 
 export type { IntegrationScenario, IntegrationScenarioResult };

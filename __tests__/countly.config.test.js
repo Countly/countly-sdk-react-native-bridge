@@ -28,6 +28,7 @@ test('CountlyConfig setters and nested interfaces persist fluent configuration',
     expect(config.setAppKey('updated-app-key')).toBe(config);
     expect(config.setDeviceID('device-123')).toBe(config);
     expect(config.setRequestTimeoutDuration(15)).toBe(config);
+    expect(config.setUpdateSessionTimerDelay(30)).toBe(config);
     expect(config.enableManualSessionControl()).toBe(config);
     expect(config.enableManualSessionControlHybridMode()).toBe(config);
     expect(config.addCustomNetworkRequestHeaders(customHeaders)).toBe(config);
@@ -78,6 +79,7 @@ test('CountlyConfig setters and nested interfaces persist fluent configuration',
     expect(config.appKey).toBe('updated-app-key');
     expect(config.deviceID).toBe('device-123');
     expect(config._requestTimeoutDuration).toBe(15);
+    expect(config._sessionUpdateTimerDelay).toBe(30);
     expect(config._manualSessionControl).toBe(true);
     expect(config._manualSessionControlHybridMode).toBe(true);
     expect(config._customNetworkRequestHeaders).toEqual(customHeaders);

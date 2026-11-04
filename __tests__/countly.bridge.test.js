@@ -239,6 +239,14 @@ test('initWithConfig leaves out empty, null and non-text device IDs so the SDK g
     expect(getNativeInitPayload(nativeModule).deviceID).toBe('device-1');
 });
 
+test('initWithConfig hands the session update timer delay to the native SDK', async () => {
+    const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge();
+    await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key').setUpdateSessionTimerDelay(5));
+
+    expect(nativeModule.init).toHaveBeenCalledTimes(1);
+    expect(getNativeInitPayload(nativeModule).sessionUpdateTimerDelay).toBe(5);
+});
+
 test('the JS crash title names the function and only the bundle file name, for debug URLs and embedded bundle paths', async () => {
     global.ErrorUtils = { getGlobalHandler: jest.fn(() => jest.fn()), setGlobalHandler: jest.fn() };
     const parseErrorStack = jest.fn(() => []);

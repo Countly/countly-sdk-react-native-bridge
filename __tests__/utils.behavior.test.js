@@ -53,6 +53,7 @@ test('configToJson serializes allowed intent package names and advanced init opt
         .disableGradualRequestCleaner()
         .disableViewRestartForManualRecording()
         .setRequestTimeoutDuration(15)
+        .setUpdateSessionTimerDelay(30)
         .enableAutomaticViewTracking()
         .setAutomaticViewTrackingExclusionList(['HiddenActivity'])
         .setGlobalViewSegmentation({ plan: 'pro' })
@@ -110,6 +111,7 @@ test('configToJson serializes allowed intent package names and advanced init opt
         campaignType: 'push',
         campaignData: '{"id":"campaign-1"}',
         requestTimeoutDuration: 15,
+        sessionUpdateTimerDelay: 30,
         enableAutomaticViewTracking: true,
         automaticViewTrackingExclusionList: ['HiddenActivity'],
         globalViewSegmentation: { plan: 'pro' },
@@ -297,4 +299,30 @@ test('configToJson sends consents as a list of feature names', () => {
     const directlyAssigned = new CountlyConfig('https://server.count.ly', 'app-key');
     directlyAssigned.consents = 'crashes';
     expect(configToJson(directlyAssigned).consents).toEqual(['crashes']);
+});
+
+test('configToJson sends the session update timer delay only when one was set', () => {
+    const { CountlyConfig, Logger, configToJson } = loadUtils();
+
+    expect(configToJson(new CountlyConfig('https://server.count.ly', 'app-key'))).not.toHaveProperty('sessionUpdateTimerDelay');
+    expect(configToJson(new CountlyConfig('https://server.count.ly', 'app-key').setUpdateSessionTimerDelay(null))).not.toHaveProperty('sessionUpdateTimerDelay');
+    expect(configToJson(new CountlyConfig('https://server.count.ly', 'app-key').setUpdateSessionTimerDelay(undefined))).not.toHaveProperty('sessionUpdateTimerDelay');
+    expect(configToJson(new CountlyConfig('https://server.count.ly', 'app-key').setUpdateSessionTimerDelay(1)).sessionUpdateTimerDelay).toBe(1);
+    expect(configToJson(new CountlyConfig('https://server.count.ly', 'app-key').setUpdateSessionTimerDelay(2147483647)).sessionUpdateTimerDelay).toBe(2147483647);
+    expect(Logger.e).not.toHaveBeenCalled();
+    expect(Logger.i).toHaveBeenCalledWith('init configuration, Session update timer delay: 1');
+});
+
+test('configToJson skips a session update timer delay that is not a whole number of seconds from 1 to 2147483647, and keeps the options after it', () => {
+    const { CountlyConfig, Logger, configToJson } = loadUtils();
+
+    [0, -5, 0.5, 1.5, NaN, Infinity, 2147483648, '30', true, {}].forEach((delay) => {
+        Logger.e.mockClear();
+        const json = configToJson(new CountlyConfig('https://server.count.ly', 'app-key').setUpdateSessionTimerDelay(delay).disableBackoffMechanism());
+
+        expect(json).not.toHaveProperty('sessionUpdateTimerDelay');
+        expect(json.disableBackoffMechanism).toBe(true);
+        expect(Logger.e).toHaveBeenCalledTimes(1);
+        expect(Logger.e).toHaveBeenCalledWith(`init configuration, the session update timer delay should be a whole number of seconds from 1 to 2147483647, received [${delay}] of type '${typeof delay}', skipping it`);
+    });
 });

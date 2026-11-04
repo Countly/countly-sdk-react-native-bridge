@@ -599,6 +599,11 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
     if (json[@"enableManualSessionControlHybridMode"]) {
         config.enableManualSessionControlHybridMode = [json[@"enableManualSessionControlHybridMode"] boolValue];
     }
+    NSNumber *sessionUpdateTimerDelay = json[@"sessionUpdateTimerDelay"];
+    // NSTimer repeats almost continuously for an interval of 0 or less, so the iOS SDK must never get one.
+    if ([sessionUpdateTimerDelay isKindOfClass:[NSNumber class]] && [sessionUpdateTimerDelay intValue] >= 1) {
+        config.updateSessionPeriod = [sessionUpdateTimerDelay intValue];
+    }
 
     NSDictionary *customNetworkRequestHeaders = json[@"customNetworkRequestHeaders"];
     if ([customNetworkRequestHeaders isKindOfClass:[NSDictionary class]] && customNetworkRequestHeaders.count > 0) {

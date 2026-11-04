@@ -844,6 +844,11 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
                 config.enableManualSessionControlHybridMode();
             }
         });
+        applyConfigStep("sessionUpdateTimerDelay", () -> {
+            if (_config.has("sessionUpdateTimerDelay")) {
+                config.setUpdateSessionTimerDelay(_config.getInt("sessionUpdateTimerDelay"));
+            }
+        });
         applyConfigStep("customNetworkRequestHeaders", () -> {
             if (_config.has("customNetworkRequestHeaders")) {
                 JSONObject customHeaderValues = _config.getJSONObject("customNetworkRequestHeaders");

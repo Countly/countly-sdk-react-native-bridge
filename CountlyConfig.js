@@ -30,6 +30,8 @@ class CountlyConfig {
 
     #requestTimeoutDuration;
 
+    #sessionUpdateTimerDelay;
+
     #manualSessionControl = false;
 
     #manualSessionControlHybridMode = false;
@@ -107,6 +109,10 @@ class CountlyConfig {
         return this.#requestTimeoutDuration;
     }
 
+    get _sessionUpdateTimerDelay() {
+        return this.#sessionUpdateTimerDelay;
+    }
+
     get _manualSessionControl() {
         return this.#manualSessionControl;
     }
@@ -177,6 +183,18 @@ class CountlyConfig {
      */
     setRequestTimeoutDuration(timeout) {
         this.#requestTimeoutDuration = timeout;
+        return this;
+    }
+
+    /**
+     * Sets how often the SDK sends automatic session updates and the queued events. The default is 60 seconds.
+     * Values that are not a whole number from 1 to 2147483647 are ignored with an error log at init.
+     *
+     * @param {Number} delay - interval in seconds
+     * @returns {CountlyConfig} this
+     */
+    setUpdateSessionTimerDelay(delay) {
+        this.#sessionUpdateTimerDelay = delay;
         return this;
     }
 

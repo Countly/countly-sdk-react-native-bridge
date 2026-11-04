@@ -269,6 +269,15 @@ function configToJson(config) {
             json.enableManualSessionControlHybridMode = true;
             L.i("init configuration, Enabled hybrid manual session control");
         }
+        const sessionUpdateTimerDelay = config._sessionUpdateTimerDelay;
+        if (sessionUpdateTimerDelay !== undefined && sessionUpdateTimerDelay !== null) {
+            if (Number.isInteger(sessionUpdateTimerDelay) && sessionUpdateTimerDelay >= 1 && sessionUpdateTimerDelay <= Validate.INT32_MAX) {
+                json.sessionUpdateTimerDelay = sessionUpdateTimerDelay;
+                L.i(`init configuration, Session update timer delay: ${sessionUpdateTimerDelay}`);
+            } else {
+                L.e(`init configuration, the session update timer delay should be a whole number of seconds from 1 to ${Validate.INT32_MAX}, received [${sessionUpdateTimerDelay}] of type '${typeof sessionUpdateTimerDelay}', skipping it`);
+            }
+        }
         if (config._customNetworkRequestHeaders) {
             json.customNetworkRequestHeaders = config._customNetworkRequestHeaders;
             L.i(`init configuration, Custom network request headers: ${JSON.stringify(config._customNetworkRequestHeaders)}`);
