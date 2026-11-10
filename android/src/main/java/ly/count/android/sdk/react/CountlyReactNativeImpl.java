@@ -2366,6 +2366,40 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         Countly.sharedInstance().requestQueue().eraseWrongAppKeyRequests();
     }
 
+    /**
+     * Sends the requests to another server from now on. The Android SDK validates the URL.
+     *
+     * @param args the new server URL at index 0
+     */
+    public void changeServerUrl(ReadableArray args) {
+        String serverUrl = args.getString(0);
+        Countly.sharedInstance().requestQueue().changeServerUrl(serverUrl);
+    }
+
+    /**
+     * Reports to another app from now on. The Android SDK validates the key and closes what belongs to the old app first.
+     *
+     * @param args the app key of the new app at index 0
+     */
+    public void changeAppKey(ReadableArray args) {
+        String appKey = args.getString(0);
+        Countly.sharedInstance().requestQueue().changeAppKey(appKey);
+    }
+
+    /**
+     * Deletes the stored requests and the recorded events that are not in a request yet.
+     */
+    public void flushQueues() {
+        Countly.sharedInstance().requestQueue().flushQueues();
+    }
+
+    /**
+     * Packs the recorded events into a request and starts sending the stored requests now.
+     */
+    public void attemptToSendStoredRequests() {
+        Countly.sharedInstance().requestQueue().attemptToSendStoredRequests();
+    }
+
     
     public void setEventSendThreshold(ReadableArray args) {
         try {

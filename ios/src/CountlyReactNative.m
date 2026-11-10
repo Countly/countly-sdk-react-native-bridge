@@ -1778,6 +1778,45 @@ RCT_EXPORT_METHOD(removeDifferentAppKeysFromQueue) {
     });
 }
 
+/**
+ * Sends the requests to another server from now on, and points the request capture at the host the iOS SDK uses then.
+ */
+RCT_EXPORT_METHOD(changeServerUrl : (NSArray *)arguments) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      NSString *serverUrl = [arguments objectAtIndex:0];
+      [Countly.sharedInstance setNewHost:serverUrl];
+      countlyRNCapturedHost = [NSURLComponents componentsWithString:CountlyConnectionManager.sharedInstance.host].host;
+    });
+}
+
+/**
+ * Reports to another app from now on.
+ */
+RCT_EXPORT_METHOD(changeAppKey : (NSArray *)arguments) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      NSString *appKey = [arguments objectAtIndex:0];
+      [Countly.sharedInstance setNewAppKey:appKey];
+    });
+}
+
+/**
+ * Deletes the stored requests and the recorded events that are not in a request yet.
+ */
+RCT_EXPORT_METHOD(flushQueues) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      [Countly.sharedInstance flushQueues];
+    });
+}
+
+/**
+ * Packs the recorded events into a request and starts sending the stored requests now.
+ */
+RCT_EXPORT_METHOD(attemptToSendStoredRequests) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      [Countly.sharedInstance attemptToSendStoredRequests];
+    });
+}
+
 RCT_EXPORT_METHOD(setEventSendThreshold : (NSArray *)arguments) {
     dispatch_async(dispatch_get_main_queue(), ^{
       NSString *size = [arguments objectAtIndex:0];

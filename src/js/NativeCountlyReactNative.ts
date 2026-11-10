@@ -89,6 +89,14 @@ export interface Spec extends TurboModule {
     presentFeedbackWidget(args: Array<string>): Promise<void>;
     replaceAllAppKeysInQueueWithCurrentAppKey(): void;
     removeDifferentAppKeysFromQueue(): void;
+    /** Sends the requests to the server URL in args[0] from now on. */
+    changeServerUrl(args: Array<string>): void;
+    /** Reports to the app whose key is in args[0] from now on. */
+    changeAppKey(args: Array<string>): void;
+    /** Deletes the stored requests and the recorded events that are not in a request yet. */
+    flushQueues(): void;
+    /** Packs the recorded events into a request and starts sending the stored requests now. */
+    attemptToSendStoredRequests(): void;
     setEventSendThreshold(args: Array<number>): void;
     addCustomNetworkRequestHeaders(args: Array<string>): void;
     startTrace(args: Array<string>): void;

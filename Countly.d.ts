@@ -1070,6 +1070,54 @@ declare module "countly-sdk-react-native-bridge" {
     export function removeDifferentAppKeysFromQueue(): string | void;
 
     /**
+     * Sends the requests to another server from now on, for example when the app moves to another server.
+     * The requests already in the queue, the immediate requests and the web views opened after the call use the new server too.
+     * The app key stays, and the URL is kept in memory only: the next init uses the one in the config.
+     * In Android, an invalid URL, or an "http" URL while certificate pinning is set, is ignored with an error log. After a change,
+     * the SDK sends the push token and the consent state to the new server and fetches the SDK behavior settings and the remote
+     * config values from it, as after init. In iOS, the URL is used as given, so pass a valid one, and call 'sendPushToken' and
+     * 'remoteConfig.update' again when the new server needs them.
+     * Should be called after init.
+     * @param {string} serverUrl the new server URL, for example "https://your.server.ly"
+     * @return {string | void} error message or void
+     */
+    export function changeServerUrl(serverUrl: string): string | void;
+
+    /**
+     * Reports to another app from now on, for example when a white label app learns at login which customer it belongs to.
+     * Before the switch, the running views stop, the recorded events are packed into a request and the running session ends,
+     * all with the old app key. After it, a session begins for the new app if one was running, and the views start again
+     * unless 'disableViewRestartForManualRecording' is set without automatic view tracking.
+     * Requests already in the queue keep the app key they were created with: call 'replaceAllAppKeysInQueueWithCurrentAppKey'
+     * to send them to the new app, or 'removeDifferentAppKeysFromQueue' to drop them.
+     * The device ID, consent and server URL stay, and the key is kept in memory only: the next init uses the one in the config.
+     * In Android, the "YOUR_APP_KEY" placeholder and the current key are ignored, and the new app then gets the push token,
+     * the consent state, its SDK behavior settings and its remote config values, as after init. In iOS, only an automatic
+     * session ends and begins again, running APM traces are cancelled, and 'sendPushToken' and 'remoteConfig.update' have to
+     * be called again when the new app needs them.
+     * Should be called after init.
+     * @param {string} appKey the app key of the new app
+     * @return {string | void} error message or void
+     */
+    export function changeAppKey(appKey: string): string | void;
+
+    /**
+     * Deletes the stored requests and the recorded events that are not in a request yet.
+     * Started timed events, running views and pending user profile changes are kept, and a request already on its way is not stopped.
+     * Should be called after init.
+     * @return {string | void} error message or void
+     */
+    export function flushQueues(): string | void;
+
+    /**
+     * Packs the recorded events into a request and starts sending the stored requests now, without waiting for the next timer tick.
+     * The backoff mechanism and the temporary device ID mode still hold the requests back.
+     * Should be called after init.
+     * @return {string | void} error message or void
+     */
+    export function attemptToSendStoredRequests(): string | void;
+
+    /**
      * Call this function when app is loaded, so that the app launch duration can be recorded.
      * Should be called after init.
      * @return {string | void} error message or void

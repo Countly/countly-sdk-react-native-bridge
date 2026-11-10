@@ -71,6 +71,10 @@ function createNativeModuleMock(overrides = {}) {
         recordDirectAttribution: jest.fn(),
         recordIndirectAttribution: jest.fn(),
         removeDifferentAppKeysFromQueue: jest.fn(),
+        changeServerUrl: jest.fn(),
+        changeAppKey: jest.fn(),
+        flushQueues: jest.fn(),
+        attemptToSendStoredRequests: jest.fn(),
         appLoadingFinished: jest.fn(),
         setCustomMetrics: jest.fn(),
         enterContentZone: jest.fn(),
@@ -546,6 +550,50 @@ test('notification, location, trace, and attribution helpers forward expected pa
     expect(pushListener).toHaveBeenCalledWith({ aps: { alert: 'hi' } });
     expect(starRatingCallback).toHaveBeenCalledWith('rated');
     expect(typeof notificationSubscription.remove).toBe('function');
+});
+
+test('server URL, app key and queue calls guard before init, refuse a missing value and leave the rest to the native SDK', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const infoSpy = jest.spyOn(console, 'info').mockImplementation(() => {});
+    const debugSpy = jest.spyOn(console, 'debug').mockImplementation(() => {});
+    const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge({ platform: 'android' });
+    const config = new CountlyConfig('https://server.count.ly', 'app-key').setLoggingEnabled(true);
+
+    expect(Countly.changeServerUrl('https://other.count.ly')).toBe("'init' must be called before 'changeServerUrl'");
+    expect(Countly.changeAppKey('other-app-key')).toBe("'init' must be called before 'changeAppKey'");
+    expect(Countly.flushQueues()).toBe("'init' must be called before 'flushQueues'");
+    expect(Countly.attemptToSendStoredRequests()).toBe("'init' must be called before 'attemptToSendStoredRequests'");
+    expect(errorSpy).toHaveBeenCalledWith("[CountlyReactNative] changeServerUrl, 'init' must be called before 'changeServerUrl'");
+
+    await Countly.initWithConfig(config);
+
+    expect(Countly.changeServerUrl('')).toBe('serverUrl should not be null, undefined or empty');
+    expect(Countly.changeServerUrl(undefined)).toBe('serverUrl should not be null, undefined or empty');
+    expect(Countly.changeServerUrl(42)).toBe("skipping value for 'serverUrl', due to unsupported data type 'number', its data type should be 'string'");
+    expect(Countly.changeAppKey(null)).toBe('appKey should not be null, undefined or empty');
+    expect(Countly.changeAppKey({ key: 'app-key-2' })).toBe("skipping value for 'appKey', due to unsupported data type 'object', its data type should be 'string'");
+    expect(warnSpy).toHaveBeenCalledWith('[CountlyReactNative] changeServerUrl, serverUrl should not be null, undefined or empty');
+    expect(warnSpy).toHaveBeenCalledWith('[CountlyReactNative] changeAppKey, appKey should not be null, undefined or empty');
+    expect(nativeModule.changeServerUrl).not.toHaveBeenCalled();
+    expect(nativeModule.changeAppKey).not.toHaveBeenCalled();
+    expect(nativeModule.flushQueues).not.toHaveBeenCalled();
+    expect(nativeModule.attemptToSendStoredRequests).not.toHaveBeenCalled();
+
+    expect(Countly.changeServerUrl('https://other.count.ly///')).toBeUndefined();
+    expect(Countly.changeServerUrl('ftp://other.count.ly')).toBeUndefined();
+    expect(Countly.changeAppKey('YOUR_APP_KEY')).toBeUndefined();
+    expect(Countly.changeAppKey('app-key-2')).toBeUndefined();
+    expect(Countly.flushQueues()).toBeUndefined();
+    expect(Countly.attemptToSendStoredRequests()).toBeUndefined();
+
+    expect(nativeModule.changeServerUrl.mock.calls).toEqual([[['https://other.count.ly///']], [['ftp://other.count.ly']]]);
+    expect(nativeModule.changeAppKey.mock.calls).toEqual([[['YOUR_APP_KEY']], [['app-key-2']]]);
+    expect(nativeModule.flushQueues).toHaveBeenCalledWith();
+    expect(nativeModule.attemptToSendStoredRequests).toHaveBeenCalledWith();
+    expect(infoSpy).toHaveBeenCalledWith('[CountlyReactNative] changeAppKey, Changing the app key to: [app-key-2]');
+
+    [warnSpy, errorSpy, infoSpy, debugSpy].forEach((spy) => spy.mockRestore());
 });
 
 test('metrics, crash, and custom metric helpers normalize payloads', async () => {
