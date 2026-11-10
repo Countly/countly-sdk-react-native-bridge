@@ -18,6 +18,10 @@
 * Added support for objects as campaign data in `recordDirectAttribution` and as values in `recordIndirectAttribution`, in `Countly` and in `CountlyConfig`.
 * Added the names "DEVELOPMENT", "PRODUCTION" and "ADHOC" as accepted values of `CountlyConfig.setPushTokenType`.
 * Added `CountlyConfig.setUpdateSessionTimerDelay(delay)` to set how often, in seconds, the SDK sends automatic session updates and the queued events. The default is 60 seconds, and a value that is not a whole number from 1 to 2147483647 is ignored with an error log.
+* Added `Countly.changeServerUrl(serverUrl)` to change the server URL after init.
+* Added `Countly.changeAppKey(appKey)` to change the app key after init.
+* Added `Countly.flushQueues()` to delete the stored requests and events.
+* Added `Countly.attemptToSendStoredRequests()` to send the stored requests now.
 
 * Mitigated remote config update issues:
   * Updates without remote config consent, in temporary device ID mode or with SDK networking disabled now complete with an error in iOS, instead of never completing.
@@ -82,6 +86,7 @@
   * `Countly.setUserData`, `Countly.userDataBulk.setUserProperties`, `Countly.userData.setProperty` and `Countly.userDataBulk.setProperty` now use the iOS SDK's user property API: pending events are sent before the user details, and `null` values and nested objects are skipped with a log line instead of being sent, as on Android.
   * The iOS SDK's default log level is now debug instead of verbose.
 
+* Updated the underlying Android SDK version to XX.XX.XX
 * Updated the underlying iOS SDK version to 26.8.0
 
 ## 26.1.0
