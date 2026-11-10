@@ -1174,3 +1174,27 @@ test('test helpers do nothing in release builds', async () => {
     expect(nativeModule.halt).not.toHaveBeenCalled();
     expect(CountlyState.isInitialized).toBe(true);
 });
+
+test('initWithConfig passes the JavaScript and the native log lines to the log listener', async () => {
+    const { Countly, CountlyConfig, nativeModule, listeners, emit } = loadCountlyBridge();
+    const lines = [];
+    const config = new CountlyConfig('https://server.count.ly', 'app-key').setLogListener((message, level) => lines.push([message, level]));
+
+    await Countly.initWithConfig(config);
+
+    expect(getNativeInitPayload(nativeModule).logListener).toBe(true);
+    expect(listeners.map((listener) => listener.eventName)).toContain('logListenerCallback');
+    expect(lines).toContainEqual(['[CountlyReactNative] initWithConfig, Initializing Countly', 'debug']);
+
+    emit('logListenerCallback', { message: '[ModuleEvents] recordEventInternal, key:[[CLY]_view]', level: 'info' });
+    expect(lines[lines.length - 1]).toEqual(['[ModuleEvents] recordEventInternal, key:[[CLY]_view]', 'info']);
+});
+
+test('setLogListener ignores a value that is not a function', async () => {
+    const { Countly, CountlyConfig, nativeModule, listeners } = loadCountlyBridge();
+
+    await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key').setLogListener('not a function'));
+
+    expect(getNativeInitPayload(nativeModule)).not.toHaveProperty('logListener');
+    expect(listeners.map((listener) => listener.eventName)).not.toContain('logListenerCallback');
+});

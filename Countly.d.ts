@@ -65,6 +65,16 @@ type ContentStatus = "COMPLETED" | "CLOSED";
 type ContentCallback = (status: ContentStatus, data: Record<string, any>) => void;
 
 /**
+ * Level of a log line, as the log listener receives it.
+ */
+type CountlyLogLevel = "error" | "warning" | "info" | "debug" | "verbose";
+
+/**
+ * Called with every log line of the SDK and its level, also when logging is disabled.
+ */
+type CountlyLogListener = (message: string, level: CountlyLogLevel) => void;
+
+/**
  * Called when the user taps a push notification.
  * actionIndex is 0 for the notification itself and 1 and up for its buttons.
  */
@@ -1251,6 +1261,16 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
    * if true, countly sdk would log to console.
    */
     setLoggingEnabled(loggingEnabled: boolean): CountlyConfig;
+
+    /**
+   * Method to set a listener that receives every log line of the SDK and its level,
+   * also when logging is disabled. It receives the lines of the native SDK and of the
+   * React Native layer. The listener is called inside the SDK's own calls, so it should
+   * return quickly and must not call the SDK.
+   *
+   * @param {CountlyLogListener} logListener called with the message and its level
+   */
+    setLogListener(logListener: CountlyLogListener): CountlyConfig;
 
     /**
    * Method to enable crash reporting to report unhandled crashes to Countly

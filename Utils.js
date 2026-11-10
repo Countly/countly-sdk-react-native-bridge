@@ -111,6 +111,10 @@ function configToJson(config) {
                 L.i(`init configuration, Enabled logging in ${__DEV__ ? "development" : "production"} mode`);
             }
         }
+        if (config._logListener) {
+            json.logListener = true;
+            L.i("init configuration, Set a log listener");
+        }
         if (config._crashReporting) {
             json.crashReporting = true;
             L.i("init configuration, Enabled crash reporting");

@@ -88,6 +88,25 @@ NSString *const ratingWidgetCallbackName = @"ratingWidgetCallback";
 NSString *const pushNotificationCallbackName = @"pushNotificationCallback";
 NSString *const pushNotificationOpenedCallbackName = @"pushNotificationOpenedCallback";
 NSString *const contentCallbackName = @"globalContentCallback";
+NSString *const logListenerCallbackName = @"logListenerCallback";
+
+/**
+ * The level name the log listener of the JavaScript layer receives for a level of the native SDK.
+ */
+static NSString *CountlyRNLogLevelName(CLYInternalLogLevel level) {
+    switch (level) {
+        case CLYInternalLogLevelError:
+            return @"error";
+        case CLYInternalLogLevelWarning:
+            return @"warning";
+        case CLYInternalLogLevelInfo:
+            return @"info";
+        case CLYInternalLogLevelVerbose:
+            return @"verbose";
+        default:
+            return @"debug";
+    }
+}
 
 static void CountlyRNEnsureCapturedRequests(void) {
     if (countlyRNCapturedRequests == nil) {
@@ -230,6 +249,9 @@ static NSData *CountlyRNCapturedResponseDataForRequest(NSURLRequest *request) {
 
 @end
 
+@interface CountlyReactNative () <CountlyLoggerDelegate>
+@end
+
 @implementation CountlyReactNative
 NSString *const kCountlyNotificationPersistencyKey = @"kCountlyNotificationPersistencyKey";
 
@@ -250,7 +272,14 @@ NSString *const kCountlyNotificationPersistencyKey = @"kCountlyNotificationPersi
 }
 
 - (NSArray<NSString *> *)supportedEvents {
-    return @[ pushNotificationCallbackName, pushNotificationOpenedCallbackName, ratingWidgetCallbackName, widgetShownCallbackName, widgetClosedCallbackName, contentCallbackName ];
+    return @[ pushNotificationCallbackName, pushNotificationOpenedCallbackName, ratingWidgetCallbackName, widgetShownCallbackName, widgetClosedCallbackName, contentCallbackName, logListenerCallbackName ];
+}
+
+/**
+ * Passes a log line of the native SDK to the log listener of the JavaScript layer.
+ */
+- (void)internalLog:(NSString *)log withLevel:(CLYInternalLogLevel)level {
+    [self sendEventWithName:logListenerCallbackName body:@{@"message" : log ?: @"", @"level" : CountlyRNLogLevelName(level)}];
 }
 
 - (NSString *)toJSONString:(id)object {
@@ -402,6 +431,12 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
         if (config.enableDebug) {
             config.internalLogLevel = CLYInternalLogLevelVerbose;
         }
+    }
+
+    if (json[@"logListener"]) {
+        config.loggerDelegate = self;
+        // the listener gets every level, also the verbose lines the default level leaves out
+        config.internalLogLevel = CLYInternalLogLevelVerbose;
     }
 
     if (json[@"shouldRequireConsent"]) {

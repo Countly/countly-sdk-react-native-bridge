@@ -52,6 +52,7 @@ let _ratingWidgetListener;
 const ratingWidgetCallbackName = "ratingWidgetCallback";
 const pushNotificationCallbackName = "pushNotificationCallback";
 const pushNotificationOpenedCallbackName = "pushNotificationOpenedCallback";
+const logListenerCallbackName = "logListenerCallback";
 
 function removeSubscription(stateKey) {
     const subscription = _state[stateKey];
@@ -72,8 +73,10 @@ function createInactiveSubscription() {
 
 function resetBridgeStateForTesting() {
     removeSubscription("globalContentCallbackSubscription");
+    removeSubscription("logListenerSubscription");
     removeSubscription("widgetShownCallback");
     removeSubscription("widgetClosedCallback");
+    L.setListener(null);
 
     if (_ratingWidgetListener && typeof _ratingWidgetListener.remove === "function") {
         _ratingWidgetListener.remove();
@@ -227,6 +230,7 @@ Countly.initWithConfig = async function (countlyConfig) {
         L.e("init, config should not be null or undefined");
         return;
     }
+    L.setListener(countlyConfig._logListener);
     if (countlyConfig.deviceID !== undefined && countlyConfig.deviceID !== null && (typeof countlyConfig.deviceID !== "string" || countlyConfig.deviceID === "")) {
         L.e("init, Device ID during init must be a non-empty string. Value will be ignored and the SDK will generate one.");
     }
@@ -251,6 +255,12 @@ Countly.initWithConfig = async function (countlyConfig) {
             }
         });
     }
+    removeSubscription("logListenerSubscription");
+    if (countlyConfig._logListener) {
+        _state.logListenerSubscription = eventEmitter.addListener(logListenerCallbackName, (data) => {
+            L.notifyListener(data.message, data.level);
+        });
+    }
     const args = [];
     const argsMap = Utils.configToJson(countlyConfig);
     const argsString = JSON.stringify(argsMap);
@@ -260,6 +270,7 @@ Countly.initWithConfig = async function (countlyConfig) {
     } catch (error) {
         L.e(`init, native init failed: ${error && error.message ? error.message : String(error)}`);
         removeSubscription("globalContentCallbackSubscription");
+        removeSubscription("logListenerSubscription");
         return;
     }
     if (countlyConfig._crashReporting) {

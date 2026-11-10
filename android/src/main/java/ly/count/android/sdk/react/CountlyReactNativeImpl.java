@@ -54,6 +54,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -126,6 +127,7 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     private static String ratingWidgetCallbackName = "ratingWidgetCallback";
     private static String pushNotificationCallbackName = "pushNotificationCallback";
     private static String pushNotificationOpenedCallbackName = "pushNotificationOpenedCallback";
+    private static String logListenerCallbackName = "logListenerCallback";
     private static final String POST_NOTIFICATIONS_PERMISSION = "android.permission.POST_NOTIFICATIONS";
     private static final int POST_NOTIFICATIONS_API_LEVEL = 33;
     private static final int POST_NOTIFICATIONS_REQUEST_CODE = 1853;
@@ -632,6 +634,20 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
                 boolean isEnabled = _config.getBoolean("loggingEnabled");
                 loggingEnabled = isEnabled;
                 config.setLoggingEnabled(isEnabled);
+            }
+        });
+        applyConfigStep("logListener", () -> {
+            if (_config.has("logListener")) {
+                config.setLogListener((logMessage, logLevel) -> {
+                    try {
+                        WritableMap data = Arguments.createMap();
+                        data.putString("message", logMessage);
+                        data.putString("level", logLevel.name().toLowerCase(Locale.ROOT));
+                        _reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit(logListenerCallbackName, data);
+                    } catch (Exception ignored) {
+                        // no running React instance to pass the line to, and a throwing listener would keep the line from log gathering
+                    }
+                });
             }
         });
         applyConfigStep("shouldRequireConsent", () -> {

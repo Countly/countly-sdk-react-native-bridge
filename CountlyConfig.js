@@ -48,6 +48,8 @@ class CountlyConfig {
 
     #globalViewSegmentation;
 
+    #logListener = null;
+
     constructor(serverURL, appKey) {
         this.serverURL = serverURL;
         this.appKey = appKey;
@@ -143,6 +145,13 @@ class CountlyConfig {
 
     get _globalViewSegmentation() {
         return this.#globalViewSegmentation;
+    }
+
+    /**
+     * Getter to get the log listener set with setLogListener
+     */
+    get _logListener() {
+        return this.#logListener;
     }
 
     /**
@@ -279,6 +288,23 @@ class CountlyConfig {
     setLoggingEnabled(loggingEnabled) {
         this.loggingEnabled = loggingEnabled;
         L.initialize(loggingEnabled); // initialize React Native SDK logger
+        return this;
+    }
+
+    /**
+     * Method to set a listener that receives every log line of the SDK and its level
+     * ("error", "warning", "info", "debug" or "verbose"), also when logging is disabled.
+     * It receives the lines of the native SDK and of the React Native layer. The listener
+     * is called inside the SDK's own calls, so it should return quickly and must not call the SDK.
+     *
+     * @param {function(string, string)} logListener called with the message and its level
+     */
+    setLogListener(logListener) {
+        if (typeof logListener !== "function") {
+            L.w("setLogListener, the log listener must be a function, ignoring it");
+            return this;
+        }
+        this.#logListener = logListener;
         return this;
     }
 
