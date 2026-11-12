@@ -1,0 +1,61 @@
+name: Public API
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api:
+    name: Breaking changes
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout SDK code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          cache: npm
+
+      # The first parent of the pull request's merge commit is the base branch it merges into.
+      - name: Compare the public API with the base branch
+        run: |
+          git worktree add "$RUNNER_TEMP/base" HEAD^1
+          for side in base head; do
+            tree="$GITHUB_WORKSPACE"
+            if [ "$side" = base ]; then
+              tree="$RUNNER_TEMP/base"
+            fi
+            cp .github/scripts/public_api_dump.cjs "$tree/public-api-dump.cjs"
+            (cd "$tree" && npm ci --ignore-scripts --no-audit --no-fund \
+              && PUBLIC_API_OUT="$RUNNER_TEMP/$side.txt" npx jest --coverage=false --testRegex 'public-api-dump\.cjs$')
+          done
+          LC_ALL=C comm -23 "$RUNNER_TEMP/base.txt" "$RUNNER_TEMP/head.txt" | sed 's/^/Removed or changed: /' > "$RUNNER_TEMP/breaking.txt"
+
+      - name: Require a CHANGELOG entry for breaking changes
+        run: |
+          if [ ! -s "$RUNNER_TEMP/breaking.txt" ]; then
+            echo "No breaking change to the public API." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          {
+            echo "### Breaking changes to the public API"
+            echo '```'
+            cat "$RUNNER_TEMP/breaking.txt"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if git diff --quiet HEAD^1 HEAD -- CHANGELOG.md; then
+            echo "::error title=Breaking API change::This pull request breaks the public API without a CHANGELOG.md entry. The job summary lists each break."
+            exit 1
+          fi
+          echo "::warning title=Breaking API change::This pull request breaks the public API. Check that CHANGELOG.md marks it as a breaking change."
