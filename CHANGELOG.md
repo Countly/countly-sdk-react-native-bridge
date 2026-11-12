@@ -18,6 +18,9 @@
 * Added support for objects as campaign data in `recordDirectAttribution` and as values in `recordIndirectAttribution`, in `Countly` and in `CountlyConfig`.
 * Added the names "DEVELOPMENT", "PRODUCTION" and "ADHOC" as accepted values of `CountlyConfig.setPushTokenType`.
 * Added `CountlyConfig.setUpdateSessionTimerDelay(delay)` to set how often, in seconds, the SDK sends automatic session updates and the queued events. The default is 60 seconds, and a value that is not a whole number from 1 to 2147483647 is ignored with an error log.
+* Added `CountlyConfig.setLogListener(listener)` for receiving every log message of the SDK and its level, also while logging is disabled:
+  * The listener gets the messages of the React Native layer and of the native SDK, each with "error", "warning", "info", "debug" or "verbose".
+  * It is called inside the SDK's own calls, so it should return quickly and must not call the SDK.
 
 * Mitigated remote config update issues:
   * Updates without remote config consent, in temporary device ID mode or with SDK networking disabled now complete with an error in iOS, instead of never completing.

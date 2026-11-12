@@ -1,5 +1,6 @@
 const countlyNamespace = "[CountlyReactNative] ";
 let canLog = false;
+let logListener = null;
 
 /**
  * Initialize logger
@@ -11,6 +12,32 @@ function initialize(debugMode) {
 }
 
 /**
+ * Sets the listener that receives every log line and its level, also when logging is disabled.
+ * @param {Function} listener - called with the message and its level, anything else removes the listener
+ */
+function setListener(listener) {
+    logListener = typeof listener === "function" ? listener : null;
+}
+
+/**
+ * Passes a log line to the log listener, if one is set. A listener that throws does not break the SDK.
+ * @param {String} message - the log line
+ * @param {String} level - "error", "warning", "info", "debug" or "verbose"
+ */
+function notifyListener(message, level) {
+    if (!logListener) {
+        return;
+    }
+    try {
+        logListener(message, level);
+    } catch (error) {
+        if (canLog) {
+            console.error(`${countlyNamespace}[Logger] notifyListener, the log listener threw an error: ${error}`);
+        }
+    }
+}
+
+/**
  * Error - this is for things that need immediate attention because SDK won’t work.
  * @param {String} message
  */
@@ -18,6 +45,7 @@ function e(message) {
     if (canLog) {
         console.error(countlyNamespace + message);
     }
+    notifyListener(countlyNamespace + message, "error");
 }
 
 /**
@@ -29,6 +57,7 @@ function w(message) {
     if (canLog) {
         console.warn(countlyNamespace + message);
     }
+    notifyListener(countlyNamespace + message, "warning");
 }
 
 /**
@@ -39,6 +68,7 @@ function i(message) {
     if (canLog) {
         console.info(countlyNamespace + message);
     }
+    notifyListener(countlyNamespace + message, "info");
 }
 
 /**
@@ -51,6 +81,7 @@ function d(message) {
     if (canLog) {
         console.debug(countlyNamespace + message);
     }
+    notifyListener(countlyNamespace + message, "debug");
 }
 
 /**
@@ -62,6 +93,7 @@ function v(message) {
     if (canLog) {
         console.log(`[VERBOSE]${countlyNamespace}${message}`);
     }
+    notifyListener(countlyNamespace + message, "verbose");
 }
 
-export { initialize, e, w, i, d, v };
+export { initialize, setListener, notifyListener, e, w, i, d, v };
