@@ -7,7 +7,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const MAX_INT = 2147483647;
+const MAX_INT = 2 ** 31 - 1;
 const RECORDS = path.join(__dirname, '..', 'api', 'requests');
 
 // what the native module answers, for the calls whose answer the bridge reads
@@ -73,11 +73,7 @@ function loadBridge() {
         Platform: { OS: 'ios', constants: { reactNativeVersion: { minor: 72 } } },
         NativeModules: { CountlyReactNative: nativeModule },
         TurboModuleRegistry: { get: jest.fn(() => nativeModule) },
-        NativeEventEmitter: class {
-            addListener() {
-                return { remove: jest.fn() };
-            }
-        },
+        NativeEventEmitter: jest.fn(() => ({ addListener: jest.fn(() => ({ remove: jest.fn() })) })),
     }), { virtual: true });
     jest.doMock('../CountlyFlavor.js', () => ({ PUSH_NOTIFICATIONS_AVAILABLE: true }));
     let bridge;
@@ -98,14 +94,14 @@ function loadBridge() {
  * @returns {Promise<void>} resolves when the calls are compared
  */
 async function checkCalls(name, configure, scenario) {
-    const { Countly, CountlyConfig, calls } = loadBridge();
-    const config = new CountlyConfig('https://parity.example', 'parity-app-key').setDeviceID('parity-device-001').enableManualSessionControl();
+    const bridge = loadBridge();
+    const config = new bridge.CountlyConfig('https://parity.example', 'parity-app-key').setDeviceID('parity-device-001').enableManualSessionControl();
     configure(config);
-    await Countly.initWithConfig(config);
-    await scenario(Countly);
+    await bridge.Countly.initWithConfig(config);
+    await scenario(bridge.Countly);
     await new Promise((resolve) => setImmediate(resolve));
 
-    const current = `${JSON.stringify(calls, null, 2)}\n`;
+    const current = `${JSON.stringify(bridge.calls, null, 2)}\n`;
     const file = path.join(RECORDS, `${name}.json`);
     if (process.env.COUNTLY_UPDATE_REQUESTS) {
         fs.mkdirSync(RECORDS, { recursive: true });
