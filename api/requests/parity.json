@@ -1,0 +1,120 @@
+[
+  {
+    "method": "init",
+    "args": [
+      [
+        "{\"serverURL\":\"https://parity.example\",\"appKey\":\"parity-app-key\",\"deviceID\":\"parity-device-001\",\"manualSessionHandling\":true}"
+      ]
+    ]
+  },
+  {
+    "method": "startSession",
+    "args": []
+  },
+  {
+    "method": "recordEvent",
+    "args": [
+      {
+        "c": 2,
+        "g": [
+          "nar",
+          "uto",
+          "sasuke",
+          2147483647,
+          "sakura",
+          false,
+          "itachi",
+          1.7976931348623157e+308,
+          "kakaski",
+          5e-324,
+          "hashirama",
+          -2147483647,
+          "tobi",
+          {
+            "obito": "uchiha",
+            "zetsu": "white"
+          },
+          "stringList",
+          [
+            "value1",
+            "value2",
+            "value3"
+          ],
+          "intList",
+          [
+            1,
+            2,
+            3
+          ],
+          "doubleList",
+          [
+            1.1,
+            2.2,
+            3.3
+          ],
+          "boolList",
+          [
+            true,
+            false,
+            true
+          ],
+          "mixedList",
+          [
+            "value1",
+            2,
+            3.3,
+            true
+          ],
+          "mapList",
+          [
+            {
+              "key1": "value1",
+              "key2": 2
+            },
+            {
+              "key1": "value2",
+              "key2": 3
+            },
+            {
+              "key1": "value3",
+              "key2": 4
+            }
+          ]
+        ],
+        "n": "purchase",
+        "s": 9.99
+      }
+    ]
+  },
+  {
+    "method": "userDataBulk_setUserProperties",
+    "args": [
+      {
+        "age": 30,
+        "byear": "1980",
+        "email": "john@example.com",
+        "gender": "M",
+        "name": "John Doe",
+        "organization": "Countly",
+        "phone": "1234567890",
+        "picture": "https://example.com/picture.jpg",
+        "tier": "gold",
+        "username": "john_d"
+      }
+    ]
+  },
+  {
+    "method": "userDataBulk_save",
+    "args": [
+      []
+    ]
+  },
+  {
+    "method": "updateSession",
+    "args": []
+  },
+  {
+    "method": "endSession",
+    "args": []
+  }
+]
