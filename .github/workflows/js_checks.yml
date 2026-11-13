@@ -34,7 +34,27 @@ jobs:
             const rows = ["lines", "statements", "branches", "functions"].map((metric) =>
               `| ${metric} | ${total[metric].pct}% | ${total[metric].covered}/${total[metric].total} |`);
             console.log(["### Unit test coverage", "", "| Metric | Covered | Count |", "|---|---|---|", ...rows].join("\n"));
-          ' >> "$GITHUB_STEP_SUMMARY"
+          ' > "$RUNNER_TEMP/coverage.md"
+          cat "$RUNNER_TEMP/coverage.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Write the CI report fragment (coverage)
+        if: ${{ !cancelled() && matrix.node-version == 24 }}
+        run: |
+          [ -s "$RUNNER_TEMP/coverage.md" ] || exit 0
+          summary=$(awk '$2 == "lines" { print "Line coverage " $4 }' "$RUNNER_TEMP/coverage.md")
+          mkdir -p "$RUNNER_TEMP/ci-report-coverage"
+          {
+            printf 'Coverage\n%s\n' "${summary:-See details}"
+            cat "$RUNNER_TEMP/coverage.md"
+          } > "$RUNNER_TEMP/ci-report-coverage/report.md"
+
+      - name: Upload the CI report fragment (coverage)
+        if: ${{ !cancelled() && matrix.node-version == 24 }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ci-report-coverage
+          path: ${{ runner.temp }}/ci-report-coverage
+          if-no-files-found: ignore
       - name: Generate and test the no-push package
         if: hashFiles('scripts/generate-no-push.js') != ''
         run: |
