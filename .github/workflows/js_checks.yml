@@ -25,7 +25,16 @@ jobs:
       - name: Type check Countly.d.ts
         run: npx tsc -p tsconfig.types.json
       - name: Unit tests
-        run: npx jest
+        run: npx jest --coverageReporters=json-summary --coverageReporters=text
+      - name: Write the coverage summary
+        if: matrix.node-version == 24
+        run: |
+          node -e '
+            const total = require("./coverage/coverage-summary.json").total;
+            const rows = ["lines", "statements", "branches", "functions"].map((metric) =>
+              `| ${metric} | ${total[metric].pct}% | ${total[metric].covered}/${total[metric].total} |`);
+            console.log(["### Unit test coverage", "", "| Metric | Covered | Count |", "|---|---|---|", ...rows].join("\n"));
+          ' >> "$GITHUB_STEP_SUMMARY"
       - name: Generate and test the no-push package
         if: hashFiles('scripts/generate-no-push.js') != ''
         run: |
