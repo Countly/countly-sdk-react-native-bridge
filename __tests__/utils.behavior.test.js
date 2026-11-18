@@ -50,6 +50,7 @@ test('configToJson serializes allowed intent package names and advanced init opt
         .disableAdditionalIntentRedirectionChecks()
         .disableSDKBehaviorSettingsUpdates()
         .disableBackoffMechanism()
+        .enableRequestCompression()
         .disableGradualRequestCleaner()
         .disableViewRestartForManualRecording()
         .setRequestTimeoutDuration(15)
@@ -127,6 +128,7 @@ test('configToJson serializes allowed intent package names and advanced init opt
         maxStackTraceLineLength: 220,
         disableSDKBehaviorSettingsUpdates: true,
         disableBackoffMechanism: true,
+        enableRequestCompression: true,
         disableGradualRequestCleaner: true,
         disableViewRestartForManualRecording: true,
         sdkBehaviorSettings,
@@ -321,6 +323,7 @@ test('configToJson skips a session update timer delay that is not a whole number
         const json = configToJson(new CountlyConfig('https://server.count.ly', 'app-key').setUpdateSessionTimerDelay(delay).disableBackoffMechanism());
 
         expect(json).not.toHaveProperty('sessionUpdateTimerDelay');
+        expect(json).not.toHaveProperty('enableRequestCompression');
         expect(json.disableBackoffMechanism).toBe(true);
         expect(Logger.e).toHaveBeenCalledTimes(1);
         expect(Logger.e).toHaveBeenCalledWith(`init configuration, the session update timer delay should be a whole number of seconds from 1 to 2147483647, received [${delay}] of type '${typeof delay}', skipping it`);

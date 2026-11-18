@@ -674,6 +674,9 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
     if (json[@"disableBackoffMechanism"]) {
         config.disableBackoffMechanism = [json[@"disableBackoffMechanism"] boolValue];
     }
+    if (json[@"enableRequestCompression"]) {
+        config.enableRequestCompression = [json[@"enableRequestCompression"] boolValue];
+    }
     if (json[@"sdkBehaviorSettings"]) {
         if (![json[@"sdkBehaviorSettings"] isKindOfClass:[NSString class]]) {
             NSError *error;

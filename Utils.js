@@ -353,6 +353,10 @@ function configToJson(config) {
             L.i("init configuration, disabled backoff mechanism");
             json.disableBackoffMechanism = true;
         }
+        if (config._enableRequestCompression) {
+            L.i("init configuration, enabled request compression");
+            json.enableRequestCompression = true;
+        }
         if (config._disableGradualRequestCleaner) {
             L.i("init configuration, disabled gradual request cleaner");
             json.disableGradualRequestCleaner = true;

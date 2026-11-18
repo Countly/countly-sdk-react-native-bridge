@@ -1397,6 +1397,13 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
     disableBackoffMechanism(): CountlyConfig;
 
     /**
+     * Method to send request bodies between 1 KB and 1 MB gzip-compressed, once the server's SDK behavior settings
+     * answer says it reads them.
+     * @return {CountlyConfig}
+     */
+    enableRequestCompression(): CountlyConfig;
+
+    /**
      * Method to set SDK behavior settings.
      *
      * @param {object} settingsObject settings object

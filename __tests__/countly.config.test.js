@@ -46,6 +46,7 @@ test('CountlyConfig setters and nested interfaces persist fluent configuration',
     expect(config.disableAdditionalIntentRedirectionChecks()).toBe(config);
     expect(config.disableSDKBehaviorSettingsUpdates()).toBe(config);
     expect(config.disableBackoffMechanism()).toBe(config);
+    expect(config.enableRequestCompression()).toBe(config);
     expect(config.setSDKBehaviorSettings(sdkBehaviorSettings)).toBe(config);
     expect(config.setPushTokenType('DEVELOPMENT')).toBe(config);
     expect(config.setPushNotificationChannelInformation('Alerts', 'Countly alerts')).toBe(config);

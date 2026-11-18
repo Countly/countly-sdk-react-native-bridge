@@ -26,6 +26,8 @@ class CountlyConfig {
 
     #disableBackoff = false;
 
+    #enableRequestCompression = false;
+
     #sdkBehaviorSettings;
 
     #requestTimeoutDuration;
@@ -101,6 +103,10 @@ class CountlyConfig {
 
     get _disableBackoff() {
         return this.#disableBackoff;
+    }
+
+    get _enableRequestCompression() {
+        return this.#enableRequestCompression;
     }
 
     get _sdkBehaviorSettings() {
@@ -401,6 +407,15 @@ class CountlyConfig {
      */
     disableBackoffMechanism() {
         this.#disableBackoff = true;
+        return this;
+    }
+
+    /**
+     * Sends request bodies between 1 KB and 1 MB gzip-compressed, once the server's SDK behavior settings answer
+     * says it reads them. It needs the SDK behavior settings updates, which disableSDKBehaviorSettingsUpdates turns off.
+     */
+    enableRequestCompression() {
+        this.#enableRequestCompression = true;
         return this;
     }
 
