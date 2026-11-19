@@ -58,7 +58,6 @@
   * JS crash titles now name the function and the bundle file the error came from, by file name only, without device or build paths.
   * `Countly.recordMetrics` before init, a survey reported as closed with a `null` result, and inputs of the wrong type no longer crash the app or leave a promise unsettled.
   * `Countly.setCustomCrashSegments` after init, where it has no effect, now returns a warning. Set crash segments before `Countly.initWithConfig`.
-* Mitigated an issue where `Countly.feedback.presentFeedbackWidget` ignored the close button text in Android.
 * Mitigated an issue where the content callback status was a number in iOS; it is now the text "COMPLETED" or "CLOSED", the same as in Android.
 * Mitigated an issue where the iOS privacy manifest was not bundled with the pod.
 * Mitigated an issue where the Android build file set app-only values and its own build script when used inside an app.
@@ -78,6 +77,49 @@
   * `Countly.getRemoteConfigValueForKey` and `Countly.getRemoteConfigValueForKeyP`, use `Countly.remoteConfig.getValue`
   * `Countly.remoteConfigClearValues`, use `Countly.remoteConfig.clearValues`
 
+* Android specific changes:
+  * ! Minor breaking change ! The Android SDK is now published at `https://maven.countly.com`. The bridge adds this repository to the app's projects; an app that declares its repositories in `settings.gradle` has to add it there:
+
+    ```groovy
+    maven {
+      url = 'https://maven.countly.com'
+      content { includeGroupByRegex 'ly\\.count\\..*' }
+    }
+    ```
+
+  * ! Minor breaking change ! The Android SDK no longer depends on `androidx.multidex:multidex`; an app that uses it has to declare it itself.
+  * ! Minor breaking change ! Content, feedback widget and push notification links with the `data:`, `zip:` or `intent:` scheme are no longer opened, and web views no longer load resources from them.
+  * ! Minor breaking change ! `Countly.test.halt()` now also erases the generated device ID.
+  * Added support for server requested SDK log gathering and connection tests, and for SDK behavior settings that control automatic session tracking, automatic view tracking, automatic crash reporting and Journey Trigger Views.
+  * Added large icons and collapse keys to push notifications.
+  * Added support for API level 37.
+  * Added the app's current theme, light or dark, to feedback widgets, rating widgets and content, so they are shown to match the app.
+  * Pending events are now sent as soon as a user property is set, so they reach the server before the user properties.
+  * Mitigated SDK behavior settings issues:
+    * The settings were ignored when the server reply carried unknown fields, as every server from 26.01.8 on does.
+    * The settings were refreshed every 4,000 hours instead of every 4 hours while the app stayed in the foreground.
+    * A setting removed in SDK Manager did not go back to its `CountlyConfig` value or the SDK default.
+    * Old requests kept being dropped from a full request queue after the settings turned the request age limit off.
+    * `CountlyConfig.disableBackoffMechanism` had no effect until the settings arrived.
+  * Mitigated view issues:
+    * A view ID returned by `Countly.views.startView` stopped working after the app went to the background and came back.
+    * An auto-stopped view could stop being tracked when the app came back from the background.
+    * With automatic view tracking, coming back to an activity that had not been stopped, for example when a translucent activity closed, did not record that activity's view again.
+  * Mitigated content and feedback widget issues:
+    * Closing a content or feedback widget from a background thread crashed the app.
+    * Content could stay hidden on some devices after it had loaded.
+    * Links that carry their own query parameters, such as deep links, were not parsed correctly.
+    * The widgets blocked keyboard input on the app's screen and kept the screen in memory after they closed.
+    * The content zone did not resume after the app left temporary device ID mode.
+  * Mitigated an issue where a rating widget could send its request in temporary device ID mode, creating a `CLYTemporaryDeviceID` user on the server.
+  * Mitigated an issue where the app was treated as being in the background after moving from one activity to another, so crash reports were marked as happening in the background.
+  * Mitigated an issue where session, view and timed event durations changed when the device clock was adjusted.
+  * Mitigated StrictMode violations the SDK caused: `IncorrectContextUseViolation` from display metrics, content and feedback widgets, `UntaggedSocketViolation` from its requests, and disk reads on the main thread when a crash was recorded.
+  * Mitigated push notification issues:
+    * Images could delay a notification or keep it from showing.
+    * An action button tap left the notification visible.
+    * The token was not sent again after push consent was given again or after a device ID change without merge.
+
 * iOS specific changes:
   * ! Minor breaking change ! A SIGPIPE the app neither ignores nor handles itself now ends the app after the crash is reported, as it would without the SDK. Before, the SDK reported it, kept the app running and turned automatic crash reporting off. An app that has to survive a broken pipe should ignore or handle SIGPIPE before `Countly.initWithConfig`.
   * Added support for server requested SDK log gathering and connection tests, and for SDK behavior settings that control automatic session tracking, automatic view tracking, automatic crash reporting and Journey Trigger Views, also for the running session.
@@ -85,6 +127,7 @@
   * `Countly.setUserData`, `Countly.userDataBulk.setUserProperties`, `Countly.userData.setProperty` and `Countly.userDataBulk.setProperty` now use the iOS SDK's user property API: pending events are sent before the user details, and `null` values and nested objects are skipped with a log line instead of being sent, as on Android.
   * The iOS SDK's default log level is now debug instead of verbose.
 
+* Updated the underlying Android SDK version to 26.8.0
 * Updated the underlying iOS SDK version to 26.8.0
 
 ## 26.1.0
