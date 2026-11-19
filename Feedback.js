@@ -198,7 +198,7 @@ class Feedback {
      * Present a chosen feedback widget
      *
      * @param {object} feedbackWidget - feedback Widget with id, type and name
-     * @param {string} closeButtonText - text for cancel/close button
+     * @param {string} closeButtonText - not used: the widget shows its own close button
      * @param {callback} [widgetShownCallback] - Callback to be executed when feedback widget is displayed. This parameter is optional.
      * @param {callback} [widgetClosedCallback] - Callback to be executed when feedback widget is closed. This parameter is optional.
      *
