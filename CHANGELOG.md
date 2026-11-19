@@ -22,6 +22,9 @@
 * Added `Countly.changeAppKey(appKey)` to change the app key after init.
 * Added `Countly.flushQueues()` to delete the stored requests and events.
 * Added `Countly.attemptToSendStoredRequests()` to send the stored requests now.
+* Added `CountlyConfig.setLogListener(listener)` for receiving every log message of the SDK and its level, also while logging is disabled:
+  * The listener gets the messages of the React Native layer and of the native SDK, each with "error", "warning", "info", "debug" or "verbose".
+  * It is called inside the SDK's own calls, so it should return quickly and must not call the SDK.
 
 * Mitigated remote config update issues:
   * Updates without remote config consent, in temporary device ID mode or with SDK networking disabled now complete with an error in iOS, instead of never completing.

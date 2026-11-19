@@ -1,0 +1,112 @@
+name: Public API changes
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api:
+    name: Breaking changes
+    outputs:
+      report: ${{ steps.report.outputs.report }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout SDK code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          cache: npm
+
+      # The first parent of the pull request's merge commit is the base branch it merges into.
+      - name: Compare the public API with the base branch
+        id: compare
+        run: |
+          git worktree add "$RUNNER_TEMP/base" HEAD^1
+          for side in base head; do
+            tree="$GITHUB_WORKSPACE"
+            if [ "$side" = base ]; then
+              tree="$RUNNER_TEMP/base"
+            fi
+            cp .github/scripts/public_api_dump.cjs "$tree/public-api-dump.cjs"
+            (cd "$tree" && npm ci --ignore-scripts --no-audit --no-fund \
+              && PUBLIC_API_OUT="$RUNNER_TEMP/$side.txt" npx jest --coverage=false --testRegex 'public-api-dump\.cjs$')
+          done
+          LC_ALL=C comm -23 "$RUNNER_TEMP/base.txt" "$RUNNER_TEMP/head.txt" | sed 's/^/Removed or changed: /' > "$RUNNER_TEMP/breaking.txt"
+          LC_ALL=C comm -13 "$RUNNER_TEMP/base.txt" "$RUNNER_TEMP/head.txt" > "$RUNNER_TEMP/added.txt"
+
+      - name: Report the public API changes
+        id: report
+        run: bash .github/scripts/public_api_report.sh "$RUNNER_TEMP/breaking.txt" "$RUNNER_TEMP/added.txt"
+
+      - name: Upload the CI report fragment
+        if: ${{ !cancelled() && steps.report.outcome == 'success' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ci-report-public-api
+          path: ${{ runner.temp }}/ci-report-public-api
+          if-no-files-found: ignore
+
+      - name: Require a CHANGELOG entry for breaking changes
+        run: |
+          if [ ! -s "$RUNNER_TEMP/breaking.txt" ]; then
+            exit 0
+          fi
+          if git diff --quiet HEAD^1 HEAD -- CHANGELOG.md; then
+            echo "::error title=Breaking API change::This pull request breaks the public API without a CHANGELOG.md entry. The job summary lists each break."
+            exit 1
+          fi
+          echo "::warning title=Breaking API change::This pull request breaks the public API. Check that CHANGELOG.md marks it as a breaking change."
+
+      # The committed record keeps every change to the public API visible in the pull request's diff.
+      - name: Compare the public API with its record
+        id: record
+        if: ${{ !cancelled() && steps.compare.outcome == 'success' }}
+        run: >
+          bash .github/scripts/public_api_record.sh
+          "$RUNNER_TEMP/head.txt=api/countly-sdk-react-native-bridge.api"
+
+      - name: Upload the new record
+        if: ${{ !cancelled() && steps.record.outcome == 'failure' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: public-api-record
+          path: ${{ runner.temp }}/public-api-record
+
+  comment:
+    name: Comment the public API changes
+    needs: api
+    # A fork's or Dependabot's pull request only gets a read-only token, so its report stays in the job summary.
+    if: >-
+      always() && needs.api.outputs.report != '' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login != 'dependabot[bot]'
+    runs-on: ubuntu-24.04
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Post or update the comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          REPORT: ${{ needs.api.outputs.report }}
+        run: |
+          id=$(gh api --paginate "repos/$REPO/issues/$PR/comments" --jq \
+            '.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("<!-- countly-public-api -->"))) | .id' | tail -n 1)
+          if [ -n "$id" ]; then
+            gh api --method PATCH "repos/$REPO/issues/comments/$id" -f "body=$REPORT" > /dev/null
+          elif ! grep -qx 'No public API change.' <<< "$REPORT"; then
+            gh api --method POST "repos/$REPO/issues/$PR/comments" -f "body=$REPORT" > /dev/null
+          fi
