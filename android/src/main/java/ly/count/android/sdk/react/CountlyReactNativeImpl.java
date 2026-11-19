@@ -488,8 +488,10 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         }
         createNotificationChannel(application, soundPath);
         SharedPreferences preferences = application.getSharedPreferences(PUSH_SETTINGS_PREFERENCES, Context.MODE_PRIVATE);
-        CountlyPush.useAdditionalIntentRedirectionChecks = preferences.getBoolean(PUSH_SETTINGS_REDIRECTION_CHECKS, true);
         CountlyConfigPush configPush = new CountlyConfigPush(application);
+        if (preferences.getBoolean(PUSH_SETTINGS_REDIRECTION_CHECKS, true)) {
+            configPush.enableAdditionalIntentRedirectionChecks();
+        }
         List<String> classNames = readStoredList(preferences, PUSH_SETTINGS_ALLOWED_CLASS_NAMES);
         List<String> packageNames = readStoredList(preferences, PUSH_SETTINGS_ALLOWED_PACKAGE_NAMES);
         if (!classNames.isEmpty()) {
