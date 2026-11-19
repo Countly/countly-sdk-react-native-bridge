@@ -5,7 +5,10 @@ Countly.addCustomNetworkRequestHeaders function
 Countly.appKey string
 Countly.appLoadingFinished function
 Countly.askForNotificationPermission function
+Countly.attemptToSendStoredRequests function
 Countly.cancelTrace function
+Countly.changeAppKey function
+Countly.changeServerUrl function
 Countly.clearAllTraces function
 Countly.content object
 Countly.content.enterContentZone function
@@ -23,6 +26,7 @@ Countly.endSession function
 Countly.endTrace function
 Countly.events object
 Countly.feedback object
+Countly.flushQueues function
 Countly.giveAllConsent function
 Countly.giveConsent function
 Countly.initWithConfig function

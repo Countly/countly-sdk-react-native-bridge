@@ -3,6 +3,7 @@ import { Platform, ScrollView, StyleSheet, Text, TextInput } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context";
 import Countly from "countly-sdk-react-native-bridge";
 import CountlyButton from "./CountlyButton";
+import { COUNTLY_APP_KEY, COUNTLY_SERVER_URL } from "./Configuration";
 
 class AttributionKey {
     static IDFA = "idfa";
@@ -33,10 +34,14 @@ const styles = StyleSheet.create({
 function OthersScreen() {
     const [contentId, setContentId] = React.useState("homepage-banner");
     const [pushToken, setPushToken] = React.useState("sample-push-token");
+    const [serverUrl, setServerUrl] = React.useState(COUNTLY_SERVER_URL);
+    const [appKey, setAppKey] = React.useState(COUNTLY_APP_KEY);
     const [status, setStatus] = React.useState("Utility actions will appear here.");
 
     const currentContentId = contentId.trim() || "homepage-banner";
     const currentPushToken = pushToken.trim() || "sample-push-token";
+    const currentServerUrl = serverUrl.trim();
+    const currentAppKey = appKey.trim();
 
     const updateStatus = (message: string) => {
         console.log(message);
@@ -112,6 +117,30 @@ function OthersScreen() {
         updateStatus(result ? String(result) : "Removed queued requests that used a different app key.");
     };
 
+    /** Sends the requests to the server URL typed in the field from now on. */
+    const changeServerUrl = () => {
+        const result = Countly.changeServerUrl(currentServerUrl);
+        updateStatus(result ? String(result) : `Asked to send the requests to '${currentServerUrl}' from now on.`);
+    };
+
+    /** Reports to the app whose key is typed in the field from now on. */
+    const changeAppKey = () => {
+        const result = Countly.changeAppKey(currentAppKey);
+        updateStatus(result ? String(result) : `Asked to report to the app key '${currentAppKey}' from now on.`);
+    };
+
+    /** Deletes the stored requests and the recorded events. */
+    const flushQueues = () => {
+        const result = Countly.flushQueues();
+        updateStatus(result ? String(result) : "Deleted the stored requests and events.");
+    };
+
+    /** Packs the recorded events into a request and sends the stored requests now. */
+    const attemptToSendStoredRequests = () => {
+        const result = Countly.attemptToSendStoredRequests();
+        updateStatus(result ? String(result) : "Started sending the stored requests.");
+    };
+
     const enterContentZone = () => {
         Countly.content.enterContentZone();
         updateStatus("Entered the content zone.");
@@ -153,6 +182,8 @@ function OthersScreen() {
             <ScrollView>
                 <TextInput style={styles.inputRoundedBorder} placeholder="Content ID to preview" onChangeText={setContentId} value={contentId} />
                 <TextInput style={styles.inputRoundedBorder} placeholder="Push token" onChangeText={setPushToken} value={pushToken} />
+                <TextInput style={styles.inputRoundedBorder} placeholder="Server URL to change to" onChangeText={setServerUrl} value={serverUrl} autoCapitalize="none" />
+                <TextInput style={styles.inputRoundedBorder} placeholder="App key to change to" onChangeText={setAppKey} value={appKey} autoCapitalize="none" />
                 <Text style={styles.statusText}>{status}</Text>
                 <CountlyButton onPress={() => void checkInitialization()} title="Check SDK Initialization" color="#00b5ad" />
                 <CountlyButton onPress={setLocation} title="Set Location" color="#00b5ad" />
@@ -165,6 +196,10 @@ function OthersScreen() {
                 <CountlyButton onPress={recordIndirectAttribution} title="Record Indirect Attribution" color="#1b1c1d" lightText={true} />
                 <CountlyButton onPress={replaceQueuedAppKeys} title="Replace Queued App Keys" color="#1b1c1d" lightText={true} />
                 <CountlyButton onPress={removeQueuedAppKeys} title="Remove Other Queued App Keys" color="#1b1c1d" lightText={true} />
+                <CountlyButton onPress={changeServerUrl} title="Change Server URL" color="#1b1c1d" lightText={true} />
+                <CountlyButton onPress={changeAppKey} title="Change App Key" color="#1b1c1d" lightText={true} />
+                <CountlyButton onPress={flushQueues} title="Flush Queues" color="#1b1c1d" lightText={true} />
+                <CountlyButton onPress={attemptToSendStoredRequests} title="Send Stored Requests Now" color="#1b1c1d" lightText={true} />
                 <CountlyButton onPress={enterContentZone} title="Enter Content Zone" color="#1b1c1d" lightText={true} />
                 <CountlyButton onPress={refreshContentZone} title="Refresh Content Zone" color="#1b1c1d" lightText={true} />
                 <CountlyButton onPress={previewContent} title="Preview Content By ID" color="#1b1c1d" lightText={true} />

@@ -18,6 +18,10 @@
 * Added support for objects as campaign data in `recordDirectAttribution` and as values in `recordIndirectAttribution`, in `Countly` and in `CountlyConfig`.
 * Added the names "DEVELOPMENT", "PRODUCTION" and "ADHOC" as accepted values of `CountlyConfig.setPushTokenType`.
 * Added `CountlyConfig.setUpdateSessionTimerDelay(delay)` to set how often, in seconds, the SDK sends automatic session updates and the queued events. The default is 60 seconds, and a value that is not a whole number from 1 to 2147483647 is ignored with an error log.
+* Added `Countly.changeServerUrl(serverUrl)` to change the server URL after init.
+* Added `Countly.changeAppKey(appKey)` to change the app key after init.
+* Added `Countly.flushQueues()` to delete the stored requests and events.
+* Added `Countly.attemptToSendStoredRequests()` to send the stored requests now.
 * Added `CountlyConfig.setLogListener(listener)` for receiving every log message of the SDK and its level, also while logging is disabled:
   * The listener gets the messages of the React Native layer and of the native SDK, each with "error", "warning", "info", "debug" or "verbose".
   * It is called inside the SDK's own calls, so it should return quickly and must not call the SDK.
