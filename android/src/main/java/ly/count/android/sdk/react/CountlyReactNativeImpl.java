@@ -2327,7 +2327,7 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         String widgetId = args.getString(0);
         String type = args.getString(1);
         String name = args.getString(2);
-        String closeButtonText = getOptionalStringArg(args, 3);
+        // args[3] is the close button text, which the Android SDK no longer uses
         String widgetVersion = args.size() > 4 && !args.isNull(4) ? args.getString(4) : null;
 
         CountlyFeedbackWidget presentableFeedback = getFeedbackWidget(widgetId);
@@ -2352,8 +2352,7 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
             }
         }
         CountlyFeedbackWidget feedbackWidgetToPresent = presentableFeedback;
-        String closeButtonTextToUse = closeButtonText.isEmpty() ? null : closeButtonText;
-        activity.runOnUiThread(() -> Countly.sharedInstance().feedback().presentFeedbackWidget(feedbackWidgetToPresent, activity, closeButtonTextToUse, new FeedbackCallback() {
+        activity.runOnUiThread(() -> Countly.sharedInstance().feedback().presentFeedbackWidget(feedbackWidgetToPresent, activity, new FeedbackCallback() {
             @Override
             public void onFinished(String error) {
                 if (error != null) {
