@@ -882,6 +882,9 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
             if (_config.has("disableBackoffMechanism") && _config.getBoolean("disableBackoffMechanism")) {
                 config.disableBackoffMechanism();
             }
+            if (_config.has("enableRequestCompression") && _config.getBoolean("enableRequestCompression")) {
+                config.enableRequestCompression();
+            }
             if (_config.has("disableGradualRequestCleaner") && _config.getBoolean("disableGradualRequestCleaner")) {
                 config.disableGradualRequestCleaner();
             }

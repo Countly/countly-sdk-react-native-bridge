@@ -197,6 +197,7 @@ test('initWithConfig serializes 26.1.0 init options and wires the global content
         .addCustomNetworkRequestHeaders({ Authorization: 'Bearer token', 'X-Countly': 'bridge' })
         .disableSDKBehaviorSettingsUpdates()
         .disableBackoffMechanism()
+        .enableRequestCompression()
         .disableGradualRequestCleaner()
         .disableViewRestartForManualRecording();
 
@@ -219,6 +220,7 @@ test('initWithConfig serializes 26.1.0 init options and wires the global content
         customNetworkRequestHeaders: { Authorization: 'Bearer token', 'X-Countly': 'bridge' },
         disableSDKBehaviorSettingsUpdates: true,
         disableBackoffMechanism: true,
+        enableRequestCompression: true,
         disableGradualRequestCleaner: true,
         disableViewRestartForManualRecording: true,
         setGlobalContentCallback: true,

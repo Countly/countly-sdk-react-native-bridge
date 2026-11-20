@@ -112,6 +112,7 @@ CountlyConfig.prototype.enableCrashReporting function
 CountlyConfig.prototype.enableManualSessionControl function
 CountlyConfig.prototype.enableManualSessionControlHybridMode function
 CountlyConfig.prototype.enableParameterTamperingProtection function
+CountlyConfig.prototype.enableRequestCompression function
 CountlyConfig.prototype.experimental undefined
 CountlyConfig.prototype.giveConsent function
 CountlyConfig.prototype.recordDirectAttribution function
