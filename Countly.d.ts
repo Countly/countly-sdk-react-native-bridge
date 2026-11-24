@@ -262,7 +262,7 @@ declare module "countly-sdk-react-native-bridge" {
        * Present a chosen feedback widget
        *
        * @param {object} feedbackWidget - feedback Widget with id, type and name
-       * @param {string} closeButtonText - not used: the widget shows its own close button
+       * @param {string} closeButtonText - not used. In Android, widgets without a widget version show a close button with the text "Close"
        * @param {callback} [widgetShownCallback] - Callback to be executed when feedback widget is displayed. This parameter is optional.
        * @param {callback} [widgetClosedCallback] - Callback to be executed when feedback widget is closed. This parameter is optional.
        *
