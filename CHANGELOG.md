@@ -95,7 +95,7 @@
   * ! Minor breaking change ! Content, feedback widget and push notification links with the `data:`, `zip:` or `intent:` scheme are no longer opened, and web views no longer load resources from them.
   * ! Minor breaking change ! `Countly.test.halt()` now also erases the generated device ID.
   * Added support for server requested SDK log gathering and connection tests, and for SDK behavior settings that control automatic session tracking, automatic view tracking, automatic crash reporting and Journey Trigger Views.
-  * Added large icons and collapse keys to push notifications.
+  * Added large icons and collapse keys to push notifications. A large icon given only by resource name needs a `tools:keep` entry when the app shrinks its resources.
   * Added support for API level 37.
   * Added the app's current theme, light or dark, to feedback widgets, rating widgets and content, so they are shown to match the app.
   * Pending events are now sent as soon as a user property is set, so they reach the server before the user properties.
@@ -117,11 +117,13 @@
     * The content zone did not resume after the app left temporary device ID mode.
   * Mitigated an issue where a rating widget could send its request in temporary device ID mode, creating a `CLYTemporaryDeviceID` user on the server.
   * Mitigated an issue where the app was treated as being in the background after moving from one activity to another, so crash reports were marked as happening in the background.
-  * Mitigated an issue where session, view and timed event durations changed when the device clock was adjusted.
+  * Mitigated an issue where session, view, timed event and custom trace durations changed when the device clock was adjusted.
   * Mitigated StrictMode violations the SDK caused: `IncorrectContextUseViolation` from display metrics, content and feedback widgets, `UntaggedSocketViolation` from its requests, and disk reads on the main thread when a crash was recorded.
+  * Mitigated health check issues: counts could be lost or reported wrong, and the health check sent its metrics without the metrics consent.
   * Mitigated push notification issues:
     * Images could delay a notification or keep it from showing.
     * An action button tap left the notification visible.
+    * The app could crash when the screen of a push notification dialog closed before its image loaded. The dialog now shows on the current screen.
     * The token was not sent again after push consent was given again or after a device ID change without merge.
 
 * iOS specific changes:
