@@ -50,6 +50,8 @@ test('configToJson serializes allowed intent package names and advanced init opt
         .disableAdditionalIntentRedirectionChecks()
         .disableSDKBehaviorSettingsUpdates()
         .disableBackoffMechanism()
+        .enableRequestCompression()
+        .disableHealthCheck()
         .disableGradualRequestCleaner()
         .disableViewRestartForManualRecording()
         .setRequestTimeoutDuration(15)
@@ -70,7 +72,7 @@ test('configToJson serializes allowed intent package names and advanced init opt
 
     config.apm.enableAppStartTimeTracking().enableForegroundBackgroundTracking().enableManualAppLoadedTrigger().setAppStartTimestampOverride(2500);
     config.experimental.enablePreviousNameRecording().enableVisibilityTracking();
-    config.content.setZoneTimerInterval(25).setGlobalContentCallback(contentCallback).setWebViewDisplayOption('SAFE_AREA');
+    config.content.setZoneTimerInterval(25).setGlobalContentCallback(contentCallback).setWebViewDisplayOption('SAFE_AREA').disableAutoContentTriggers();
     config.sdkInternalLimits
         .setMaxKeyLength(64)
         .setMaxValueSize(128)
@@ -103,6 +105,7 @@ test('configToJson serializes allowed intent package names and advanced init opt
         setZoneTimerInterval: 25,
         setGlobalContentCallback: true,
         webViewDisplayOption: 'SAFE_AREA',
+        disableAutoContentTriggers: true,
         disableAdditionalIntentRedirectionChecks: true,
         allowedIntentPackageNames: ['com.countly.allowed'],
         starRatingTextTitle: 'Title',
@@ -127,6 +130,8 @@ test('configToJson serializes allowed intent package names and advanced init opt
         maxStackTraceLineLength: 220,
         disableSDKBehaviorSettingsUpdates: true,
         disableBackoffMechanism: true,
+        enableRequestCompression: true,
+        disableHealthCheck: true,
         disableGradualRequestCleaner: true,
         disableViewRestartForManualRecording: true,
         sdkBehaviorSettings,
@@ -321,6 +326,9 @@ test('configToJson skips a session update timer delay that is not a whole number
         const json = configToJson(new CountlyConfig('https://server.count.ly', 'app-key').setUpdateSessionTimerDelay(delay).disableBackoffMechanism());
 
         expect(json).not.toHaveProperty('sessionUpdateTimerDelay');
+        expect(json).not.toHaveProperty('enableRequestCompression');
+        expect(json).not.toHaveProperty('disableHealthCheck');
+        expect(json).not.toHaveProperty('disableAutoContentTriggers');
         expect(json.disableBackoffMechanism).toBe(true);
         expect(Logger.e).toHaveBeenCalledTimes(1);
         expect(Logger.e).toHaveBeenCalledWith(`init configuration, the session update timer delay should be a whole number of seconds from 1 to 2147483647, received [${delay}] of type '${typeof delay}', skipping it`);

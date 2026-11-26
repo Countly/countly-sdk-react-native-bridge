@@ -1,4 +1,4 @@
-## XX.XX.XX
+## 26.8.1
 * ! Minor breaking change ! `Countly.remoteConfig.updateForKeysOnly` and `updateExceptKeys` now enroll the user only in the A/B tests of the downloaded keys in iOS, not in all running A/B tests.
 * ! Minor breaking change ! `Countly.remoteConfig.getValue` now returns string values as strings in Android. Before, "2.10" came back as 2.1.
 * ! Minor breaking change ! `Countly.logException(exception, false)` now records a fatal crash.
@@ -8,7 +8,7 @@
 * ! Minor breaking change ! The package now ships only the files the SDK needs at runtime; the example app, the tests and the Xcode project for manual linking are no longer part of it. It declares `react-native` as a peer dependency and needs React Native 0.62 or newer.
 * ! Minor breaking change ! The pod now makes only the bridge header and the iOS SDK's public headers public; other headers can no longer be imported from it.
 * ! Minor breaking change ! The `NotificationService` subspec no longer depends on React, and `pod 'CountlyReactNative'` installs only the `Core` subspec.
-* ! Minor breaking change ! The pod now needs iOS 15 (tvOS 15, macOS 12, watchOS 9), the minimum of the bundled iOS SDK 26.8.0, instead of iOS 10. With React Native 0.71 and newer it uses React Native's minimum iOS version when that is higher. An app whose Podfile platform is below iOS 15, for example with React Native 0.75 or older, has to raise it; an app that has to support older iOS versions can stay on 26.1.0.
+* ! Minor breaking change ! The pod now needs iOS 15 (tvOS 15, macOS 12, watchOS 9), the minimum of the bundled iOS SDK 26.8.1, instead of iOS 10. With React Native 0.71 and newer it uses React Native's minimum iOS version when that is higher. An app whose Podfile platform is below iOS 15, for example with React Native 0.75 or older, has to raise it; an app that has to support older iOS versions can stay on 26.1.0.
 
 * Added a `{ success, error }` result to `Countly.remoteConfig.update`, `updateForKeysOnly` and `updateExceptKeys`.
 * Added `Countly.registerForNotificationOpened(listener)`, called when the user taps a push in Android and iOS:
@@ -25,6 +25,10 @@
 * Added `CountlyConfig.setLogListener(listener)` for receiving every log message of the SDK and its level, also while logging is disabled:
   * The listener gets the messages of the React Native layer and of the native SDK, each with "error", "warning", "info", "debug" or "verbose".
   * It is called inside the SDK's own calls, so it should return quickly and must not call the SDK.
+* Added content triggers. While the content zone is entered, an event, view, session, user property, recorded exception or consent change that starts a journey or campaign with content now requests that content immediately. Turn them off with `CountlyConfig.content.disableAutoContentTriggers()`.
+* Added `CountlyConfig.enableRequestCompression()` for sending requests gzip-compressed to servers that support it.
+* Added `CountlyConfig.disableHealthCheck()` for turning off the SDK health check.
+* Improved journey triggers set in SDK behavior settings. Their events and views now request content immediately, the same way as content triggers.
 
 * Mitigated remote config update issues:
   * Updates without remote config consent, in temporary device ID mode or with SDK networking disabled now complete with an error in iOS, instead of never completing.
@@ -33,6 +37,7 @@
 * Mitigated crash reporting issues:
   * The JS crash handler no longer fails, or skips the app's previous error handler, when the app throws a value that is not an Error.
   * `Countly.logException` now skips `null` and `undefined` segment values instead of failing.
+* Mitigated an issue where the "enter content zone" SDK behavior setting could exit a content zone the app entered. The setting now applies only when the SDK starts.
 * Mitigated an issue where `CountlyConfig.setLocation` was ignored without a country code in iOS.
 * Mitigated an issue where `Countly.giveAllConsent` sent two consent requests in iOS.
 * Mitigated start-up issues:
@@ -115,6 +120,7 @@
     * Links that carry their own query parameters, such as deep links, were not parsed correctly.
     * The widgets blocked keyboard input on the app's screen and kept the screen in memory after they closed.
     * The content zone did not resume after the app left temporary device ID mode.
+    * Content and feedback widgets could keep their previous size after a rotation, leaving part of them off screen.
   * Mitigated an issue where a rating widget could send its request in temporary device ID mode, creating a `CLYTemporaryDeviceID` user on the server.
   * Mitigated an issue where the app was treated as being in the background after moving from one activity to another, so crash reports were marked as happening in the background.
   * Mitigated an issue where session, view, timed event and custom trace durations changed when the device clock was adjusted.
@@ -132,9 +138,13 @@
   * Mitigated an issue where `Countly.userData.setProperty` and `Countly.userDataBulk.setProperty` with a predefined key (name, username, email, organization, phone, gender, picture, picturePath, byear) recorded a custom property of that name; they now set that field, as on Android.
   * `Countly.setUserData`, `Countly.userDataBulk.setUserProperties`, `Countly.userData.setProperty` and `Countly.userDataBulk.setProperty` now use the iOS SDK's user property API: pending events are sent before the user details, and `null` values and nested objects are skipped with a log line instead of being sent, as on Android.
   * The iOS SDK's default log level is now debug instead of verbose.
+  * Mitigated an issue where session, view, timed event and custom trace durations changed when the device clock was adjusted, and events recorded with a negative duration kept it.
+  * Mitigated an issue where the health check sent the app version without the metrics consent.
+  * Mitigated an issue where journey trigger events and views with keys longer than the key length limit never matched.
+  * Mitigated an issue where the orientation was not recorded at start, and not at all on iOS 27 in apps that use the UIScene lifecycle.
 
-* Updated the underlying Android SDK version to 26.8.0
-* Updated the underlying iOS SDK version to 26.8.0
+* Updated the underlying Android SDK version to 26.8.1
+* Updated the underlying iOS SDK version to 26.8.1
 
 ## 26.1.0
 * Added a new `Countly.sessions` interface for manual session control:

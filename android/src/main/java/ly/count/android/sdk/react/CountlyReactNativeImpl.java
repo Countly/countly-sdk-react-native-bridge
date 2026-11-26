@@ -104,7 +104,7 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
 
     public static final String NAME = "CountlyReactNative";
     public static final String TAG = "CountlyRNPlugin";
-    private String COUNTLY_RN_SDK_VERSION_STRING = "26.1.0";
+    private String COUNTLY_RN_SDK_VERSION_STRING = "26.8.1";
     private String COUNTLY_RN_SDK_NAME = "js-rnb-android";
 
     private static CountlyConfig config = new CountlyConfig();
@@ -735,6 +735,9 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
                     config.setWebviewDisplayOption(WebViewDisplayOption.IMMERSIVE);
                 }
             }
+            if (_config.has("disableAutoContentTriggers") && _config.getBoolean("disableAutoContentTriggers")) {
+                config.content.disableAutoContentTriggers();
+            }
         });
         applyConfigStep("sdkInternalLimits", () -> {
             if (_config.has("maxKeyLength")) {
@@ -881,6 +884,12 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
             }
             if (_config.has("disableBackoffMechanism") && _config.getBoolean("disableBackoffMechanism")) {
                 config.disableBackoffMechanism();
+            }
+            if (_config.has("enableRequestCompression") && _config.getBoolean("enableRequestCompression")) {
+                config.enableRequestCompression();
+            }
+            if (_config.has("disableHealthCheck") && _config.getBoolean("disableHealthCheck")) {
+                config.disableHealthCheck();
             }
             if (_config.has("disableGradualRequestCleaner") && _config.getBoolean("disableGradualRequestCleaner")) {
                 config.disableGradualRequestCleaner();

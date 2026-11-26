@@ -190,6 +190,10 @@ function configToJson(config) {
             json.webViewDisplayOption = config.content.webViewDisplayOption;
             L.i(`init configuration, WebView display option: ${config.content.webViewDisplayOption}`);
         }
+        if (config.content.autoContentTriggersDisabled) {
+            json.disableAutoContentTriggers = true;
+            L.i("init configuration, Disabled auto content triggers");
+        }
         if (config._disableIntentRedirectionCheck) {
             json.disableAdditionalIntentRedirectionChecks = true;
             L.i("init configuration, Disabled additional intent redirection checks");
@@ -352,6 +356,14 @@ function configToJson(config) {
         if (config._disableBackoff) {
             L.i("init configuration, disabled backoff mechanism");
             json.disableBackoffMechanism = true;
+        }
+        if (config._enableRequestCompression) {
+            L.i("init configuration, enabled request compression");
+            json.enableRequestCompression = true;
+        }
+        if (config._disableHealthCheck) {
+            L.i("init configuration, disabled health check");
+            json.disableHealthCheck = true;
         }
         if (config._disableGradualRequestCleaner) {
             L.i("init configuration, disabled gradual request cleaner");

@@ -1177,6 +1177,12 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
      * Controls how Content and feedback widgets are displayed.
      */
     setWebViewDisplayOption(displayOption: CountlyWebViewDisplayOption): this;
+
+    /**
+     * Stops requesting content right after an event, view, session, user property, recorded exception or consent
+     * change that starts a journey or campaign with content. Content then arrives with the next content zone update.
+     */
+    disableAutoContentTriggers(): this;
   }
 
   /**
@@ -1443,6 +1449,19 @@ declare module "countly-sdk-react-native-bridge/CountlyConfig" {
      * @return {CountlyConfig}
      */
     disableBackoffMechanism(): CountlyConfig;
+
+    /**
+     * Method to send request bodies between 1 KB and 1 MB gzip-compressed, once the server's SDK behavior settings
+     * answer says it reads them.
+     * @return {CountlyConfig}
+     */
+    enableRequestCompression(): CountlyConfig;
+
+    /**
+     * Method to stop the health check request the SDK sends once per initialization.
+     * @return {CountlyConfig}
+     */
+    disableHealthCheck(): CountlyConfig;
 
     /**
      * Method to set SDK behavior settings.
