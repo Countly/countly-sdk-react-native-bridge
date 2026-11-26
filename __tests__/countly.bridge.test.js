@@ -197,10 +197,12 @@ test('initWithConfig serializes 26.1.0 init options and wires the global content
         .addCustomNetworkRequestHeaders({ Authorization: 'Bearer token', 'X-Countly': 'bridge' })
         .disableSDKBehaviorSettingsUpdates()
         .disableBackoffMechanism()
+        .enableRequestCompression()
+        .disableHealthCheck()
         .disableGradualRequestCleaner()
         .disableViewRestartForManualRecording();
 
-    config.content.setGlobalContentCallback(contentCallback).setWebViewDisplayOption(Countly.webViewDisplayOption.SAFE_AREA);
+    config.content.setGlobalContentCallback(contentCallback).setWebViewDisplayOption(Countly.webViewDisplayOption.SAFE_AREA).disableAutoContentTriggers();
 
     await Countly.initWithConfig(config);
 
@@ -219,10 +221,13 @@ test('initWithConfig serializes 26.1.0 init options and wires the global content
         customNetworkRequestHeaders: { Authorization: 'Bearer token', 'X-Countly': 'bridge' },
         disableSDKBehaviorSettingsUpdates: true,
         disableBackoffMechanism: true,
+        enableRequestCompression: true,
+        disableHealthCheck: true,
         disableGradualRequestCleaner: true,
         disableViewRestartForManualRecording: true,
         setGlobalContentCallback: true,
         webViewDisplayOption: Countly.webViewDisplayOption.SAFE_AREA,
+        disableAutoContentTriggers: true,
     });
     expect(listeners.map((listener) => listener.eventName)).toContain('globalContentCallback');
     expect(CountlyState.isInitialized).toBe(true);

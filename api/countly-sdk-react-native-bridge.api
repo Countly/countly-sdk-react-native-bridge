@@ -105,6 +105,7 @@ CountlyConfig.prototype.content undefined
 CountlyConfig.prototype.disableAdditionalIntentRedirectionChecks function
 CountlyConfig.prototype.disableBackoffMechanism function
 CountlyConfig.prototype.disableGradualRequestCleaner function
+CountlyConfig.prototype.disableHealthCheck function
 CountlyConfig.prototype.disableSDKBehaviorSettingsUpdates function
 CountlyConfig.prototype.disableViewRestartForManualRecording function
 CountlyConfig.prototype.enableAutomaticViewTracking function
@@ -112,6 +113,7 @@ CountlyConfig.prototype.enableCrashReporting function
 CountlyConfig.prototype.enableManualSessionControl function
 CountlyConfig.prototype.enableManualSessionControlHybridMode function
 CountlyConfig.prototype.enableParameterTamperingProtection function
+CountlyConfig.prototype.enableRequestCompression function
 CountlyConfig.prototype.experimental undefined
 CountlyConfig.prototype.giveConsent function
 CountlyConfig.prototype.recordDirectAttribution function

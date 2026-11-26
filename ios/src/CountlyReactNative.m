@@ -52,7 +52,7 @@ void CountlyRNInternalLog(NSString *format, ...) NS_FORMAT_FUNCTION(1, 2);
 @property (nonatomic, readonly) NSString *widgetVersion;
 @end
 
-NSString *const kCountlyReactNativeSDKVersion = @"26.1.0";
+NSString *const kCountlyReactNativeSDKVersion = @"26.8.1";
 #ifdef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
 NSString *const kCountlyReactNativeSDKName = @"js-rnbnp-ios";
 #else
@@ -519,6 +519,9 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
             [config.content setWebviewDisplayOption:IMMERSIVE];
         }
     }
+    if ([json[@"disableAutoContentTriggers"] boolValue]) {
+        [config.content disableAutoContentTriggers];
+    }
     // APM ------------------------------------------------
     NSNumber *enableForegroundBackground = json[@"enableForegroundBackground"];
     if (enableForegroundBackground) {
@@ -673,6 +676,12 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
     }
     if (json[@"disableBackoffMechanism"]) {
         config.disableBackoffMechanism = [json[@"disableBackoffMechanism"] boolValue];
+    }
+    if (json[@"enableRequestCompression"]) {
+        config.enableRequestCompression = [json[@"enableRequestCompression"] boolValue];
+    }
+    if (json[@"disableHealthCheck"]) {
+        config.disableHealthCheck = [json[@"disableHealthCheck"] boolValue];
     }
     if (json[@"sdkBehaviorSettings"]) {
         if (![json[@"sdkBehaviorSettings"] isKindOfClass:[NSString class]]) {

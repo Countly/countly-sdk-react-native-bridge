@@ -81,7 +81,7 @@ rootProject.allprojects {
 
 dependencies {
     implementation "com.facebook.react:react-native:${safeExtGet('reactNativeVersion', '+')}"
-    implementation 'ly.count.android:sdk:26.8.0'
+    implementation 'ly.count.android:sdk:26.8.1'
 
     // BoM 32.8.1 brings firebase-messaging 23.4.1: it declares POST_NOTIFICATIONS, needs minSdk 19 and Kotlin stdlib 1.7.10 only.
     implementation platform('com.google.firebase:firebase-bom:32.8.1')
