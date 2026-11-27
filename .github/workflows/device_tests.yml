@@ -22,6 +22,8 @@ on:
       - 'example/CountlyRNExample/Configuration.tsx'
       - '.github/scripts/create-test-app.sh'
       - '.github/scripts/create-device-test-app.sh'
+      - '.github/scripts/create-phase-apks.sh'
+      - '.github/strictmode-allowlist.txt'
       - '.github/workflows/device_tests.yml'
   push:
     branches: [master, staging]
@@ -95,12 +97,59 @@ jobs:
           arch: x86_64
           target: google_apis
           disable-animations: true
-          script: node e2e/android/run.mjs "$RUNNER_TEMP/app/android/app/build/outputs/apk/debug/app-debug.apk" "$RUNNER_TEMP/app/e2e/scenarios.json" "$RUNNER_TEMP/results/android-emulator-$PACKAGE-$REACT_NATIVE.xml"
+          script: node e2e/android/run.mjs "$RUNNER_TEMP/app/android/app/build/outputs/apk/debug/app-debug.apk" "$RUNNER_TEMP/app/e2e/scenarios.json" "$RUNNER_TEMP/results/android-emulator-$PACKAGE-$REACT_NATIVE.xml" "$RUNNER_TEMP/results/strictmode-$PACKAGE-$REACT_NATIVE.log"
+      - name: Audit the StrictMode violations of the SDK
+        if: ${{ !cancelled() }}
+        run: python3 e2e/android/strictmode_audit.py --allowlist .github/strictmode-allowlist.txt "$RUNNER_TEMP/results/strictmode-$PACKAGE-$REACT_NATIVE.log"
       - name: Upload the results
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: android-emulator-results-${{ matrix.package }}-${{ matrix.react-native }}
+          path: ${{ runner.temp }}/results/
+          if-no-files-found: ignore
+
+  android-phases:
+    name: Android emulator (upgrade from 26.1.0, crash and restart)
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      REACT_NATIVE: 0.81.6
+      UPGRADE_FROM: 26.1.0
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ env.NODE }}
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: zulu
+          java-version: 17
+      - name: Build the apps of the upgrade test
+        run: .github/scripts/create-phase-apks.sh upgrade "$REACT_NATIVE" "$RUNNER_TEMP/apks/upgrade"
+      - name: Build the apps of the crash test
+        run: .github/scripts/create-phase-apks.sh crash "$REACT_NATIVE" "$RUNNER_TEMP/apks/crash"
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      # Both tests run on one emulator; the second runs even when the first fails.
+      - name: Run the upgrade and the crash test on the emulator
+        uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          script: node e2e/android/phases.mjs upgrade "$RUNNER_TEMP/apks/upgrade/before.apk" "$RUNNER_TEMP/apks/upgrade/after.apk" "$RUNNER_TEMP/results/upgrade.xml"; upgrade=$?; node e2e/android/phases.mjs crash "$RUNNER_TEMP/apks/crash/before.apk" "$RUNNER_TEMP/apks/crash/after.apk" "$RUNNER_TEMP/results/crash.xml" --before-crashes; crash=$?; exit $((upgrade + crash))
+      - name: Upload the results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: android-phases-results
           path: ${{ runner.temp }}/results/
           if-no-files-found: ignore
 

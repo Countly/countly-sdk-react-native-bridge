@@ -46,6 +46,11 @@ console.log(`${ids.length} scenarios`);
 cd "$app"
 case "$platform" in
   android)
+    # StrictMode reports main thread disk and network work, and leaked resources, to logcat (tag StrictMode), where
+    # e2e/android/strictmode_audit.py reads them.
+    main_application=android/app/src/main/java/com/helloworld/MainApplication.kt
+    perl -0pi -e 's/(\n([ \t]*)super\.onCreate\(\)\n)/$1$2android.os.StrictMode.setThreadPolicy(android.os.StrictMode.ThreadPolicy.Builder().detectAll().penaltyLog().build())\n$2android.os.StrictMode.setVmPolicy(android.os.StrictMode.VmPolicy.Builder().detectAll().penaltyLog().build())\n/' "$main_application"
+    grep -q "StrictMode.setThreadPolicy" "$main_application"
     mkdir -p android/app/src/main/assets
     npx react-native bundle --platform android --dev true --entry-file index.js \
       --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res

@@ -7,6 +7,8 @@
 # scheme HelloWorld, Android application ID com.helloworld. Its index.js imports the bridge, so a release build bundles
 # the bridge's JavaScript too. The app gets only the changes an app on that React Native version needs for the bridge
 # (iOS 15, Android API 21), plus the fixes old templates need on today's build machines.
+# BRIDGE_PACKAGE installs a published bridge instead of this repository's, for example
+# countly-sdk-react-native-bridge@26.1.0.
 set -euo pipefail
 
 version=${1:?react-native version}
@@ -15,13 +17,20 @@ app=${3:?app directory}
 minor=$(echo "$version" | cut -d. -f2)
 work=$(mktemp -d)
 
-source=.
-# The no-push branch has no generator, because it already is the no-push package.
-if [ "$package" = no-push ] && [ -f scripts/generate-no-push.js ]; then
-  node scripts/generate-no-push.js "$work/no-push"
-  source="$work/no-push"
+if [ -n "${BRIDGE_PACKAGE:-}" ]; then
+  tarball=$BRIDGE_PACKAGE
+  bridge=${BRIDGE_PACKAGE%@*}
+else
+  source=.
+  # The no-push branch has no generator, because it already is the no-push package.
+  if [ "$package" = no-push ] && [ -f scripts/generate-no-push.js ]; then
+    node scripts/generate-no-push.js "$work/no-push"
+    source="$work/no-push"
+  fi
+  tarball="$work/$(npm pack "$source" --pack-destination "$work" | tail -n 1)"
+  # The no-push package has its own name.
+  bridge=$(tar -xzOf "$tarball" package/package.json | node -e 'let s="";process.stdin.on("data",(d)=>{s+=d;}).on("end",()=>{process.stdout.write(JSON.parse(s).name);})')
 fi
-tarball="$work/$(npm pack "$source" --pack-destination "$work" | tail -n 1)"
 
 # React Native 0.75 moved the template out of the react-native package.
 if [ "$minor" -ge 75 ]; then
@@ -41,8 +50,6 @@ find . -depth -name '_[a-zA-Z]*' | while read -r path; do
   mv "$path" "$(dirname "$path")/.$(basename "$path" | cut -c2-)"
 done
 
-# The no-push package has its own name.
-bridge=$(tar -xzOf "$tarball" package/package.json | node -e 'let s="";process.stdin.on("data",(d)=>{s+=d;}).on("end",()=>{process.stdout.write(JSON.parse(s).name);})')
 cat >> index.js <<EOF
 
 import Countly from '$bridge';
