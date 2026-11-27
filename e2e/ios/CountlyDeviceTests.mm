@@ -120,12 +120,11 @@ static UIWindow *gWindow;
 }
 
 /**
- * Starts React Native with the test app once, before the first test, and waits until it reports DONE or
- * kRunTimeout passes.
+ * Starts React Native with the test app once, from the first test, and waits until it reports DONE or kRunTimeout
+ * passes. The suite is a plain XCTestSuite, which does not call the class setUp.
  */
-+ (void)setUp
++ (void)runScenariosOnce
 {
-    [super setUp];
     if (gRunStarted) {
         return;
     }
@@ -166,6 +165,7 @@ static UIWindow *gWindow;
  */
 - (void)test_allScenariosFinished
 {
+    [[self class] runScenariosOnce];
     XCTAssertNotNil(gStart, @"The test app never reported START: React Native did not load the bundle or the app crashed.");
     XCTAssertNotNil(gDone, @"The test app did not report DONE within %.0f minutes. Scenarios with a result: %@", kRunTimeout / 60, [gResults.allKeys componentsJoinedByString:@", "]);
     NSSet *expected = [NSSet setWithArray:[[self class] scenarioIds]];
@@ -178,6 +178,7 @@ static UIWindow *gWindow;
  */
 - (void)checkScenario:(NSString *)scenarioId
 {
+    [[self class] runScenariosOnce];
     NSDictionary *result = gResults[scenarioId];
     if (result == nil) {
         [self recordIssue:[[XCTIssue alloc] initWithType:XCTIssueTypeAssertionFailure compactDescription:[NSString stringWithFormat:@"%@ reported no result.", scenarioId]]];

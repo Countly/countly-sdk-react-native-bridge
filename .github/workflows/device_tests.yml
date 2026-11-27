@@ -69,7 +69,9 @@ jobs:
         run: .github/scripts/create-device-test-app.sh android "$REACT_NATIVE" "$RUNNER_TEMP/app"
       - name: Build the test app
         working-directory: ${{ runner.temp }}/app/android
-        run: ./gradlew assembleDebug --no-daemon -PreactNativeArchitectures=x86_64
+        # One retry, because downloads from the Gradle plugin portal and Maven Central fail now and then.
+        run: |
+          ./gradlew assembleDebug --no-daemon -PreactNativeArchitectures=x86_64 || \n            ./gradlew assembleDebug --no-daemon -PreactNativeArchitectures=x86_64
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -170,7 +172,9 @@ jobs:
         run: .github/scripts/create-device-test-app.sh android "$REACT_NATIVE" "$RUNNER_TEMP/app"
       - name: Build the test app
         working-directory: ${{ runner.temp }}/app/android
-        run: ./gradlew assembleDebug --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
+        # One retry, because downloads from the Gradle plugin portal and Maven Central fail now and then.
+        run: |
+          ./gradlew assembleDebug --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a || \n            ./gradlew assembleDebug --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
       - name: Put adb on the path
         run: echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
       - name: Join the device farm queue
