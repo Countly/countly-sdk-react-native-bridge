@@ -38,10 +38,11 @@ grep -q "RUN_CLANG_STATIC_ANALYZER" "$app/ios/Podfile"
   -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
   ARCHS=arm64 CODE_SIGNING_ALLOWED=NO > "$raw/build.log") || { tail -n 80 "$raw/build.log"; exit 1; }
 
-# Xcode names each report after its source file and gives it the .plist extension, whatever its format.
+# Xcode names each report after its source file and gives it the .plist extension, whatever its format; the
+# .plist.scan files next to them are its own binary records.
 echo "Analyzer reports:"
-find "$raw/out" -type f | sed "s#^$raw/out/##"
-find "$raw/out" -type f \( -name 'CountlyReactNative.*' -o -name 'CountlyRNPushNotifications.*' \) | while read -r report; do
+find "$raw/out" -type f -name '*.plist' | sed "s#^$raw/out/##"
+find "$raw/out" -type f \( -name 'CountlyReactNative.plist' -o -name 'CountlyRNPushNotifications.plist' \) | while read -r report; do
   cp "$report" "$sarif/$(basename "${report%.*}").sarif"
 done
 ls -l "$sarif"
