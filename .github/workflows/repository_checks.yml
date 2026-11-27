@@ -1,0 +1,126 @@
+# Checks that need no build: that every version agrees, what the npm package carries, that the typings match the
+# runtime API and compile in an app with the oldest and the newest supported TypeScript, that ios/src is the iOS SDK
+# release it names, and that the workflows themselves are sound.
+name: Repository checks
+
+on:
+  pull_request:
+  push:
+    branches: [master, staging, master-np, staging-np]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: repository-checks-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  versions:
+    name: Versions agree
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Compare every file that carries a version
+        run: python3 .github/scripts/check_versions.py
+
+  package:
+    name: npm package contents
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+      - name: List what npm would publish
+        run: npm pack --dry-run --json --ignore-scripts > "$RUNNER_TEMP/pack.json"
+      - name: Check the list
+        run: python3 .github/scripts/check_package.py "$RUNNER_TEMP/pack.json"
+
+  typings:
+    name: Typings match the runtime
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Compare Countly.d.ts with the public API record
+        run: node .github/scripts/check_typings.cjs
+
+  typescript:
+    name: TypeScript ${{ matrix.typescript }} compiles an app
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.9 is the TypeScript of the React Native 0.65 era, 4.8 the first one a React Native template (0.71) shipped.
+        typescript: ['3.9.10', '4.8.4', 'latest']
+    env:
+      TYPESCRIPT: ${{ matrix.typescript }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+      # The no-push package declares its modules under its own name.
+      - name: Compile .github/typings/consumer.ts with the typings
+        run: |
+          name=$(node -p "require('./package.json').name")
+          dir="$RUNNER_TEMP/typings"
+          mkdir -p "$dir"
+          cp Countly.d.ts .github/typings/tsconfig.json "$dir/"
+          sed "s#\"countly-sdk-react-native-bridge#\"$name#g" .github/typings/consumer.ts > "$dir/consumer.ts"
+          npx --yes -p "typescript@$TYPESCRIPT" tsc --version
+          npx --yes -p "typescript@$TYPESCRIPT" tsc -p "$dir/tsconfig.json"
+
+  ios-copy:
+    name: ios/src equals its iOS SDK release
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      # A release must ship a released iOS SDK; elsewhere a copy of an untagged iOS SDK only warns.
+      STRICT: ${{ (github.base_ref == 'master' || github.base_ref == 'master-np' || github.ref_name == 'master' || github.ref_name == 'master-np') && '1' || '0' }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Compare ios/src with the iOS SDK tag
+        run: python3 .github/scripts/check_ios_copy.py
+
+  workflows:
+    name: Workflows
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: actionlint
+        run: |
+          curl -sSfL -o "$RUNNER_TEMP/actionlint.tar.gz" https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz
+          echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  $RUNNER_TEMP/actionlint.tar.gz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/actionlint.tar.gz" -C "$RUNNER_TEMP" actionlint
+          # actionlint 1.7.12 predates the concurrency queue key GitHub added in May 2026 (rhysd/actionlint#654).
+          "$RUNNER_TEMP/actionlint" -ignore 'unexpected key "queue" for "concurrency" section'
+      - name: zizmor
+        if: ${{ !cancelled() }}
+        run: |
+          curl -sSfL -o "$RUNNER_TEMP/zizmor.tar.gz" https://github.com/zizmorcore/zizmor/releases/download/v1.30.1/zizmor-x86_64-unknown-linux-gnu.tar.gz
+          echo "e65324f4430c2717591937edcec90ccbefaf14c174f8ec9415e03ca875b46e1a  $RUNNER_TEMP/zizmor.tar.gz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/zizmor.tar.gz" -C "$RUNNER_TEMP" zizmor
+          "$RUNNER_TEMP/zizmor" --offline --min-severity low --config .github/zizmor.yml .github/workflows

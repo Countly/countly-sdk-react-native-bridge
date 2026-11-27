@@ -12,6 +12,7 @@ on:  # zizmor: ignore[dangerous-triggers] the job reads the pull request's artif
       - "JS checks"
       - "Public API changelog"
       - "Public API changes"
+      - "Repository checks"
     types: [completed]
 
 permissions: {}
