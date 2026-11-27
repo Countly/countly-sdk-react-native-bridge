@@ -7,6 +7,10 @@
 #import <React-RCTAppDelegate/RCTRootViewFactory.h>
 #import <ReactAppDependencyProvider/RCTAppDependencyProvider.h>
 
+#ifndef COUNTLY_DEVICE_TESTS_NEW_ARCH
+#define COUNTLY_DEVICE_TESTS_NEW_ARCH 1
+#endif
+
 static NSString *const kLinePrefix = @"CLY_E2E ";
 static NSString *const kModuleName = @"HelloWorld";
 static const NSTimeInterval kRunTimeout = 25 * 60;
@@ -38,6 +42,15 @@ static BOOL gRunStarted;
 - (NSURL *)sourceURLForBridge:(RCTBridge *)bridge
 {
     return [self bundleURL];
+}
+
+/**
+ * The architecture the pods were installed for. React Native reads it from the app's RCTNewArchEnabled entry
+ * otherwise, which the test runner app does not have.
+ */
+- (BOOL)newArchEnabled
+{
+    return COUNTLY_DEVICE_TESTS_NEW_ARCH == 1;
 }
 
 @end

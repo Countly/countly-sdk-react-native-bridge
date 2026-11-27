@@ -21,6 +21,8 @@ target.add_file_references([group.new_reference('CountlyDeviceTests.mm')])
   target.resources_build_phase.add_file_reference(group.new_reference(name))
 end
 target.add_dependency(app)
+# The runner app has no RCTNewArchEnabled entry, so the tests tell React Native the architecture of the pods.
+new_arch = ENV.fetch('RCT_NEW_ARCH_ENABLED', '1') == '1' ? 1 : 0
 target.build_configurations.each do |config|
   settings = config.build_settings
   settings['PRODUCT_NAME'] = '$(TARGET_NAME)'
@@ -29,6 +31,7 @@ target.build_configurations.each do |config|
   settings['TEST_TARGET_NAME'] = 'HelloWorld'
   settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++20'
   settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.1'
+  settings['GCC_PREPROCESSOR_DEFINITIONS'] = ['$(inherited)', "COUNTLY_DEVICE_TESTS_NEW_ARCH=#{new_arch}"]
 end
 project.save
 

@@ -35,14 +35,33 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-  REACT_NATIVE: 0.88.1
   NODE: 24
 
 jobs:
   android-emulator:
-    name: Android emulator
+    name: Android emulator (${{ matrix.name }})
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: React Native 0.88.1
+            react-native: 0.88.1
+            new-arch: true
+            package: standard
+          - name: React Native 0.81.6, old architecture
+            react-native: 0.81.6
+            new-arch: false
+            package: standard
+          - name: React Native 0.88.1, no-push package
+            react-native: 0.88.1
+            new-arch: true
+            package: no-push
+    env:
+      REACT_NATIVE: ${{ matrix.react-native }}
+      NEW_ARCH: ${{ matrix.new-arch }}
+      PACKAGE: ${{ matrix.package }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -55,12 +74,15 @@ jobs:
           distribution: zulu
           java-version: 17
       - name: Create the test app
-        run: .github/scripts/create-device-test-app.sh android "$REACT_NATIVE" "$RUNNER_TEMP/app"
+        run: .github/scripts/create-device-test-app.sh android "$REACT_NATIVE" "$PACKAGE" "$RUNNER_TEMP/app"
       - name: Build the test app
         working-directory: ${{ runner.temp }}/app/android
         # One retry, because downloads from the Gradle plugin portal and Maven Central fail now and then.
         run: |
-          ./gradlew assembleDebug --no-daemon -PreactNativeArchitectures=x86_64 || \n            ./gradlew assembleDebug --no-daemon -PreactNativeArchitectures=x86_64
+          build() {
+            ./gradlew assembleDebug --no-daemon -PreactNativeArchitectures=x86_64 "-PnewArchEnabled=$NEW_ARCH"
+          }
+          build || { echo "::warning::The build failed; trying once more"; build; }
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -73,21 +95,39 @@ jobs:
           arch: x86_64
           target: google_apis
           disable-animations: true
-          script: node e2e/android/run.mjs "$RUNNER_TEMP/app/android/app/build/outputs/apk/debug/app-debug.apk" "$RUNNER_TEMP/app/e2e/scenarios.json" "$RUNNER_TEMP/results/android-emulator.xml"
+          script: node e2e/android/run.mjs "$RUNNER_TEMP/app/android/app/build/outputs/apk/debug/app-debug.apk" "$RUNNER_TEMP/app/e2e/scenarios.json" "$RUNNER_TEMP/results/android-emulator-$PACKAGE-$REACT_NATIVE.xml"
       - name: Upload the results
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: android-emulator-results
+          name: android-emulator-results-${{ matrix.package }}-${{ matrix.react-native }}
           path: ${{ runner.temp }}/results/
           if-no-files-found: ignore
 
   ios-simulator:
-    name: iOS simulator
+    name: iOS simulator (${{ matrix.name }})
     runs-on: macos-26
     timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: React Native 0.88.1
+            react-native: 0.88.1
+            new-arch: true
+            package: standard
+          - name: React Native 0.81.6, old architecture
+            react-native: 0.81.6
+            new-arch: false
+            package: standard
+          - name: React Native 0.88.1, no-push package
+            react-native: 0.88.1
+            new-arch: true
+            package: no-push
     env:
-      RCT_NEW_ARCH_ENABLED: 1
+      REACT_NATIVE: ${{ matrix.react-native }}
+      RCT_NEW_ARCH_ENABLED: ${{ matrix.new-arch && '1' || '0' }}
+      PACKAGE: ${{ matrix.package }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -96,7 +136,7 @@ jobs:
         with:
           node-version: ${{ env.NODE }}
       - name: Create the test app
-        run: .github/scripts/create-device-test-app.sh ios "$REACT_NATIVE" "$RUNNER_TEMP/app"
+        run: .github/scripts/create-device-test-app.sh ios "$REACT_NATIVE" "$PACKAGE" "$RUNNER_TEMP/app"
       - name: Install the pods
         working-directory: ${{ runner.temp }}/app/ios
         run: pod install
@@ -131,7 +171,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: ios-simulator-results
+          name: ios-simulator-results-${{ matrix.package }}-${{ matrix.react-native }}
           path: ${{ runner.temp }}/ios-simulator.xcresult
           if-no-files-found: ignore
 

@@ -2,28 +2,33 @@
 # Creates the device test app: the template app of one React Native version with the bridge, whose JavaScript runs
 # every integration scenario of the example app (example/CountlyRNExample/testing) once it starts.
 #
-# Usage: .github/scripts/create-device-test-app.sh <android|ios> <react-native-version> <app-directory> [test-bundle-id]
+# Usage: .github/scripts/create-device-test-app.sh <android|ios> <react-native-version> <standard|no-push> <app-directory> [test-bundle-id]
 #
 # Run it from the repository root. The JavaScript is a development bundle (the Countly.test helpers work only there)
 # stored in the app, so no Metro server is needed:
 #   android: android/app/src/main/assets/index.android.bundle; build the debug APK afterwards.
 #   ios:     the CountlyDeviceTests UI test bundle (e2e/ios) in ios/HelloWorld.xcodeproj, with the bundle and
-#            scenarios.json as its resources; run pod install afterwards.
+#            scenarios.json as its resources; run pod install afterwards, with the same RCT_NEW_ARCH_ENABLED.
 # e2e/scenarios.json in the app lists the scenario ids, one test case each.
 set -euo pipefail
 
 platform=${1:?android or ios}
 version=${2:?react-native version}
-app=${3:?app directory}
-bundle_id=${4:-com.countly.CountlyTests}
+package=${3:?standard or no-push}
+app=${4:?app directory}
+bundle_id=${5:-com.countly.CountlyTests}
 repo=$(pwd)
 
-.github/scripts/create-test-app.sh "$version" standard "$app"
+.github/scripts/create-test-app.sh "$version" "$package" "$app"
 
 mkdir -p "$app/e2e/testing"
 cp e2e/index.js e2e/runner.js "$app/e2e/"
 cp example/CountlyRNExample/testing/helpers.ts example/CountlyRNExample/testing/scenarios.ts "$app/e2e/testing/"
 cp example/CountlyRNExample/Configuration.tsx "$app/e2e/"
+# The scenarios import the package the app installed: the push or the no-push one.
+bridge=$(node -p "Object.keys(require('$app/package.json').dependencies).find((name) => name.startsWith('countly-sdk-react-native-bridge'))")
+BRIDGE="$bridge" perl -pi -e 's#(["'"'"'])countly-sdk-react-native-bridge(-np)?(?=["'"'"'/])#$1$ENV{BRIDGE}#g' \
+  "$app/e2e/testing/helpers.ts" "$app/e2e/testing/scenarios.ts" "$app/e2e/Configuration.tsx"
 # The iOS SDK stops the app on the placeholder app key, and the reserved .invalid domain keeps every request on the
 # device, where the scenarios read it from the queue.
 perl -pi -e 's#"https://your\.server\.ly"#"https://device-tests.invalid"#; s#"YOUR_APP_KEY"#"device-tests-app-key"#' "$app/e2e/Configuration.tsx"
@@ -60,4 +65,4 @@ case "$platform" in
     exit 2
     ;;
 esac
-echo "Created the $platform device test app in $(pwd)"
+echo "Created the $platform device test app with $bridge in $(pwd)"
