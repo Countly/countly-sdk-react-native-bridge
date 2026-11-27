@@ -37,6 +37,7 @@
 * Mitigated crash reporting issues:
   * The JS crash handler no longer fails, or skips the app's previous error handler, when the app throws a value that is not an Error.
   * `Countly.logException` now skips `null` and `undefined` segment values instead of failing.
+* Mitigated an issue where the release build of an app on React Native 0.72 or older failed with "Class private methods are not enabled" in `Feedback.js`.
 * Mitigated an issue where the "enter content zone" SDK behavior setting could exit a content zone the app entered. The setting now applies only when the SDK starts.
 * Mitigated an issue where `CountlyConfig.setLocation` was ignored without a country code in iOS.
 * Mitigated an issue where `Countly.giveAllConsent` sent two consent requests in iOS.
