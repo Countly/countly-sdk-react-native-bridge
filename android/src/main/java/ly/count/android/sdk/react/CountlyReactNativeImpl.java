@@ -104,7 +104,7 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
 
     public static final String NAME = "CountlyReactNative";
     public static final String TAG = "CountlyRNPlugin";
-    private String COUNTLY_RN_SDK_VERSION_STRING = "26.8.1";
+    private String COUNTLY_RN_SDK_VERSION_STRING = "26.8.0";
     private String COUNTLY_RN_SDK_NAME = "js-rnb-android";
 
     private static CountlyConfig config = new CountlyConfig();

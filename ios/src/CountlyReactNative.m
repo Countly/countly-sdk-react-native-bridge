@@ -52,7 +52,7 @@ void CountlyRNInternalLog(NSString *format, ...) NS_FORMAT_FUNCTION(1, 2);
 @property (nonatomic, readonly) NSString *widgetVersion;
 @end
 
-NSString *const kCountlyReactNativeSDKVersion = @"26.8.1";
+NSString *const kCountlyReactNativeSDKVersion = @"26.8.0";
 #ifdef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
 NSString *const kCountlyReactNativeSDKName = @"js-rnbnp-ios";
 #else

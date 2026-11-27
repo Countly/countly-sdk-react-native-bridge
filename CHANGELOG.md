@@ -1,4 +1,4 @@
-## 26.8.1
+## 26.8.0
 * ! Minor breaking change ! `Countly.remoteConfig.updateForKeysOnly` and `updateExceptKeys` now enroll the user only in the A/B tests of the downloaded keys in iOS, not in all running A/B tests.
 * ! Minor breaking change ! `Countly.remoteConfig.getValue` now returns string values as strings in Android. Before, "2.10" came back as 2.1.
 * ! Minor breaking change ! `Countly.logException(exception, false)` now records a fatal crash.
