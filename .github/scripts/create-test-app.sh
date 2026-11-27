@@ -78,6 +78,19 @@ if [ -f "$boost" ]; then
   perl -pi -e 's#https://boostorg\.jfrog\.io/artifactory/main/release/#https://archives.boost.io/release/#' "$boost"
 fi
 
+# Boost of React Native 0.70 and older uses std::unary_function, which the C++ library of Xcode 15 and newer removed.
+if [ "$minor" -lt 71 ]; then
+  cat > "$work/unary.rb" <<'RUBY'
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = ['$(inherited)', '_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION']
+      end
+    end
+RUBY
+  ADD="$work/unary.rb" perl -0pi -e 'open(my $f, "<", $ENV{ADD}) or die; my $add = do { local $/; <$f> }; s/(post_install do \|installer\|\n)/$1$add/' ios/Podfile
+  grep -q _LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION ios/Podfile
+fi
+
 # Yoga of React Native 0.67 and older does not compile with Xcode 14.3 and newer (-Wbitwise-instead-of-logical);
 # apps on those versions apply this one-character fix.
 yoga=node_modules/react-native/ReactCommon/yoga/yoga/Yoga.cpp
