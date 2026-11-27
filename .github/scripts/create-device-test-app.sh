@@ -24,6 +24,11 @@ mkdir -p "$app/e2e/testing"
 cp e2e/index.js e2e/runner.js "$app/e2e/"
 cp example/CountlyRNExample/testing/helpers.ts example/CountlyRNExample/testing/scenarios.ts "$app/e2e/testing/"
 cp example/CountlyRNExample/Configuration.tsx "$app/e2e/"
+# The iOS SDK stops the app on the placeholder app key, and the reserved .invalid domain keeps every request on the
+# device, where the scenarios read it from the queue.
+perl -pi -e 's#"https://your\.server\.ly"#"https://device-tests.invalid"#; s#"YOUR_APP_KEY"#"device-tests-app-key"#' "$app/e2e/Configuration.tsx"
+grep -q '"https://device-tests.invalid"' "$app/e2e/Configuration.tsx"
+grep -q '"device-tests-app-key"' "$app/e2e/Configuration.tsx"
 printf 'import "./e2e/index";\n' > "$app/index.js"
 node -e '
 const fs = require("fs");
