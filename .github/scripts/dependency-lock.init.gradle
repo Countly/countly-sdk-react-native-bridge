@@ -1,0 +1,12 @@
+// Turns on dependency locking for the project named in -DlockProject (for example :countly-sdk-react-native-bridge),
+// so that a build with --write-locks writes the versions it resolved into that project's gradle.lockfile.
+// Only .github/scripts/lock-android-dependencies.sh applies it, through --init-script, so no build file changes.
+def lockProject = System.getProperty('lockProject')
+
+allprojects { project ->
+  if (project.path == lockProject) {
+    project.dependencyLocking {
+      lockAllConfigurations()
+    }
+  }
+}
