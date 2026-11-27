@@ -50,9 +50,12 @@ test('configToJson serializes allowed intent package names and advanced init opt
         .disableAdditionalIntentRedirectionChecks()
         .disableSDKBehaviorSettingsUpdates()
         .disableBackoffMechanism()
+        .enableRequestCompression()
+        .disableHealthCheck()
         .disableGradualRequestCleaner()
         .disableViewRestartForManualRecording()
         .setRequestTimeoutDuration(15)
+        .setUpdateSessionTimerDelay(30)
         .enableAutomaticViewTracking()
         .setAutomaticViewTrackingExclusionList(['HiddenActivity'])
         .setGlobalViewSegmentation({ plan: 'pro' })
@@ -69,7 +72,7 @@ test('configToJson serializes allowed intent package names and advanced init opt
 
     config.apm.enableAppStartTimeTracking().enableForegroundBackgroundTracking().enableManualAppLoadedTrigger().setAppStartTimestampOverride(2500);
     config.experimental.enablePreviousNameRecording().enableVisibilityTracking();
-    config.content.setZoneTimerInterval(25).setGlobalContentCallback(contentCallback).setWebViewDisplayOption('SAFE_AREA');
+    config.content.setZoneTimerInterval(25).setGlobalContentCallback(contentCallback).setWebViewDisplayOption('SAFE_AREA').disableAutoContentTriggers();
     config.sdkInternalLimits
         .setMaxKeyLength(64)
         .setMaxValueSize(128)
@@ -102,6 +105,7 @@ test('configToJson serializes allowed intent package names and advanced init opt
         setZoneTimerInterval: 25,
         setGlobalContentCallback: true,
         webViewDisplayOption: 'SAFE_AREA',
+        disableAutoContentTriggers: true,
         disableAdditionalIntentRedirectionChecks: true,
         allowedIntentPackageNames: ['com.countly.allowed'],
         starRatingTextTitle: 'Title',
@@ -110,6 +114,7 @@ test('configToJson serializes allowed intent package names and advanced init opt
         campaignType: 'push',
         campaignData: '{"id":"campaign-1"}',
         requestTimeoutDuration: 15,
+        sessionUpdateTimerDelay: 30,
         enableAutomaticViewTracking: true,
         automaticViewTrackingExclusionList: ['HiddenActivity'],
         globalViewSegmentation: { plan: 'pro' },
@@ -125,6 +130,8 @@ test('configToJson serializes allowed intent package names and advanced init opt
         maxStackTraceLineLength: 220,
         disableSDKBehaviorSettingsUpdates: true,
         disableBackoffMechanism: true,
+        enableRequestCompression: true,
+        disableHealthCheck: true,
         disableGradualRequestCleaner: true,
         disableViewRestartForManualRecording: true,
         sdkBehaviorSettings,
@@ -297,4 +304,33 @@ test('configToJson sends consents as a list of feature names', () => {
     const directlyAssigned = new CountlyConfig('https://server.count.ly', 'app-key');
     directlyAssigned.consents = 'crashes';
     expect(configToJson(directlyAssigned).consents).toEqual(['crashes']);
+});
+
+test('configToJson sends the session update timer delay only when one was set', () => {
+    const { CountlyConfig, Logger, configToJson } = loadUtils();
+
+    expect(configToJson(new CountlyConfig('https://server.count.ly', 'app-key'))).not.toHaveProperty('sessionUpdateTimerDelay');
+    expect(configToJson(new CountlyConfig('https://server.count.ly', 'app-key').setUpdateSessionTimerDelay(null))).not.toHaveProperty('sessionUpdateTimerDelay');
+    expect(configToJson(new CountlyConfig('https://server.count.ly', 'app-key').setUpdateSessionTimerDelay(undefined))).not.toHaveProperty('sessionUpdateTimerDelay');
+    expect(configToJson(new CountlyConfig('https://server.count.ly', 'app-key').setUpdateSessionTimerDelay(1)).sessionUpdateTimerDelay).toBe(1);
+    expect(configToJson(new CountlyConfig('https://server.count.ly', 'app-key').setUpdateSessionTimerDelay(2147483647)).sessionUpdateTimerDelay).toBe(2147483647);
+    expect(Logger.e).not.toHaveBeenCalled();
+    expect(Logger.i).toHaveBeenCalledWith('init configuration, Session update timer delay: 1');
+});
+
+test('configToJson skips a session update timer delay that is not a whole number of seconds from 1 to 2147483647, and keeps the options after it', () => {
+    const { CountlyConfig, Logger, configToJson } = loadUtils();
+
+    [0, -5, 0.5, 1.5, NaN, Infinity, 2147483648, '30', true, {}].forEach((delay) => {
+        Logger.e.mockClear();
+        const json = configToJson(new CountlyConfig('https://server.count.ly', 'app-key').setUpdateSessionTimerDelay(delay).disableBackoffMechanism());
+
+        expect(json).not.toHaveProperty('sessionUpdateTimerDelay');
+        expect(json).not.toHaveProperty('enableRequestCompression');
+        expect(json).not.toHaveProperty('disableHealthCheck');
+        expect(json).not.toHaveProperty('disableAutoContentTriggers');
+        expect(json.disableBackoffMechanism).toBe(true);
+        expect(Logger.e).toHaveBeenCalledTimes(1);
+        expect(Logger.e).toHaveBeenCalledWith(`init configuration, the session update timer delay should be a whole number of seconds from 1 to 2147483647, received [${delay}] of type '${typeof delay}', skipping it`);
+    });
 });

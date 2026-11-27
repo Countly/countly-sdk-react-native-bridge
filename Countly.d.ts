@@ -65,6 +65,16 @@ type ContentStatus = "COMPLETED" | "CLOSED";
 type ContentCallback = (status: ContentStatus, data: Record<string, any>) => void;
 
 /**
+ * Level of a log line, as the log listener receives it.
+ */
+type CountlyLogLevel = "error" | "warning" | "info" | "debug" | "verbose";
+
+/**
+ * Called with every log line of the SDK and its level, also when logging is disabled.
+ */
+type CountlyLogListener = (message: string, level: CountlyLogLevel) => void;
+
+/**
  * Called when the user taps a push notification.
  * actionIndex is 0 for the notification itself and 1 and up for its buttons.
  */
@@ -252,7 +262,7 @@ declare module "countly-sdk-react-native-bridge-np" {
        * Present a chosen feedback widget
        *
        * @param {object} feedbackWidget - feedback Widget with id, type and name
-       * @param {string} closeButtonText - text for cancel/close button
+       * @param {string} closeButtonText - not used. In Android, widgets without a widget version show a close button with the text "Close"
        * @param {callback} [widgetShownCallback] - Callback to be executed when feedback widget is displayed. This parameter is optional.
        * @param {callback} [widgetClosedCallback] - Callback to be executed when feedback widget is closed. This parameter is optional.
        *
@@ -1075,6 +1085,54 @@ declare module "countly-sdk-react-native-bridge-np" {
     export function removeDifferentAppKeysFromQueue(): string | void;
 
     /**
+     * Sends the requests to another server from now on, for example when the app moves to another server.
+     * The requests already in the queue, the immediate requests and the web views opened after the call use the new server too.
+     * The app key stays, and the URL is kept in memory only: the next init uses the one in the config.
+     * In Android, an invalid URL, or an "http" URL while certificate pinning is set, is ignored with an error log. After a change,
+     * the SDK sends the push token and the consent state to the new server and fetches the SDK behavior settings and the remote
+     * config values from it, as after init. In iOS, the URL is used as given, so pass a valid one, and call 'sendPushToken' and
+     * 'remoteConfig.update' again when the new server needs them.
+     * Should be called after init.
+     * @param {string} serverUrl the new server URL, for example "https://your.server.ly"
+     * @return {string | void} error message or void
+     */
+    export function changeServerUrl(serverUrl: string): string | void;
+
+    /**
+     * Reports to another app from now on, for example when a white label app learns at login which customer it belongs to.
+     * Before the switch, the running views stop, the recorded events are packed into a request and the running session ends,
+     * all with the old app key. After it, a session begins for the new app if one was running, and the views start again
+     * unless 'disableViewRestartForManualRecording' is set without automatic view tracking.
+     * Requests already in the queue keep the app key they were created with: call 'replaceAllAppKeysInQueueWithCurrentAppKey'
+     * to send them to the new app, or 'removeDifferentAppKeysFromQueue' to drop them.
+     * The device ID, consent and server URL stay, and the key is kept in memory only: the next init uses the one in the config.
+     * In Android, the "YOUR_APP_KEY" placeholder and the current key are ignored, and the new app then gets the push token,
+     * the consent state, its SDK behavior settings and its remote config values, as after init. In iOS, only an automatic
+     * session ends and begins again, running APM traces are cancelled, and 'sendPushToken' and 'remoteConfig.update' have to
+     * be called again when the new app needs them.
+     * Should be called after init.
+     * @param {string} appKey the app key of the new app
+     * @return {string | void} error message or void
+     */
+    export function changeAppKey(appKey: string): string | void;
+
+    /**
+     * Deletes the stored requests and the recorded events that are not in a request yet.
+     * Started timed events, running views and pending user profile changes are kept, and a request already on its way is not stopped.
+     * Should be called after init.
+     * @return {string | void} error message or void
+     */
+    export function flushQueues(): string | void;
+
+    /**
+     * Packs the recorded events into a request and starts sending the stored requests now, without waiting for the next timer tick.
+     * The backoff mechanism and the temporary device ID mode still hold the requests back.
+     * Should be called after init.
+     * @return {string | void} error message or void
+     */
+    export function attemptToSendStoredRequests(): string | void;
+
+    /**
      * Call this function when app is loaded, so that the app launch duration can be recorded.
      * Should be called after init.
      * @return {string | void} error message or void
@@ -1124,6 +1182,12 @@ declare module "countly-sdk-react-native-bridge-np/CountlyConfig" {
      * Controls how Content and feedback widgets are displayed.
      */
     setWebViewDisplayOption(displayOption: CountlyWebViewDisplayOption): this;
+
+    /**
+     * Stops requesting content right after an event, view, session, user property, recorded exception or consent
+     * change that starts a journey or campaign with content. Content then arrives with the next content zone update.
+     */
+    disableAutoContentTriggers(): this;
   }
 
   /**
@@ -1258,6 +1322,16 @@ declare module "countly-sdk-react-native-bridge-np/CountlyConfig" {
     setLoggingEnabled(loggingEnabled: boolean): CountlyConfig;
 
     /**
+   * Method to set a listener that receives every log line of the SDK and its level,
+   * also when logging is disabled. It receives the lines of the native SDK and of the
+   * React Native layer. The listener is called inside the SDK's own calls, so it should
+   * return quickly and must not call the SDK.
+   *
+   * @param {CountlyLogListener} logListener called with the message and its level
+   */
+    setLogListener(logListener: CountlyLogListener): CountlyConfig;
+
+    /**
    * Method to enable crash reporting to report unhandled crashes to Countly
    */
     enableCrashReporting(): CountlyConfig;
@@ -1387,6 +1461,19 @@ declare module "countly-sdk-react-native-bridge-np/CountlyConfig" {
     disableBackoffMechanism(): CountlyConfig;
 
     /**
+     * Method to send request bodies between 1 KB and 1 MB gzip-compressed, once the server's SDK behavior settings
+     * answer says it reads them.
+     * @return {CountlyConfig}
+     */
+    enableRequestCompression(): CountlyConfig;
+
+    /**
+     * Method to stop the health check request the SDK sends once per initialization.
+     * @return {CountlyConfig}
+     */
+    disableHealthCheck(): CountlyConfig;
+
+    /**
      * Method to set SDK behavior settings.
      *
      * @param {object} settingsObject settings object
@@ -1401,6 +1488,15 @@ declare module "countly-sdk-react-native-bridge-np/CountlyConfig" {
      * @return {CountlyConfig}
      */
     setRequestTimeoutDuration(requestTimeoutDuration: number): CountlyConfig;
+
+    /**
+     * Sets how often the SDK sends automatic session updates and the queued events. The default is 60 seconds.
+     * Values that are not a whole number from 1 to 2147483647 are ignored with an error log at init.
+     *
+     * @param {number} delay - interval in seconds
+     * @return {CountlyConfig}
+     */
+    setUpdateSessionTimerDelay(delay: number): CountlyConfig;
 
     /**
      * Enables manual session handling.

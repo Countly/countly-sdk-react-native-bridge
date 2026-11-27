@@ -67,7 +67,19 @@ repositories {
     }
 }
 
+// The app resolves this library's dependencies with its own repositories, so every project gets the Countly repository.
+rootProject.allprojects {
+    repositories {
+        maven {
+            url = "https://maven.countly.com"
+            content {
+                includeGroupByRegex 'ly\\.count\\..*'
+            }
+        }
+    }
+}
+
 dependencies {
     implementation "com.facebook.react:react-native:${safeExtGet('reactNativeVersion', '+')}"
-    implementation 'ly.count.android:sdk:26.1.2'
+    implementation 'ly.count.android:sdk:26.8.1'
 }

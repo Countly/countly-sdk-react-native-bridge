@@ -111,6 +111,10 @@ function configToJson(config) {
                 L.i(`init configuration, Enabled logging in ${__DEV__ ? "development" : "production"} mode`);
             }
         }
+        if (config._logListener) {
+            json.logListener = true;
+            L.i("init configuration, Set a log listener");
+        }
         if (config._crashReporting) {
             json.crashReporting = true;
             L.i("init configuration, Enabled crash reporting");
@@ -185,6 +189,10 @@ function configToJson(config) {
         if (config.content.webViewDisplayOption) {
             json.webViewDisplayOption = config.content.webViewDisplayOption;
             L.i(`init configuration, WebView display option: ${config.content.webViewDisplayOption}`);
+        }
+        if (config.content.autoContentTriggersDisabled) {
+            json.disableAutoContentTriggers = true;
+            L.i("init configuration, Disabled auto content triggers");
         }
         if (config._disableIntentRedirectionCheck) {
             json.disableAdditionalIntentRedirectionChecks = true;
@@ -269,6 +277,15 @@ function configToJson(config) {
             json.enableManualSessionControlHybridMode = true;
             L.i("init configuration, Enabled hybrid manual session control");
         }
+        const sessionUpdateTimerDelay = config._sessionUpdateTimerDelay;
+        if (sessionUpdateTimerDelay !== undefined && sessionUpdateTimerDelay !== null) {
+            if (Number.isInteger(sessionUpdateTimerDelay) && sessionUpdateTimerDelay >= 1 && sessionUpdateTimerDelay <= Validate.INT32_MAX) {
+                json.sessionUpdateTimerDelay = sessionUpdateTimerDelay;
+                L.i(`init configuration, Session update timer delay: ${sessionUpdateTimerDelay}`);
+            } else {
+                L.e(`init configuration, the session update timer delay should be a whole number of seconds from 1 to ${Validate.INT32_MAX}, received [${sessionUpdateTimerDelay}] of type '${typeof sessionUpdateTimerDelay}', skipping it`);
+            }
+        }
         if (config._customNetworkRequestHeaders) {
             json.customNetworkRequestHeaders = config._customNetworkRequestHeaders;
             L.i(`init configuration, Custom network request headers: ${JSON.stringify(config._customNetworkRequestHeaders)}`);
@@ -339,6 +356,14 @@ function configToJson(config) {
         if (config._disableBackoff) {
             L.i("init configuration, disabled backoff mechanism");
             json.disableBackoffMechanism = true;
+        }
+        if (config._enableRequestCompression) {
+            L.i("init configuration, enabled request compression");
+            json.enableRequestCompression = true;
+        }
+        if (config._disableHealthCheck) {
+            L.i("init configuration, disabled health check");
+            json.disableHealthCheck = true;
         }
         if (config._disableGradualRequestCleaner) {
             L.i("init configuration, disabled gradual request cleaner");

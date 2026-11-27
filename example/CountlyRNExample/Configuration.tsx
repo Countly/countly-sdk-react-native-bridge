@@ -17,6 +17,7 @@ const countlyConfig = createCountlyConfig();
 // Core initialization =======================================
 // .setDeviceID(Countly.TemporaryDeviceIDString) // Enable temporary id mode
 // .setRequestTimeoutDuration(60) // Set custom request timeout duration in seconds (default is 30 seconds)
+// .setUpdateSessionTimerDelay(30) // Set how often session updates and queued events are sent, in seconds (default is 60 seconds)
 // Manual session control is enabled above so the Sessions screen can exercise the session APIs.
 // .enableManualSessionControlHybridMode() // Enable hybrid manual session control
 // .addCustomNetworkRequestHeaders({ "X-Example": "CountlyRNExample" })

@@ -71,6 +71,10 @@ function createNativeModuleMock(overrides = {}) {
         recordDirectAttribution: jest.fn(),
         recordIndirectAttribution: jest.fn(),
         removeDifferentAppKeysFromQueue: jest.fn(),
+        changeServerUrl: jest.fn(),
+        changeAppKey: jest.fn(),
+        flushQueues: jest.fn(),
+        attemptToSendStoredRequests: jest.fn(),
         appLoadingFinished: jest.fn(),
         setCustomMetrics: jest.fn(),
         enterContentZone: jest.fn(),
@@ -193,10 +197,12 @@ test('initWithConfig serializes 26.1.0 init options and wires the global content
         .addCustomNetworkRequestHeaders({ Authorization: 'Bearer token', 'X-Countly': 'bridge' })
         .disableSDKBehaviorSettingsUpdates()
         .disableBackoffMechanism()
+        .enableRequestCompression()
+        .disableHealthCheck()
         .disableGradualRequestCleaner()
         .disableViewRestartForManualRecording();
 
-    config.content.setGlobalContentCallback(contentCallback).setWebViewDisplayOption(Countly.webViewDisplayOption.SAFE_AREA);
+    config.content.setGlobalContentCallback(contentCallback).setWebViewDisplayOption(Countly.webViewDisplayOption.SAFE_AREA).disableAutoContentTriggers();
 
     await Countly.initWithConfig(config);
 
@@ -215,10 +221,13 @@ test('initWithConfig serializes 26.1.0 init options and wires the global content
         customNetworkRequestHeaders: { Authorization: 'Bearer token', 'X-Countly': 'bridge' },
         disableSDKBehaviorSettingsUpdates: true,
         disableBackoffMechanism: true,
+        enableRequestCompression: true,
+        disableHealthCheck: true,
         disableGradualRequestCleaner: true,
         disableViewRestartForManualRecording: true,
         setGlobalContentCallback: true,
         webViewDisplayOption: Countly.webViewDisplayOption.SAFE_AREA,
+        disableAutoContentTriggers: true,
     });
     expect(listeners.map((listener) => listener.eventName)).toContain('globalContentCallback');
     expect(CountlyState.isInitialized).toBe(true);
@@ -237,6 +246,14 @@ test('initWithConfig leaves out empty, null and non-text device IDs so the SDK g
     const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge();
     await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key').setDeviceID('device-1'));
     expect(getNativeInitPayload(nativeModule).deviceID).toBe('device-1');
+});
+
+test('initWithConfig hands the session update timer delay to the native SDK', async () => {
+    const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge();
+    await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key').setUpdateSessionTimerDelay(5));
+
+    expect(nativeModule.init).toHaveBeenCalledTimes(1);
+    expect(getNativeInitPayload(nativeModule).sessionUpdateTimerDelay).toBe(5);
 });
 
 test('the JS crash title names the function and only the bundle file name, for debug URLs and embedded bundle paths', async () => {
@@ -538,6 +555,50 @@ test('notification, location, trace, and attribution helpers forward expected pa
     expect(pushListener).toHaveBeenCalledWith({ aps: { alert: 'hi' } });
     expect(starRatingCallback).toHaveBeenCalledWith('rated');
     expect(typeof notificationSubscription.remove).toBe('function');
+});
+
+test('server URL, app key and queue calls guard before init, refuse a missing value and leave the rest to the native SDK', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const infoSpy = jest.spyOn(console, 'info').mockImplementation(() => {});
+    const debugSpy = jest.spyOn(console, 'debug').mockImplementation(() => {});
+    const { Countly, CountlyConfig, nativeModule } = loadCountlyBridge({ platform: 'android' });
+    const config = new CountlyConfig('https://server.count.ly', 'app-key').setLoggingEnabled(true);
+
+    expect(Countly.changeServerUrl('https://other.count.ly')).toBe("'init' must be called before 'changeServerUrl'");
+    expect(Countly.changeAppKey('other-app-key')).toBe("'init' must be called before 'changeAppKey'");
+    expect(Countly.flushQueues()).toBe("'init' must be called before 'flushQueues'");
+    expect(Countly.attemptToSendStoredRequests()).toBe("'init' must be called before 'attemptToSendStoredRequests'");
+    expect(errorSpy).toHaveBeenCalledWith("[CountlyReactNative] changeServerUrl, 'init' must be called before 'changeServerUrl'");
+
+    await Countly.initWithConfig(config);
+
+    expect(Countly.changeServerUrl('')).toBe('serverUrl should not be null, undefined or empty');
+    expect(Countly.changeServerUrl(undefined)).toBe('serverUrl should not be null, undefined or empty');
+    expect(Countly.changeServerUrl(42)).toBe("skipping value for 'serverUrl', due to unsupported data type 'number', its data type should be 'string'");
+    expect(Countly.changeAppKey(null)).toBe('appKey should not be null, undefined or empty');
+    expect(Countly.changeAppKey({ key: 'app-key-2' })).toBe("skipping value for 'appKey', due to unsupported data type 'object', its data type should be 'string'");
+    expect(warnSpy).toHaveBeenCalledWith('[CountlyReactNative] changeServerUrl, serverUrl should not be null, undefined or empty');
+    expect(warnSpy).toHaveBeenCalledWith('[CountlyReactNative] changeAppKey, appKey should not be null, undefined or empty');
+    expect(nativeModule.changeServerUrl).not.toHaveBeenCalled();
+    expect(nativeModule.changeAppKey).not.toHaveBeenCalled();
+    expect(nativeModule.flushQueues).not.toHaveBeenCalled();
+    expect(nativeModule.attemptToSendStoredRequests).not.toHaveBeenCalled();
+
+    expect(Countly.changeServerUrl('https://other.count.ly///')).toBeUndefined();
+    expect(Countly.changeServerUrl('ftp://other.count.ly')).toBeUndefined();
+    expect(Countly.changeAppKey('YOUR_APP_KEY')).toBeUndefined();
+    expect(Countly.changeAppKey('app-key-2')).toBeUndefined();
+    expect(Countly.flushQueues()).toBeUndefined();
+    expect(Countly.attemptToSendStoredRequests()).toBeUndefined();
+
+    expect(nativeModule.changeServerUrl.mock.calls).toEqual([[['https://other.count.ly///']], [['ftp://other.count.ly']]]);
+    expect(nativeModule.changeAppKey.mock.calls).toEqual([[['YOUR_APP_KEY']], [['app-key-2']]]);
+    expect(nativeModule.flushQueues).toHaveBeenCalledWith();
+    expect(nativeModule.attemptToSendStoredRequests).toHaveBeenCalledWith();
+    expect(infoSpy).toHaveBeenCalledWith('[CountlyReactNative] changeAppKey, Changing the app key to: [app-key-2]');
+
+    [warnSpy, errorSpy, infoSpy, debugSpy].forEach((spy) => spy.mockRestore());
 });
 
 test('metrics, crash, and custom metric helpers normalize payloads', async () => {
@@ -1165,4 +1226,28 @@ test('test helpers do nothing in release builds', async () => {
     expect(nativeModule.getEventQueue).not.toHaveBeenCalled();
     expect(nativeModule.halt).not.toHaveBeenCalled();
     expect(CountlyState.isInitialized).toBe(true);
+});
+
+test('initWithConfig passes the JavaScript and the native log lines to the log listener', async () => {
+    const { Countly, CountlyConfig, nativeModule, listeners, emit } = loadCountlyBridge();
+    const lines = [];
+    const config = new CountlyConfig('https://server.count.ly', 'app-key').setLogListener((message, level) => lines.push([message, level]));
+
+    await Countly.initWithConfig(config);
+
+    expect(getNativeInitPayload(nativeModule).logListener).toBe(true);
+    expect(listeners.map((listener) => listener.eventName)).toContain('logListenerCallback');
+    expect(lines).toContainEqual(['[CountlyReactNative] initWithConfig, Initializing Countly', 'debug']);
+
+    emit('logListenerCallback', { message: '[ModuleEvents] recordEventInternal, key:[[CLY]_view]', level: 'info' });
+    expect(lines[lines.length - 1]).toEqual(['[ModuleEvents] recordEventInternal, key:[[CLY]_view]', 'info']);
+});
+
+test('setLogListener ignores a value that is not a function', async () => {
+    const { Countly, CountlyConfig, nativeModule, listeners } = loadCountlyBridge();
+
+    await Countly.initWithConfig(new CountlyConfig('https://server.count.ly', 'app-key').setLogListener('not a function'));
+
+    expect(getNativeInitPayload(nativeModule)).not.toHaveProperty('logListener');
+    expect(listeners.map((listener) => listener.eventName)).not.toContain('logListenerCallback');
 });

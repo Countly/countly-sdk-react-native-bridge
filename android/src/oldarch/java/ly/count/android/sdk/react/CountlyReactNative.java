@@ -442,6 +442,42 @@ public class CountlyReactNative extends ReactContextBaseJavaModule {
         this.impl.removeDifferentAppKeysFromQueue();
     }
 
+    /**
+     * Sends the requests to another server from now on.
+     *
+     * @param args the new server URL at index 0
+     */
+    @ReactMethod
+    public void changeServerUrl(ReadableArray args) {
+        this.impl.changeServerUrl(args);
+    }
+
+    /**
+     * Reports to another app from now on.
+     *
+     * @param args the app key of the new app at index 0
+     */
+    @ReactMethod
+    public void changeAppKey(ReadableArray args) {
+        this.impl.changeAppKey(args);
+    }
+
+    /**
+     * Deletes the stored requests and the recorded events that are not in a request yet.
+     */
+    @ReactMethod
+    public void flushQueues() {
+        this.impl.flushQueues();
+    }
+
+    /**
+     * Packs the recorded events into a request and starts sending the stored requests now.
+     */
+    @ReactMethod
+    public void attemptToSendStoredRequests() {
+        this.impl.attemptToSendStoredRequests();
+    }
+
     @ReactMethod
     public void setEventSendThreshold(ReadableArray args) {
         this.impl.setEventSendThreshold(args);
