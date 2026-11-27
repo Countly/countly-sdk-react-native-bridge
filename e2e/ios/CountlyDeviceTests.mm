@@ -131,6 +131,12 @@ static UIWindow *gWindow;
     gRunStarted = YES;
     gResults = [NSMutableDictionary dictionary];
 
+    // The runner app starts in the background, where the iOS SDK does not begin sessions; bring it to the foreground
+    // as a user would see an app.
+    XCUIApplication *runner = [[XCUIApplication alloc] initWithBundleIdentifier:NSBundle.mainBundle.bundleIdentifier];
+    [runner activate];
+    NSLog(@"Countly device tests: runner application state %ld", (long)UIApplication.sharedApplication.applicationState);
+
     RCTSetLogThreshold(RCTLogLevelInfo);
     RCTAddLogFunction(^(RCTLogLevel level, RCTLogSource source, NSString *fileName, NSNumber *lineNumber, NSString *message) {
         [CountlyDeviceTests handleLogMessage:message];
