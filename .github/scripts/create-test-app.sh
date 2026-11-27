@@ -78,4 +78,11 @@ if [ -f "$boost" ]; then
   perl -pi -e 's#https://boostorg\.jfrog\.io/artifactory/main/release/#https://archives.boost.io/release/#' "$boost"
 fi
 
+# Yoga of React Native 0.67 and older does not compile with Xcode 14.3 and newer (-Wbitwise-instead-of-logical);
+# apps on those versions apply this one-character fix.
+yoga=node_modules/react-native/ReactCommon/yoga/yoga/Yoga.cpp
+if [ -f "$yoga" ]; then
+  perl -0pi -e 's/hadOverflow\(\) \|\n/hadOverflow() ||\n/g' "$yoga"
+fi
+
 echo "Created $(pwd) with React Native $version and $(basename "$tarball")"
