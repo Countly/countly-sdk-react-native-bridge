@@ -65,7 +65,8 @@ jobs:
       - name: Create an app with the bridge
         run: |
           source=.
-          if [ "$PACKAGE" = no-push ]; then
+          # The no-push branch has no generator, because it already is the no-push package.
+          if [ "$PACKAGE" = no-push ] && [ -f scripts/generate-no-push.js ]; then
             node scripts/generate-no-push.js "$RUNNER_TEMP/no-push"
             source="$RUNNER_TEMP/no-push"
           fi
