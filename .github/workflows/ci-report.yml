@@ -11,6 +11,7 @@ on:  # zizmor: ignore[dangerous-triggers] the job reads the pull request's artif
       - "Android build"
       - "JS checks"
       - "iOS build"
+      - "Device tests"
       - "Public API changelog"
       - "Public API changes"
     types: [completed]

@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# Creates the device test app: the template app of one React Native version with the bridge, whose JavaScript runs
+# every integration scenario of the example app (example/CountlyRNExample/testing) once it starts.
+#
+# Usage: .github/scripts/create-device-test-app.sh <android|ios> <react-native-version> <app-directory> [test-bundle-id]
+#
+# Run it from the repository root. The JavaScript is a development bundle (the Countly.test helpers work only there)
+# stored in the app, so no Metro server is needed:
+#   android: android/app/src/main/assets/index.android.bundle; build the debug APK afterwards.
+#   ios:     the CountlyDeviceTests UI test bundle (e2e/ios) in ios/HelloWorld.xcodeproj, with the bundle and
+#            scenarios.json as its resources; run pod install afterwards.
+# e2e/scenarios.json in the app lists the scenario ids, one test case each.
+set -euo pipefail
+
+platform=${1:?android or ios}
+version=${2:?react-native version}
+app=${3:?app directory}
+bundle_id=${4:-com.countly.CountlyTests}
+repo=$(pwd)
+
+.github/scripts/create-test-app.sh "$version" standard "$app"
+
+mkdir -p "$app/e2e/testing"
+cp e2e/index.js e2e/runner.js "$app/e2e/"
+cp example/CountlyRNExample/testing/helpers.ts example/CountlyRNExample/testing/scenarios.ts "$app/e2e/testing/"
+cp example/CountlyRNExample/Configuration.tsx "$app/e2e/"
+printf 'import "./e2e/index";\n' > "$app/index.js"
+node -e '
+const fs = require("fs");
+const ids = [...fs.readFileSync(process.argv[1], "utf8").matchAll(/^\s+id: "([^"]+)",$/gm)].map((m) => m[1]);
+if (ids.length === 0) { console.error("no scenario ids found"); process.exit(1); }
+fs.writeFileSync(process.argv[2], JSON.stringify(ids, null, 2) + "\n");
+console.log(`${ids.length} scenarios`);
+' example/CountlyRNExample/testing/scenarios.ts "$app/e2e/scenarios.json"
+
+cd "$app"
+case "$platform" in
+  android)
+    mkdir -p android/app/src/main/assets
+    npx react-native bundle --platform android --dev true --entry-file index.js \
+      --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res
+    ;;
+  ios)
+    mkdir -p ios/CountlyDeviceTests
+    cp "$repo/e2e/ios/CountlyDeviceTests.mm" e2e/scenarios.json ios/CountlyDeviceTests/
+    npx react-native bundle --platform ios --dev true --entry-file index.js \
+      --bundle-output ios/CountlyDeviceTests/main.jsbundle --assets-dest ios/CountlyDeviceTests
+    ruby "$repo/e2e/ios/add-test-target.rb" ios/HelloWorld.xcodeproj "$bundle_id"
+    # The test bundle links every pod of the app, because it starts React Native itself.
+    perl -0pi -e "s/(target 'HelloWorld' do\n)/\$1  target 'CountlyDeviceTests' do\n    inherit! :complete\n  end\n\n/" ios/Podfile
+    grep -q "target 'CountlyDeviceTests'" ios/Podfile
+    ;;
+  *)
+    echo "unknown platform $platform" >&2
+    exit 2
+    ;;
+esac
+echo "Created the $platform device test app in $(pwd)"
