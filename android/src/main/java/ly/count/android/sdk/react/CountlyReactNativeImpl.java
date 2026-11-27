@@ -54,6 +54,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -103,7 +104,7 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
 
     public static final String NAME = "CountlyReactNative";
     public static final String TAG = "CountlyRNPlugin";
-    private String COUNTLY_RN_SDK_VERSION_STRING = "26.1.0";
+    private String COUNTLY_RN_SDK_VERSION_STRING = "26.8.1";
     private String COUNTLY_RN_SDK_NAME = "js-rnbnp-android";
 
     private static CountlyConfig config = new CountlyConfig();
@@ -126,6 +127,7 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     private static String ratingWidgetCallbackName = "ratingWidgetCallback";
     private static String pushNotificationCallbackName = "pushNotificationCallback";
     private static String pushNotificationOpenedCallbackName = "pushNotificationOpenedCallback";
+    private static String logListenerCallbackName = "logListenerCallback";
     private static final String POST_NOTIFICATIONS_PERMISSION = "android.permission.POST_NOTIFICATIONS";
     private static final int POST_NOTIFICATIONS_API_LEVEL = 33;
     private static final int POST_NOTIFICATIONS_REQUEST_CODE = 1853;
@@ -486,8 +488,10 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         }
         createNotificationChannel(application, soundPath);
         SharedPreferences preferences = application.getSharedPreferences(PUSH_SETTINGS_PREFERENCES, Context.MODE_PRIVATE);
-        CountlyPush.useAdditionalIntentRedirectionChecks = preferences.getBoolean(PUSH_SETTINGS_REDIRECTION_CHECKS, true);
         CountlyConfigPush configPush = new CountlyConfigPush(application);
+        if (preferences.getBoolean(PUSH_SETTINGS_REDIRECTION_CHECKS, true)) {
+            configPush.enableAdditionalIntentRedirectionChecks();
+        }
         List<String> classNames = readStoredList(preferences, PUSH_SETTINGS_ALLOWED_CLASS_NAMES);
         List<String> packageNames = readStoredList(preferences, PUSH_SETTINGS_ALLOWED_PACKAGE_NAMES);
         if (!classNames.isEmpty()) {
@@ -634,6 +638,20 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
                 config.setLoggingEnabled(isEnabled);
             }
         });
+        applyConfigStep("logListener", () -> {
+            if (_config.has("logListener")) {
+                config.setLogListener((logMessage, logLevel) -> {
+                    try {
+                        WritableMap data = Arguments.createMap();
+                        data.putString("message", logMessage);
+                        data.putString("level", logLevel.name().toLowerCase(Locale.ROOT));
+                        _reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit(logListenerCallbackName, data);
+                    } catch (Exception ignored) {
+                        // no running React instance to pass the line to, and a throwing listener would keep the line from log gathering
+                    }
+                });
+            }
+        });
         applyConfigStep("shouldRequireConsent", () -> {
             if (_config.has("shouldRequireConsent")) {
                 config.setRequiresConsent(_config.getBoolean("shouldRequireConsent"));
@@ -716,6 +734,9 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
                 } else {
                     config.setWebviewDisplayOption(WebViewDisplayOption.IMMERSIVE);
                 }
+            }
+            if (_config.has("disableAutoContentTriggers") && _config.getBoolean("disableAutoContentTriggers")) {
+                config.content.disableAutoContentTriggers();
             }
         });
         applyConfigStep("sdkInternalLimits", () -> {
@@ -844,6 +865,11 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
                 config.enableManualSessionControlHybridMode();
             }
         });
+        applyConfigStep("sessionUpdateTimerDelay", () -> {
+            if (_config.has("sessionUpdateTimerDelay")) {
+                config.setUpdateSessionTimerDelay(_config.getInt("sessionUpdateTimerDelay"));
+            }
+        });
         applyConfigStep("customNetworkRequestHeaders", () -> {
             if (_config.has("customNetworkRequestHeaders")) {
                 JSONObject customHeaderValues = _config.getJSONObject("customNetworkRequestHeaders");
@@ -858,6 +884,12 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
             }
             if (_config.has("disableBackoffMechanism") && _config.getBoolean("disableBackoffMechanism")) {
                 config.disableBackoffMechanism();
+            }
+            if (_config.has("enableRequestCompression") && _config.getBoolean("enableRequestCompression")) {
+                config.enableRequestCompression();
+            }
+            if (_config.has("disableHealthCheck") && _config.getBoolean("disableHealthCheck")) {
+                config.disableHealthCheck();
             }
             if (_config.has("disableGradualRequestCleaner") && _config.getBoolean("disableGradualRequestCleaner")) {
                 config.disableGradualRequestCleaner();
@@ -2306,7 +2338,7 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
         String widgetId = args.getString(0);
         String type = args.getString(1);
         String name = args.getString(2);
-        String closeButtonText = getOptionalStringArg(args, 3);
+        // args[3] is the close button text, which the Android SDK no longer uses
         String widgetVersion = args.size() > 4 && !args.isNull(4) ? args.getString(4) : null;
 
         CountlyFeedbackWidget presentableFeedback = getFeedbackWidget(widgetId);
@@ -2331,8 +2363,7 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
             }
         }
         CountlyFeedbackWidget feedbackWidgetToPresent = presentableFeedback;
-        String closeButtonTextToUse = closeButtonText.isEmpty() ? null : closeButtonText;
-        activity.runOnUiThread(() -> Countly.sharedInstance().feedback().presentFeedbackWidget(feedbackWidgetToPresent, activity, closeButtonTextToUse, new FeedbackCallback() {
+        activity.runOnUiThread(() -> Countly.sharedInstance().feedback().presentFeedbackWidget(feedbackWidgetToPresent, activity, new FeedbackCallback() {
             @Override
             public void onFinished(String error) {
                 if (error != null) {
@@ -2359,6 +2390,40 @@ public class CountlyReactNativeImpl extends ReactContextBaseJavaModule implement
     
     public void removeDifferentAppKeysFromQueue() {
         Countly.sharedInstance().requestQueue().eraseWrongAppKeyRequests();
+    }
+
+    /**
+     * Sends the requests to another server from now on. The Android SDK validates the URL.
+     *
+     * @param args the new server URL at index 0
+     */
+    public void changeServerUrl(ReadableArray args) {
+        String serverUrl = args.getString(0);
+        Countly.sharedInstance().requestQueue().changeServerUrl(serverUrl);
+    }
+
+    /**
+     * Reports to another app from now on. The Android SDK validates the key and closes what belongs to the old app first.
+     *
+     * @param args the app key of the new app at index 0
+     */
+    public void changeAppKey(ReadableArray args) {
+        String appKey = args.getString(0);
+        Countly.sharedInstance().requestQueue().changeAppKey(appKey);
+    }
+
+    /**
+     * Deletes the stored requests and the recorded events that are not in a request yet.
+     */
+    public void flushQueues() {
+        Countly.sharedInstance().requestQueue().flushQueues();
+    }
+
+    /**
+     * Packs the recorded events into a request and starts sending the stored requests now.
+     */
+    public void attemptToSendStoredRequests() {
+        Countly.sharedInstance().requestQueue().attemptToSendStoredRequests();
     }
 
     

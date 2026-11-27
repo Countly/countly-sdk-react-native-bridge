@@ -52,7 +52,7 @@ void CountlyRNInternalLog(NSString *format, ...) NS_FORMAT_FUNCTION(1, 2);
 @property (nonatomic, readonly) NSString *widgetVersion;
 @end
 
-NSString *const kCountlyReactNativeSDKVersion = @"26.1.0";
+NSString *const kCountlyReactNativeSDKVersion = @"26.8.1";
 #ifdef COUNTLY_EXCLUDE_PUSHNOTIFICATIONS
 NSString *const kCountlyReactNativeSDKName = @"js-rnbnp-ios";
 #else
@@ -88,6 +88,25 @@ NSString *const ratingWidgetCallbackName = @"ratingWidgetCallback";
 NSString *const pushNotificationCallbackName = @"pushNotificationCallback";
 NSString *const pushNotificationOpenedCallbackName = @"pushNotificationOpenedCallback";
 NSString *const contentCallbackName = @"globalContentCallback";
+NSString *const logListenerCallbackName = @"logListenerCallback";
+
+/**
+ * The level name the log listener of the JavaScript layer receives for a level of the native SDK.
+ */
+static NSString *CountlyRNLogLevelName(CLYInternalLogLevel level) {
+    switch (level) {
+        case CLYInternalLogLevelError:
+            return @"error";
+        case CLYInternalLogLevelWarning:
+            return @"warning";
+        case CLYInternalLogLevelInfo:
+            return @"info";
+        case CLYInternalLogLevelVerbose:
+            return @"verbose";
+        default:
+            return @"debug";
+    }
+}
 
 static void CountlyRNEnsureCapturedRequests(void) {
     if (countlyRNCapturedRequests == nil) {
@@ -230,6 +249,9 @@ static NSData *CountlyRNCapturedResponseDataForRequest(NSURLRequest *request) {
 
 @end
 
+@interface CountlyReactNative () <CountlyLoggerDelegate>
+@end
+
 @implementation CountlyReactNative
 NSString *const kCountlyNotificationPersistencyKey = @"kCountlyNotificationPersistencyKey";
 
@@ -250,7 +272,14 @@ NSString *const kCountlyNotificationPersistencyKey = @"kCountlyNotificationPersi
 }
 
 - (NSArray<NSString *> *)supportedEvents {
-    return @[ pushNotificationCallbackName, pushNotificationOpenedCallbackName, ratingWidgetCallbackName, widgetShownCallbackName, widgetClosedCallbackName, contentCallbackName ];
+    return @[ pushNotificationCallbackName, pushNotificationOpenedCallbackName, ratingWidgetCallbackName, widgetShownCallbackName, widgetClosedCallbackName, contentCallbackName, logListenerCallbackName ];
+}
+
+/**
+ * Passes a log line of the native SDK to the log listener of the JavaScript layer.
+ */
+- (void)internalLog:(NSString *)log withLevel:(CLYInternalLogLevel)level {
+    [self sendEventWithName:logListenerCallbackName body:@{@"message" : log ?: @"", @"level" : CountlyRNLogLevelName(level)}];
 }
 
 - (NSString *)toJSONString:(id)object {
@@ -404,6 +433,12 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
         }
     }
 
+    if (json[@"logListener"]) {
+        config.loggerDelegate = self;
+        // the listener gets every level, also the verbose lines the default level leaves out
+        config.internalLogLevel = CLYInternalLogLevelVerbose;
+    }
+
     if (json[@"shouldRequireConsent"]) {
         config.requiresConsent = YES;
     }
@@ -483,6 +518,9 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
         } else {
             [config.content setWebviewDisplayOption:IMMERSIVE];
         }
+    }
+    if ([json[@"disableAutoContentTriggers"] boolValue]) {
+        [config.content disableAutoContentTriggers];
     }
     // APM ------------------------------------------------
     NSNumber *enableForegroundBackground = json[@"enableForegroundBackground"];
@@ -599,6 +637,11 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
     if (json[@"enableManualSessionControlHybridMode"]) {
         config.enableManualSessionControlHybridMode = [json[@"enableManualSessionControlHybridMode"] boolValue];
     }
+    NSNumber *sessionUpdateTimerDelay = json[@"sessionUpdateTimerDelay"];
+    // NSTimer repeats almost continuously for an interval of 0 or less, so the iOS SDK must never get one.
+    if ([sessionUpdateTimerDelay isKindOfClass:[NSNumber class]] && [sessionUpdateTimerDelay intValue] >= 1) {
+        config.updateSessionPeriod = [sessionUpdateTimerDelay intValue];
+    }
 
     NSDictionary *customNetworkRequestHeaders = json[@"customNetworkRequestHeaders"];
     if ([customNetworkRequestHeaders isKindOfClass:[NSDictionary class]] && customNetworkRequestHeaders.count > 0) {
@@ -633,6 +676,12 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
     }
     if (json[@"disableBackoffMechanism"]) {
         config.disableBackoffMechanism = [json[@"disableBackoffMechanism"] boolValue];
+    }
+    if (json[@"enableRequestCompression"]) {
+        config.enableRequestCompression = [json[@"enableRequestCompression"] boolValue];
+    }
+    if (json[@"disableHealthCheck"]) {
+        config.disableHealthCheck = [json[@"disableHealthCheck"] boolValue];
     }
     if (json[@"sdkBehaviorSettings"]) {
         if (![json[@"sdkBehaviorSettings"] isKindOfClass:[NSString class]]) {
@@ -1770,6 +1819,45 @@ RCT_EXPORT_METHOD(replaceAllAppKeysInQueueWithCurrentAppKey) {
 RCT_EXPORT_METHOD(removeDifferentAppKeysFromQueue) {
     dispatch_async(dispatch_get_main_queue(), ^{
       [Countly.sharedInstance removeDifferentAppKeysFromQueue];
+    });
+}
+
+/**
+ * Sends the requests to another server from now on, and points the request capture at the host the iOS SDK uses then.
+ */
+RCT_EXPORT_METHOD(changeServerUrl : (NSArray *)arguments) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      NSString *serverUrl = [arguments objectAtIndex:0];
+      [Countly.sharedInstance setNewHost:serverUrl];
+      countlyRNCapturedHost = [NSURLComponents componentsWithString:CountlyConnectionManager.sharedInstance.host].host;
+    });
+}
+
+/**
+ * Reports to another app from now on.
+ */
+RCT_EXPORT_METHOD(changeAppKey : (NSArray *)arguments) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      NSString *appKey = [arguments objectAtIndex:0];
+      [Countly.sharedInstance setNewAppKey:appKey];
+    });
+}
+
+/**
+ * Deletes the stored requests and the recorded events that are not in a request yet.
+ */
+RCT_EXPORT_METHOD(flushQueues) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      [Countly.sharedInstance flushQueues];
+    });
+}
+
+/**
+ * Packs the recorded events into a request and starts sending the stored requests now.
+ */
+RCT_EXPORT_METHOD(attemptToSendStoredRequests) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      [Countly.sharedInstance attemptToSendStoredRequests];
     });
 }
 

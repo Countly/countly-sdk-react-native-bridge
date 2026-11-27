@@ -28,6 +28,7 @@ test('CountlyConfig setters and nested interfaces persist fluent configuration',
     expect(config.setAppKey('updated-app-key')).toBe(config);
     expect(config.setDeviceID('device-123')).toBe(config);
     expect(config.setRequestTimeoutDuration(15)).toBe(config);
+    expect(config.setUpdateSessionTimerDelay(30)).toBe(config);
     expect(config.enableManualSessionControl()).toBe(config);
     expect(config.enableManualSessionControlHybridMode()).toBe(config);
     expect(config.addCustomNetworkRequestHeaders(customHeaders)).toBe(config);
@@ -45,6 +46,8 @@ test('CountlyConfig setters and nested interfaces persist fluent configuration',
     expect(config.disableAdditionalIntentRedirectionChecks()).toBe(config);
     expect(config.disableSDKBehaviorSettingsUpdates()).toBe(config);
     expect(config.disableBackoffMechanism()).toBe(config);
+    expect(config.enableRequestCompression()).toBe(config);
+    expect(config.disableHealthCheck()).toBe(config);
     expect(config.setSDKBehaviorSettings(sdkBehaviorSettings)).toBe(config);
     expect(config.setPushTokenType('DEVELOPMENT')).toBe(config);
     expect(config.setPushNotificationChannelInformation('Alerts', 'Countly alerts')).toBe(config);
@@ -65,6 +68,8 @@ test('CountlyConfig setters and nested interfaces persist fluent configuration',
     expect(config.content.setZoneTimerInterval(25)).toBe(config.content);
     expect(config.content.setGlobalContentCallback(contentCallback)).toBe(config.content);
     expect(config.content.setWebViewDisplayOption('SAFE_AREA')).toBe(config.content);
+    expect(config.content.autoContentTriggersDisabled).toBe(false);
+    expect(config.content.disableAutoContentTriggers()).toBe(config.content);
 
     expect(config.sdkInternalLimits.setMaxKeyLength(64)).toBe(config.sdkInternalLimits);
     expect(config.sdkInternalLimits.setMaxValueSize(128)).toBe(config.sdkInternalLimits);
@@ -78,6 +83,7 @@ test('CountlyConfig setters and nested interfaces persist fluent configuration',
     expect(config.appKey).toBe('updated-app-key');
     expect(config.deviceID).toBe('device-123');
     expect(config._requestTimeoutDuration).toBe(15);
+    expect(config._sessionUpdateTimerDelay).toBe(30);
     expect(config._manualSessionControl).toBe(true);
     expect(config._manualSessionControlHybridMode).toBe(true);
     expect(config._customNetworkRequestHeaders).toEqual(customHeaders);
@@ -120,6 +126,7 @@ test('CountlyConfig setters and nested interfaces persist fluent configuration',
     expect(config.content.timerInterval).toBe(25);
     expect(config.content.contentCallback).toBe(contentCallback);
     expect(config.content.webViewDisplayOption).toBe('SAFE_AREA');
+    expect(config.content.autoContentTriggersDisabled).toBe(true);
     expect(config.sdkInternalLimits.maxKeyLength).toBe(64);
     expect(config.sdkInternalLimits.maxValueSize).toBe(128);
     expect(config.sdkInternalLimits.maxSegmentationValues).toBe(12);

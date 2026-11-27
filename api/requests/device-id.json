@@ -1,0 +1,56 @@
+[
+  {
+    "method": "init",
+    "args": [
+      [
+        "{\"serverURL\":\"https://parity.example\",\"appKey\":\"parity-app-key\",\"deviceID\":\"parity-device-001\",\"manualSessionHandling\":true}"
+      ]
+    ]
+  },
+  {
+    "method": "startSession",
+    "args": []
+  },
+  {
+    "method": "changeDeviceId",
+    "args": [
+      [
+        "parity-device-002",
+        "1"
+      ]
+    ]
+  },
+  {
+    "method": "recordEvent",
+    "args": [
+      {
+        "c": 1,
+        "n": "after_merge",
+        "s": 0
+      }
+    ]
+  },
+  {
+    "method": "changeDeviceId",
+    "args": [
+      [
+        "parity-device-003",
+        "0"
+      ]
+    ]
+  },
+  {
+    "method": "recordEvent",
+    "args": [
+      {
+        "c": 1,
+        "n": "after_new_id",
+        "s": 0
+      }
+    ]
+  },
+  {
+    "method": "endSession",
+    "args": []
+  }
+]

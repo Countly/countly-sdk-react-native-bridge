@@ -26,9 +26,15 @@ class CountlyConfig {
 
     #disableBackoff = false;
 
+    #enableRequestCompression = false;
+
+    #disableHealthCheck = false;
+
     #sdkBehaviorSettings;
 
     #requestTimeoutDuration;
+
+    #sessionUpdateTimerDelay;
 
     #manualSessionControl = false;
 
@@ -45,6 +51,8 @@ class CountlyConfig {
     #automaticViewTrackingExclusionList;
 
     #globalViewSegmentation;
+
+    #logListener = null;
 
     constructor(serverURL, appKey) {
         this.serverURL = serverURL;
@@ -99,12 +107,24 @@ class CountlyConfig {
         return this.#disableBackoff;
     }
 
+    get _enableRequestCompression() {
+        return this.#enableRequestCompression;
+    }
+
+    get _disableHealthCheck() {
+        return this.#disableHealthCheck;
+    }
+
     get _sdkBehaviorSettings() {
         return this.#sdkBehaviorSettings;
     }
 
     get _requestTimeoutDuration() {
         return this.#requestTimeoutDuration;
+    }
+
+    get _sessionUpdateTimerDelay() {
+        return this.#sessionUpdateTimerDelay;
     }
 
     get _manualSessionControl() {
@@ -137,6 +157,13 @@ class CountlyConfig {
 
     get _globalViewSegmentation() {
         return this.#globalViewSegmentation;
+    }
+
+    /**
+     * Getter to get the log listener set with setLogListener
+     */
+    get _logListener() {
+        return this.#logListener;
     }
 
     /**
@@ -177,6 +204,18 @@ class CountlyConfig {
      */
     setRequestTimeoutDuration(timeout) {
         this.#requestTimeoutDuration = timeout;
+        return this;
+    }
+
+    /**
+     * Sets how often the SDK sends automatic session updates and the queued events. The default is 60 seconds.
+     * Values that are not a whole number from 1 to 2147483647 are ignored with an error log at init.
+     *
+     * @param {Number} delay - interval in seconds
+     * @returns {CountlyConfig} this
+     */
+    setUpdateSessionTimerDelay(delay) {
+        this.#sessionUpdateTimerDelay = delay;
         return this;
     }
 
@@ -261,6 +300,23 @@ class CountlyConfig {
     setLoggingEnabled(loggingEnabled) {
         this.loggingEnabled = loggingEnabled;
         L.initialize(loggingEnabled); // initialize React Native SDK logger
+        return this;
+    }
+
+    /**
+     * Method to set a listener that receives every log line of the SDK and its level
+     * ("error", "warning", "info", "debug" or "verbose"), also when logging is disabled.
+     * It receives the lines of the native SDK and of the React Native layer. The listener
+     * is called inside the SDK's own calls, so it should return quickly and must not call the SDK.
+     *
+     * @param {function(string, string)} logListener called with the message and its level
+     */
+    setLogListener(logListener) {
+        if (typeof logListener !== "function") {
+            L.w("setLogListener, the log listener must be a function, ignoring it");
+            return this;
+        }
+        this.#logListener = logListener;
         return this;
     }
 
@@ -357,6 +413,23 @@ class CountlyConfig {
      */
     disableBackoffMechanism() {
         this.#disableBackoff = true;
+        return this;
+    }
+
+    /**
+     * Sends request bodies between 1 KB and 1 MB gzip-compressed, once the server's SDK behavior settings answer
+     * says it reads them. It needs the SDK behavior settings updates, which disableSDKBehaviorSettingsUpdates turns off.
+     */
+    enableRequestCompression() {
+        this.#enableRequestCompression = true;
+        return this;
+    }
+
+    /**
+     * Stops the health check request the SDK sends once per initialization.
+     */
+    disableHealthCheck() {
+        this.#disableHealthCheck = true;
         return this;
     }
 
