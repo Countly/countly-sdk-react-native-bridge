@@ -5,83 +5,86 @@ on:
     paths:
       - 'ios/**'
       - 'src/**'
+      - '*.js'
+      - 'lib/**'
       - 'package.json'
       - 'CountlyReactNative.podspec'
       - 'scripts/generate-no-push.js'
+      - '.github/react-native-versions.json'
+      - '.github/scripts/create-test-app.sh'
       - '.github/workflows/ios_build.yml'
   push:
     branches: [master, staging]
     paths:
       - 'ios/**'
       - 'src/**'
+      - '*.js'
+      - 'lib/**'
       - 'package.json'
       - 'CountlyReactNative.podspec'
       - 'scripts/generate-no-push.js'
+      - '.github/react-native-versions.json'
+      - '.github/scripts/create-test-app.sh'
       - '.github/workflows/ios_build.yml'
+  schedule:
+    - cron: '0 3 * * 1'
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ios-build-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
-  build:
-    name: ${{ matrix.name }}
-    runs-on: macos-15
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: New architecture (React Native 0.88.1)
-            react-native: 0.88.1
-            cli: 20.2.0
-            new-arch: 1
-            package: standard
-          - name: Old architecture (React Native 0.81.6)
-            react-native: 0.81.6
-            cli: 20.0.0
-            new-arch: 0
-            package: standard
-          - name: No-push package (React Native 0.88.1)
-            react-native: 0.88.1
-            cli: 20.2.0
-            new-arch: 1
-            package: no-push
-    env:
-      REACT_NATIVE: ${{ matrix.react-native }}
-      CLI: ${{ matrix.cli }}
-      RCT_NEW_ARCH_ENABLED: ${{ matrix.new-arch }}
-      PACKAGE: ${{ matrix.package }}
+  versions:
+    name: React Native versions
+    runs-on: ubuntu-latest
+    outputs:
+      list: ${{ steps.read.outputs.list }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
+      - id: read
+        run: echo "list=$(jq -c . .github/react-native-versions.json)" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: ${{ matrix.name }}
+    needs: versions
+    runs-on: ${{ matrix.macos }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.versions.outputs.list) }}
+    env:
+      REACT_NATIVE: ${{ matrix.react-native }}
+      RCT_NEW_ARCH_ENABLED: ${{ matrix.new-arch && '1' || '0' }}
+      NO_FLIPPER: 1
+      PACKAGE: ${{ matrix.package }}
+      XCODE: ${{ matrix.xcode }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Select Xcode
+        run: sudo xcode-select -s "/Applications/Xcode_$XCODE.app"
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 24
+          node-version: ${{ matrix.node }}
       # The app installs the packed tarball, so the build sees only the files npm publishes.
       - name: Create an app with the bridge
-        run: |
-          source=.
-          # The no-push branch has no generator, because it already is the no-push package.
-          if [ "$PACKAGE" = no-push ] && [ -f scripts/generate-no-push.js ]; then
-            node scripts/generate-no-push.js "$RUNNER_TEMP/no-push"
-            source="$RUNNER_TEMP/no-push"
-          fi
-          tarball="$RUNNER_TEMP/$(npm pack "$source" --pack-destination "$RUNNER_TEMP" | tail -n 1)"
-          cd "$RUNNER_TEMP"
-          npx --yes "@react-native-community/cli@$CLI" init CountlyApp --version "$REACT_NATIVE" --pm npm --skip-git-init --install-pods false
-          cd CountlyApp
-          npm install --no-audit --no-fund "$tarball"
+        run: .github/scripts/create-test-app.sh "$REACT_NATIVE" "$PACKAGE" "$RUNNER_TEMP/app"
       - name: Install the pods
-        working-directory: ${{ runner.temp }}/CountlyApp/ios
-        run: |
-          bundle install
-          bundle exec pod install
-      - name: Build the app for the simulator
-        working-directory: ${{ runner.temp }}/CountlyApp/ios
+        working-directory: ${{ runner.temp }}/app/ios
+        run: pod install
+      # A release build also bundles the JavaScript, and compiles it with Hermes where the app uses Hermes.
+      - name: Build the release app for the simulator
+        working-directory: ${{ runner.temp }}/app/ios
         run: |
           xcodebuild build \
-            -workspace CountlyApp.xcworkspace -scheme CountlyApp -configuration Debug \
+            -workspace HelloWorld.xcworkspace -scheme HelloWorld -configuration Release \
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
-            CODE_SIGNING_ALLOWED=NO
+            ARCHS=arm64 CODE_SIGNING_ALLOWED=NO
