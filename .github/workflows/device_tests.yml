@@ -1,18 +1,10 @@
-# Runs the integration scenarios of the example app (example/CountlyRNExample/testing) on running devices: an
-# Android emulator and an iOS simulator on every run, and real phones through the Countly Device Farm when the repo
-# variable DEVICE_FARM is "true".
+# Runs the integration scenarios of the example app (example/CountlyRNExample/testing) on an Android emulator and an
+# iOS simulator.
 #
 # The test app is the React Native template app with the packed bridge (.github/scripts/create-device-test-app.sh).
 # Its JavaScript runs every scenario once it starts and writes one CLY_E2E line per result; e2e/android/run.mjs reads
 # them from logcat, and on iOS the CountlyDeviceTests UI test bundle (e2e/ios) starts React Native inside its runner
 # app and reads them from the React Native log. Each scenario becomes one test case.
-#
-# The phone jobs join the farm's queue with the job's GitHub OIDC token, so no farm secret lives in the repo and fork
-# pull requests never reach a phone. The farm client and the iOS packaging script are vendored in .github/farm from
-# countly-sdk-tools. Before setting DEVICE_FARM, the farm's Command Center must list this repo in CC_FARM_OIDC_REPOS
-# and countly-sdk-react-native-bridge in CC_FARM_SDKS, and an Apple Developer team admin must add the secrets
-# APPLE_CERT_P12, APPLE_CERT_PASSWORD and APPLE_PROFILE (a development profile for the farm iPhone that covers the
-# runner ID, FARM_IOS_TEST_BUNDLE_ID plus ".xctrunner").
 name: Device tests
 
 on:
@@ -28,7 +20,6 @@ on:
       - 'e2e/**'
       - 'example/CountlyRNExample/testing/**'
       - 'example/CountlyRNExample/Configuration.tsx'
-      - '.github/farm/**'
       - '.github/scripts/create-test-app.sh'
       - '.github/scripts/create-device-test-app.sh'
       - '.github/workflows/device_tests.yml'
@@ -46,8 +37,6 @@ concurrency:
 env:
   REACT_NATIVE: 0.88.1
   NODE: 24
-  FARM_URL: https://test-deniz.count.ly/command-center/farm
-  FARM_SDK: countly-sdk-react-native-bridge
 
 jobs:
   android-emulator:
@@ -92,9 +81,6 @@ jobs:
           name: android-emulator-results
           path: ${{ runner.temp }}/results/
           if-no-files-found: ignore
-      - name: Summarise the results
-        if: ${{ !cancelled() }}
-        run: node .github/farm/client.mjs summary "$RUNNER_TEMP/results" >> "$GITHUB_STEP_SUMMARY"
 
   ios-simulator:
     name: iOS simulator
@@ -149,141 +135,3 @@ jobs:
           path: ${{ runner.temp }}/ios-simulator.xcresult
           if-no-files-found: ignore
 
-  android-phone:
-    name: Android real phone
-    if: ${{ vars.DEVICE_FARM == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 90
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: ${{ env.NODE }}
-      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
-        with:
-          distribution: zulu
-          java-version: 17
-      - name: Create the test app
-        run: .github/scripts/create-device-test-app.sh android "$REACT_NATIVE" "$RUNNER_TEMP/app"
-      - name: Build the test app
-        working-directory: ${{ runner.temp }}/app/android
-        # One retry, because downloads from the Gradle plugin portal and Maven Central fail now and then.
-        run: |
-          ./gradlew assembleDebug --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a || \n            ./gradlew assembleDebug --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
-      - name: Put adb on the path
-        run: echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
-      - name: Join the device farm queue
-        run: node .github/farm/client.mjs oidc "$FARM_SDK"
-      - name: Take the phone and tunnel adb
-        run: node .github/farm/client.mjs open
-      - name: Run the scenarios on the phone
-        run: node e2e/android/run.mjs "$RUNNER_TEMP/app/android/app/build/outputs/apk/debug/app-debug.apk" "$RUNNER_TEMP/app/e2e/scenarios.json" "$RUNNER_TEMP/results/android-phone.xml"
-      - name: Upload the results
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: android-phone-results
-          path: ${{ runner.temp }}/results/
-          if-no-files-found: ignore
-      - name: Summarise the results
-        if: ${{ !cancelled() }}
-        run: node .github/farm/client.mjs summary "$RUNNER_TEMP/results" >> "$GITHUB_STEP_SUMMARY"
-      - name: Give the phone back
-        if: always() && env.FARM_TOKEN != ''
-        run: node .github/farm/client.mjs release "${{ job.status }}"
-
-  ios-phone:
-    name: iOS real phone
-    if: ${{ vars.DEVICE_FARM == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
-    runs-on: macos-26
-    timeout-minutes: 120
-    permissions:
-      contents: read
-      id-token: write
-    env:
-      RCT_NEW_ARCH_ENABLED: 1
-      TEST_BUNDLE_ID: ${{ vars.FARM_IOS_TEST_BUNDLE_ID || 'com.countly.CountlyTests' }}
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: ${{ env.NODE }}
-      - name: Import the signing certificate
-        env:
-          APPLE_CERT_P12: ${{ secrets.APPLE_CERT_P12 }}
-          APPLE_CERT_PASSWORD: ${{ secrets.APPLE_CERT_PASSWORD }}
-        run: |
-          set -eu
-          if [ -z "$APPLE_CERT_P12" ]; then
-            echo "::error::The APPLE_CERT_P12 secret is not set"
-            exit 1
-          fi
-          keychain="$RUNNER_TEMP/farm.keychain-db"
-          password="$(openssl rand -base64 16)"
-          security create-keychain -p "$password" "$keychain"
-          security set-keychain-settings -lut 3600 "$keychain"
-          security unlock-keychain -p "$password" "$keychain"
-          echo "$APPLE_CERT_P12" | base64 -d > "$RUNNER_TEMP/cert.p12"
-          security import "$RUNNER_TEMP/cert.p12" -k "$keychain" -P "$APPLE_CERT_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
-          security set-key-partition-list -S apple-tool:,apple: -s -k "$password" "$keychain" >/dev/null
-          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
-          identity="$(security find-identity -v -p codesigning "$keychain" | awk '/1\)/{print $2; exit}')"
-          echo "SIGN_IDENTITY=$identity" >> "$GITHUB_ENV"
-          rm -f "$RUNNER_TEMP/cert.p12"
-      - name: Install the provisioning profile
-        env:
-          APPLE_PROFILE: ${{ secrets.APPLE_PROFILE }}
-        run: |
-          set -eu
-          dir="$HOME/Library/MobileDevice/Provisioning Profiles"
-          mkdir -p "$dir"
-          echo "$APPLE_PROFILE" | base64 -d > "$dir/farm.mobileprovision"
-      - name: Create the test app
-        run: .github/scripts/create-device-test-app.sh ios "$REACT_NATIVE" "$RUNNER_TEMP/app" "$TEST_BUNDLE_ID"
-      - name: Install the pods
-        working-directory: ${{ runner.temp }}/app/ios
-        run: pod install
-      # Xcode builds without signing; the packaging step signs the test bundle, its frameworks and the runner.
-      - name: Build the tests for a phone
-        working-directory: ${{ runner.temp }}/app/ios
-        run: |
-          xcodebuild build-for-testing \
-            -workspace HelloWorld.xcworkspace -scheme CountlyDeviceTests -configuration Debug \
-            -destination 'generic/platform=iOS' -derivedDataPath "$RUNNER_TEMP/dd" \
-            CODE_SIGNING_ALLOWED=NO
-      - name: Package the signed runner
-        run: |
-          set -eu
-          xctest="$(find "$RUNNER_TEMP/dd/Build/Products" -name CountlyDeviceTests.xctest -type d | head -1)"
-          profile="$HOME/Library/MobileDevice/Provisioning Profiles/farm.mobileprovision"
-          .github/farm/package-xctest.sh "$xctest" "$RUNNER_TEMP/pkg" "$SIGN_IDENTITY" "$profile"
-      - name: Upload the test package
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: rn-ios-tests
-          path: ${{ runner.temp }}/pkg/CountlyDeviceTests-Runner.ipa
-          if-no-files-found: error
-      - name: Join the device farm queue
-        run: node .github/farm/client.mjs oidc "$FARM_SDK"
-      - name: Run the scenarios on the iPhone
-        run: node .github/farm/client.mjs ios rn-ios-tests "$TEST_BUNDLE_ID.xctrunner" "$RUNNER_TEMP/results/ios-phone.xml"
-      - name: Upload the results
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: ios-phone-results
-          path: ${{ runner.temp }}/results/
-          if-no-files-found: ignore
-      - name: Summarise the results
-        if: ${{ !cancelled() }}
-        run: node .github/farm/client.mjs summary "$RUNNER_TEMP/results" >> "$GITHUB_STEP_SUMMARY"
-      - name: Give the phone back
-        if: always() && env.FARM_TOKEN != ''
-        run: node .github/farm/client.mjs release "${{ job.status }}"
