@@ -13,6 +13,8 @@ on:  # zizmor: ignore[dangerous-triggers] the job reads the pull request's artif
       - "iOS build"
       - "Public API changelog"
       - "Public API changes"
+      - "Static analysis"
+      - "Dependency security"
     types: [completed]
 
 permissions: {}

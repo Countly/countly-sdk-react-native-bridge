@@ -1,0 +1,63 @@
+# Known vulnerabilities in what an app gets from the bridge. The package has no npm runtime dependencies, so the scan
+# covers the Android libraries the bridge brings in: the Countly Android SDK, Firebase and their own dependencies, as
+# Gradle resolves them in a React Native app. It also runs weekly, as a dependency can turn vulnerable without this
+# repository changing. On pull requests, dependency review fails on a newly added dependency with a known
+# vulnerability (npm development dependencies and actions).
+name: Dependency security
+
+on:
+  pull_request:
+  push:
+    branches: [master, staging]
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-security-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  REACT_NATIVE: 0.88.1
+
+jobs:
+  osv-android:
+    name: OSV scan of the Android dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: zulu
+          java-version: 17
+      # The scanner reads files of the workspace, so the lockfile goes there.
+      - name: Resolve the dependencies
+        run: .github/scripts/lock-android-dependencies.sh "$RUNNER_TEMP/app" .osv/android/gradle.lockfile
+      - name: Scan the resolved dependencies
+        uses: google/osv-scanner-action/osv-scanner-action@a345acffa64b0eaede81a3d9aae6141214d9c8fc # v2.6.0
+        with:
+          scan-args: |-
+            --lockfile=./.osv/android/gradle.lockfile
+
+  dependency-review:
+    name: Dependency review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Fail on newly added dependencies with a known vulnerability
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: low
+          comment-summary-in-pr: never

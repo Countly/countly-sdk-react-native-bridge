@@ -1,0 +1,101 @@
+# Static analysis of the native bridge code, the way the Android and iOS SDK repositories analyse theirs: Android Lint
+# on the bridge's Android module and the Clang Static Analyzer on its iOS sources, each inside a React Native app. On
+# a pull request the base branch is analysed too, and only findings the base does not have, at warning or error level,
+# fail the job (.github/scripts/sarif_summary.py, the same script as in those repositories).
+name: Static analysis
+
+on:
+  pull_request:
+    paths:
+      - 'android/**'
+      - 'ios/src/CountlyReactNative.*'
+      - 'ios/src/CountlyRNPushNotifications.*'
+      - 'CountlyReactNative.podspec'
+      - 'package.json'
+      - '.github/scripts/create-test-app.sh'
+      - '.github/scripts/lint-android-bridge.sh'
+      - '.github/scripts/analyze-ios-bridge.sh'
+      - '.github/scripts/android-lint.init.gradle'
+      - '.github/scripts/sarif_summary.py'
+      - '.github/workflows/static_analysis.yml'
+  push:
+    branches: [master, staging]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: static-analysis-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  REACT_NATIVE: 0.88.1
+
+jobs:
+  android-lint:
+    name: Android Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: zulu
+          java-version: 17
+      - name: Lint the bridge module
+        run: |
+          .github/scripts/lint-android-bridge.sh . "$RUNNER_TEMP/sarif" "$RUNNER_TEMP/app"
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            git worktree add "$RUNNER_TEMP/base" HEAD^1
+            .github/scripts/lint-android-bridge.sh "$RUNNER_TEMP/base" "$RUNNER_TEMP/sarif-base" "$RUNNER_TEMP/base-app"
+          fi
+      # The paths in the reports point into each app, so each app folder is the root its paths are read against.
+      - name: Summarize the findings
+        working-directory: ${{ runner.temp }}/app
+        run: |
+          set -o pipefail
+          base=()
+          if [ -d "$RUNNER_TEMP/sarif-base" ]; then
+            base=(--base "$RUNNER_TEMP/sarif-base" --base-root "$RUNNER_TEMP/base-app")
+          fi
+          python3 "$GITHUB_WORKSPACE/.github/scripts/sarif_summary.py" "Android Lint" "$RUNNER_TEMP/sarif" "${base[@]}" | tee -a "$GITHUB_STEP_SUMMARY"
+
+  clang-analyzer:
+    name: Clang Static Analyzer
+    runs-on: macos-15
+    timeout-minutes: 90
+    env:
+      RCT_NEW_ARCH_ENABLED: 1
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.4.app
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+      - name: Analyze the iOS bridge
+        run: |
+          .github/scripts/analyze-ios-bridge.sh . "$RUNNER_TEMP/sarif" "$RUNNER_TEMP/app"
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            git worktree add "$RUNNER_TEMP/base" HEAD^1
+            .github/scripts/analyze-ios-bridge.sh "$RUNNER_TEMP/base" "$RUNNER_TEMP/sarif-base" "$RUNNER_TEMP/base-app"
+          fi
+      - name: Summarize the findings
+        working-directory: ${{ runner.temp }}/app
+        run: |
+          set -o pipefail
+          base=()
+          if [ -d "$RUNNER_TEMP/sarif-base" ]; then
+            base=(--base "$RUNNER_TEMP/sarif-base" --base-root "$RUNNER_TEMP/base-app")
+          fi
+          python3 "$GITHUB_WORKSPACE/.github/scripts/sarif_summary.py" "Clang Static Analyzer" "$RUNNER_TEMP/sarif" "${base[@]}" | tee -a "$GITHUB_STEP_SUMMARY"
