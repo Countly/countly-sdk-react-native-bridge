@@ -1,5 +1,6 @@
 import Countly from "countly-sdk-react-native-bridge";
 import CountlyConfig from "countly-sdk-react-native-bridge/CountlyConfig";
+import { PUSH_NOTIFICATIONS_AVAILABLE } from "countly-sdk-react-native-bridge/CountlyFlavor";
 import { Platform } from "react-native";
 
 import { COUNTLY_APP_KEY, COUNTLY_SERVER_URL, createCountlyConfig } from "../Configuration";
@@ -1159,6 +1160,18 @@ function createPushTokenWithoutPermissionCallScenario() {
             const baselineQueue = await getStableRequestQueue();
 
             const result = Countly.sendPushToken({ token: "e2e-handed-over-token" });
+
+            if (!PUSH_NOTIFICATIONS_AVAILABLE) {
+                // The no-push package ignores push tokens, so nothing may reach the queue in the time a token would.
+                await sleep(12000);
+                const queue = await getStableRequestQueue();
+                const tokenRequest = findLastRequestContaining(takeAppendedEntries(baselineQueue, queue), "e2e-handed-over-token");
+                assertCondition(tokenRequest === null, `Expected the no-push package to ignore the token, received: ${tokenRequest?.entry || ""}`);
+                return {
+                    summary: "The no-push package ignores a handed over push token.",
+                    details: [],
+                };
+            }
 
             // The Android SDK queues token requests 10 seconds after it receives the token.
             const finalQueue = await waitForRequestContaining(baselineQueue, "e2e-handed-over-token", 15000);
