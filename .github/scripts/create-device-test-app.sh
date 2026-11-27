@@ -59,6 +59,20 @@ case "$platform" in
     # The test bundle links every pod of the app, because it starts React Native itself.
     perl -0pi -e "s/(target 'HelloWorld' do\n)/\$1  target 'CountlyDeviceTests' do\n    inherit! :complete\n  end\n\n/" ios/Podfile
     grep -q "target 'CountlyDeviceTests'" ios/Podfile
+    # fmt of React Native 0.81 and older does not compile as C++20 with Xcode 26; apps compile it as C++17.
+    if [ "$(echo "$version" | cut -d. -f2)" -le 81 ]; then
+      cat > "$app/fmt.rb" <<'RUBY'
+    installer.pods_project.targets.each do |target|
+      next unless target.name == 'fmt'
+      target.build_configurations.each do |config|
+        config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+      end
+    end
+RUBY
+      ADD="$app/fmt.rb" perl -0pi -e 'open(my $f, "<", $ENV{ADD}) or die; my $add = do { local $/; <$f> }; s/(\n[ \t]*react_native_post_install\(.*?\)\n)/$1$add/s' ios/Podfile
+      grep -q "next unless target.name == 'fmt'" ios/Podfile
+      rm "$app/fmt.rb"
+    fi
     ;;
   *)
     echo "unknown platform $platform" >&2
