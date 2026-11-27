@@ -1,0 +1,4 @@
+---
+# ios/src/CountlyTests are the iOS SDK's own tests, copied with its release; the iOS SDK repository analyses them.
+exclude_paths:
+  - "ios/src/CountlyTests/**"

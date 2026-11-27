@@ -20,7 +20,8 @@ function kindOf(value) {
 }
 
 /**
- * Adds a line for the value at path and, for objects and functions, for each public member below it.
+ * Adds a line for the value at path and, for objects and functions, for each public member below it. For an object
+ * made by a class, such as Countly.events, the members include the methods and accessors of its classes.
  * Names that start with an underscore are private by convention and skipped, and array elements are data.
  * @param {*} value the value to describe
  * @param {string} at the dotted path that reaches the value
@@ -38,6 +39,16 @@ function describeValue(value, at, lines, seen, depth) {
     for (const key of Object.keys(value)) {
         if (!key.startsWith("_")) {
             describeValue(value[key], `${at}.${key}`, lines, seen, depth + 1);
+        }
+    }
+    if (kind === "object") {
+        for (let proto = Object.getPrototypeOf(value); proto && proto !== Object.prototype; proto = Object.getPrototypeOf(proto)) {
+            for (const key of Object.getOwnPropertyNames(proto)) {
+                if (key !== "constructor" && !key.startsWith("_") && !Object.prototype.hasOwnProperty.call(value, key)) {
+                    const descriptor = Object.getOwnPropertyDescriptor(proto, key);
+                    lines.push(`${at}.${key} ${descriptor.get || descriptor.set ? "accessor" : kindOf(descriptor.value)}`);
+                }
+            }
         }
     }
     if (kind === "function" && value.prototype) {

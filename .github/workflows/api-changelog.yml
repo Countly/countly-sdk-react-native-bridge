@@ -40,6 +40,12 @@ jobs:
             changelog=${pair#*=}
             if changes "$record"; then
               recorded_changed=yes
+              # A new dump script rewrites the record without a change of the API; the Breaking changes job still
+              # compares the API itself with the base branch.
+              if [ "$record" = api/countly-sdk-react-native-bridge.api ] && changes .github/scripts/public_api_dump.cjs; then
+                echo "::notice::$record changes together with the script that writes it, so no CHANGELOG line is required for it."
+                continue
+              fi
               if ! changes "$changelog"; then
                 echo "::error::This pull request changes $record, which records the public API or the requests the SDK sends, but not $changelog. Add a line that tells integrators what changed."
                 exit 1
