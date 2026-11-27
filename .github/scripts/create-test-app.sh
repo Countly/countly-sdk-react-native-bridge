@@ -41,10 +41,12 @@ find . -depth -name '_[a-zA-Z]*' | while read -r path; do
   mv "$path" "$(dirname "$path")/.$(basename "$path" | cut -c2-)"
 done
 
-cat >> index.js <<'EOF'
+# The no-push package has its own name.
+bridge=$(tar -xzOf "$tarball" package/package.json | node -e 'let s="";process.stdin.on("data",(d)=>{s+=d;}).on("end",()=>{process.stdout.write(JSON.parse(s).name);})')
+cat >> index.js <<EOF
 
-import Countly from 'countly-sdk-react-native-bridge';
-import CountlyConfig from 'countly-sdk-react-native-bridge/CountlyConfig';
+import Countly from '$bridge';
+import CountlyConfig from '$bridge/CountlyConfig';
 
 global.countlyBuildCheck = [Countly, CountlyConfig];
 EOF
