@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Fails the build when the files that carry a version disagree.
+"""
+Fails the build when the files that carry a version disagree.
 
 Every version in this repository is written by hand, and nothing in a build notices a forgotten one: the app then
 reports one version to the server as sdk_version, npm and CocoaPods show another, and the changelog a third.

@@ -29,6 +29,7 @@ jobs:
       - name: Write the coverage summary
         if: matrix.node-version == 24
         run: |
+          # shellcheck disable=SC2016 # the single-quoted text is JavaScript for node, not for the shell
           node -e '
             const total = require("./coverage/coverage-summary.json").total;
             const rows = ["lines", "statements", "branches", "functions"].map((metric) =>

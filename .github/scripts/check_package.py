@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Fails the build when the npm package would carry a file that must never ship, would miss a file it needs, or would
-need a runtime dependency.
+"""
+Fails the build when the npm package would carry the wrong files or need a runtime dependency.
 
 Usage: npm pack --dry-run --json > pack.json && python3 .github/scripts/check_package.py pack.json
 
@@ -49,13 +49,13 @@ COMMENT = re.compile(r"/\*.*?\*/|(?<![:\"'\\])//[^\n]*", re.S)
 
 
 def package_name(specifier):
-    """Returns the npm package a bare import names, for example "react-native" for "react-native/Libraries/x"."""
+    """Return the npm package a bare import names, for example "react-native" for "react-native/Libraries/x"."""
     parts = specifier.split("/")
     return "/".join(parts[:2]) if specifier.startswith("@") else parts[0]
 
 
 def resolve(importer, specifier, shipped):
-    """Returns the shipped file a relative import of `importer` loads, or None when the package does not carry it."""
+    """Return the shipped file a relative import of `importer` loads, or None when the package does not carry it."""
     base = posixpath.normpath(posixpath.join(posixpath.dirname(importer), specifier))
     for candidate in (base, base + ".js", base + ".ts", base + ".json", base + "/index.js"):
         if candidate in shipped:
@@ -63,39 +63,41 @@ def resolve(importer, specifier, shipped):
     return None
 
 
-def main(pack_json):
-    """Reads the `npm pack --dry-run --json` output and exits non-zero when the package is wrong."""
-    pack = json.loads(Path(pack_json).read_text(encoding="utf-8"))[0]
-    files = {entry["path"]: entry["size"] for entry in pack["files"]}
-    manifest = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
-    errors = []
+def check_manifest(manifest):
+    """Return the errors of package.json: any runtime dependency is one."""
+    fields = ("dependencies", "optionalDependencies", "bundleDependencies", "bundledDependencies")
+    return ["package.json has %s; the SDK must not need a runtime dependency" % field
+            for field in fields if manifest.get(field)]
 
-    print("%s %s: %d files, %d bytes packed, %d bytes unpacked"
-          % (pack["name"], pack["version"], len(files), pack["size"], pack["unpackedSize"]))
 
-    for field in ("dependencies", "optionalDependencies", "bundleDependencies", "bundledDependencies"):
-        if manifest.get(field):
-            errors.append("package.json has %s; the SDK must not need a runtime dependency" % field)
-
+def check_required(manifest, files):
+    """Return an error for each file the package must carry and does not."""
     required = dict(REQUIRED)
     for field in ("main", "types"):
         if manifest.get(field):
             required[manifest[field]] = 'the "%s" entry of package.json' % field
-    for path, reason in sorted(required.items()):
-        if path not in files:
-            errors.append("%s is missing from the package (%s)" % (path, reason))
+    return ["%s is missing from the package (%s)" % (path, reason)
+            for path, reason in sorted(required.items()) if path not in files]
 
+
+def check_files(pack, files):
+    """Return an error for each forbidden or oversized file, and for an oversized package."""
+    errors = []
     for path in sorted(files):
-        for pattern, reason in FORBIDDEN:
-            if pattern.search(path):
-                errors.append("%s would be published (%s)" % (path, reason))
-                break
+        reasons = [reason for pattern, reason in FORBIDDEN if pattern.search(path)]
+        if reasons:
+            errors.append("%s would be published (%s)" % (path, reasons[0]))
         if files[path] > MAX_FILE_BYTES:
             errors.append("%s has %d bytes, more than the %d a file may have" % (path, files[path], MAX_FILE_BYTES))
     if pack["unpackedSize"] > MAX_UNPACKED_BYTES:
         errors.append("the package has %d bytes unpacked, more than %d" % (pack["unpackedSize"], MAX_UNPACKED_BYTES))
+    return errors
 
+
+def check_imports(manifest, files):
+    """Return an error for each import of a file the package does not carry, or of a package that is no peer."""
     allowed_packages = set(manifest.get("peerDependencies", {})) | {manifest["name"]}
+    errors = []
     for path in sorted(p for p in files if SOURCE.search(p) and not p.endswith(".d.ts")):
         source = COMMENT.sub("", (ROOT / path).read_text(encoding="utf-8"))
         for specifier in IMPORT.findall(source):
@@ -104,7 +106,19 @@ def main(pack_json):
                     errors.append("%s imports %s, which the package does not carry" % (path, specifier))
             elif package_name(specifier) not in allowed_packages:
                 errors.append("%s imports %s, which is not a peer dependency" % (path, specifier))
+    return errors
 
+
+def main(pack_json):
+    """Read the `npm pack --dry-run --json` output and exit non-zero when the package is wrong."""
+    pack = json.loads(Path(pack_json).read_text(encoding="utf-8"))[0]
+    files = {entry["path"]: entry["size"] for entry in pack["files"]}
+    manifest = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
+    print("%s %s: %d files, %d bytes packed, %d bytes unpacked"
+          % (pack["name"], pack["version"], len(files), pack["size"], pack["unpackedSize"]))
+
+    errors = (check_manifest(manifest) + check_required(manifest, files) + check_files(pack, files)
+              + check_imports(manifest, files))
     if errors:
         for error in errors:
             print("::error::%s" % error)

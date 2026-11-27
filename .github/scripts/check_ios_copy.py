@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Fails the build when the copy of the iOS SDK in ios/src is not the iOS SDK release it claims to be.
+"""
+Fails the build when the copy of the iOS SDK in ios/src is not the iOS SDK release it claims to be.
 
 ios/src holds every file of an iOS SDK release except the iOS repository's own tooling (its hidden files and api/),
 plus the files the bridge owns (BRIDGE_FILES). A hand edit to a copied file builds and ships, and the next copy of a
