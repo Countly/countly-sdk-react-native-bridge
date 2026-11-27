@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
-"""
-Fails the build when the copy of the iOS SDK in ios/src is not the iOS SDK release it claims to be.
+"""Fail the build when the copy of the iOS SDK in ios/src is not the iOS SDK release it claims to be."""
 
-ios/src holds every file of an iOS SDK release except the iOS repository's own tooling (its hidden files and api/),
-plus the files the bridge owns (BRIDGE_FILES). A hand edit to a copied file builds and ships, and the next copy of a
-release deletes it without a trace; a file left out of the copy can break a build.
-
-The release is the one ios/src/CountlyCommon.m names. The script fetches that tag of the iOS SDK repository into this
-clone and compares git blob ids, so two files are equal only when their bytes, or for links their targets, are equal.
-While the copy holds an iOS SDK version that has no tag yet, the check only warns; with STRICT=1, which release
-branches set, it fails. IOS_REMOTE overrides the repository address, for example with a local clone.
-"""
+# ios/src holds every file of an iOS SDK release except the iOS repository's own tooling (its hidden files and api/),
+# plus the files the bridge owns (BRIDGE_FILES). A hand edit to a copied file builds and ships, and the next copy of a
+# release deletes it without a trace; a file left out of the copy can break a build.
+#
+# The release is the one ios/src/CountlyCommon.m names. The script fetches that tag of the iOS SDK repository into this
+# clone and compares git blob ids, so two files are equal only when their bytes, or for links their targets, are equal.
+# While the copy holds an iOS SDK version that has no tag yet, the check only warns; with STRICT=1, which release
+# branches set, it fails. IOS_REMOTE overrides the repository address, for example with a local clone.
 
 import os
 import re

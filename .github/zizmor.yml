@@ -1,0 +1,7 @@
+# Configuration of the zizmor audit in .github/workflows/repository_checks.yml.
+rules:
+  adhoc-packages:
+    ignore:
+      # The Android build installs the bridge tarball it packed a moment before, into an app it just created; there is
+      # no lockfile to install from.
+      - android_build.yml

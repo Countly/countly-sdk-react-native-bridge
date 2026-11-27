@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
-"""
-Fails the build when the files that carry a version disagree.
+"""Fail the build when the files that carry a version disagree."""
 
-Every version in this repository is written by hand, and nothing in a build notices a forgotten one: the app then
-reports one version to the server as sdk_version, npm and CocoaPods show another, and the changelog a third.
-
-The bridge version comes from package.json and must also be in package-lock.json (twice), CountlyReactNative.podspec,
-the Android and the iOS bridge version strings, and the first CHANGELOG.md heading. That heading is "## <version>", or
-"## <version>-np" in the no-push package, or "## XX.XX.XX" while the next release is not decided.
-
-The Android SDK version comes from android/build.gradle, and the newest "underlying Android SDK version" line of
-CHANGELOG.md must name it. The iOS SDK version comes from the copied iOS SDK (ios/src/CountlyCommon.m), and the two
-podspecs of the copy and the newest "underlying iOS SDK version" line of CHANGELOG.md must name it.
-"""
+# Every version in this repository is written by hand, and nothing in a build notices a forgotten one: the app then
+# reports one version to the server as sdk_version, npm and CocoaPods show another, and the changelog a third.
+#
+# The bridge version comes from package.json and must also be in package-lock.json (twice), CountlyReactNative.podspec,
+# the Android and the iOS bridge version strings, and the first CHANGELOG.md heading. That heading is "## <version>", or
+# "## <version>-np" in the no-push package, or "## XX.XX.XX" while the next release is not decided.
+#
+# The Android SDK version comes from android/build.gradle, and the newest "underlying Android SDK version" line of
+# CHANGELOG.md must name it. The iOS SDK version comes from the copied iOS SDK (ios/src/CountlyCommon.m), and the two
+# podspecs of the copy and the newest "underlying iOS SDK version" line of CHANGELOG.md must name it.
 
 import json
 import re

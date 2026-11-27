@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
-"""
-Fails the build when the npm package would carry the wrong files or need a runtime dependency.
+"""Fail the build when the npm package would carry the wrong files or need a runtime dependency."""
 
-Usage: npm pack --dry-run --json > pack.json && python3 .github/scripts/check_package.py pack.json
-
-"files" in package.json decides what ships. A file the code needs but "files" leaves out still installs, and the app
-fails only when it bundles or builds; a file that should stay in the repository can leak a key or make every app that
-installs the package larger. The SDKs have no runtime dependencies, so the code may import only its peer dependencies
-and its own files.
-"""
+# Usage: npm pack --dry-run --json > pack.json && python3 .github/scripts/check_package.py pack.json
+#
+# "files" in package.json decides what ships. A file the code needs but "files" leaves out still installs, and the app
+# fails only when it bundles or builds; a file that should stay in the repository can leak a key or make every app that
+# installs the package larger. The SDKs have no runtime dependencies, so the code may import only its peer dependencies
+# and its own files.
 
 import json
 import posixpath
