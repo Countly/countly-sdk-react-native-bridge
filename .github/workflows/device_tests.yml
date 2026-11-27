@@ -96,7 +96,7 @@ jobs:
 
   ios-simulator:
     name: iOS simulator
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 90
     env:
       RCT_NEW_ARCH_ENABLED: 1
@@ -104,8 +104,6 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
-      - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_16.4.app
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: ${{ env.NODE }}
@@ -114,12 +112,31 @@ jobs:
       - name: Install the pods
         working-directory: ${{ runner.temp }}/app/ios
         run: pod install
+      # Runner images differ in their simulators, so take an iPhone of the newest iOS runtime there is.
+      - name: Pick a simulator
+        run: |
+          udid=$(xcrun simctl list devices available --json | node -e '
+            let s = "";
+            process.stdin.on("data", (d) => { s += d; }).on("end", () => {
+              const runtimes = Object.entries(JSON.parse(s).devices).filter(([r]) => r.includes("iOS"))
+                .sort(([a], [b]) => b.localeCompare(a, undefined, { numeric: true }));
+              for (const [runtime, devices] of runtimes) {
+                const phone = devices.find((d) => d.name.startsWith("iPhone"));
+                if (phone) {
+                  console.error(`${phone.name}, ${runtime}`);
+                  console.log(phone.udid);
+                  return;
+                }
+              }
+              process.exit(1);
+            });')
+          echo "SIMULATOR=$udid" >> "$GITHUB_ENV"
       - name: Run the scenarios on the simulator
         working-directory: ${{ runner.temp }}/app/ios
         run: |
           xcodebuild test \
             -workspace HelloWorld.xcworkspace -scheme CountlyDeviceTests -configuration Debug \
-            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -destination "id=$SIMULATOR" \
             -resultBundlePath "$RUNNER_TEMP/ios-simulator.xcresult" \
             CODE_SIGNING_ALLOWED=NO
       - name: Upload the results
@@ -179,7 +196,7 @@ jobs:
   ios-phone:
     name: iOS real phone
     if: ${{ vars.DEVICE_FARM == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 120
     permissions:
       contents: read
@@ -191,8 +208,6 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
-      - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_16.4.app
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: ${{ env.NODE }}
