@@ -54,7 +54,8 @@ case "$kind" in
 
     tarball="$work/$(npm pack . --pack-destination "$work" | tail -n 1)"
     (cd "$app" && npm install --no-audit --no-fund "$tarball")
-    gradle clean
+    # The new package comes without the old one's generated code, which a Gradle clean would still look for.
+    rm -rf "$app/android/app/build" "$app/android/app/.cxx" "$app/android/build"
     use_entry upgrade-after.js
     dev_bundle
     gradle assembleDebug
