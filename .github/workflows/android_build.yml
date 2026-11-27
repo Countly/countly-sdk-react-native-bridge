@@ -78,4 +78,9 @@ jobs:
       # A release build also bundles the JavaScript, and compiles it with Hermes where the app uses Hermes.
       - name: Build the release APK
         working-directory: ${{ runner.temp }}/app/android
-        run: ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=x86_64 "-PnewArchEnabled=$NEW_ARCH"
+        # One retry, because downloads from the Gradle plugin portal and Maven Central fail now and then.
+        run: |
+          build() {
+            ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=x86_64 "-PnewArchEnabled=$NEW_ARCH"
+          }
+          build || { echo "::warning::The build failed; trying once more"; build; }
