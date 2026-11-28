@@ -449,10 +449,11 @@ function createCachedUserPropertyFlushOnEventScenario() {
     return {
         id: "cached-user-property-flush-on-event",
         title: "Cached User Property Flush Behavior",
-        description: "Checks that a cached user property stays out of both native queues until a supported flush path moves it into the request queue.",
+        description: "Checks that a cached user property stays out of both native queues until an event is recorded, which saves it first, so the event reaches the server after it.",
         async run() {
             await haltBridgeForScenario();
 
+            // On iOS the event goes into the request queue at once, so the order of the two requests can be checked too.
             prepareIOSEventQueueRequestFallback();
             await Countly.initWithConfig(createStableEventQueueConfig());
             const baselineRequestQueue = await getStableRequestQueue();
@@ -474,36 +475,6 @@ function createCachedUserPropertyFlushOnEventScenario() {
 
             Countly.events.recordEvent("flushes-cached-user-property", { source: "integration-testing" });
 
-            if (isIOSEventQueueFallbackEnabled()) {
-                const requestQueueAfterEvent = await waitForRequestGrowth(baselineRequestQueue, 1);
-                const appendedRequestsAfterEvent = takeAppendedEntries(baselineRequestQueue, requestQueueAfterEvent);
-                const eventRequest = findLastRequestWithEventName(appendedRequestsAfterEvent, "flushes-cached-user-property");
-                const cachedUserPropertyRequestAfterEvent = findLastRequestWithCustomUserProperty(appendedRequestsAfterEvent, "cached_before_event");
-
-                assertCondition(eventRequest !== null, "Expected recording an event to flush the event into the iOS request queue, but no matching event request was appended.");
-                assertCondition(cachedUserPropertyRequestAfterEvent === null, "Expected the cached user property to remain unsent on iOS until explicit save, but a user_details request was appended with the event.");
-
-                await Countly.userDataBulk.save();
-
-                const finalRequestQueue = await waitForRequestGrowth(requestQueueAfterEvent, 1);
-                const finalEventQueue = await getStableEventQueue();
-                const appendedRequestsAfterSave = takeAppendedEntries(requestQueueAfterEvent, finalRequestQueue);
-                const cachedUserPropertyRequest = findLastRequestWithCustomUserProperty(appendedRequestsAfterSave, "cached_before_event");
-                const customUserDetails = getCustomUserDetails(cachedUserPropertyRequest);
-
-                assertCondition(cachedUserPropertyRequest !== null, "Expected explicit save to flush the cached user property into the iOS request queue, but no matching user_details request was appended.");
-                assertCondition(customUserDetails?.cached_before_event === "cached-value", `Expected cached user property value 'cached-value', received '${customUserDetails?.cached_before_event || ""}'.`);
-
-                return {
-                    summary: "On iOS, the cached user property stayed local through the event flush and moved into the request queue only after explicit save.",
-                    details: [
-                        `Event request: ${eventRequest?.entry || ""}`,
-                        `User details request after save: ${cachedUserPropertyRequest?.entry || ""}`,
-                        `Event queue size after save: ${finalEventQueue.length}`,
-                    ],
-                };
-            }
-
             await waitForRequestGrowth(baselineRequestQueue, 1);
             const finalRequestQueue = await getStableRequestQueue();
             const finalEventQueue = await getStableEventQueue();
@@ -511,14 +482,22 @@ function createCachedUserPropertyFlushOnEventScenario() {
             const appendedEvents = takeAppendedEntries(baselineEventQueue, finalEventQueue);
             const cachedUserPropertyRequest = findLastRequestWithCustomUserProperty(appendedRequests, "cached_before_event");
             const customUserDetails = getCustomUserDetails(cachedUserPropertyRequest);
+            const eventRequest = findLastRequestWithEventName(appendedRequests, "flushes-cached-user-property");
 
-            assertCondition(cachedUserPropertyRequest !== null, "Expected recording an event to flush the cached user property into the request queue, but no matching user_details request was appended.");
+            assertCondition(cachedUserPropertyRequest !== null, "Expected recording an event to save the cached user property first, but no matching user_details request was appended.");
             assertCondition(customUserDetails?.cached_before_event === "cached-value", `Expected cached user property value 'cached-value', received '${customUserDetails?.cached_before_event || ""}'.`);
+            if (eventRequest !== null && cachedUserPropertyRequest !== null) {
+                assertCondition(
+                    appendedRequests.indexOf(cachedUserPropertyRequest.entry) < appendedRequests.indexOf(eventRequest.entry),
+                    `Expected the user_details request before the event request. Appended requests: ${appendedRequests.join(" | ")}`,
+                );
+            }
 
             return {
-                summary: "Recording an event flushed the previously cached user property into the request queue.",
+                summary: "Recording an event saved the previously cached user property first.",
                 details: [
                     `User details request: ${cachedUserPropertyRequest?.entry || ""}`,
+                    `Event request: ${eventRequest?.entry || "still in the event queue"}`,
                     `Request queue growth after event: ${appendedRequests.length}`,
                     `Event queue growth after event: ${appendedEvents.length}`,
                 ],

@@ -192,6 +192,7 @@ jobs:
       # Runner images differ in their simulators, so take an iPhone of the newest iOS runtime there is.
       - name: Pick a simulator
         run: |
+          # shellcheck disable=SC2016 # the single-quoted text is JavaScript for node, not for the shell
           udid=$(xcrun simctl list devices available --json | node -e '
             let s = "";
             process.stdin.on("data", (d) => { s += d; }).on("end", () => {
