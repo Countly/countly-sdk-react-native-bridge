@@ -80,11 +80,13 @@ static UIWindow *gWindow;
 }
 
 /**
- * Builds the suite: one test that checks the whole run finished, then one test per scenario.
+ * Builds the suite: one test that brings the runner app to the foreground, one that checks the whole run finished,
+ * then one test per scenario.
  */
 + (XCTestSuite *)defaultTestSuite
 {
     XCTestSuite *suite = [XCTestSuite testSuiteWithName:NSStringFromClass(self)];
+    [suite addTest:[self testCaseWithSelector:@selector(test_runnerInForeground)]];
     [suite addTest:[self testCaseWithSelector:@selector(test_allScenariosFinished)]];
     for (NSString *scenarioId in [self scenarioIds]) {
         NSString *name = [@"test_" stringByAppendingString:[scenarioId stringByReplacingOccurrencesOfString:@"-" withString:@"_"]];
@@ -143,11 +145,6 @@ static UIWindow *gWindow;
     }
     gRunStarted = YES;
     gResults = [NSMutableDictionary dictionary];
-
-    // The runner app starts in the background, where the iOS SDK does not begin sessions; bring it to the foreground
-    // as a user would see an app.
-    XCUIApplication *runner = [[XCUIApplication alloc] initWithBundleIdentifier:NSBundle.mainBundle.bundleIdentifier];
-    [runner activate];
     NSLog(@"Countly device tests: runner application state %ld", (long)UIApplication.sharedApplication.applicationState);
 
     RCTSetLogThreshold(RCTLogLevelInfo);
@@ -177,6 +174,19 @@ static UIWindow *gWindow;
     while (gDone == nil && deadline.timeIntervalSinceNow > 0) {
         [[NSRunLoop mainRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.5]];
     }
+}
+
+/**
+ * Brings the runner app to the foreground, as a user sees an app: it starts in the background, where the iOS SDK does
+ * not begin sessions. This is its own test, so a slow simulator that fails it does not stop the scenarios.
+ */
+- (void)test_runnerInForeground
+{
+    if (UIApplication.sharedApplication.applicationState == UIApplicationStateActive) {
+        return;
+    }
+    XCUIApplication *runner = [[XCUIApplication alloc] initWithBundleIdentifier:NSBundle.mainBundle.bundleIdentifier];
+    [runner activate];
 }
 
 /**
