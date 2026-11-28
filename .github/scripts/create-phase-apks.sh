@@ -21,10 +21,10 @@ work=$(mktemp -d)
 app="$work/app"
 mkdir -p "$out"
 
-# Runs a Gradle task of the app, once more when it fails, as downloads fail now and then.
+# Runs a Gradle task of the app, once more a minute later when it fails, as downloads fail now and then.
 gradle() {
   (cd "$app/android" && { ./gradlew "$1" --no-daemon -PreactNativeArchitectures=x86_64 \
-    || { echo "::warning::$1 failed; trying once more"; ./gradlew "$1" --no-daemon -PreactNativeArchitectures=x86_64; }; })
+    || { echo "::warning::$1 failed; trying once more in a minute"; sleep 60; ./gradlew "$1" --no-daemon -PreactNativeArchitectures=x86_64; }; })
 }
 
 # Makes e2e/phases/<entry> the app's entry, importing the bridge package the app installed.
