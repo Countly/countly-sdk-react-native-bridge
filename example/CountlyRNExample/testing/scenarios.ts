@@ -1,5 +1,6 @@
 import Countly from "countly-sdk-react-native-bridge";
 import CountlyConfig from "countly-sdk-react-native-bridge/CountlyConfig";
+import { PUSH_NOTIFICATIONS_AVAILABLE } from "countly-sdk-react-native-bridge/CountlyFlavor";
 import { Platform } from "react-native";
 
 import { COUNTLY_APP_KEY, COUNTLY_SERVER_URL, createCountlyConfig } from "../Configuration";
@@ -15,7 +16,7 @@ import {
     parseQueryEntry,
     safeParseJson,
     takeAppendedEntries,
-    waitForCapturedRequestGrowth,
+    waitForCapturedRequest,
     waitForEventGrowth,
     waitForRequestGrowth,
 } from "./helpers";
@@ -448,10 +449,11 @@ function createCachedUserPropertyFlushOnEventScenario() {
     return {
         id: "cached-user-property-flush-on-event",
         title: "Cached User Property Flush Behavior",
-        description: "Checks that a cached user property stays out of both native queues until a supported flush path moves it into the request queue.",
+        description: "Checks that a cached user property stays out of both native queues until an event is recorded, which saves it first, so the event reaches the server after it.",
         async run() {
             await haltBridgeForScenario();
 
+            // On iOS the event goes into the request queue at once, so the order of the two requests can be checked too.
             prepareIOSEventQueueRequestFallback();
             await Countly.initWithConfig(createStableEventQueueConfig());
             const baselineRequestQueue = await getStableRequestQueue();
@@ -473,36 +475,6 @@ function createCachedUserPropertyFlushOnEventScenario() {
 
             Countly.events.recordEvent("flushes-cached-user-property", { source: "integration-testing" });
 
-            if (isIOSEventQueueFallbackEnabled()) {
-                const requestQueueAfterEvent = await waitForRequestGrowth(baselineRequestQueue, 1);
-                const appendedRequestsAfterEvent = takeAppendedEntries(baselineRequestQueue, requestQueueAfterEvent);
-                const eventRequest = findLastRequestWithEventName(appendedRequestsAfterEvent, "flushes-cached-user-property");
-                const cachedUserPropertyRequestAfterEvent = findLastRequestWithCustomUserProperty(appendedRequestsAfterEvent, "cached_before_event");
-
-                assertCondition(eventRequest !== null, "Expected recording an event to flush the event into the iOS request queue, but no matching event request was appended.");
-                assertCondition(cachedUserPropertyRequestAfterEvent === null, "Expected the cached user property to remain unsent on iOS until explicit save, but a user_details request was appended with the event.");
-
-                await Countly.userDataBulk.save();
-
-                const finalRequestQueue = await waitForRequestGrowth(requestQueueAfterEvent, 1);
-                const finalEventQueue = await getStableEventQueue();
-                const appendedRequestsAfterSave = takeAppendedEntries(requestQueueAfterEvent, finalRequestQueue);
-                const cachedUserPropertyRequest = findLastRequestWithCustomUserProperty(appendedRequestsAfterSave, "cached_before_event");
-                const customUserDetails = getCustomUserDetails(cachedUserPropertyRequest);
-
-                assertCondition(cachedUserPropertyRequest !== null, "Expected explicit save to flush the cached user property into the iOS request queue, but no matching user_details request was appended.");
-                assertCondition(customUserDetails?.cached_before_event === "cached-value", `Expected cached user property value 'cached-value', received '${customUserDetails?.cached_before_event || ""}'.`);
-
-                return {
-                    summary: "On iOS, the cached user property stayed local through the event flush and moved into the request queue only after explicit save.",
-                    details: [
-                        `Event request: ${eventRequest?.entry || ""}`,
-                        `User details request after save: ${cachedUserPropertyRequest?.entry || ""}`,
-                        `Event queue size after save: ${finalEventQueue.length}`,
-                    ],
-                };
-            }
-
             await waitForRequestGrowth(baselineRequestQueue, 1);
             const finalRequestQueue = await getStableRequestQueue();
             const finalEventQueue = await getStableEventQueue();
@@ -510,14 +482,22 @@ function createCachedUserPropertyFlushOnEventScenario() {
             const appendedEvents = takeAppendedEntries(baselineEventQueue, finalEventQueue);
             const cachedUserPropertyRequest = findLastRequestWithCustomUserProperty(appendedRequests, "cached_before_event");
             const customUserDetails = getCustomUserDetails(cachedUserPropertyRequest);
+            const eventRequest = findLastRequestWithEventName(appendedRequests, "flushes-cached-user-property");
 
-            assertCondition(cachedUserPropertyRequest !== null, "Expected recording an event to flush the cached user property into the request queue, but no matching user_details request was appended.");
+            assertCondition(cachedUserPropertyRequest !== null, "Expected recording an event to save the cached user property first, but no matching user_details request was appended.");
             assertCondition(customUserDetails?.cached_before_event === "cached-value", `Expected cached user property value 'cached-value', received '${customUserDetails?.cached_before_event || ""}'.`);
+            if (eventRequest !== null && cachedUserPropertyRequest !== null) {
+                assertCondition(
+                    appendedRequests.indexOf(cachedUserPropertyRequest.entry) < appendedRequests.indexOf(eventRequest.entry),
+                    `Expected the user_details request before the event request. Appended requests: ${appendedRequests.join(" | ")}`,
+                );
+            }
 
             return {
-                summary: "Recording an event flushed the previously cached user property into the request queue.",
+                summary: "Recording an event saved the previously cached user property first.",
                 details: [
                     `User details request: ${cachedUserPropertyRequest?.entry || ""}`,
+                    `Event request: ${eventRequest?.entry || "still in the event queue"}`,
                     `Request queue growth after event: ${appendedRequests.length}`,
                     `Event queue growth after event: ${appendedEvents.length}`,
                 ],
@@ -716,9 +696,10 @@ function createServerConfigDirectScenario() {
             const baselineCapturedRequests = await getStableCapturedRequests();
             await Countly.initWithConfig(createCountlyConfig());
 
-            const finalCapturedRequests = await waitForCapturedRequestGrowth(baselineCapturedRequests, 1);
+            const isServerConfigRequest = (request: { requestData?: string }) => (request.requestData || "").includes("method=sc");
+            const finalCapturedRequests = await waitForCapturedRequest(baselineCapturedRequests, isServerConfigRequest);
             const appendedRequests = takeAppendedEntries(baselineCapturedRequests, finalCapturedRequests);
-            const serverConfigRequest = findLastCapturedRequest(appendedRequests, (request) => (request.requestData || "").includes("method=sc"));
+            const serverConfigRequest = findLastCapturedRequest(appendedRequests, isServerConfigRequest);
 
             assertCondition(serverConfigRequest !== null, "Expected init to generate a direct server configuration request, but none was captured.");
             assertCondition((serverConfigRequest?.customEndpoint || serverConfigRequest?.path || "").includes("/o/sdk"), `Expected server config request to target '/o/sdk', received '${serverConfigRequest?.customEndpoint || serverConfigRequest?.path || ""}'.`);
@@ -748,12 +729,13 @@ function createRemoteConfigDirectScenario() {
 
             await Countly.remoteConfig.update();
 
-            const finalCapturedRequests = await waitForCapturedRequestGrowth(baselineCapturedRequests, 1);
-            const appendedRequests = takeAppendedEntries(baselineCapturedRequests, finalCapturedRequests);
-            const remoteConfigRequest = findLastCapturedRequest(appendedRequests, (request) => {
+            const isRemoteConfigRequest = (request: { requestData?: string }) => {
                 const requestData = request.requestData || "";
                 return requestData.includes("method=rc") || requestData.includes("method=fetch_remote_config");
-            });
+            };
+            const finalCapturedRequests = await waitForCapturedRequest(baselineCapturedRequests, isRemoteConfigRequest);
+            const appendedRequests = takeAppendedEntries(baselineCapturedRequests, finalCapturedRequests);
+            const remoteConfigRequest = findLastCapturedRequest(appendedRequests, isRemoteConfigRequest);
 
             assertCondition(remoteConfigRequest !== null, "Expected remoteConfigUpdate to generate a direct request, but none was captured.");
             assertCondition((remoteConfigRequest?.customEndpoint || remoteConfigRequest?.path || "").includes("/o/sdk"), `Expected remote config request to target '/o/sdk', received '${remoteConfigRequest?.customEndpoint || remoteConfigRequest?.path || ""}'.`);
@@ -1159,6 +1141,18 @@ function createPushTokenWithoutPermissionCallScenario() {
             const baselineQueue = await getStableRequestQueue();
 
             const result = Countly.sendPushToken({ token: "e2e-handed-over-token" });
+
+            if (!PUSH_NOTIFICATIONS_AVAILABLE) {
+                // The no-push package ignores push tokens, so nothing may reach the queue in the time a token would.
+                await sleep(12000);
+                const queue = await getStableRequestQueue();
+                const tokenRequest = findLastRequestContaining(takeAppendedEntries(baselineQueue, queue), "e2e-handed-over-token");
+                assertCondition(tokenRequest === null, `Expected the no-push package to ignore the token, received: ${tokenRequest?.entry || ""}`);
+                return {
+                    summary: "The no-push package ignores a handed over push token.",
+                    details: [],
+                };
+            }
 
             // The Android SDK queues token requests 10 seconds after it receives the token.
             const finalQueue = await waitForRequestContaining(baselineQueue, "e2e-handed-over-token", 15000);

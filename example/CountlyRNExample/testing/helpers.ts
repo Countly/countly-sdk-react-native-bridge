@@ -156,13 +156,22 @@ async function waitForEventGrowth(before: string[], minGrowth: number) {
     return waitForQueueGrowth(() => Countly.test.getEventQueue(), before, minGrowth);
 }
 
-async function waitForCapturedRequestGrowth(before: string[], minGrowth: number) {
+// Init sends several direct requests at once (the health check, the behavior settings), and a captured request shows
+// up once its answer is in, which took two seconds on a slow simulator; so this waits for the expected request itself.
+async function waitForCapturedRequest(before: string[], predicate: (request: CapturedRequest) => boolean, timeoutMs = 15000) {
     ensureTestApi();
     if (typeof Countly.test.getCapturedRequests !== "function") {
         return before;
     }
 
-    return waitForQueueGrowth(() => Countly.test.getCapturedRequests(), before, minGrowth);
+    const startedAt = Date.now();
+    let currentSnapshot = await Countly.test.getCapturedRequests();
+    while (findLastCapturedRequest(takeAppendedEntries(before, currentSnapshot), predicate) === null && Date.now() - startedAt < timeoutMs) {
+        await sleep(POLL_INTERVAL_MS);
+        currentSnapshot = await Countly.test.getCapturedRequests();
+    }
+
+    return currentSnapshot;
 }
 
 function parseCapturedRequest(entry: string) {
@@ -197,7 +206,7 @@ export {
     parseQueryEntry,
     safeParseJson,
     takeAppendedEntries,
-    waitForCapturedRequestGrowth,
+    waitForCapturedRequest,
     waitForEventGrowth,
     waitForRequestGrowth,
 };
