@@ -156,13 +156,14 @@ async function waitForEventGrowth(before: string[], minGrowth: number) {
     return waitForQueueGrowth(() => Countly.test.getEventQueue(), before, minGrowth);
 }
 
-async function waitForCapturedRequestGrowth(before: string[], minGrowth: number) {
+// A captured direct request shows up once its answer is in, which took two seconds on a slow simulator.
+async function waitForCapturedRequestGrowth(before: string[], minGrowth: number, timeoutMs = 15000) {
     ensureTestApi();
     if (typeof Countly.test.getCapturedRequests !== "function") {
         return before;
     }
 
-    return waitForQueueGrowth(() => Countly.test.getCapturedRequests(), before, minGrowth);
+    return waitForQueueGrowth(() => Countly.test.getCapturedRequests(), before, minGrowth, timeoutMs);
 }
 
 function parseCapturedRequest(entry: string) {
