@@ -471,32 +471,32 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
     // Limits -----------------------------------------------
     // maxKeyLength
     NSNumber *maxKeyLength = json[@"maxKeyLength"];
-    if (maxKeyLength) {
+    if (maxKeyLength != nil) {
         [config.sdkInternalLimits setMaxKeyLength:[maxKeyLength intValue]];
     }
     NSNumber *maxValueSize = json[@"maxValueSize"];
-    if (maxValueSize) {
+    if (maxValueSize != nil) {
         [config.sdkInternalLimits setMaxValueSize:[maxValueSize intValue]];
     }
     NSNumber *maxSegmentationValues = json[@"maxSegmentationValues"];
-    if (maxSegmentationValues) {
+    if (maxSegmentationValues != nil) {
         [config.sdkInternalLimits setMaxSegmentationValues:[maxSegmentationValues intValue]];
     }
     NSNumber *maxBreadcrumbCount = json[@"maxBreadcrumbCount"];
-    if (maxBreadcrumbCount) {
+    if (maxBreadcrumbCount != nil) {
         [config.sdkInternalLimits setMaxBreadcrumbCount:[maxBreadcrumbCount intValue]];
     }
     NSNumber *maxStackTraceLineLength = json[@"maxStackTraceLineLength"];
-    if (maxStackTraceLineLength) {
+    if (maxStackTraceLineLength != nil) {
         [config.sdkInternalLimits setMaxStackTraceLineLength:[maxStackTraceLineLength intValue]];
     }
     NSNumber *maxStackTraceLinesPerThread = json[@"maxStackTraceLinesPerThread"];
-    if (maxStackTraceLinesPerThread) {
+    if (maxStackTraceLinesPerThread != nil) {
         [config.sdkInternalLimits setMaxStackTraceLinesPerThread:[maxStackTraceLinesPerThread intValue]];
     }
     // Limits End -------------------------------------------
     NSNumber *timerInt = json[@"setZoneTimerInterval"];
-    if (timerInt) {
+    if (timerInt != nil) {
         [config.content setZoneTimerInterval:[timerInt intValue]];
     }
     if(json[@"setGlobalContentCallback"]) {
@@ -524,19 +524,19 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
     }
     // APM ------------------------------------------------
     NSNumber *enableForegroundBackground = json[@"enableForegroundBackground"];
-    if (enableForegroundBackground) {
+    if (enableForegroundBackground != nil) {
         config.apm.enableForegroundBackgroundTracking = [enableForegroundBackground boolValue];
     }
     NSNumber *enableManualAppLoaded = json[@"enableManualAppLoaded"];
-    if (enableManualAppLoaded) {
+    if (enableManualAppLoaded != nil) {
         config.apm.enableManualAppLoadedTrigger = [enableManualAppLoaded boolValue];
     }
     NSNumber *trackAppStartTime = json[@"trackAppStartTime"];
-    if (trackAppStartTime) {
+    if (trackAppStartTime != nil) {
         config.apm.enableAppStartTimeTracking = [trackAppStartTime boolValue];
     }
     NSNumber *startTSOverride = json[@"startTSOverride"];
-    if (startTSOverride) {
+    if (startTSOverride != nil) {
         [config.apm setAppStartTimestampOverride:[startTSOverride longLongValue]];
     }
     // APM END --------------------------------------------
@@ -547,7 +547,7 @@ RCT_REMAP_METHOD(init, params : (NSArray *)arguments initWithResolver : (RCTProm
         config.experimental.enableVisibiltyTracking = YES;
     }
     NSNumber *enableAutomaticViewTracking = json[@"enableAutomaticViewTracking"];
-    if (enableAutomaticViewTracking) {
+    if (enableAutomaticViewTracking != nil) {
         config.enableAutomaticViewTracking = [enableAutomaticViewTracking boolValue];
     }
     NSArray *automaticViewTrackingExclusionList = json[@"automaticViewTrackingExclusionList"];
