@@ -16,7 +16,7 @@ import {
     parseQueryEntry,
     safeParseJson,
     takeAppendedEntries,
-    waitForCapturedRequestGrowth,
+    waitForCapturedRequest,
     waitForEventGrowth,
     waitForRequestGrowth,
 } from "./helpers";
@@ -696,9 +696,10 @@ function createServerConfigDirectScenario() {
             const baselineCapturedRequests = await getStableCapturedRequests();
             await Countly.initWithConfig(createCountlyConfig());
 
-            const finalCapturedRequests = await waitForCapturedRequestGrowth(baselineCapturedRequests, 1);
+            const isServerConfigRequest = (request: { requestData?: string }) => (request.requestData || "").includes("method=sc");
+            const finalCapturedRequests = await waitForCapturedRequest(baselineCapturedRequests, isServerConfigRequest);
             const appendedRequests = takeAppendedEntries(baselineCapturedRequests, finalCapturedRequests);
-            const serverConfigRequest = findLastCapturedRequest(appendedRequests, (request) => (request.requestData || "").includes("method=sc"));
+            const serverConfigRequest = findLastCapturedRequest(appendedRequests, isServerConfigRequest);
 
             assertCondition(serverConfigRequest !== null, "Expected init to generate a direct server configuration request, but none was captured.");
             assertCondition((serverConfigRequest?.customEndpoint || serverConfigRequest?.path || "").includes("/o/sdk"), `Expected server config request to target '/o/sdk', received '${serverConfigRequest?.customEndpoint || serverConfigRequest?.path || ""}'.`);
@@ -728,12 +729,13 @@ function createRemoteConfigDirectScenario() {
 
             await Countly.remoteConfig.update();
 
-            const finalCapturedRequests = await waitForCapturedRequestGrowth(baselineCapturedRequests, 1);
-            const appendedRequests = takeAppendedEntries(baselineCapturedRequests, finalCapturedRequests);
-            const remoteConfigRequest = findLastCapturedRequest(appendedRequests, (request) => {
+            const isRemoteConfigRequest = (request: { requestData?: string }) => {
                 const requestData = request.requestData || "";
                 return requestData.includes("method=rc") || requestData.includes("method=fetch_remote_config");
-            });
+            };
+            const finalCapturedRequests = await waitForCapturedRequest(baselineCapturedRequests, isRemoteConfigRequest);
+            const appendedRequests = takeAppendedEntries(baselineCapturedRequests, finalCapturedRequests);
+            const remoteConfigRequest = findLastCapturedRequest(appendedRequests, isRemoteConfigRequest);
 
             assertCondition(remoteConfigRequest !== null, "Expected remoteConfigUpdate to generate a direct request, but none was captured.");
             assertCondition((remoteConfigRequest?.customEndpoint || remoteConfigRequest?.path || "").includes("/o/sdk"), `Expected remote config request to target '/o/sdk', received '${remoteConfigRequest?.customEndpoint || remoteConfigRequest?.path || ""}'.`);
