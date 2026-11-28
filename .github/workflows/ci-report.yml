@@ -10,6 +10,7 @@ on:  # zizmor: ignore[dangerous-triggers] the job reads the pull request's artif
     workflows:
       - "Android build"
       - "JS checks"
+      - "iOS build"
       - "Public API changelog"
       - "Public API changes"
     types: [completed]

@@ -5,49 +5,60 @@ on:
     paths:
       - 'android/**'
       - 'src/**'
+      - '*.js'
+      - 'lib/**'
       - 'package.json'
       - 'scripts/generate-no-push.js'
+      - '.github/react-native-versions.json'
+      - '.github/scripts/create-test-app.sh'
       - '.github/workflows/android_build.yml'
   push:
     branches: [master, staging]
     paths:
       - 'android/**'
       - 'src/**'
+      - '*.js'
+      - 'lib/**'
       - 'package.json'
       - 'scripts/generate-no-push.js'
+      - '.github/react-native-versions.json'
+      - '.github/scripts/create-test-app.sh'
       - '.github/workflows/android_build.yml'
+  schedule:
+    - cron: '0 3 * * 1'
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: android-build-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
+  versions:
+    name: React Native versions
+    runs-on: ubuntu-latest
+    outputs:
+      list: ${{ steps.read.outputs.list }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - id: read
+        run: echo "list=$(jq -c . .github/react-native-versions.json)" >> "$GITHUB_OUTPUT"
+
   build:
     name: ${{ matrix.name }}
+    needs: versions
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - name: New architecture (React Native 0.88.1)
-            react-native: 0.88.1
-            cli: 20.2.0
-            new-arch: true
-            package: standard
-          - name: Old architecture (React Native 0.81.6)
-            react-native: 0.81.6
-            cli: 20.0.0
-            new-arch: false
-            package: standard
-          - name: No-push package (React Native 0.88.1)
-            react-native: 0.88.1
-            cli: 20.2.0
-            new-arch: true
-            package: no-push
+        include: ${{ fromJSON(needs.versions.outputs.list) }}
     env:
       REACT_NATIVE: ${{ matrix.react-native }}
-      CLI: ${{ matrix.cli }}
       NEW_ARCH: ${{ matrix.new-arch }}
       PACKAGE: ${{ matrix.package }}
     steps:
@@ -56,24 +67,21 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 24
+          node-version: ${{ matrix.node }}
       - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: zulu
-          java-version: 17
+          java-version: ${{ matrix.java }}
       # The app installs the packed tarball, so the build sees only the files npm publishes.
       - name: Create an app with the bridge
+        run: .github/scripts/create-test-app.sh "$REACT_NATIVE" "$PACKAGE" "$RUNNER_TEMP/app"
+      # A release build also bundles the JavaScript, and compiles it with Hermes where the app uses Hermes.
+      - name: Build the release APK
+        working-directory: ${{ runner.temp }}/app/android
+        # One retry, because downloads from the Gradle plugin portal and Maven Central fail now and then. Maven Central
+        # answers the parallel builds with 429 Too Many Requests at times, so the retry waits a minute first.
         run: |
-          source=.
-          if [ "$PACKAGE" = no-push ]; then
-            node scripts/generate-no-push.js "$RUNNER_TEMP/no-push"
-            source="$RUNNER_TEMP/no-push"
-          fi
-          tarball="$RUNNER_TEMP/$(npm pack "$source" --pack-destination "$RUNNER_TEMP" | tail -n 1)"
-          cd "$RUNNER_TEMP"
-          npx --yes "@react-native-community/cli@$CLI" init CountlyApp --version "$REACT_NATIVE" --pm npm --skip-git-init --install-pods false
-          cd CountlyApp
-          npm install --no-audit --no-fund "$tarball"
-      - name: Build the debug APK
-        working-directory: ${{ runner.temp }}/CountlyApp/android
-        run: ./gradlew assembleDebug --no-daemon -PreactNativeArchitectures=x86_64 "-PnewArchEnabled=$NEW_ARCH"
+          build() {
+            ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=x86_64 "-PnewArchEnabled=$NEW_ARCH"
+          }
+          build || { echo "::warning::The build failed; trying once more in a minute"; sleep 60; build; }

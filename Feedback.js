@@ -28,7 +28,7 @@ class Feedback {
      */
     presentNPS(nameIDorTag, widgetShownCallback, widgetClosedCallback) {
         L.i(`presentNPS, Will show NPS widget with name, id, or tag: [${nameIDorTag}], shown callback provided: [${typeof widgetShownCallback === "function"}], closed callback provided: [${typeof widgetClosedCallback === "function"}]`);
-        this.#presentDirectFeedback("presentNPS", "nps", nameIDorTag, widgetShownCallback, widgetClosedCallback);
+        this._presentDirectFeedback("presentNPS", "nps", nameIDorTag, widgetShownCallback, widgetClosedCallback);
     }
 
     /**
@@ -52,7 +52,7 @@ class Feedback {
      */
     presentSurvey(nameIDorTag, widgetShownCallback, widgetClosedCallback) {
         L.i(`presentSurvey, Will show Survey widget with name, id, or tag: [${nameIDorTag}], shown callback provided: [${typeof widgetShownCallback === "function"}], closed callback provided: [${typeof widgetClosedCallback === "function"}]`);
-        this.#presentDirectFeedback("presentSurvey", "survey", nameIDorTag, widgetShownCallback, widgetClosedCallback);
+        this._presentDirectFeedback("presentSurvey", "survey", nameIDorTag, widgetShownCallback, widgetClosedCallback);
     }
 
     /**
@@ -76,10 +76,10 @@ class Feedback {
      */
     presentRating(nameIDorTag, widgetShownCallback, widgetClosedCallback) {
         L.i(`presentRating, Will show Rating widget with name, id, or tag: [${nameIDorTag}], shown callback provided: [${typeof widgetShownCallback === "function"}], closed callback provided: [${typeof widgetClosedCallback === "function"}]`);
-        this.#presentDirectFeedback("presentRating", "rating", nameIDorTag, widgetShownCallback, widgetClosedCallback);
+        this._presentDirectFeedback("presentRating", "rating", nameIDorTag, widgetShownCallback, widgetClosedCallback);
     }
 
-    #normalizeNameIDorTag(nameIDorTag, functionName) {
+    _normalizeNameIDorTag(nameIDorTag, functionName) {
         if (typeof nameIDorTag === "string") {
             return nameIDorTag;
         }
@@ -91,7 +91,7 @@ class Feedback {
         return "";
     }
 
-    #registerPresentationCallbacks(widgetShownCallback, widgetClosedCallback) {
+    _registerPresentationCallbacks(widgetShownCallback, widgetClosedCallback) {
         if (this.#state.widgetShownCallback) {
             this.#state.widgetShownCallback.remove();
             this.#state.widgetShownCallback = null;
@@ -117,26 +117,26 @@ class Feedback {
         }
     }
 
-    #presentDirectFeedback(nativeMethodName, widgetType, nameIDorTag, widgetShownCallback, widgetClosedCallback) {
+    _presentDirectFeedback(nativeMethodName, widgetType, nameIDorTag, widgetShownCallback, widgetClosedCallback) {
         if (!this.#state.isInitialized) {
             L.e(`${nativeMethodName}, 'init' must be called before '${nativeMethodName}'`);
             return;
         }
 
-        const normalizedNameIDorTag = this.#normalizeNameIDorTag(nameIDorTag, nativeMethodName);
+        const normalizedNameIDorTag = this._normalizeNameIDorTag(nameIDorTag, nativeMethodName);
         const nativeMethod = this.#state.CountlyReactNative[nativeMethodName];
 
         if (typeof nativeMethod === "function") {
-            this.#registerPresentationCallbacks(widgetShownCallback, widgetClosedCallback);
+            this._registerPresentationCallbacks(widgetShownCallback, widgetClosedCallback);
             nativeMethod.call(this.#state.CountlyReactNative, [normalizedNameIDorTag]);
             return;
         }
 
         L.w(`${nativeMethodName}, native direct feedback method unavailable, falling back to widget lookup`);
-        this.#showInternalFeedback(widgetType, normalizedNameIDorTag, widgetShownCallback, widgetClosedCallback);
+        this._showInternalFeedback(widgetType, normalizedNameIDorTag, widgetShownCallback, widgetClosedCallback);
     }
 
-    #showInternalFeedback(widgetType, nameIDorTag, widgetShownCallback, widgetClosedCallback) {
+    _showInternalFeedback(widgetType, nameIDorTag, widgetShownCallback, widgetClosedCallback) {
         this.getAvailableFeedbackWidgets((retrievedWidgets, error) => {
             if (error) {
                 L.e(`showInternalFeedback, ${error}`);
@@ -234,7 +234,7 @@ class Feedback {
         }
 
         L.d(`presentFeedbackWidget, presentFeedbackWidget with widget:[${JSON.stringify(feedbackWidget)}]`);
-        this.#registerPresentationCallbacks(widgetShownCallback, widgetClosedCallback);
+        this._registerPresentationCallbacks(widgetShownCallback, widgetClosedCallback);
 
         feedbackWidget.name = feedbackWidget.name || "";
         closeButtonText = closeButtonText || "";

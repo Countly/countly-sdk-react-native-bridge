@@ -5,7 +5,7 @@
 * ! Minor breaking change ! An uncaught JS error that crashes a release build is now recorded once, as a fatal crash with its JS stack, instead of twice.
 * ! Minor breaking change ! Android now uses Firebase BoM 32.8.1 (firebase-messaging 23.4.1) instead of 28.4.2. Apps on an older Firebase BoM get its versions for their Firebase libraries, and the Kotlin standard library 1.7.10 joins the build. The minimum Android version stays API 21.
 * ! Minor breaking change ! `Countly.test` helpers now work only in debug builds.
-* ! Minor breaking change ! The package now ships only the files the SDK needs at runtime; the example app, the tests and the Xcode project for manual linking are no longer part of it. It declares `react-native` as a peer dependency and needs React Native 0.62 or newer.
+* ! Minor breaking change ! The package now ships only the files the SDK needs at runtime; the example app, the tests and the Xcode project for manual linking are no longer part of it. It declares `react-native` as a peer dependency and needs React Native 0.65 or newer.
 * ! Minor breaking change ! The pod now makes only the bridge header and the iOS SDK's public headers public; other headers can no longer be imported from it.
 * ! Minor breaking change ! The `NotificationService` subspec no longer depends on React, and `pod 'CountlyReactNative'` installs only the `Core` subspec.
 * ! Minor breaking change ! The pod now needs iOS 15 (tvOS 15, macOS 12, watchOS 9), the minimum of the bundled iOS SDK 26.8.1, instead of iOS 10. With React Native 0.71 and newer it uses React Native's minimum iOS version when that is higher. An app whose Podfile platform is below iOS 15, for example with React Native 0.75 or older, has to raise it; an app that has to support older iOS versions can stay on 26.1.0.
@@ -37,6 +37,7 @@
 * Mitigated crash reporting issues:
   * The JS crash handler no longer fails, or skips the app's previous error handler, when the app throws a value that is not an Error.
   * `Countly.logException` now skips `null` and `undefined` segment values instead of failing.
+* Mitigated an issue where the release build of an app on React Native 0.72 or older failed with "Class private methods are not enabled" in `Feedback.js`.
 * Mitigated an issue where the "enter content zone" SDK behavior setting could exit a content zone the app entered. The setting now applies only when the SDK starts.
 * Mitigated an issue where `CountlyConfig.setLocation` was ignored without a country code in iOS.
 * Mitigated an issue where `Countly.giveAllConsent` sent two consent requests in iOS.

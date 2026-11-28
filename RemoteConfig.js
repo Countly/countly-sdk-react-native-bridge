@@ -63,13 +63,13 @@ class RemoteConfig {
      * @returns {Promise<{success: boolean, error: string | null}>} whether new values were downloaded, and why not
      */
     async update() {
-        const initializationError = this.#initializationError("update");
+        const initializationError = this._initializationError("update");
         if (initializationError) {
             return failedUpdate(initializationError);
         }
 
         L.d("remoteConfig.update, Updating remote config");
-        return this.#runUpdate("remoteConfigUpdate", []);
+        return this._runUpdate("remoteConfigUpdate", []);
     }
 
     /**
@@ -80,12 +80,12 @@ class RemoteConfig {
      * @returns {Promise<{success: boolean, error: string | null}>} whether new values were downloaded, and why not
      */
     async updateForKeysOnly(keyNames) {
-        const initializationError = this.#initializationError("updateForKeysOnly");
+        const initializationError = this._initializationError("updateForKeysOnly");
         if (initializationError) {
             return failedUpdate(initializationError);
         }
 
-        const normalizedKeyNames = this.#normalizeKeyNames(keyNames, "updateForKeysOnly");
+        const normalizedKeyNames = this._normalizeKeyNames(keyNames, "updateForKeysOnly");
         if (normalizedKeyNames == null) {
             return failedUpdate(KEY_NAMES_TYPE_ERROR);
         }
@@ -96,7 +96,7 @@ class RemoteConfig {
         }
 
         L.d(`remoteConfig.updateForKeysOnly, Updating remote config for keys: [${normalizedKeyNames}]`);
-        return this.#runUpdate("updateRemoteConfigForKeysOnly", normalizedKeyNames);
+        return this._runUpdate("updateRemoteConfigForKeysOnly", normalizedKeyNames);
     }
 
     /**
@@ -107,12 +107,12 @@ class RemoteConfig {
      * @returns {Promise<{success: boolean, error: string | null}>} whether new values were downloaded, and why not
      */
     async updateExceptKeys(keyNames) {
-        const initializationError = this.#initializationError("updateExceptKeys");
+        const initializationError = this._initializationError("updateExceptKeys");
         if (initializationError) {
             return failedUpdate(initializationError);
         }
 
-        const normalizedKeyNames = this.#normalizeKeyNames(keyNames, "updateExceptKeys");
+        const normalizedKeyNames = this._normalizeKeyNames(keyNames, "updateExceptKeys");
         if (normalizedKeyNames == null) {
             return failedUpdate(KEY_NAMES_TYPE_ERROR);
         }
@@ -123,7 +123,7 @@ class RemoteConfig {
         }
 
         L.d(`remoteConfig.updateExceptKeys, Updating remote config except keys: [${normalizedKeyNames}]`);
-        return this.#runUpdate("updateRemoteConfigExceptKeys", normalizedKeyNames);
+        return this._runUpdate("updateRemoteConfigExceptKeys", normalizedKeyNames);
     }
 
     /**
@@ -134,7 +134,7 @@ class RemoteConfig {
      * @returns {Promise<any | null>}
      */
     async getValue(keyName) {
-        if (this.#initializationError("getValue")) {
+        if (this._initializationError("getValue")) {
             return null;
         }
 
@@ -166,7 +166,7 @@ class RemoteConfig {
      * @returns {Promise<void>}
      */
     async clearValues() {
-        if (this.#initializationError("clearValues")) {
+        if (this._initializationError("clearValues")) {
             return;
         }
 
@@ -184,7 +184,7 @@ class RemoteConfig {
      * @param {string} functionName - name of the called function
      * @returns {string | null} the error message, or null when the SDK is initialized
      */
-    #initializationError(functionName) {
+    _initializationError(functionName) {
         if (!this.#state.isInitialized) {
             const message = `'init' must be called before 'Countly.remoteConfig.${functionName}'`;
             L.e(`remoteConfig.${functionName}, ${message}`);
@@ -194,7 +194,7 @@ class RemoteConfig {
         return null;
     }
 
-    #normalizeKeyNames(keyNames, functionName) {
+    _normalizeKeyNames(keyNames, functionName) {
         if (!Array.isArray(keyNames)) {
             L.e(`remoteConfig.${functionName}, ${KEY_NAMES_TYPE_ERROR}`);
             return null;
@@ -215,7 +215,7 @@ class RemoteConfig {
         return normalizedKeyNames;
     }
 
-    async #runUpdate(nativeMethodName, args) {
+    async _runUpdate(nativeMethodName, args) {
         try {
             const status = await new Promise((resolve) => {
                 this.#state.CountlyReactNative[nativeMethodName](args, (result) => {
