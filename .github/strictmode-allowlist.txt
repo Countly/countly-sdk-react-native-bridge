@@ -1,0 +1,19 @@
+# StrictMode violations the device test audit accepts, checked by e2e/android/strictmode_audit.py.
+#
+# Format: <policy> <violation> <site>   # reason
+#   policy     VM or THREAD
+#   violation  the StrictMode violation class name
+#   site       Class.method of the frame closest to the violation in ly.count.android.sdk (the Android SDK or the
+#              bridge), anonymous class numbers dropped, or Class.* for every method of the class
+#
+# The entries for the Android SDK's own code follow the allowlist of the Android SDK repository.
+
+# Init reads the persisted state synchronously. The first read of a SharedPreferences file waits for it to finish
+# loading and is reported, and which method gets there first depends on timing.
+THREAD DiskReadViolation CountlyStore.*
+THREAD DiskReadViolation ModuleDeviceId.*
+THREAD DiskWriteViolation CountlyStore.<init>                 # first use creates the shared_prefs directory
+
+# Native crash dumps left by sdk-native are looked for, sent, and deleted during init.
+THREAD DiskReadViolation ModuleCrash.checkForNativeCrashDumps
+THREAD DiskWriteViolation ModuleCrash.checkForNativeCrashDumps
