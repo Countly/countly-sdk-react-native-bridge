@@ -35,6 +35,7 @@ perl -pi -e 's#"https://your\.server\.ly"#"https://device-tests.invalid"#; s#"YO
 grep -q '"https://device-tests.invalid"' "$app/e2e/Configuration.tsx"
 grep -q '"device-tests-app-key"' "$app/e2e/Configuration.tsx"
 printf 'import "./e2e/index";\n' > "$app/index.js"
+# shellcheck disable=SC2016 # the single-quoted text is JavaScript for node, not for the shell
 node -e '
 const fs = require("fs");
 const ids = [...fs.readFileSync(process.argv[1], "utf8").matchAll(/^\s+id: "([^"]+)",$/gm)].map((m) => m[1]);
